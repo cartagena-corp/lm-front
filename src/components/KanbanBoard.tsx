@@ -110,7 +110,7 @@ export default function KanbanBoard() {
         {columns.map((column) => (
           <div
             key={column.id}
-            className="flex-shrink-0 w-80 bg-gray-100 rounded-lg p-4"
+            className="flex-shrink-0 w-80 bg-white rounded-lg p-4"
           >
             <h3 className="font-semibold text-gray-700 mb-4">{column.title}</h3>
             <Droppable droppableId={column.id}>
@@ -131,7 +131,7 @@ export default function KanbanBoard() {
                           ref={provided.innerRef}
                           {...provided.draggableProps}
                           {...provided.dragHandleProps}
-                          className="bg-white p-4 rounded-md shadow-sm"
+                          className="bg-gray-100 p-4 rounded-md shadow-sm"
                         >
                           <h4 className="font-medium text-gray-900">
                             {task.title}

@@ -27,7 +27,7 @@ export default function Sidebar() {
   ];
 
   return (
-    <div className="flex h-screen flex-col justify-between bg-gray-900 w-64">
+    <div className="flex h-screen flex-col justify-between bg-gray-900 w-64 sticky top-0 left-0">
       <div className="px-4 py-6">
         <h1 className="text-2xl font-bold text-white mb-8">La Muralla</h1>
         <nav className="space-y-1">

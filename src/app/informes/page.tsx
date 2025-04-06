@@ -63,7 +63,7 @@ export default function InformesPage() {
   return (
     <div className="flex h-screen">
       <Sidebar />
-      <main className="flex-1 p-8 bg-gray-100">
+      <main className="flex-1 p-10 bg-gray-100">
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Informes</h1>

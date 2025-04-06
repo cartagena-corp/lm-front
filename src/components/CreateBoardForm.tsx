@@ -32,7 +32,7 @@ export default function CreateBoardForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
+      <div className='space-y-1'>
         <label htmlFor="title" className="block text-sm font-medium text-gray-700">
           Título
         </label>
@@ -41,13 +41,13 @@ export default function CreateBoardForm({
           id="title"
           name="title"
           required
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+          className="px-3 py-1.5 block w-full rounded-md border-gray-300 border shadow-sm focus:border-blue-500 focus:outline-blue-500 sm:text-sm"
           value={formData.title}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
         />
       </div>
 
-      <div>
+      <div className='space-y-1'>
         <label htmlFor="description" className="block text-sm font-medium text-gray-700">
           Descripción
         </label>
@@ -55,20 +55,20 @@ export default function CreateBoardForm({
           id="description"
           name="description"
           rows={3}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+          className="px-3 py-1.5 block w-full rounded-md border-gray-300 border shadow-sm focus:border-blue-500 focus:outline-blue-500 sm:text-sm"
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
         />
       </div>
 
-      <div>
+      <div className='space-y-1'>
         <label htmlFor="type" className="block text-sm font-medium text-gray-700">
           Tipo de tablero
         </label>
         <select
           id="type"
           name="type"
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+          className="p-2 block w-full rounded-md border-gray-300 border shadow-sm focus:border-blue-500 focus:outline-blue-500 sm:text-sm"
           value={formData.type}
           onChange={(e) =>
             setFormData({ ...formData, type: e.target.value as 'kanban' | 'scrum' })
