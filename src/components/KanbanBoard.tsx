@@ -105,7 +105,7 @@ export default function KanbanBoard() {
   };
 
   return (
-    <div className="flex gap-4 p-4 overflow-x-auto">
+    <div className="flex gap-4 overflow-x-auto">
       <DragDropContext onDragEnd={onDragEnd}>
         {columns.map((column) => (
           <div
@@ -131,7 +131,7 @@ export default function KanbanBoard() {
                           ref={provided.innerRef}
                           {...provided.draggableProps}
                           {...provided.dragHandleProps}
-                          className="bg-gray-100 p-4 rounded-md shadow-sm"
+                          className="bg-gray-100/60 p-4 rounded-md shadow-sm"
                         >
                           <h4 className="font-medium text-gray-900">
                             {task.title}

@@ -31,37 +31,35 @@ export default function TableroDetalle() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen">
       <Sidebar />
-      <main className="flex-1 overflow-hidden">
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Proyecto Alpha
-              </h1>
-              <p className="text-sm text-gray-500">
-                Tablero del proyecto principal
-              </p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <select
-                className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-                value={boardType}
-                onChange={(e) =>
-                  setBoardType(e.target.value as 'kanban' | 'scrum')
-                }
-              >
-                <option value="kanban">Kanban</option>
-                <option value="scrum">Scrum</option>
-              </select>
-              <button
-                onClick={() => setIsCreateModalOpen(true)}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
-              >
-                {boardType === 'kanban' ? 'Nueva tarea' : 'Nueva historia'}
-              </button>
-            </div>
+      <main className="flex-1 p-10 bg-gray-100">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Proyecto Alpha
+            </h1>
+            <p className="text-sm text-gray-500">
+              Tablero del proyecto principal
+            </p>
+          </div>
+          <div className="flex items-center space-x-4">
+            <select
+              className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              value={boardType}
+              onChange={(e) =>
+                setBoardType(e.target.value as 'kanban' | 'scrum')
+              }
+            >
+              <option value="kanban">Kanban</option>
+              <option value="scrum">Scrum</option>
+            </select>
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+            >
+              {boardType === 'kanban' ? 'Nueva tarea' : 'Nueva historia'}
+            </button>
           </div>
         </div>
 

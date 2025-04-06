@@ -129,7 +129,7 @@ export default function ScrumBoard() {
   };
 
   return (
-    <div className="p-4">
+    <div className="p-4 bg-white rounded-md">
       <div className="mb-8">
         <div className="flex justify-between items-center mb-4">
           <div>
