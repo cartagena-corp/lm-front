@@ -1,0 +1,8 @@
+{
+  "/login/page": "app/login/page.js",
+  "/tableros/page": "app/tableros/page.js",
+  "/calendario/page": "app/calendario/page.js",
+  "/informes/page": "app/informes/page.js",
+  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
+  "/filtros/page": "app/filtros/page.js"
+}
