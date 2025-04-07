@@ -1,254 +1,195 @@
-'use client';
-import { useState } from 'react';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import { useState } from 'react'
+import { DndContext, DragEndEvent } from '@dnd-kit/core'
+import { Draggable } from './Draggable'
+import { Droppable } from './Droppable'
 
-interface UserStory {
-   id: string;
-   title: string;
-   description: string;
-   points: number;
-   priority: 'low' | 'medium' | 'high';
-   status: 'backlog' | 'sprint' | 'in-progress' | 'review' | 'done';
-   assignee: string;
+interface Task {
+   id: string
+   task: string
+   desc: string
+   priority: string
+   pts: number
+   user_asigned: string
 }
 
-interface Sprint {
-   id: string;
-   name: string;
-   startDate: string;
-   endDate: string;
-   stories: UserStory[];
+interface Column {
+   id: string
+   title: string
+   tasks: Task[]
 }
 
-const initialSprint: Sprint = {
-   id: '1',
-   name: 'Sprint 1',
-   startDate: '2024-02-20',
-   endDate: '2024-03-05',
-   stories: [
+interface ScrumData {
+   columns: Column[]
+}
+
+const initialScrumData: ScrumData = {
+   columns: [
       {
-         id: '1',
-         title: 'Implementar autenticación',
-         description: 'Configurar NextAuth.js para el login de usuarios',
-         points: 5,
-         priority: 'high',
-         status: 'in-progress',
-         assignee: 'Carlos López',
+         id: "BACKLOG",
+         title: "Backlog",
+         tasks: [
+            {
+               id: "1",
+               task: "Tarea #1",
+               desc: "Descripción de la tarea #1",
+               priority: "Low",
+               pts: 3,
+               user_asigned: "Kenn Marcucci"
+            },
+            {
+               id: "2",
+               task: "Tarea #2",
+               desc: "Descripción de la tarea #2",
+               priority: "Low",
+               pts: 1,
+               user_asigned: "Diego Pedrozo"
+            },
+         ],
       },
       {
-         id: '2',
-         title: 'Diseñar dashboard',
-         description: 'Crear mockups y componentes del dashboard principal',
-         points: 3,
-         priority: 'medium',
-         status: 'sprint',
-         assignee: 'Ana García',
+         id: "SPRINT",
+         title: "Sprint",
+         tasks: [
+            {
+               id: "3",
+               task: "Tarea #3",
+               desc: "Descripción de la tarea #3",
+               priority: "Medium",
+               pts: 5,
+               user_asigned: "Juan Cartagena"
+            },
+         ],
+      },
+      {
+         id: "PROGRESS",
+         title: "En progreso",
+         tasks: [
+            {
+               id: "4",
+               task: "Tarea #4",
+               desc: "Descripción de la tarea #4",
+               priority: "High",
+               pts: 8,
+               user_asigned: "Juan Cartagena"
+            },
+         ],
+      },
+      {
+         id: "REVIEW",
+         title: "En revisión",
+         tasks: [
+            {
+               id: "5",
+               task: "Tarea #5",
+               desc: "Descripción de la tarea #5",
+               priority: "medium",
+               pts: 4,
+               user_asigned: "Kenn Marcucci"
+            },
+         ],
+      },
+      {
+         id: "DONE",
+         title: "Completado",
+         tasks: [
+            {
+               id: "6",
+               task: "Tarea #6",
+               desc: "Descripción de la tarea #6",
+               priority: "High",
+               pts: 10,
+               user_asigned: "Diego Pedrozo"
+            },
+         ],
       },
    ],
-};
-
-const initialBacklog: UserStory[] = [
-   {
-      id: '3',
-      title: 'Integrar API REST',
-      description: 'Conectar el frontend con los endpoints del backend',
-      points: 8,
-      priority: 'high',
-      status: 'backlog',
-      assignee: 'María Rodríguez',
-   },
-   {
-      id: '4',
-      title: 'Implementar filtros',
-      description: 'Agregar funcionalidad de filtrado en las listas',
-      points: 3,
-      priority: 'low',
-      status: 'backlog',
-      assignee: 'Juan Pérez',
-   },
-];
+}
 
 export default function Scrum() {
-   const [sprint, setSprint] = useState<Sprint>(initialSprint);
-   const [backlog, setBacklog] = useState<UserStory[]>(initialBacklog);
+   const [data, setData] = useState<ScrumData>(initialScrumData)
 
-   const getStatusColor = (status: UserStory['status']) => {
-      switch (status) {
-         case 'backlog':
-            return 'bg-gray-50';
-         case 'sprint':
-            return 'bg-blue-50';
-         case 'in-progress':
-            return 'bg-yellow-50';
-         case 'review':
-            return 'bg-purple-50';
-         case 'done':
-            return 'bg-green-50';
-      }
-   };
+   const handleDragEnd = (event: DragEndEvent) => {
+      const { active, over } = event
+      if (!over) return
 
-   const getPriorityColor = (priority: UserStory['priority']) => {
-      switch (priority) {
-         case 'high':
-            return 'bg-red-100 text-red-800';
-         case 'medium':
-            return 'bg-yellow-100 text-yellow-800';
-         case 'low':
-            return 'bg-green-100 text-green-800';
-      }
-   };
+      // Asumimos que cada Draggable tiene id con el formato "task-{id}"
+      const activeTaskId = active.id
+      const destinationColumnId = over.id
 
-   const onDragEnd = (result: any) => {
-      if (!result.destination) return;
-      const { source, destination } = result;
+      // Buscar la columna de origen y el índice de la tarea
+      let sourceColIndex = -1
+      let taskIndex = -1
+      let draggedTask: Task | undefined = undefined
 
-      // Clonación de arrays para evitar mutaciones directas
-      const newBacklog = [...backlog];
-      const newSprintStories = [...sprint.stories];
+      data.columns.forEach((col, colIndex) => {
+         const index = col.tasks.findIndex(task => `task-${task.id}` === activeTaskId)
+         if (index !== -1) {
+            sourceColIndex = colIndex
+            taskIndex = index
+            draggedTask = col.tasks[index]
+         }
+      })
 
-      let movedStory: UserStory;
-      if (source.droppableId === 'backlog') {
-         [movedStory] = newBacklog.splice(source.index, 1);
-      } else {
-         [movedStory] = newSprintStories.splice(source.index, 1);
-      }
+      if (!draggedTask) return
 
-      movedStory.status =
-         destination.droppableId === 'backlog'
-            ? 'backlog'
-            : (destination.droppableId as UserStory['status']);
+      // Si la tarea se suelta en la misma columna, se podría implementar reordenamiento interno
+      if (data.columns[sourceColIndex].id === destinationColumnId) return
 
-      if (destination.droppableId === 'backlog') {
-         newBacklog.splice(destination.index, 0, movedStory);
-      } else {
-         newSprintStories.splice(destination.index, 0, movedStory);
+      // Remover la tarea de la columna de origen
+      const newColumns = data.columns.map((col, index) => {
+         if (index === sourceColIndex) {
+            return { ...col, tasks: col.tasks.filter(task => task.id !== draggedTask!.id) }
+         }
+         return col
+      })
+
+      // Encontrar la columna destino
+      const destColIndex = newColumns.findIndex(col => col.id === destinationColumnId)
+      if (destColIndex === -1) return
+
+      // Agregar la tarea al final de la columna destino
+      newColumns[destColIndex] = {
+         ...newColumns[destColIndex],
+         tasks: [...newColumns[destColIndex].tasks, draggedTask],
       }
 
-      if (source.droppableId === 'backlog' || destination.droppableId === 'backlog') {
-         setBacklog(newBacklog);
-      }
-      if (source.droppableId !== 'backlog' || destination.droppableId !== 'backlog') {
-         setSprint({ ...sprint, stories: newSprintStories });
-      }
-   };
+      setData({ columns: newColumns })
+   }
 
    return (
-      <div className="bg-white p-4 rounded-md pb-14">
-         <div className="flex justify-between items-center mb-4">
-            <div className="flex flex-col">
-               <h2 className="text-xl font-semibold text-gray-900">{sprint.name}</h2>
-               <p className="text-sm text-gray-500">
-                  {sprint.startDate} - {sprint.endDate}
-               </p>
-            </div>
-            <button className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
-               Nuevo Sprint
-            </button>
+      <DndContext onDragEnd={handleDragEnd}>
+         <div className='flex justify-between gap-4'>
+            {
+               data.columns.map(column =>
+                  <Droppable key={column.id} id={column.id} styleClass={
+                     column.id === "BACKLOG" ? "bg-white" :
+                        column.id === "SPRINT" ? "bg-sky-100" :
+                           column.id === "PROGRESS" ? "bg-amber-100/75" :
+                              column.id === "REVIEW" ? "bg-purple-100/75" : "bg-green-100/75"
+                  }>
+                     <h2 className='text-xl font-bold'>{column.title}</h2>
+                     {
+                        column.tasks.map(task =>
+                           <Draggable key={task.id} id={`task-${task.id}`} styleClass={null}>
+                              <div className='mb-2.5'>
+                                 <h6 className='font-medium'>{task.task}</h6>
+                                 <p className='text-sm'>{task.desc}</p>
+                              </div>
+                              <div className='flex justify-between items-center gap-2'>
+                                 <span className={`${task.priority === "Low" ? "bg-green-200/50 text-green-700" :
+                                    task.priority === "Medium" ? "bg-yellow-100 text-yellow-700" : "bg-red-200/60 text-red-700"} 
+                                    text-xs rounded-full px-2.5 py-0.5`}>
+                                    {task.pts} pts
+                                 </span>
+                                 <p className='text-xs text-black/50'>{task.user_asigned}</p>
+                              </div>
+                           </Draggable>
+                        )
+                     }
+                  </Droppable>
+               )
+            }
          </div>
-         <DragDropContext onDragEnd={onDragEnd}>
-            <div className="grid grid-cols-5 gap-4">
-               <div className="space-y-3">
-                  <h3 className="font-medium text-gray-900">Backlog</h3>
-                  <div className="h-full">
-                     <Droppable droppableId="backlog">
-                        {(provided) => (
-                           <div
-                              ref={provided.innerRef}
-                              {...provided.droppableProps}
-                              className="bg-gray-200 rounded-lg p-4 h-full space-y-4"
-                           >
-                              {backlog.map((story, index) => (
-                                 <Draggable key={story.id} draggableId={story.id} index={index}>
-                                    {(provided) => (
-                                       <div
-                                          ref={provided.innerRef}
-                                          {...provided.draggableProps}
-                                          className="bg-white p-4 rounded-md shadow-sm"
-                                       >
-                                          <div {...provided.dragHandleProps} className="cursor-grab">
-                                             <h4 className="font-medium text-gray-900">
-                                                {story.title}
-                                             </h4>
-                                          </div>
-                                          <p className="text-sm text-gray-600 mt-1">
-                                             {story.description}
-                                          </p>
-                                          <div className="mt-2 flex items-center justify-between">
-                                             <span
-                                                className={`px-2 py-1 text-xs rounded-full ${getPriorityColor(
-                                                   story.priority
-                                                )}`}
-                                             >
-                                                {story.points} pts
-                                             </span>
-                                             <span className="text-sm text-gray-500">
-                                                {story.assignee}
-                                             </span>
-                                          </div>
-                                       </div>
-                                    )}
-                                 </Draggable>
-                              ))}
-                              {provided.placeholder}
-                           </div>
-                        )}
-                     </Droppable>
-                  </div>
-               </div>
-               {
-                  ['sprint', 'in-progress', 'review', 'done'].map((status) => (
-                     <div key={status}>
-                        <h3 className="font-medium text-gray-900 mb-3 capitalize">
-                           {status.replace('-', ' ')}
-                        </h3>
-                        <div className="h-full">
-                           <Droppable droppableId={status}>
-                              {(provided) => (
-                                 <div ref={provided.innerRef} {...provided.droppableProps}
-                                    className={`${getStatusColor(status as UserStory['status'])} rounded-lg p-4 h-full space-y-4`}>
-                                    {
-                                       sprint.stories.filter((story) => story.status === status).map((story, index) => (
-                                          <Draggable key={story.id} draggableId={story.id} index={index}>
-                                             {
-                                                (provided) => (
-                                                   <div
-                                                      ref={provided.innerRef}
-                                                      {...provided.draggableProps}
-                                                      className="bg-white p-4 rounded-md shadow-sm"
-                                                   >
-                                                      <div {...provided.dragHandleProps} className="cursor-grab">
-                                                         <h4 className="font-medium text-gray-900">
-                                                            {story.title}
-                                                         </h4>
-                                                      </div>
-                                                      <p className="text-sm text-gray-600 mt-1">
-                                                         {story.description}
-                                                      </p>
-                                                      <div className="mt-2 flex items-center justify-between">
-                                                         <span className={`px-2 py-1 text-xs rounded-full ${getPriorityColor(story.priority)}`}>
-                                                            {story.points} pts
-                                                         </span>
-                                                         <span className="text-sm text-gray-500">
-                                                            {story.assignee}
-                                                         </span>
-                                                      </div>
-                                                   </div>
-
-                                                )
-                                             }
-                                          </Draggable>
-                                       ))
-                                    }
-                                    {provided.placeholder}
-                                 </div>
-                              )}
-                           </Droppable>
-                        </div>
-                     </div>
-                  ))
-               }
-            </div>
-         </DragDropContext>
-      </div>
-   );
+      </DndContext>
+   )
 }

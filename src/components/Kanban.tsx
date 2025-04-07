@@ -123,11 +123,11 @@ export default function Kanban() {
          <div className='flex justify-between gap-4'>
             {
                data.columns.map(column =>
-                  <Droppable key={column.id} id={column.id}>
+                  <Droppable key={column.id} id={column.id} styleClass={null}>
                      <h2 className='text-xl font-bold'>{column.title}</h2>
                      {
                         column.tasks.map(task =>
-                           <Draggable key={task.id} id={`task-${task.id}`}>
+                           <Draggable key={task.id} id={`task-${task.id}`} styleClass={null}>
                               <div className='flex justify-between items-center gap-2'>
                                  <h6 className='text-lg font-semibold'>{task.task}</h6>
                                  <span className={`${task.priority === "Low" ? "bg-green-200 text-green-700" :
