@@ -105,64 +105,58 @@ export default function KanbanBoard() {
   };
 
   return (
-    <div className="flex gap-4 overflow-x-auto">
+    <div className="flex gap-4 w-full pb-2">
       <DragDropContext onDragEnd={onDragEnd}>
-        {columns.map((column) => (
-          <div
-            key={column.id}
-            className="flex-shrink-0 w-80 bg-white rounded-lg p-4"
-          >
-            <h3 className="font-semibold text-gray-700 mb-4">{column.title}</h3>
-            <Droppable droppableId={column.id}>
-              {(provided) => (
-                <div
-                  ref={provided.innerRef}
-                  {...provided.droppableProps}
-                  className="space-y-3"
-                >
-                  {column.tasks.map((task, index) => (
-                    <Draggable
-                      key={task.id}
-                      draggableId={task.id}
-                      index={index}
-                    >
-                      {(provided) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          className="bg-gray-100/60 p-4 rounded-md shadow-sm"
-                        >
-                          <h4 className="font-medium text-gray-900">
-                            {task.title}
-                          </h4>
-                          <p className="text-sm text-gray-600 mt-1">
-                            {task.description}
-                          </p>
-                          <div className="mt-2">
-                            <span
-                              className={`inline-block px-2 py-1 text-xs rounded ${
-                                task.priority === 'high'
-                                  ? 'bg-red-100 text-red-800'
-                                  : task.priority === 'medium'
-                                  ? 'bg-yellow-100 text-yellow-800'
-                                  : 'bg-green-100 text-green-800'
-                              }`}
-                            >
-                              {task.priority}
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </div>
-        ))}
-      </DragDropContext>
+        {
+          columns.map(column =>
+            <div key={column.id} className="flex flex-col bg-white rounded-lg p-4 w-1/3">
+              <h3 className="font-semibold text-gray-700 mb-4">{column.title}</h3>
+              <Droppable droppableId={column.id}>
+                {
+                  provided => (
+                    <div ref={provided.innerRef} {...provided.droppableProps} className="space-y-3">
+                      {
+                        column.tasks.map((task, index) => (
+                          <Draggable key={task.id} draggableId={task.id} index={index}>
+                            {(provided) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                className="bg-gray-100/60 p-4 rounded-md shadow-sm"
+                              >
+                                <h4 className="font-medium text-gray-900">
+                                  {task.title}
+                                </h4>
+                                <p className="text-sm text-gray-600 mt-1">
+                                  {task.description}
+                                </p>
+                                <div className="mt-2">
+                                  <span
+                                    className={`inline-block px-2 py-1 text-xs rounded ${task.priority === 'high'
+                                      ? 'bg-red-100 text-red-800'
+                                      : task.priority === 'medium'
+                                        ? 'bg-yellow-100 text-yellow-800'
+                                        : 'bg-green-100 text-green-800'
+                                      }`}
+                                  >
+                                    {task.priority}
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                          </Draggable>
+                        ))
+                      }
+                      {provided.placeholder}
+                    </div>
+                  )
+                }
+              </Droppable>
+            </div>
+          )
+        }
+      </DragDropContext >
     </div>
-  );
+  )
 } 
