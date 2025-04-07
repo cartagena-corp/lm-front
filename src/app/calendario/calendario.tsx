@@ -28,4 +28,6 @@ export default function CalendarioPage() {
       </main>
     </div>
   );
-} 
+}
+
+// CAMBIAR EL NOMBRE DEL ARCHIVO "calendario.tsx" A "page.tsx" CUANDO SE DESEE ACTIVAR

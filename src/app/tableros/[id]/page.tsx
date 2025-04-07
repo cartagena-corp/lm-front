@@ -1,28 +1,14 @@
 'use client'
 
-import { useParams } from 'next/navigation'
 import { useState } from 'react'
 import Sidebar from '@/components/Sidebar'
-import KanbanBoard from '@/components/KanbanBoard'
-import ScrumBoard from '@/components/ScrumBoard'
 import Modal from '@/components/Modal'
 import CreateTaskForm from '@/components/CreateTaskForm'
 import CreateUserStoryForm from '@/components/CreateUserStoryForm'
 import Scrum from '@/components/Scrum'
 import Kanban from '@/components/Kanban'
 
-interface Task {
-  id: string
-  title: string
-  description: string
-  priority: 'low' | 'medium' | 'high'
-  assignee: string
-  dueDate: string
-}
-
 export default function TableroDetalle() {
-  const params = useParams()
-  const boardId = params.id
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [boardType, setBoardType] = useState<'kanban' | 'scrum'>('kanban')
 

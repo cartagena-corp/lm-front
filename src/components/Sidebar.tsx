@@ -16,14 +16,10 @@ export default function Sidebar() {
   const { data: session } = useSession();
 
   const navigation = [
-    {
-      name: 'Tableros',
-      href: '/tableros',
-      icon: ClipboardDocumentListIcon,
-    },
-    { name: 'Calendario', href: '/calendario', icon: CalendarIcon },
-    { name: 'Informes', href: '/informes', icon: ChartBarIcon },
-    { name: 'Filtros', href: '/filtros', icon: FunnelIcon },
+    { name: 'Tableros', href: '/tableros', icon: ClipboardDocumentListIcon, isAvailable: true },
+    { name: 'Informes', href: '/informes', icon: ChartBarIcon, isAvailable: true },
+    { name: 'Filtros', href: '/filtros', icon: FunnelIcon, isAvailable: true },
+    { name: 'Calendario', href: '#', icon: CalendarIcon, isAvailable: false },
   ];
 
   return (
@@ -31,30 +27,30 @@ export default function Sidebar() {
       <div className="px-4 py-6">
         <h1 className="text-2xl font-bold text-white mb-8">La Muralla</h1>
         <nav className="space-y-1">
-          {navigation.map((item) => {
-            const isActive = pathname.startsWith(item.href);
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={`group flex items-center px-2 py-2 text-base font-medium rounded-md ${
-                  isActive
+          {
+            navigation.map(item => {
+              const isActive = pathname.startsWith(item.href);
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  title={!item.isAvailable ? "Próximanente..." : undefined}
+                  className={`group flex items-center px-2 py-2 text-base font-medium rounded-md ${isActive
                     ? 'bg-gray-800 text-white'
-                    : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                }`}
-              >
-                <item.icon
-                  className={`mr-4 h-6 w-6 flex-shrink-0 ${
-                    isActive
+                    : !item.isAvailable ? 'text-white opacity-25 cursor-default' : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                    }`}
+                >
+                  <item.icon
+                    className={`mr-4 h-6 w-6 flex-shrink-0 ${isActive
                       ? 'text-white'
-                      : 'text-gray-400 group-hover:text-gray-300'
-                  }`}
-                  aria-hidden="true"
-                />
-                {item.name}
-              </Link>
-            );
-          })}
+                      : item.isAvailable && 'text-gray-400 group-hover:text-gray-300'}`}
+                    aria-hidden="true"
+                  />
+                  {item.name}
+                </Link>
+              );
+            })
+          }
         </nav>
       </div>
 
