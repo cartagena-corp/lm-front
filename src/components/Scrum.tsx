@@ -170,7 +170,7 @@ export default function Scrum() {
                      <h2 className='text-xl font-bold'>{column.title}</h2>
                      {
                         column.tasks.map(task =>
-                           <Draggable key={task.id} id={`task-${task.id}`} styleClass={null}>
+                           <Draggable key={task.id} id={`task-${task.id}`} styleClass={column.id === "BACKLOG" ? "border bg-white" : "bg-white"}>
                               <div className='mb-2.5'>
                                  <h6 className='font-medium'>{task.task}</h6>
                                  <p className='text-sm'>{task.desc}</p>
