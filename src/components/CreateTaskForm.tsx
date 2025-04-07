@@ -47,7 +47,7 @@ export default function CreateTaskForm({
           id="title"
           name="title"
           required
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+          className="p-2 border block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:outline-blue-500 sm:text-sm"
           value={formData.title}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
         />
@@ -61,7 +61,7 @@ export default function CreateTaskForm({
           id="description"
           name="description"
           rows={3}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+          className="p-2 border block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:outline-blue-500 sm:text-sm"
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
         />
@@ -74,7 +74,7 @@ export default function CreateTaskForm({
         <select
           id="priority"
           name="priority"
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+          className="p-2 border block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:outline-blue-500 sm:text-sm"
           value={formData.priority}
           onChange={(e) =>
             setFormData({
@@ -98,7 +98,7 @@ export default function CreateTaskForm({
           id="assignee"
           name="assignee"
           required
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+          className="p-2 border block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:outline-blue-500 sm:text-sm"
           value={formData.assignee}
           onChange={(e) => setFormData({ ...formData, assignee: e.target.value })}
         />
@@ -113,7 +113,7 @@ export default function CreateTaskForm({
           id="dueDate"
           name="dueDate"
           required
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+          className="p-2 border block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:outline-blue-500 sm:text-sm"
           value={formData.dueDate}
           onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
         />

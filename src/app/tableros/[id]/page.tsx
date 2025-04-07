@@ -1,34 +1,36 @@
-'use client';
+'use client'
 
-import { useParams } from 'next/navigation';
-import { useState } from 'react';
-import Sidebar from '@/components/Sidebar';
-import KanbanBoard from '@/components/KanbanBoard';
-import ScrumBoard from '@/components/ScrumBoard';
-import Modal from '@/components/Modal';
-import CreateTaskForm from '@/components/CreateTaskForm';
-import CreateUserStoryForm from '@/components/CreateUserStoryForm';
+import { useParams } from 'next/navigation'
+import { useState } from 'react'
+import Sidebar from '@/components/Sidebar'
+import KanbanBoard from '@/components/KanbanBoard'
+import ScrumBoard from '@/components/ScrumBoard'
+import Modal from '@/components/Modal'
+import CreateTaskForm from '@/components/CreateTaskForm'
+import CreateUserStoryForm from '@/components/CreateUserStoryForm'
+import Scrum from '@/components/Scrum'
+import Kanban from '@/components/Kanban'
 
 interface Task {
-  id: string;
-  title: string;
-  description: string;
-  priority: 'low' | 'medium' | 'high';
-  assignee: string;
-  dueDate: string;
+  id: string
+  title: string
+  description: string
+  priority: 'low' | 'medium' | 'high'
+  assignee: string
+  dueDate: string
 }
 
 export default function TableroDetalle() {
-  const params = useParams();
-  const boardId = params.id;
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [boardType, setBoardType] = useState<'kanban' | 'scrum'>('kanban');
+  const params = useParams()
+  const boardId = params.id
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [boardType, setBoardType] = useState<'kanban' | 'scrum'>('kanban')
 
   const handleCreateItem = (data: any) => {
     // Aquí se implementaría la lógica para agregar la tarea o historia
-    console.log('Nuevo item:', data);
-    setIsCreateModalOpen(false);
-  };
+    console.log('Nuevo item:', data)
+    setIsCreateModalOpen(false)
+  }
 
   return (
     <div className="flex h-screen">
@@ -63,7 +65,8 @@ export default function TableroDetalle() {
           </div>
         </div>
 
-        {boardType === 'kanban' ? <KanbanBoard /> : <ScrumBoard />}
+        {/* {boardType === 'kanban' ? <KanbanBoard /> : <ScrumBoard />} */}
+        {boardType === 'kanban' ? <Kanban /> : <Scrum />}
 
         <Modal
           isOpen={isCreateModalOpen}
@@ -86,5 +89,5 @@ export default function TableroDetalle() {
         </Modal>
       </main>
     </div>
-  );
+  )
 } 
