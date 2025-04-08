@@ -17,8 +17,8 @@ export default function Sidebar() {
 
   const navigation = [
     { name: 'Tableros', href: '/tableros', icon: ClipboardDocumentListIcon, isAvailable: true },
-    { name: 'Informes', href: '/informes', icon: ChartBarIcon, isAvailable: true },
-    { name: 'Filtros', href: '/filtros', icon: FunnelIcon, isAvailable: true },
+    { name: 'Filtros', href: '#', icon: FunnelIcon, isAvailable: false },
+    { name: 'Informes', href: '#', icon: ChartBarIcon, isAvailable: false },
     { name: 'Calendario', href: '#', icon: CalendarIcon, isAvailable: false },
   ];
 
