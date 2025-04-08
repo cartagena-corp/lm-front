@@ -13,7 +13,7 @@ export function Draggable({ id, children, styleClass = null }: DraggableProps) {
    const style = { transform: CSS.Translate.toString(transform) }
 
    return (
-      <div className={`${styleClass ? styleClass : "bg-gray-100"} rounded-md hover:shadow-lg active:duration-0 duration-150  p-4 cursor-grab active:cursor-grabbing select-none`} ref={setNodeRef} style={style} {...listeners} {...attributes}>
+      <div className={`${styleClass ? styleClass : "bg-white border"} rounded-md hover:shadow-lg active:duration-0 duration-150  p-4 cursor-grab active:cursor-grabbing select-none`} ref={setNodeRef} style={style} {...listeners} {...attributes}>
          {children}
       </div>
    )
