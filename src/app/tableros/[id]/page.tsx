@@ -7,10 +7,13 @@ import CreateTaskForm from '@/components/CreateTaskForm'
 import CreateUserStoryForm from '@/components/CreateUserStoryForm'
 import Scrum from '@/components/Scrum'
 import Kanban from '@/components/Kanban'
+import { CustomSwitch } from '@/components/CustomSwitch'
 
 export default function TableroDetalle() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [boardType, setBoardType] = useState<'kanban' | 'scrum'>('kanban')
+
+  const [viewType, setViewType] = useState<"Tablero" | "Diagrama de Gantt">("Tablero")
 
   const handleCreateItem = (data: any) => {
     // Aquí se implementaría la lógica para agregar la tarea o historia
@@ -21,7 +24,7 @@ export default function TableroDetalle() {
   return (
     <div className="flex h-screen">
       <Sidebar />
-      <main className="flex-1 p-10 bg-gray-100">
+      <main className="bg-gray-100 flex flex-col w-full p-10">
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
@@ -42,16 +45,19 @@ export default function TableroDetalle() {
               <option value="kanban">Kanban</option>
               <option value="scrum">Scrum</option>
             </select>
+
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 whitespace-nowrap"
             >
               {boardType === 'kanban' ? 'Nueva tarea' : 'Nueva historia'}
             </button>
           </div>
         </div>
 
-        {/* {boardType === 'kanban' ? <KanbanBoard /> : <ScrumBoard />} */}
+        {/* const [viewType, setViewType] = useState<"Tablero" | "Diagrama de Gantt">("Tablero") */}
+        <CustomSwitch value={viewType} onChange={setViewType} />
+
         {boardType === 'kanban' ? <Kanban /> : <Scrum />}
 
         <Modal
