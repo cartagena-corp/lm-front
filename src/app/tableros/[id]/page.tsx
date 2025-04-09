@@ -8,10 +8,12 @@ import CreateUserStoryForm from '@/components/CreateUserStoryForm'
 import Scrum from '@/components/Scrum'
 import Kanban from '@/components/Kanban'
 import { CustomSwitch } from '@/components/CustomSwitch'
+import FilterTaskForm from '@/components/FilterTaskForm'
 
 export default function TableroDetalle() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [boardType, setBoardType] = useState<'kanban' | 'scrum'>('kanban')
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
 
   const [viewType, setViewType] = useState<"Tablero" | "Diagrama de Gantt">("Tablero")
 
@@ -20,6 +22,11 @@ export default function TableroDetalle() {
     console.log('Nuevo item:', data)
     setIsCreateModalOpen(false)
   }
+
+  const handleFilter = (data: { keyword: string, state: string, sort: string, priority: string, isAsc: boolean, user: string }) => {
+    console.log("handleFilter", data)
+    setIsFilterModalOpen(false)
+  };
 
   return (
     <div className="flex h-screen">
@@ -45,6 +52,13 @@ export default function TableroDetalle() {
               <option value="kanban">Kanban</option>
               <option value="scrum">Scrum</option>
             </select>
+
+            <button
+              onClick={() => setIsFilterModalOpen(true)}
+              className="border-blue-600 text-blue-600 hover:bg-blue-700 hover:text-white duration-150 px-4 py-2 rounded-md border whitespace-nowrap"
+            >
+              Filtrar
+            </button>
 
             <button
               onClick={() => setIsCreateModalOpen(true)}
@@ -78,6 +92,18 @@ export default function TableroDetalle() {
               onCancel={() => setIsCreateModalOpen(false)}
             />
           )}
+        </Modal>
+
+        {/* Modal para Filtros */}
+        <Modal
+          isOpen={isFilterModalOpen}
+          onClose={() => setIsFilterModalOpen(false)}
+          title="Filtros"
+        >
+          <FilterTaskForm
+            onSubmit={handleFilter}
+            onCancel={() => setIsFilterModalOpen(false)}
+          />
         </Modal>
       </main>
     </div>
