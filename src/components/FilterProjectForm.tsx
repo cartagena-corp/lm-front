@@ -12,10 +12,10 @@ interface FilterFormProps {
    onCancel: () => void;
 }
 
-export default function FilterForm({ onSubmit, onCancel }: FilterFormProps) {
+export default function FilterProjectForm({ onSubmit, onCancel }: FilterFormProps) {
    const [formData, setFormData] = useState<{ keyword: string, state: string, sort: string, isAsc: boolean }>({
       keyword: "",
-      state: "Inactivo",
+      state: "Cualquier estado",
       sort: "Fecha de creación",
       isAsc: false,
    });
@@ -24,6 +24,7 @@ export default function FilterForm({ onSubmit, onCancel }: FilterFormProps) {
    const [isSortBySelectOpen, setIsSortBySelectOpen] = useState(false);
 
    const stateSelect = [
+      { state: "Cualquier estado" },
       { state: "Inactivo" },
       { state: "En curso" },
       { state: "Terminado" },
@@ -65,8 +66,8 @@ export default function FilterForm({ onSubmit, onCancel }: FilterFormProps) {
    };
 
    return (
-      <form onSubmit={handleSubmit} className="space-y-4">
-         <div className='pb-6 space-y-4'>
+      <form onSubmit={handleSubmit}>
+         <div className='pb-14 space-y-4'>
             <div className='space-y-1'>
                <label htmlFor="title" className="text-gray-700 text-sm font-medium">
                   Palabra clave
@@ -78,6 +79,7 @@ export default function FilterForm({ onSubmit, onCancel }: FilterFormProps) {
 
                   <input onChange={(e) => setFormData({ ...formData, keyword: e.target.value })}
                      type="search"
+                     placeholder="Buscar por nombre o palabra clave"
                      id="keyword"
                      name="keyword"
                      className="outline-none text-sm w-full py-2"
@@ -107,10 +109,21 @@ export default function FilterForm({ onSubmit, onCancel }: FilterFormProps) {
                </button>
                {
                   isStateSelectOpen &&
-                  <div className='border-gray-300 bg-white shadow-md absolute z-10 top-[100%] flex flex-col items-start rounded-md border text-sm w-full'>{
+                  <div className='border-gray-300 bg-white shadow-md absolute z-10 top-[100%] flex flex-col items-start rounded-md border text-sm w-full max-h-28 overflow-y-auto'>{
                      stateSelect.map((obj, i) =>
                         <button key={i} onClick={() => { setFormData({ ...formData, state: obj.state }); setIsStateSelectOpen(false) }} type='button'
-                           className='hover:bg-black/5 duration-150 w-full text-start py-2 px-4'>
+                           className='hover:bg-black/5 duration-150 w-full text-start py-2 px-2 flex items-center gap-2'>
+                           {
+                              obj.state === formData.state ?
+                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                                 </svg>
+                                 :
+                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" className='hidden' />
+                                 </svg>
+
+                           }
                            {obj.state}
                         </button>
                      )
@@ -163,10 +176,21 @@ export default function FilterForm({ onSubmit, onCancel }: FilterFormProps) {
                </div>
                {
                   isSortBySelectOpen &&
-                  <div className='border-gray-300 bg-white shadow-md absolute top-[100%] flex flex-col items-start rounded-md border text-sm w-full'>{
+                  <div className='border-gray-300 bg-white shadow-md absolute z-10 top-[100%] flex flex-col items-start rounded-md border text-sm w-full max-h-28 overflow-y-auto'>{
                      sortBySelect.map((obj, i) =>
                         <button key={i} onClick={() => { setFormData({ ...formData, sort: obj.sort }); setIsSortBySelectOpen(false) }} type='button'
-                           className='hover:bg-black/5 duration-150 w-full text-start py-2 px-4'>
+                           className='hover:bg-black/5 duration-150 w-full text-start py-2 px-2 flex items-center gap-2'>
+                           {
+                              obj.sort === formData.sort ?
+                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                                 </svg>
+                                 :
+                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" className='hidden' />
+                                 </svg>
+
+                           }
                            {obj.sort}
                         </button>
                      )
@@ -175,7 +199,7 @@ export default function FilterForm({ onSubmit, onCancel }: FilterFormProps) {
             </div>
          </div>
 
-         <div className="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
+         <div className="pb-3 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
             <button
                type="submit"
                className="text-white inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold textWhite shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 sm:col-start-2"

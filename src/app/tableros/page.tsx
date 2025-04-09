@@ -5,8 +5,7 @@ import Link from 'next/link';
 import Sidebar from '@/components/Sidebar';
 import Modal from '@/components/Modal';
 import CreateBoardForm from '@/components/CreateBoardForm';
-import { CustomSwitch } from '@/components/CustomSwitch';
-import FilterForm from '@/components/FilterForm';
+import FilterProjectForm from '@/components/FilterProjectForm';
 
 interface Board {
   id: string;
@@ -120,7 +119,7 @@ export default function TablerosPage() {
           onClose={() => setIsFilterModalOpen(false)}
           title="Filtros"
         >
-          <FilterForm
+          <FilterProjectForm
             onSubmit={handleFilter}
             onCancel={() => setIsFilterModalOpen(false)}
           />
