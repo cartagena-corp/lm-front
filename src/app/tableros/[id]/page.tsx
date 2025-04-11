@@ -88,17 +88,10 @@ export default function TableroDetalle() {
           boardType === 'kanban' ? 'Crear nueva tarea' : 'Crear nueva historia'
         }
       >
-        {boardType === 'kanban' ? (
-          <CreateTaskForm
-            onSubmit={handleCreateItem}
-            onCancel={() => setIsCreateModalOpen(false)}
-          />
-        ) : (
-          <CreateUserStoryForm
-            onSubmit={handleCreateItem}
-            onCancel={() => setIsCreateModalOpen(false)}
-          />
-        )}
+        <CreateTaskForm
+          onSubmit={handleCreateItem}
+          onCancel={() => setIsCreateModalOpen(false)}
+        />
       </Modal>
 
       {/* Modal para Filtros */}

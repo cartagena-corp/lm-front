@@ -1,34 +1,29 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import AutoResizeTextarea from './AutoResizeTextarea';
 
-interface CreateTaskFormProps {
+interface FormProps {
   onSubmit: (data: {
-    title: string;
-    description: string;
-    priority: 'low' | 'medium' | 'high';
-    assignee: string;
-    dueDate: string;
+    title: string
+    desc: string
+    priority: string
+    limitDate: string
+    user: string
   }) => void;
   onCancel: () => void;
 }
 
-export default function CreateTaskForm({
-  onSubmit,
-  onCancel,
-}: CreateTaskFormProps) {
-  const [formData, setFormData] = useState<{
-    title: string;
-    description: string;
-    priority: 'low' | 'medium' | 'high';
-    assignee: string;
-    dueDate: string;
-  }>({
-    title: '',
-    description: '',
-    priority: 'medium', // ✅ Se mantiene el valor, pero sin "as const"
-    assignee: '',
-    dueDate: '',
+
+export default function CreateTaskForm({ onSubmit, onCancel }: FormProps) {
+  const [isPriorityOpen, setIsPriorityOpen] = useState(false)
+  const [isUserOpen, setIsUserOpen] = useState(false)
+  const [formData, setFormData] = useState<{ title: string, desc: string, priority: string, limitDate: string, user: string }>({
+    title: "",
+    desc: "",
+    priority: "Baja",
+    limitDate: "",
+    user: "Kenn Marcucci",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -36,95 +31,159 @@ export default function CreateTaskForm({
     onSubmit(formData);
   };
 
+  const priorityRef = useRef(null)
+  const userRef = useRef(null)
+
+  const userSelect = [
+    { user: "Kenn Marcucci" },
+    { user: "Diego Pedrozo" },
+    { user: "Juan Cartagena" },
+    { user: "Natalia Ariza" },
+  ];
+
+  const prioritySelect = [
+    { priority: "Baja" },
+    { priority: "Media" },
+    { priority: "Alta" },
+  ]
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-          Título
-        </label>
-        <input
-          type="text"
-          id="title"
-          name="title"
-          required
-          className="p-2 border block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:outline-blue-500 sm:text-sm"
-          value={formData.title}
-          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-        />
-      </div>
+    <form onSubmit={handleSubmit}>
+      <div className='pt-4 pb-14 space-y-4'>
+        <div className='space-y-1'>
+          <label htmlFor="title" className="text-gray-700 text-sm font-medium">
+            Título
+          </label>
+          <div className='border-gray-300 flex justify-center items-center rounded-md border px-2 gap-2'>
+            <input onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              className="outline-none text-sm w-full py-2"
+              value={formData.title}
+              name="title"
+              type="text"
+              id="title"
+            />
+          </div>
+        </div>
 
-      <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-          Descripción
-        </label>
-        <textarea
-          id="description"
-          name="description"
-          rows={3}
-          className="p-2 border block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:outline-blue-500 sm:text-sm"
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-        />
-      </div>
+        <div className='space-y-1'>
+          <label htmlFor="desc" className="text-gray-700 text-sm font-medium">
+            Descripción
+          </label>
+          <AutoResizeTextarea
+            value={formData.desc}
+            onChange={(str) => setFormData({ ...formData, desc: str })}
+            className='text-sm'
+          />
+        </div>
 
-      <div>
-        <label htmlFor="priority" className="block text-sm font-medium text-gray-700">
-          Prioridad
-        </label>
-        <select
-          id="priority"
-          name="priority"
-          className="p-2 border block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:outline-blue-500 sm:text-sm"
-          value={formData.priority}
-          onChange={(e) =>
-            setFormData({
-              ...formData,
-              priority: e.target.value as 'low' | 'medium' | 'high',
-            })
+        <div className='space-y-1 relative' ref={priorityRef}>
+          <label htmlFor="priority" className="text-gray-700 text-sm font-medium">
+            Prioridad
+          </label>
+
+          <button onClick={() => {
+            setIsPriorityOpen(!isPriorityOpen);
+            setIsUserOpen(false);
+          }} type='button'
+            className='border-gray-300 flex justify-center items-center select-none rounded-md border w-full px-2 gap-2'>
+            <p className='py-2 w-full text-start text-sm'>
+              {formData.priority}
+            </p>
+
+            <svg className={`text-gray-500 size-4 duration-150 ${isPriorityOpen ? "-rotate-180" : ""}`}
+              xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+            </svg>
+          </button>
+          {
+            isPriorityOpen &&
+            <div className='border-gray-300 bg-white shadow-md absolute z-10 top-[100%] flex flex-col items-start rounded-md border text-sm w-full max-h-28 overflow-y-auto'>{
+              prioritySelect.map((obj, i) =>
+                <button key={i} onClick={() => { setFormData({ ...formData, priority: obj.priority }); setIsPriorityOpen(false) }} type='button'
+                  className='hover:bg-black/5 duration-150 w-full text-start py-2 px-2 flex items-center gap-2'>
+                  {
+                    obj.priority === formData.priority ?
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                      </svg>
+                      :
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" className='hidden' />
+                      </svg>
+
+                  }
+                  {obj.priority}
+                </button>
+              )
+            }</div>
           }
-        >
-          <option value="low">Baja</option>
-          <option value="medium">Media</option>
-          <option value="high">Alta</option>
-        </select>
-      </div>
+        </div>
 
-      <div>
-        <label htmlFor="assignee" className="block text-sm font-medium text-gray-700">
-          Asignar a
-        </label>
-        <input
-          type="text"
-          id="assignee"
-          name="assignee"
-          required
-          className="p-2 border block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:outline-blue-500 sm:text-sm"
-          value={formData.assignee}
-          onChange={(e) => setFormData({ ...formData, assignee: e.target.value })}
-        />
-      </div>
+        <div className='space-y-1 relative' ref={userRef}>
+          <label htmlFor="user" className="text-gray-700 text-sm font-medium">
+            Asignar a
+          </label>
 
-      <div>
-        <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700">
-          Fecha límite
-        </label>
-        <input
-          type="date"
-          id="dueDate"
-          name="dueDate"
-          required
-          className="p-2 border block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:outline-blue-500 sm:text-sm"
-          value={formData.dueDate}
-          onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-        />
-      </div>
+          <button onClick={() => {
+            setIsUserOpen(!isPriorityOpen);
+            setIsPriorityOpen(false);
+          }} type='button'
+            className='border-gray-300 flex justify-center items-center select-none rounded-md border w-full px-2 gap-2'>
+            <p className='py-2 w-full text-start text-sm'>
+              {formData.user}
+            </p>
 
-      <div className="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
+            <svg className={`text-gray-500 size-4 duration-150 ${isUserOpen ? "-rotate-180" : ""}`}
+              xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+            </svg>
+          </button>
+          {
+            isUserOpen &&
+            <div className='border-gray-300 bg-white shadow-md absolute z-10 top-[100%] flex flex-col items-start rounded-md border text-sm w-full max-h-28 overflow-y-auto'>{
+              userSelect.map((obj, i) =>
+                <button key={i} onClick={() => { setFormData({ ...formData, user: obj.user }); setIsUserOpen(false) }} type='button'
+                  className='hover:bg-black/5 duration-150 w-full text-start py-2 px-2 flex items-center gap-2'>
+                  {
+                    obj.user === formData.user ?
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                      </svg>
+                      :
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" className='hidden' />
+                      </svg>
+
+                  }
+                  {obj.user}
+                </button>
+              )
+            }</div>
+          }
+        </div>
+
+        <div className='space-y-1'>
+          <label htmlFor="limitdate" className="text-gray-700 text-sm font-medium">
+            Fecha límite
+          </label>
+          <div className='border-gray-300 flex justify-center items-center rounded-md border px-2 gap-2'>
+            <input onChange={(e) => setFormData({ ...formData, limitDate: e.target.value })}
+              className="outline-none text-sm w-full py-2"
+              value={formData.limitDate}
+              name="limitdate"
+              type="date"
+              id="limitdate"
+            />
+          </div>
+        </div>
+
+      </div>
+      <div className="pb-3 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
         <button
           type="submit"
-          className="inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 sm:col-start-2"
+          className="text-white inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold textWhite shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 sm:col-start-2"
         >
-          Crear tarea
+          Crear Nueva Tarea
         </button>
         <button
           type="button"
