@@ -21,9 +21,9 @@ export default function Sidebar() {
     { name: 'Informes', href: '#', icon: ChartBarIcon, isAvailable: false },
     { name: 'Calendario', href: '#', icon: CalendarIcon, isAvailable: false },
   ];
-
+  if (pathname == "/login") return
   return (
-    <div className="flex h-screen flex-col justify-between bg-gray-900 w-64 sticky top-0 left-0">
+    <div className="flex flex-col justify-between bg-gray-900 w-64 fixed top-0 left-0 z-[9999999] h-screen">
       <div className="px-4 py-6">
         <h1 className="text-2xl font-bold text-white mb-8">La Muralla</h1>
         <nav className="space-y-1">
