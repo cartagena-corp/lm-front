@@ -1,7 +1,16 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { DndContext, DragEndEvent } from '@dnd-kit/core'
 import { Draggable } from './Draggable'
 import { Droppable } from './Droppable'
+import Modal from './Modal'
+import TaskDetailsForm from './TaskDetailsForm'
+
+interface Tarea {
+   id: string
+   task: string
+   desc: string
+   priority: string
+}
 
 interface Task {
    id: string
@@ -82,7 +91,7 @@ const initialScrumData: ScrumData = {
                id: "5",
                task: "Tarea #5",
                desc: "Descripción de la tarea #5",
-               priority: "medium",
+               priority: "Medium",
                pts: 4,
                user_asigned: "Kenn Marcucci"
             },
@@ -107,6 +116,8 @@ const initialScrumData: ScrumData = {
 
 export default function Scrum() {
    const [data, setData] = useState<ScrumData>(initialScrumData)
+   const [isTaskDetailsModalOpen, setIsTaskDetailsModalOpen] = useState(false)
+   const [taskActive, setTaskActive] = useState<Tarea>({ id: "", task: "", desc: "", priority: "" })
 
    const handleDragEnd = (event: DragEndEvent) => {
       const { active, over } = event
@@ -156,6 +167,15 @@ export default function Scrum() {
       setData({ columns: newColumns })
    }
 
+   const handleDetails = (data: { keyword: string, state: string, sort: string, isAsc: boolean }) => {
+      console.log("handleFilter", data)
+      setIsTaskDetailsModalOpen(false)
+   };
+
+   const [mounted, setMounted] = useState(false)
+   useEffect(() => { setMounted(true) }, [])
+   if (!mounted) return <div>Cargando tablero...</div>
+
    return (
       <DndContext onDragEnd={handleDragEnd}>
          <div className='flex justify-between gap-4'>
@@ -172,14 +192,19 @@ export default function Scrum() {
                         column.tasks.map(task =>
                            <Draggable key={task.id} id={`task-${task.id}`} styleClass={column.id === "BACKLOG" ? "border bg-white" : "bg-white"}>
                               <div className='mb-2.5'>
-                                 <h6 className='font-medium'>{task.task}</h6>
+                                 <h6 className='hover:text-blue-500 text-lg font-semibold cursor-pointer duration-150'
+                                    onPointerDown={(e) => e.stopPropagation()}
+                                    onClick={() => { setIsTaskDetailsModalOpen(true); setTaskActive(task) }}
+                                 >
+                                    {task.task}
+                                 </h6>
                                  <p className='text-sm'>{task.desc}</p>
                               </div>
                               <div className='flex justify-between items-center gap-2'>
                                  <span className={`${task.priority === "Low" ? "bg-green-200/50 text-green-700" :
                                     task.priority === "Medium" ? "bg-yellow-100 text-yellow-700" : "bg-red-200/60 text-red-700"} 
                                     text-xs rounded-full px-2.5 py-0.5`}>
-                                    {task.pts} pts
+                                    {task.priority}
                                  </span>
                                  <p className='text-xs text-black/50'>{task.user_asigned}</p>
                               </div>
@@ -190,6 +215,18 @@ export default function Scrum() {
                )
             }
          </div>
+
+         {/* Modal para detalle de tareas */}
+         <Modal customWidth={'sm:max-w-4xl'}
+            isOpen={isTaskDetailsModalOpen}
+            onClose={() => setIsTaskDetailsModalOpen(false)}
+            title={taskActive.task}
+         >
+            <TaskDetailsForm task={taskActive}
+               onSubmit={handleDetails}
+               onCancel={() => setIsTaskDetailsModalOpen(false)}
+            />
+         </Modal>
       </DndContext>
    )
 }
