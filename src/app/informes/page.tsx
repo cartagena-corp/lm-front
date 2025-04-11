@@ -61,66 +61,63 @@ export default function InformesPage() {
   };
 
   return (
-    <div className="flex h-screen">
-      <Sidebar />
-      <main className="flex-1 p-10 bg-gray-100">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Informes</h1>
-            <p className="text-sm text-gray-500">
-              Visualiza y genera informes del proyecto
-            </p>
-          </div>
-          <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-            Nuevo informe
-          </button>
+    <main className="flex-1 p-10 bg-gray-100">
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Informes</h1>
+          <p className="text-sm text-gray-500">
+            Visualiza y genera informes del proyecto
+          </p>
         </div>
+        <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+          Nuevo informe
+        </button>
+      </div>
 
-        <div className="grid gap-6">
-          {reports.map((report) => (
-            <div
-              key={report.id}
-              className="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <span className="text-2xl">{getTypeIcon(report.type)}</span>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {report.title}
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                      Fecha: {report.date}
-                    </p>
-                  </div>
+      <div className="grid gap-6">
+        {reports.map((report) => (
+          <div
+            key={report.id}
+            className="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <span className="text-2xl">{getTypeIcon(report.type)}</span>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {report.title}
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    Fecha: {report.date}
+                  </p>
                 </div>
-                <span
-                  className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
-                    report.status
-                  )}`}
-                >
-                  {report.status === 'completed'
-                    ? 'Completado'
-                    : report.status === 'in-progress'
+              </div>
+              <span
+                className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
+                  report.status
+                )}`}
+              >
+                {report.status === 'completed'
+                  ? 'Completado'
+                  : report.status === 'in-progress'
                     ? 'En progreso'
                     : 'Pendiente'}
-                </span>
-              </div>
-              <div className="mt-4 flex space-x-3">
-                <button className="px-3 py-1 text-sm text-blue-600 hover:text-blue-700">
-                  Ver detalles
-                </button>
-                <button className="px-3 py-1 text-sm text-blue-600 hover:text-blue-700">
-                  Descargar PDF
-                </button>
-                <button className="px-3 py-1 text-sm text-blue-600 hover:text-blue-700">
-                  Compartir
-                </button>
-              </div>
+              </span>
             </div>
-          ))}
-        </div>
-      </main>
-    </div>
+            <div className="mt-4 flex space-x-3">
+              <button className="px-3 py-1 text-sm text-blue-600 hover:text-blue-700">
+                Ver detalles
+              </button>
+              <button className="px-3 py-1 text-sm text-blue-600 hover:text-blue-700">
+                Descargar PDF
+              </button>
+              <button className="px-3 py-1 text-sm text-blue-600 hover:text-blue-700">
+                Compartir
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </main>
   );
 } 
