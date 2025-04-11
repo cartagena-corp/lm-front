@@ -81,7 +81,7 @@ export default function FilterTaskForm({ onSubmit, onCancel }: FilterFormProps) 
 
    return (
       <form onSubmit={handleSubmit}>
-         <div className='pb-14 space-y-4'>
+         <div className='pt-4 pb-14 space-y-4'>
             <div className='space-y-1'>
                <label htmlFor="title" className="text-gray-700 text-sm font-medium">
                   Palabra clave
