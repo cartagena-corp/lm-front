@@ -1,90 +1,152 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
+import { ProjectProps } from '@/lib/types/types'
+import { useRef, useState } from 'react'
+import AutoResizeTextarea from './AutoResizeTextarea'
 
 interface CreateBoardFormProps {
-  onSubmit: (data: {
-    title: string;
-    description: string;
-    type: 'kanban' | 'scrum';
-  }) => void;
-  onCancel: () => void;
+  onSubmit: (newBoard: ProjectProps) => void
+  onCancel: () => void
 }
 
-export default function CreateBoardForm({
-  onSubmit,
-  onCancel,
-}: CreateBoardFormProps) {
-  const [formData, setFormData] = useState<{
-    title: string;
-    description: string;
-    type: 'kanban' | 'scrum';
-  }>({
-    title: '',
-    description: '',
-    type: 'kanban', // Aquí ya está correctamente tipado
-  });
+export default function CreateBoardForm({ onSubmit, onCancel }: CreateBoardFormProps) {
+  const [isStatusOpen, setIsStatusOpen] = useState(false)
+  const [formData, setFormData] = useState<ProjectProps>({
+    id: "",
+    name: "",
+    description: "",
+    startDate: "",
+    endDate: "",
+    status: "Activo",
+    createdAt: "",
+    updatedAt: "",
+    createdBy: ""
+  })
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(formData);
-  };
+    e.preventDefault()
+    onSubmit(formData)
+  }
+
+  const statusRef = useRef(null)
+
+  const statusSelect: { status: "Activo" | "Inactivo" | "Finalizado" }[] = [
+    { status: "Activo" },
+    { status: "Finalizado" },
+    { status: "Inactivo" },
+  ]
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className='space-y-1'>
-        <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-          Título
-        </label>
-        <input
-          type="text"
-          id="title"
-          name="title"
-          required
-          className="px-3 py-1.5 block w-full rounded-md border-gray-300 border shadow-sm focus:border-blue-500 focus:outline-blue-500 sm:text-sm"
-          value={formData.title}
-          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-        />
-      </div>
+      <div className='pt-4 pb-14 space-y-4'>
+        <div className='space-y-1'>
+          <label htmlFor="name" className="text-gray-700 text-sm font-medium">
+            Nombre del Tablero
+          </label>
+          <div className='border-gray-300 flex justify-center items-center rounded-md border px-2 gap-2'>
+            <input onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder='Ingresa el nombre del tablero...'
+              className="outline-none text-sm w-full py-2"
+              value={formData.name}
+              name="name"
+              type="text"
+              id="name"
+              required
+            />
+          </div>
+        </div>
 
-      <div className='space-y-1'>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-          Descripción
-        </label>
-        <textarea
-          id="description"
-          name="description"
-          rows={3}
-          className="px-3 py-1.5 block w-full rounded-md border-gray-300 border shadow-sm focus:border-blue-500 focus:outline-blue-500 sm:text-sm"
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-        />
-      </div>
+        <div className='space-y-1'>
+          <label htmlFor="desc" className="text-gray-700 text-sm font-medium">
+            Descripción
+          </label>
+          <AutoResizeTextarea required={true}
+            value={formData.description}
+            onChange={(str) => setFormData({ ...formData, description: str })}
+            className='text-sm'
+            placeholder='Describe el propósito y objetivos del tablero...'
+          />
+        </div>
 
-      <div className='space-y-1'>
-        <label htmlFor="type" className="block text-sm font-medium text-gray-700">
-          Tipo de tablero
-        </label>
-        <select
-          id="type"
-          name="type"
-          className="p-2 block w-full rounded-md border-gray-300 border shadow-sm focus:border-blue-500 focus:outline-blue-500 sm:text-sm"
-          value={formData.type}
-          onChange={(e) =>
-            setFormData({ ...formData, type: e.target.value as 'kanban' | 'scrum' })
+        <div className='space-y-1'>
+          <label htmlFor="startDate" className="text-gray-700 text-sm font-medium">
+            Fecha de Inicio
+          </label>
+          <div className='border-gray-300 flex justify-center items-center rounded-md border px-2 gap-2'>
+            <input onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+              className="outline-none text-sm w-full py-2"
+              value={formData.startDate}
+              name="startDate"
+              type="date"
+              id="startDate"
+              required
+            />
+          </div>
+        </div>
+
+        <div className='space-y-1'>
+          <label htmlFor="endDate" className="text-gray-700 text-sm font-medium">
+            Fecha de Finalización
+          </label>
+          <div className='border-gray-300 flex justify-center items-center rounded-md border px-2 gap-2'>
+            <input onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+              className="outline-none text-sm w-full py-2"
+              value={formData.endDate}
+              name="endDate"
+              type="date"
+              id="endDate"
+              required
+            />
+          </div>
+        </div>
+
+        <div className='space-y-1 relative' ref={statusRef}>
+          <label htmlFor="state" className="text-gray-700 text-sm font-medium">
+            Estado
+          </label>
+
+          <button onClick={() => setIsStatusOpen(!isStatusOpen)} type='button'
+            className='border-gray-300 flex justify-center items-center select-none rounded-md border w-full px-2 gap-2'>
+            <p className='py-2 w-full text-start text-sm'>
+              {formData.status}
+            </p>
+
+            <svg className={`text-gray-500 size-4 duration-150 ${isStatusOpen ? "-rotate-180" : ""}`}
+              xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+            </svg>
+          </button>
+          {
+            isStatusOpen &&
+            <div className='border-gray-300 bg-white shadow-md absolute z-10 top-[100%] flex flex-col items-start rounded-md border text-sm w-full max-h-28 overflow-y-auto'>{
+              statusSelect.map((obj, i) =>
+                <button key={i} onClick={() => { setFormData({ ...formData, status: obj.status }); setIsStatusOpen(false) }} type='button'
+                  className='hover:bg-black/5 duration-150 w-full text-start py-2 px-2 flex items-center gap-2'>
+                  {
+                    obj.status === formData.status ?
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                      </svg>
+                      :
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" className='hidden' />
+                      </svg>
+
+                  }
+                  {obj.status}
+                </button>
+              )
+            }</div>
           }
-        >
-          <option value="kanban">Kanban</option>
-          <option value="scrum">Scrum</option>
-        </select>
+        </div>
       </div>
 
-      <div className="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
+      <div className="pb-3 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
         <button
           type="submit"
-          className="inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 sm:col-start-2"
+          className="text-white inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold textWhite shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 sm:col-start-2"
         >
-          Crear tablero
+          Crear Tablero
         </button>
         <button
           type="button"
@@ -95,5 +157,5 @@ export default function CreateBoardForm({
         </button>
       </div>
     </form>
-  );
+  )
 }

@@ -1,60 +1,38 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import Link from 'next/link';
-import Sidebar from '@/components/Sidebar';
-import Modal from '@/components/Modal';
-import CreateBoardForm from '@/components/CreateBoardForm';
-import FilterProjectForm from '@/components/FilterProjectForm';
-
-interface Board {
-  id: string;
-  title: string;
-  description: string;
-  type: 'kanban' | 'scrum';
-}
+import { useState } from 'react'
+import Link from 'next/link'
+import Modal from '@/components/Modal'
+import CreateBoardForm from '@/components/CreateBoardForm'
+import FilterProjectForm from '@/components/FilterProjectForm'
+import { ProjectProps } from '@/lib/types/types'
 
 export default function TablerosPage() {
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  const [boards, setBoards] = useState<Board[]>([
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
+  const [boards, setBoards] = useState<ProjectProps[]>([
     {
-      id: '1',
-      title: 'Proyecto Alpha',
-      description: 'Tablero del proyecto principal',
-      type: 'kanban',
+      id: "proyecto-1",
+      name: "La Muralla Frontend",
+      description: "Listado de actividades del Frontend del proyecto La Muralla.",
+      startDate: "01/01/2025",
+      endDate: "31/12/2025",
+      status: "Activo",
+      createdAt: "01/01/2025",
+      updatedAt: "13/04/2025",
+      createdBy: "KennMarcucciUUID",
     },
-    {
-      id: '2',
-      title: 'Desarrollo Web',
-      description: 'Frontend y Backend',
-      type: 'scrum',
-    },
-    {
-      id: '3',
-      title: 'Marketing',
-      description: 'Calendario de campaña',
-      type: 'kanban',
-    },
-  ]);
+  ])
 
-  const handleCreateBoard = (data: {
-    title: string;
-    description: string;
-    type: 'kanban' | 'scrum';
-  }) => {
-    const newBoard: Board = {
-      id: String(Date.now()),
-      ...data,
-    };
-    setBoards([...boards, newBoard]);
-    setIsCreateModalOpen(false);
-  };
+  const handleCreateBoard = (newBoard: ProjectProps) => {
+    setBoards([...boards, newBoard])
+    setIsCreateModalOpen(false)
+  }
 
   const handleFilter = (data: { keyword: string, state: string, sort: string, isAsc: boolean }) => {
     console.log("handleFilter", data)
     setIsFilterModalOpen(false)
-  };
+  }
 
   return (
     <main className="bg-gray-100 flex flex-col p-10 ml-64 min-h-screen">
@@ -85,14 +63,14 @@ export default function TablerosPage() {
               className="block bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow"
             >
               <h3 className="text-lg font-semibold text-gray-900">
-                {board.title}
+                {board.name}
               </h3>
               <p className="text-gray-600 mt-1">{board.description}</p>
               <div className="mt-4 flex items-center">
-                <span className={`px-2 py-1 text-xs rounded ${board.type === 'kanban'
+                {/* <span className={`px-2 py-1 text-xs rounded ${board.type === 'kanban'
                   ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
                   {board.type.toUpperCase()}
-                </span>
+                </span> */}
               </div>
             </Link>
           )
@@ -123,5 +101,5 @@ export default function TablerosPage() {
         />
       </Modal>
     </main>
-  );
+  )
 } 
