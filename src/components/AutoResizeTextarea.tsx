@@ -5,9 +5,10 @@ type Props = {
    onChange: (value: string) => void;
    placeholder?: string;
    className?: string;
+   required?: boolean
 };
 
-const AutoResizeTextarea = ({ value, onChange, placeholder, className = '' }: Props) => {
+const AutoResizeTextarea = ({ value, onChange, placeholder, className = '', required = false }: Props) => {
    const textareaRef = useRef<HTMLTextAreaElement>(null);
 
    useEffect(() => {
@@ -31,6 +32,7 @@ const AutoResizeTextarea = ({ value, onChange, placeholder, className = '' }: Pr
          value={value}
          rows={1}
          onChange={(e) => onChange(e.target.value)}
+         required={required}
       />
    );
 };
