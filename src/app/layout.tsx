@@ -16,7 +16,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script src="https://cdn.jsdelivr.net/npm/frappe-gantt/dist/frappe-gantt.umd.js" />
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/frappe-gantt/dist/frappe-gantt.css" />
       </head>
-      <body className={`${inter.className} max-w-screen overflow-hidden`}>
+      <body className={`${inter.className} max-w-screen overflow-x-hidden`}>
         <Sidebar />
         {children}
       </body>
