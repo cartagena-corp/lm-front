@@ -8,7 +8,7 @@ import FilterProjectForm from '@/components/partials/FilterProjectForm'
 import { ProjectProps } from '@/lib/types/types'
 import { useBoardStore } from '@/lib/store/BoardStore'
 import { useAuthStore } from '@/lib/store/AuthStore'
-import BoardCard from '@/components/partials/BoardCard'
+import BoardCard, { BoardCardSkeleton } from '@/components/partials/BoardCard'
 
 export default function TablerosPage() {
   const { boards, setBoards, createBoard } = useBoardStore()
@@ -66,9 +66,10 @@ export default function TablerosPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
         {
-          boards.content?.map((board, i) =>
-            <BoardCard key={i} board={board} />
-          )
+          boards.content ?
+            boards.content.map((board, i) => <BoardCard key={i} board={board} />)
+            :
+            Array.from({ length: 8 }).map((_, i) => <BoardCardSkeleton key={i} />)
         }
       </div>
 
