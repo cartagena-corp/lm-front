@@ -25,7 +25,11 @@ export default function Comment({ name, time, comment, replies = [] }: CommentPr
 
             <div className="flex flex-col overflow-y-auto w-full">
                <div className="flex items-center justify-start gap-4">
-                  <h6 className="text-black/50 text-sm"><b className="text-black">{name} ·</b> {time}</h6>
+                  <h6 className="text-black/50 text-sm"><b className="text-black">{name} · </b>
+                     <span className="text-xs">
+                        {time}
+                     </span>
+                  </h6>
                </div>
                <p className="text-xs">{comment}</p>
                {
@@ -59,7 +63,11 @@ export default function Comment({ name, time, comment, replies = [] }: CommentPr
 
                   <div className="flex flex-col">
                      <div className="flex items-center justify-start gap-4">
-                        <h6 className="text-black/50 text-sm"><b className="text-black">{reply.name} ·</b> {reply.time}</h6>
+                        <h6 className="text-black/50 text-sm"><b className="text-black">{reply.name} · </b>
+                           <span className="text-xs">
+                              {reply.time}
+                           </span>
+                        </h6>
                      </div>
                      <p className="text-xs">{reply.comment}</p>
                   </div>
