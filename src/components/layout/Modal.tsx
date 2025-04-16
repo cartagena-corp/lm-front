@@ -50,7 +50,7 @@ export default function Modal({ isOpen, onClose, title, children, customWidth = 
                   </Dialog.Title>
                   <button
                     type="button"
-                    className="bg-white text-gray-400 hover:text-gray-500 rounded-md"
+                    className="bg-white text-gray-400 hover:text-gray-700 rounded-md cursor-pointer"
                     onClick={onClose}
                   >
                     <XIcon />
