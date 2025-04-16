@@ -8,6 +8,7 @@ import FilterProjectForm from '@/components/partials/FilterProjectForm'
 import { ProjectProps } from '@/lib/types/types'
 import { useBoardStore } from '@/lib/store/BoardStore'
 import { useAuthStore } from '@/lib/store/AuthStore'
+import BoardCard from '@/components/partials/BoardCard'
 
 export default function TablerosPage() {
   const { boards, setBoards, createBoard } = useBoardStore()
@@ -63,17 +64,12 @@ export default function TablerosPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {boards.content?.map(board => (
-          <Link
-            key={board.id}
-            href={`/tableros/${board.id}`}
-            className="bg-white block p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow"
-          >
-            <h3 className="text-lg font-semibold text-gray-900">{board.name}</h3>
-            <p className="text-gray-600 mt-1">{board.description}</p>
-          </Link>
-        ))}
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+        {
+          boards.content?.map((board, i) =>
+            <BoardCard key={i} board={board} />
+          )
+        }
       </div>
 
       {/* Modal para crear tablero */}
@@ -99,6 +95,6 @@ export default function TablerosPage() {
           onCancel={() => setIsFilterModalOpen(false)}
         />
       </Modal>
-    </main>
+    </main >
   )
 }
