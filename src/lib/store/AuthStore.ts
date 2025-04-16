@@ -1,4 +1,3 @@
-import { redirect as nextRedirect } from 'next/navigation'
 import { deleteCookie, getCookie, setCookie } from 'cookies-next/client'
 import { UserProps } from '../types/types'
 import { jwtDecode } from 'jwt-decode'
@@ -96,11 +95,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
 
    // Establecer el token de acceso en la cookie y actualizar el estado del usuario
    setAccessToken: (token: string) => {
-      setCookie("NEXT_COOKIE_ACCESS_TOKEN", token, {
-         secure: process.env.NODE_ENV === 'production', 
-         sameSite: 'strict',
-         path: '/',
-      })
+      setCookie("NEXT_COOKIE_ACCESS_TOKEN", token)
 
       const user = decodeToken(token)
 
@@ -112,7 +107,6 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       deleteCookie("NEXT_COOKIE_ACCESS_TOKEN", { path: '/' })
       set({ user: null, isAuthenticated: false })
       if (typeof window !== 'undefined') window.location.href = "/login"
-      else nextRedirect("/login")
    },
 
    // Refrescar el token: utiliza el refresh token (almacenado como httpOnly en el backend)
