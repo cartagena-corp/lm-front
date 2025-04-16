@@ -87,3 +87,8 @@ export interface IconProps {
    size?: number | string
    stroke?: number
 }
+
+//* Configuration
+interface ConfigProps {
+   name: string
+}
