@@ -55,3 +55,9 @@ export default function BoardCard({ board }: { board: ProjectProps }) {
       </div>
    )
 }
+
+export function BoardCardSkeleton(): JSX.Element {
+   return (
+      <div className="bg-black/15 animate-pulse h-[260px] shadow-md rounded-md p-5" />
+   )
+}

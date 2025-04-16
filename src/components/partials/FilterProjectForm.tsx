@@ -109,8 +109,8 @@ export default function FilterProjectForm({ onSubmit, onCancel }: FilterFormProp
                </button>
                {
                   isStateSelectOpen &&
-                  <div className='border-gray-300 bg-white shadow-md absolute z-10 top-[100%] flex flex-col items-start rounded-md border text-sm w-full max-h-28 overflow-y-auto'>{
-                     stateSelect.map((obj, i) =>
+                  <div className='border-gray-300 bg-white shadow-md absolute z-10 top-[105%] flex flex-col items-start rounded-md border text-sm w-full max-h-28 overflow-y-auto'>{
+                     stateSelect.map((obj, i: number) =>
                         <button key={i} onClick={() => { setFormData({ ...formData, state: obj.state }), setIsStateSelectOpen(false) }} type='button'
                            className='hover:bg-black/5 duration-150 w-full text-start py-2 px-2 flex items-center gap-2'>
                            {
@@ -131,7 +131,7 @@ export default function FilterProjectForm({ onSubmit, onCancel }: FilterFormProp
                }
             </div>
 
-            <div className='space-y-1 relative' ref={sortBySelectRef}>
+            <div className='space-y-1' ref={sortBySelectRef}>
                <label htmlFor="state" className="text-gray-700 text-sm font-medium">
                   Ordenar por
                </label>
@@ -140,7 +140,7 @@ export default function FilterProjectForm({ onSubmit, onCancel }: FilterFormProp
                      setIsSortBySelectOpen(!isSortBySelectOpen)
                      setIsStateSelectOpen(false) // Cierra el otro select
                   }} type='button'
-                     className='border-gray-300 flex justify-center items-center select-none rounded-md border w-full px-2 gap-2'>
+                     className='border-gray-300 flex justify-center items-center select-none rounded-md border w-full px-2 gap-2 relative'>
                      <p className='py-2 w-full text-start text-sm'>
                         {formData.sort}
                      </p>
@@ -149,6 +149,30 @@ export default function FilterProjectForm({ onSubmit, onCancel }: FilterFormProp
                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                      </svg>
+
+                     {
+                        isSortBySelectOpen &&
+                        <div className='border-gray-300 bg-white shadow-md absolute z-10 top-[115%] flex flex-col items-start rounded-md border text-sm w-full max-h-28 overflow-y-auto'>{
+                           sortBySelect.map((obj, i) =>
+                              <div key={i} onClick={() => { setFormData({ ...formData, sort: obj.sort }), setIsSortBySelectOpen(false) }}
+                                 className='hover:bg-black/5 duration-150 w-full text-start py-2 px-2 flex items-center gap-2'>
+                                 {
+                                    obj.sort === formData.sort ?
+                                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
+                                          <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                                       </svg>
+                                       :
+                                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
+                                          <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" className='hidden' />
+                                       </svg>
+
+                                 }
+                                 {obj.sort}
+                              </div>
+                           )
+                        }
+                        </div>
+                     }
                   </button>
 
                   <button onClick={() => setFormData({ ...formData, isAsc: !formData.isAsc })} type='button' className='border-gray-300 border p-1.5 rounded-md'>
@@ -174,28 +198,6 @@ export default function FilterProjectForm({ onSubmit, onCancel }: FilterFormProp
                      }
                   </button>
                </div>
-               {
-                  isSortBySelectOpen &&
-                  <div className='border-gray-300 bg-white shadow-md absolute z-10 top-[100%] flex flex-col items-start rounded-md border text-sm w-full max-h-28 overflow-y-auto'>{
-                     sortBySelect.map((obj, i) =>
-                        <button key={i} onClick={() => { setFormData({ ...formData, sort: obj.sort }), setIsSortBySelectOpen(false) }} type='button'
-                           className='hover:bg-black/5 duration-150 w-full text-start py-2 px-2 flex items-center gap-2'>
-                           {
-                              obj.sort === formData.sort ?
-                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                                 </svg>
-                                 :
-                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" className='hidden' />
-                                 </svg>
-
-                           }
-                           {obj.sort}
-                        </button>
-                     )
-                  }</div>
-               }
             </div>
          </div>
 

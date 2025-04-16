@@ -97,7 +97,7 @@ export default function CreateTaskForm({ onSubmit, onCancel }: FormProps) {
           </button>
           {
             isPriorityOpen &&
-            <div className='border-gray-300 bg-white shadow-md absolute z-10 top-[100%] flex flex-col items-start rounded-md border text-sm w-full max-h-28 overflow-y-auto'>{
+            <div className='border-gray-300 bg-white shadow-md absolute z-10 top-[105%] flex flex-col items-start rounded-md border text-sm w-full max-h-28 overflow-y-auto'>{
               prioritySelect.map((obj, i) =>
                 <button key={i} onClick={() => { setFormData({ ...formData, priority: obj.priority }), setIsPriorityOpen(false) }} type='button'
                   className='hover:bg-black/5 duration-150 w-full text-start py-2 px-2 flex items-center gap-2'>
@@ -125,7 +125,7 @@ export default function CreateTaskForm({ onSubmit, onCancel }: FormProps) {
           </label>
 
           <button onClick={() => {
-            setIsUserOpen(!isPriorityOpen)
+            setIsUserOpen(!isUserOpen)
             setIsPriorityOpen(false)
           }} type='button'
             className='border-gray-300 flex justify-center items-center select-none rounded-md border w-full px-2 gap-2'>
@@ -140,7 +140,7 @@ export default function CreateTaskForm({ onSubmit, onCancel }: FormProps) {
           </button>
           {
             isUserOpen &&
-            <div className='border-gray-300 bg-white shadow-md absolute z-10 top-[100%] flex flex-col items-start rounded-md border text-sm w-full max-h-28 overflow-y-auto'>{
+            <div className='border-gray-300 bg-white shadow-md absolute z-10 top-[105%] flex flex-col items-start rounded-md border text-sm w-full max-h-28 overflow-y-auto'>{
               userSelect.map((obj, i) =>
                 <button key={i} onClick={() => { setFormData({ ...formData, user: obj.user }), setIsUserOpen(false) }} type='button'
                   className='hover:bg-black/5 duration-150 w-full text-start py-2 px-2 flex items-center gap-2'>

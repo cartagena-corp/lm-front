@@ -121,29 +121,29 @@ export default function FilterTaskForm({ onSubmit, onCancel }: FilterFormProps) 
                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                      </svg>
-                  </button>
-                  {
-                     isStateSelectOpen &&
-                     <div className='border-gray-300 bg-white shadow-md absolute z-10 top-[100%] flex flex-col items-start rounded-md border text-sm w-full max-h-28 overflow-y-auto'>{
-                        stateSelect.map((obj, i) =>
-                           <button key={i} onClick={() => { setFormData({ ...formData, state: obj.state }), setIsStateSelectOpen(false) }} type='button'
-                              className='hover:bg-black/5 duration-150 w-full text-start py-2 px-2 flex items-center gap-2'>
-                              {
-                                 obj.state === formData.state ?
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
-                                       <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                                    </svg>
-                                    :
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
-                                       <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" className='hidden' />
-                                    </svg>
+                     {
+                        isStateSelectOpen &&
+                        <div className='border-gray-300 bg-white shadow-md absolute z-10 top-[105%] flex flex-col items-start rounded-md border text-sm w-full max-h-28 overflow-y-auto'>{
+                           stateSelect.map((obj, i) =>
+                              <div key={i} onClick={() => { setFormData({ ...formData, state: obj.state }), setIsStateSelectOpen(false) }}
+                                 className='hover:bg-black/5 duration-150 w-full text-start py-2 px-2 flex items-center gap-2 cursor-pointer'>
+                                 {
+                                    obj.state === formData.state ?
+                                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
+                                          <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                                       </svg>
+                                       :
+                                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
+                                          <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" className='hidden' />
+                                       </svg>
 
-                              }
-                              {obj.state}
-                           </button>
-                        )
-                     }</div>
-                  }
+                                 }
+                                 {obj.state}
+                              </div>
+                           )
+                        }</div>
+                     }
+                  </button>
                </div>
                <div className='space-y-1 relative w-full' ref={prioritySelectRef}>
                   <label htmlFor="state" className="text-gray-700 text-sm font-medium">
@@ -163,29 +163,29 @@ export default function FilterTaskForm({ onSubmit, onCancel }: FilterFormProps) 
                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                      </svg>
-                  </button>
-                  {
-                     isPrioritySelectOpen &&
-                     <div className='border-gray-300 bg-white shadow-md absolute z-10 top-[100%] flex flex-col items-start rounded-md border text-sm w-full max-h-28 overflow-y-auto'>{
-                        prioritySelect.map((obj, i) =>
-                           <button key={i} onClick={() => { setFormData({ ...formData, priority: obj.priority }), setIsPrioritySelectOpen(false) }} type='button'
-                              className='hover:bg-black/5 duration-150 w-full text-start py-2 px-2 flex items-center gap-2'>
-                              {
-                                 obj.priority === formData.priority ?
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
-                                       <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                                    </svg>
-                                    :
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
-                                       <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" className='hidden' />
-                                    </svg>
+                     {
+                        isPrioritySelectOpen &&
+                        <div className='border-gray-300 bg-white shadow-md absolute z-10 top-[105%] flex flex-col items-start rounded-md border text-sm w-full max-h-28 overflow-y-auto'>{
+                           prioritySelect.map((obj, i) =>
+                              <div key={i} onClick={() => { setFormData({ ...formData, priority: obj.priority }), setIsPrioritySelectOpen(false) }}
+                                 className='hover:bg-black/5 duration-150 w-full text-start py-2 px-2 flex items-center gap-2 cursor-pointer'>
+                                 {
+                                    obj.priority === formData.priority ?
+                                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
+                                          <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                                       </svg>
+                                       :
+                                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
+                                          <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" className='hidden' />
+                                       </svg>
 
-                              }
-                              {obj.priority}
-                           </button>
-                        )
-                     }</div>
-                  }
+                                 }
+                                 {obj.priority}
+                              </div>
+                           )
+                        }</div>
+                     }
+                  </button>
                </div>
             </div>
 
@@ -207,41 +207,42 @@ export default function FilterTaskForm({ onSubmit, onCancel }: FilterFormProps) 
                      xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                      <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                   </svg>
-               </button>
-               {
-                  isUserSelectOpen &&
-                  <div className='border-gray-300 bg-white shadow-md absolute z-10 top-[100%] flex flex-col items-start rounded-md border text-sm w-full max-h-28 overflow-y-auto'>{
-                     userSelect.map((obj, i) =>
-                        <button key={i} onClick={() => { setFormData({ ...formData, user: obj.user }), setIsUserSelectOpen(false) }} type='button'
-                           className='hover:bg-black/5 duration-150 w-full text-start py-2 px-2 flex items-center gap-2'>
-                           {
-                              obj.user === formData.user ?
-                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                                 </svg>
-                                 :
-                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" className='hidden' />
-                                 </svg>
+                  {
+                     isUserSelectOpen &&
+                     <div className='border-gray-300 bg-white shadow-md absolute z-10 top-[105%] flex flex-col items-start rounded-md border text-sm w-full max-h-28 overflow-y-auto'>{
+                        userSelect.map((obj, i) =>
+                           <div key={i} onClick={() => { setFormData({ ...formData, user: obj.user }), setIsUserSelectOpen(false) }}
+                              className='hover:bg-black/5 duration-150 w-full text-start py-2 px-2 flex items-center gap-2 cursor-pointer'>
+                              {
+                                 obj.user === formData.user ?
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
+                                       <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                                    </svg>
+                                    :
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
+                                       <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" className='hidden' />
+                                    </svg>
 
-                           }
-                           {obj.user}
-                        </button>
-                     )
-                  }</div>
-               }
+                              }
+                              {obj.user}
+                           </div>
+                        )
+                     }
+                     </div>
+                  }
+               </button>
             </div>
 
-            <div className='space-y-1 relative' ref={sortBySelectRef}>
+            <div className='space-y-1'>
                <label htmlFor="state" className="text-gray-700 text-sm font-medium">
                   Ordenar por
                </label>
-               <div className='flex justify-center items-center gap-2'>
+               <div className='flex justify-center items-center gap-2' ref={sortBySelectRef}>
                   <button onClick={() => {
                      setIsSortBySelectOpen(!isSortBySelectOpen)
                      setIsPrioritySelectOpen(false), setIsUserSelectOpen(false), setIsStateSelectOpen(false)
                   }} type='button'
-                     className='border-gray-300 flex justify-center items-center select-none rounded-md border w-full px-2 gap-2'>
+                     className='border-gray-300 flex justify-center items-center select-none rounded-md border w-full px-2 gap-2 relative'>
                      <p className='py-2 w-full text-start text-sm'>
                         {formData.sort}
                      </p>
@@ -250,6 +251,28 @@ export default function FilterTaskForm({ onSubmit, onCancel }: FilterFormProps) 
                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                      </svg>
+                     {
+                        isSortBySelectOpen &&
+                        <div className='border-gray-300 bg-white shadow-md absolute z-10 top-[110%] flex flex-col items-start rounded-md border text-sm w-full max-h-28 overflow-y-auto'>{
+                           sortBySelect.map((obj, i) =>
+                              <div key={i} onClick={() => { setFormData({ ...formData, sort: obj.sort }), setIsSortBySelectOpen(false) }}
+                                 className='hover:bg-black/5 duration-150 w-full text-start py-2 px-2 flex items-center gap-2 cursor-pointer'>
+                                 {
+                                    obj.sort === formData.sort ?
+                                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
+                                          <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                                       </svg>
+                                       :
+                                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
+                                          <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" className='hidden' />
+                                       </svg>
+
+                                 }
+                                 {obj.sort}
+                              </div>
+                           )
+                        }</div>
+                     }
                   </button>
 
                   <button onClick={() => setFormData({ ...formData, isAsc: !formData.isAsc })} type='button' className='border-gray-300 border p-1.5 rounded-md'>
@@ -270,33 +293,9 @@ export default function FilterTaskForm({ onSubmit, onCancel }: FilterFormProps) 
                               <path d="M11 6H21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                               <path d="M7 18.8125C6.60678 19.255 5.56018 21 5 21M5 21C4.43982 21 3.39322 19.255 3 18.8125M5 21V15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                            </svg>
-
-
                      }
                   </button>
                </div>
-               {
-                  isSortBySelectOpen &&
-                  <div className='border-gray-300 bg-white shadow-md absolute z-10 top-[100%] flex flex-col items-start rounded-md border text-sm w-full max-h-28 overflow-y-auto'>{
-                     sortBySelect.map((obj, i) =>
-                        <button key={i} onClick={() => { setFormData({ ...formData, sort: obj.sort }), setIsSortBySelectOpen(false) }} type='button'
-                           className='hover:bg-black/5 duration-150 w-full text-start py-2 px-2 flex items-center gap-2'>
-                           {
-                              obj.sort === formData.sort ?
-                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                                 </svg>
-                                 :
-                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" className='hidden' />
-                                 </svg>
-
-                           }
-                           {obj.sort}
-                        </button>
-                     )
-                  }</div>
-               }
             </div>
          </div>
 

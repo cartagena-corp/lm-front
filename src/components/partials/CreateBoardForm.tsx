@@ -1,8 +1,10 @@
 'use client'
 
 import { ProjectProps } from '@/lib/types/types'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import AutoResizeTextarea from '../ui/AutoResizeTextarea'
+import { useConfigStore } from '@/lib/store/ConfigStore'
+import { useAuthStore } from '@/lib/store/AuthStore'
 
 interface CreateBoardFormProps {
   onSubmit: (newBoard: ProjectProps) => void
@@ -10,6 +12,8 @@ interface CreateBoardFormProps {
 }
 
 export default function CreateBoardForm({ onSubmit, onCancel }: CreateBoardFormProps) {
+  const { projectStatuses, setConfig } = useConfigStore()
+  const { isAuthenticated } = useAuthStore()
   const [isStatusOpen, setIsStatusOpen] = useState(false)
   const [formData, setFormData] = useState<ProjectProps>({
     id: "",
@@ -30,11 +34,9 @@ export default function CreateBoardForm({ onSubmit, onCancel }: CreateBoardFormP
 
   const statusRef = useRef(null)
 
-  const statusSelect: { status: "Activo" | "Inactivo" | "Finalizado" }[] = [
-    { status: "Activo" },
-    { status: "Finalizado" },
-    { status: "Inactivo" },
-  ]
+  useEffect(() => {
+    if (isAuthenticated) setConfig()
+  }, [isAuthenticated, setConfig])
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -115,29 +117,29 @@ export default function CreateBoardForm({ onSubmit, onCancel }: CreateBoardFormP
               xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
             </svg>
-          </button>
-          {
-            isStatusOpen &&
-            <div className='border-gray-300 bg-white shadow-md absolute z-10 top-[100%] flex flex-col items-start rounded-md border text-sm w-full max-h-28 overflow-y-auto'>{
-              statusSelect.map((obj, i) =>
-                <button key={i} onClick={() => { setFormData({ ...formData, status: obj.status }), setIsStatusOpen(false) }} type='button'
-                  className='hover:bg-black/5 duration-150 w-full text-start py-2 px-2 flex items-center gap-2'>
-                  {
-                    obj.status === formData.status ?
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                      </svg>
-                      :
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" className='hidden' />
-                      </svg>
+            {
+              isStatusOpen &&
+              <div className='border-gray-300 bg-white shadow-md absolute z-10 top-[110%] flex flex-col items-start rounded-md border text-sm w-full max-h-28 overflow-y-auto'>{
+                projectStatuses?.map((obj, i) =>
+                  <div key={i} onClick={() => { setFormData({ ...formData, status: obj.name }), setIsStatusOpen(false) }}
+                    className='hover:bg-black/5 duration-150 w-full text-start py-2 px-2 flex items-center gap-2'>
+                    {
+                      obj.name === formData.status ?
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                        </svg>
+                        :
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" className='hidden' />
+                        </svg>
 
-                  }
-                  {obj.status}
-                </button>
-              )
-            }</div>
-          }
+                    }
+                    {obj.name}
+                  </div>
+                )
+              }</div>
+            }
+          </button>
         </div>
       </div>
 
