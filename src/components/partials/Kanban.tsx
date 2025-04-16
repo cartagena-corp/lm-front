@@ -135,7 +135,7 @@ export default function Kanban() {
          <div className='flex justify-between gap-4'>
             {
                data.columns.map(column => (
-                  <Droppable key={column.id} id={column.id} styleClass={null}>
+                  <Droppable key={column.id} id={column.id} styleClass={"bg-white"}>
                      <h2 className='text-xl font-bold'>{column.title}</h2>
                      {
                         column.tasks.map(task => (
