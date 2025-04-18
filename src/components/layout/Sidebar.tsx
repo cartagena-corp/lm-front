@@ -62,32 +62,29 @@ export default function Sidebar() {
       </section>
 
       <section className="border-white/25 border-t px-4 py-6 space-y-5">
-        <div className="flex items-center gap-4">
-          <div className="relative h-10 w-10 rounded-full overflow-hidden bg-gray-300">
-            {
-              isClient && user && user.img ? (
-                <>
-                  {!isImageLoaded && <div className="absolute inset-0 bg-gray-300 animate-pulse" />}
+        <div className="grid grid-cols-4 items-center">
+          {
+            isClient && user && user.img ? (
+              <>
+                <div className="rounded-full w-10 aspect-square">
                   <Image
                     src={user.img}
                     alt="User Image"
                     width={40}
                     height={40}
-                    className="rounded-full"
+                    className="rounded-full object-cover"
                     onLoad={() => setIsImageLoaded(true)}
                   />
-                </>
-              ) : <div className="flex items-center justify-center h-full w-full bg-gray-300" />
-            }
-          </div>
-          <p className="text-sm whitespace-nowrap text-white/85">{user?.firstName || 'Nombre Apellido'}</p>
+                </div>
+                <p className="text-white/85 overflow-ellipsis col-span-3 text-sm">{user?.firstName} {user?.lastName}</p>
+              </>
+            ) : <div className="bg-gray-500 rounded-full w-10 aspect-square" />
+          }
         </div>
 
 
-        <button
-          onClick={() => logout()}
-          className="hover:bg-gray-800 text-white duration-150 flex justify-start items-center cursor-pointer rounded-md w-full gap-4 p-2"
-        >
+        <button className="hover:bg-gray-800 text-white duration-150 flex justify-start items-center cursor-pointer rounded-md w-full gap-4 p-2"
+          onClick={() => logout()}>
           <LogoutIcon />
           Cerrar sesión
         </button>
