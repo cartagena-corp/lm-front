@@ -9,6 +9,7 @@ import { ProjectProps } from '@/lib/types/types'
 import { useBoardStore } from '@/lib/store/BoardStore'
 import { useAuthStore } from '@/lib/store/AuthStore'
 import BoardCard, { BoardCardSkeleton } from '@/components/partials/BoardCard'
+import { useConfigStore } from '@/lib/store/ConfigStore'
 
 export default function TablerosPage() {
   const { boards, setBoards, createBoard } = useBoardStore()
@@ -17,16 +18,14 @@ export default function TablerosPage() {
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
+  const { setConfig } = useConfigStore()
 
   // Función para crear un nuevo tablero utilizando un token validado
   const handleCreateBoard = async (newBoard: ProjectProps) => {
     const token = await getValidAccessToken()
-    if (token) {
-      await createBoard(token, newBoard)
-    }
+    if (token) await createBoard(token, { ...newBoard, status: newBoard.status.id })
     setIsCreateModalOpen(false)
   }
-
   // Cargar los tableros desde la API asegurando que el token esté vigente.
   useEffect(() => {
     if (isAuthenticated) {
@@ -38,6 +37,8 @@ export default function TablerosPage() {
       })()
     }
   }, [isAuthenticated, setBoards, getValidAccessToken])
+
+  useEffect(() => { if (isAuthenticated) setConfig() }, [isAuthenticated, setConfig])
 
   const handleFilter = (data: { keyword: string, state: string, sort: string, isAsc: boolean }) => {
     setIsFilterModalOpen(false)

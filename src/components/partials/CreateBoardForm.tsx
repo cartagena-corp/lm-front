@@ -4,7 +4,6 @@ import { ProjectProps } from '@/lib/types/types'
 import { useEffect, useRef, useState } from 'react'
 import AutoResizeTextarea from '../ui/AutoResizeTextarea'
 import { useConfigStore } from '@/lib/store/ConfigStore'
-import { useAuthStore } from '@/lib/store/AuthStore'
 
 interface CreateBoardFormProps {
   onSubmit: (newBoard: ProjectProps) => void
@@ -12,8 +11,7 @@ interface CreateBoardFormProps {
 }
 
 export default function CreateBoardForm({ onSubmit, onCancel }: CreateBoardFormProps) {
-  const { projectStatuses, setConfig } = useConfigStore()
-  const { isAuthenticated } = useAuthStore()
+  const { projectStatus } = useConfigStore()
   const [isStatusOpen, setIsStatusOpen] = useState(false)
   const [formData, setFormData] = useState<ProjectProps>({
     id: "",
@@ -21,7 +19,7 @@ export default function CreateBoardForm({ onSubmit, onCancel }: CreateBoardFormP
     description: "",
     startDate: "",
     endDate: "",
-    status: "Activo",
+    status: { id: 0, name: "" },
     createdAt: "",
     updatedAt: "",
     createdBy: ""
@@ -35,8 +33,11 @@ export default function CreateBoardForm({ onSubmit, onCancel }: CreateBoardFormP
   const statusRef = useRef(null)
 
   useEffect(() => {
-    if (isAuthenticated) setConfig()
-  }, [isAuthenticated, setConfig])
+    if (projectStatus) setFormData({
+      ...formData,
+      status: projectStatus[0]
+    })
+  }, [projectStatus])
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -110,7 +111,7 @@ export default function CreateBoardForm({ onSubmit, onCancel }: CreateBoardFormP
           <button onClick={() => setIsStatusOpen(!isStatusOpen)} type='button'
             className='border-gray-300 flex justify-center items-center select-none rounded-md border w-full px-2 gap-2'>
             <p className='py-2 w-full text-start text-sm'>
-              {formData.status}
+              {formData.status.name}
             </p>
 
             <svg className={`text-gray-500 size-4 duration-150 ${isStatusOpen ? "-rotate-180" : ""}`}
@@ -120,11 +121,11 @@ export default function CreateBoardForm({ onSubmit, onCancel }: CreateBoardFormP
             {
               isStatusOpen &&
               <div className='border-gray-300 bg-white shadow-md absolute z-10 top-[110%] flex flex-col items-start rounded-md border text-sm w-full max-h-28 overflow-y-auto'>{
-                projectStatuses?.map((obj, i) =>
-                  <div key={i} onClick={() => { setFormData({ ...formData, status: obj.name }), setIsStatusOpen(false) }}
+                projectStatus?.map(obj =>
+                  <div key={obj.id} onClick={() => { setFormData({ ...formData, status: obj }), setIsStatusOpen(false) }}
                     className='hover:bg-black/5 duration-150 w-full text-start py-2 px-2 flex items-center gap-2'>
                     {
-                      obj.name === formData.status ?
+                      obj === formData.status ?
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
                           <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                         </svg>
