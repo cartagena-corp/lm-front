@@ -7,7 +7,7 @@ export interface ProjectProps {
    description: string
    startDate: string                                  /* DD/MM/YYYY */
    endDate: string                                    /* DD/MM/YYYY */
-   status: string                                     /* DEFAULT: "Activo" | "Inactivo" | "Finalizado" */
+   status: ConfigProjectStatusProps                                     /* DEFAULT: "Activo" | "Inactivo" | "Finalizado" */
    createdAt: string                                  /* DD/MM/YYYY (T) HH:MM:SS */
    updatedAt: string                                  /* DD/MM/YYYY (T) HH:MM:SS */
    createdBy: string
@@ -89,6 +89,7 @@ export interface IconProps {
 }
 
 //* Configuration
-interface ConfigProps {
+interface ConfigProjectStatusProps {
+   id: number
    name: string
 }
