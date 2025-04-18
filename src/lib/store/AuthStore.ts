@@ -16,11 +16,13 @@ interface AuthState {
 
 interface PayloadProps {
    permissions: string[]
+   family_mame: string
+   given_mame: string
    picture: string
    email: string
    role: string
-   sub: string
    exp?: number
+   sub: string
 }
 
 const API_URL = process.env.NEXT_PUBLIC_AUTHENTICATION
@@ -33,6 +35,8 @@ function decodeToken(token: string): UserProps | null {
          id: decodedToken.sub,
          img: decodedToken.picture,
          email: decodedToken.email,
+         firstName: decodedToken.given_mame,
+         lastName: decodedToken.family_mame,
          role: {
             name: decodedToken.role,
             permissions: decodedToken.permissions.map(permission => ({ name: permission }))

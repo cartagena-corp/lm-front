@@ -14,7 +14,7 @@ interface BoardState {
    setBoards: (token: string) => Promise<void>
    createBoard: (
       token: string,
-      boardData: { name: string, description: string, startDate: string, endDate: string, status: string }
+      boardData: { name: string, description: string, startDate: string, endDate: string, status: number }
    ) => Promise<void>
 }
 
@@ -58,7 +58,7 @@ export const useBoardStore = create<BoardState>((set) => ({
          console.error("Error en la solicitud", error)
       }
    },
-   createBoard: async (token: string, boardData: { name: string, description: string, startDate: string, endDate: string, status: string }) => {
+   createBoard: async (token: string, boardData: { name: string, description: string, startDate: string, endDate: string, status: number }) => {
       try {
          const response = await fetch(`${API_URL}${process.env.NEXT_PUBLIC_GET_PROJECTS}`, {
             method: 'POST',
@@ -79,7 +79,7 @@ export const useBoardStore = create<BoardState>((set) => ({
          set((state) => ({
             boards: {
                ...state.boards,
-               content: state.boards.content ? [...state.boards.content, newBoard] : [newBoard],
+               content: state.boards.content ? [newBoard, ...state.boards.content] : [newBoard],
                totalElements: state.boards.totalElements + 1
             }
          }))

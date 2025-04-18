@@ -1,23 +1,19 @@
-import { ConfigProps } from '../types/types'
 import { create } from 'zustand'
+import { ConfigProjectStatusProps } from '../types/types'
 
-interface ConfigState {
-   projectStatuses: ConfigProps[] | null
-   issueStatuses: ConfigProps[] | null
-   priorities: ConfigProps[] | null
+interface ConfigProjectState {
+   projectStatus: ConfigProjectStatusProps[] | null
 
    setConfig: () => Promise<void>
 }
 
 const API_URL = process.env.NEXT_PUBLIC_CONFIG
 
-export const useConfigStore = create<ConfigState>((set) => ({
-   projectStatuses: null,
-   issueStatuses: null,
-   priorities: null,
+export const useConfigStore = create<ConfigProjectState>((set) => ({
+   projectStatus: null,
    setConfig: async () => {
       try {
-         const response = await fetch(`${API_URL}${process.env.NEXT_PUBLIC_GET_CONFIG}`, {
+         const response = await fetch(`${API_URL}${process.env.NEXT_PUBLIC_GET_CONFIG_PROJECT_STATE}`, {
             method: 'GET',
             headers: {
                "Content-Type": "application/json",
@@ -25,14 +21,12 @@ export const useConfigStore = create<ConfigState>((set) => ({
             }
          })
 
-         if (!response.ok) return console.error("Error al obtener las configuraciones", response.statusText)
+         if (!response.ok) return console.error("Error al obtener las configuraciones de los estados globales de los proyectos", response.statusText)
 
-         const data: ConfigState = await response.json()
+         const data: ConfigProjectStatusProps[] = await response.json()
 
          set({
-            projectStatuses: data.projectStatuses,
-            issueStatuses: data.issueStatuses,
-            priorities: data.priorities,
+            projectStatus: data,
          })
       }
       catch (error) {
