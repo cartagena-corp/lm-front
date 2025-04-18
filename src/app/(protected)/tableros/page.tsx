@@ -1,20 +1,21 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import Link from 'next/link'
-import Modal from '@/components/layout/Modal'
-import CreateBoardForm from '@/components/partials/CreateBoardForm'
+import BoardCard, { BoardCardSkeleton } from '@/components/partials/BoardCard'
 import FilterProjectForm from '@/components/partials/FilterProjectForm'
-import { ProjectProps } from '@/lib/types/types'
+import { FilterProjectProps, ProjectProps } from '@/lib/types/types'
+import CreateBoardForm from '@/components/partials/CreateBoardForm'
+import { useConfigStore } from '@/lib/store/ConfigStore'
 import { useBoardStore } from '@/lib/store/BoardStore'
 import { useAuthStore } from '@/lib/store/AuthStore'
-import BoardCard, { BoardCardSkeleton } from '@/components/partials/BoardCard'
-import { useConfigStore } from '@/lib/store/ConfigStore'
+import Modal from '@/components/layout/Modal'
+import { useEffect, useState } from 'react'
+import { useParams } from 'next/navigation'
 
 export default function TablerosPage() {
   const { boards, setBoards, createBoard } = useBoardStore()
   // Extraemos el nuevo método getValidAccessToken y el flag isAuthenticated del store
   const { getValidAccessToken, isAuthenticated } = useAuthStore((state) => state)
+  const params = useParams()
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
@@ -40,9 +41,10 @@ export default function TablerosPage() {
 
   useEffect(() => { if (isAuthenticated) setConfig() }, [isAuthenticated, setConfig])
 
-  const handleFilter = (data: { keyword: string, state: string, sort: string, isAsc: boolean }) => {
+  const handleFilter = async (filters: FilterProjectProps) => {
     setIsFilterModalOpen(false)
-    // Aquí podrías agregar la lógica para aplicar filtros a los tableros
+    const token = await getValidAccessToken()
+    if (token) await setBoards(token, filters)
   }
 
   return (

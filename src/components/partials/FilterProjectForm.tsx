@@ -1,50 +1,48 @@
 'use client'
 
+import { useAuthStore } from '@/lib/store/AuthStore'
+import { useConfigStore } from '@/lib/store/ConfigStore'
+import { FilterProjectProps } from '@/lib/types/types'
 import { FormEvent, useState, useEffect, useRef } from 'react'
 
 interface FilterFormProps {
-   onSubmit: (data: {
-      keyword: string
-      state: string
-      sort: string
-      isAsc: boolean
-   }) => void
+   onSubmit: (data: FilterProjectProps) => void
    onCancel: () => void
 }
 
 export default function FilterProjectForm({ onSubmit, onCancel }: FilterFormProps) {
-   const [formData, setFormData] = useState<{ keyword: string, state: string, sort: string, isAsc: boolean }>({
-      keyword: "",
-      state: "Cualquier estado",
-      sort: "Fecha de creación",
-      isAsc: false,
+   const { projectStatus } = useConfigStore()
+   const { user } = useAuthStore()
+   const [formData, setFormData] = useState<FilterProjectProps>({
+      name: "",
+      status: 0,
+      createdBy: "",
+      page: 0,
+      size: 10,
+      sortBy: { id: "createdAt", sort: "Cualquier orden" },
+      direction: ""
    })
 
-   const [isStateSelectOpen, setIsStateSelectOpen] = useState(false)
+   const [isStatusSelectOpen, setIsStatusSelectOpen] = useState(false)
    const [isSortBySelectOpen, setIsSortBySelectOpen] = useState(false)
-
-   const stateSelect = [
-      { state: "Cualquier estado" },
-      { state: "Inactivo" },
-      { state: "En curso" },
-      { state: "Terminado" },
-   ]
+   const [isAsc, setIsAsc] = useState(false)
 
    const sortBySelect = [
-      { sort: "Fecha de creación" },
-      { sort: "Última actualización" },
+      { id: "createdAt", sort: "Fecha de creación" },
+      { id: "updatedAt", sort: "Última actualización" },
    ]
 
-   const stateSelectRef = useRef<HTMLDivElement>(null)
+   const statusSelectRef = useRef<HTMLDivElement>(null)
+   const paginationSelectRef = useRef<HTMLDivElement>(null)
    const sortBySelectRef = useRef<HTMLDivElement>(null)
 
    useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
          if (
-            stateSelectRef.current &&
-            !stateSelectRef.current.contains(event.target as Node)
+            statusSelectRef.current &&
+            !statusSelectRef.current.contains(event.target as Node)
          ) {
-            setIsStateSelectOpen(false)
+            setIsStatusSelectOpen(false)
          }
          if (
             sortBySelectRef.current &&
@@ -62,8 +60,11 @@ export default function FilterProjectForm({ onSubmit, onCancel }: FilterFormProp
 
    const handleSubmit = (e: FormEvent) => {
       e.preventDefault()
+      console.log(formData)
       onSubmit(formData)
    }
+
+   const handleAscChange = () => setIsAsc(!isAsc)
 
    return (
       <form onSubmit={handleSubmit}>
@@ -77,44 +78,44 @@ export default function FilterProjectForm({ onSubmit, onCancel }: FilterFormProp
                      <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
                   </svg>
 
-                  <input onChange={(e) => setFormData({ ...formData, keyword: e.target.value })}
+                  <input onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                      type="search"
                      placeholder="Buscar por nombre o palabra clave"
-                     id="keyword"
-                     name="keyword"
+                     id="name"
+                     name="name"
                      className="outline-none text-sm w-full py-2"
-                     value={formData.keyword}
+                     value={formData.name}
                   />
                </div>
             </div>
 
-            <div className='space-y-1 relative' ref={stateSelectRef}>
-               <label htmlFor="state" className="text-gray-700 text-sm font-medium">
+            <div className='space-y-1 relative' ref={statusSelectRef}>
+               <label htmlFor="status" className="text-gray-700 text-sm font-medium">
                   Estado
                </label>
 
                <button onClick={() => {
-                  setIsStateSelectOpen(!isStateSelectOpen)
+                  setIsStatusSelectOpen(!isStatusSelectOpen)
                   setIsSortBySelectOpen(false) // Cierra el otro select
                }} type='button'
                   className='border-gray-300 flex justify-center items-center select-none rounded-md border w-full px-2 gap-2'>
                   <p className='py-2 w-full text-start text-sm'>
-                     {formData.state}
+                     {formData.status == 0 ? "Cualquier estado" : projectStatus?.find(status => status.id == formData.status)?.name}
                   </p>
 
-                  <svg className={`text-gray-500 size-4 duration-150 ${isStateSelectOpen ? "-rotate-180" : ""}`}
+                  <svg className={`text-gray-500 size-4 duration-150 ${isStatusSelectOpen ? "-rotate-180" : ""}`}
                      xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                      <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                   </svg>
                </button>
                {
-                  isStateSelectOpen &&
+                  isStatusSelectOpen &&
                   <div className='border-gray-300 bg-white shadow-md absolute z-10 top-[105%] flex flex-col items-start rounded-md border text-sm w-full max-h-28 overflow-y-auto'>{
-                     stateSelect.map((obj, i: number) =>
-                        <button key={i} onClick={() => { setFormData({ ...formData, state: obj.state }), setIsStateSelectOpen(false) }} type='button'
+                     projectStatus?.map((obj) =>
+                        <button key={obj.id} onClick={() => { setFormData({ ...formData, status: obj.id }), setIsStatusSelectOpen(false) }} type='button'
                            className='hover:bg-black/5 duration-150 w-full text-start py-2 px-2 flex items-center gap-2'>
                            {
-                              obj.state === formData.state ?
+                              obj.id === formData.status ?
                                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                                  </svg>
@@ -124,7 +125,7 @@ export default function FilterProjectForm({ onSubmit, onCancel }: FilterFormProp
                                  </svg>
 
                            }
-                           {obj.state}
+                           {obj.name}
                         </button>
                      )
                   }</div>
@@ -132,17 +133,17 @@ export default function FilterProjectForm({ onSubmit, onCancel }: FilterFormProp
             </div>
 
             <div className='space-y-1' ref={sortBySelectRef}>
-               <label htmlFor="state" className="text-gray-700 text-sm font-medium">
+               <label htmlFor="status" className="text-gray-700 text-sm font-medium">
                   Ordenar por
                </label>
                <div className='flex justify-center items-center gap-2'>
                   <button onClick={() => {
                      setIsSortBySelectOpen(!isSortBySelectOpen)
-                     setIsStateSelectOpen(false) // Cierra el otro select
+                     setIsStatusSelectOpen(false) // Cierra el otro select
                   }} type='button'
                      className='border-gray-300 flex justify-center items-center select-none rounded-md border w-full px-2 gap-2 relative'>
                      <p className='py-2 w-full text-start text-sm'>
-                        {formData.sort}
+                        {formData.sortBy.sort}
                      </p>
 
                      <svg className={`text-gray-500 size-4 duration-150 ${isSortBySelectOpen ? "-rotate-180" : ""}`}
@@ -153,11 +154,11 @@ export default function FilterProjectForm({ onSubmit, onCancel }: FilterFormProp
                      {
                         isSortBySelectOpen &&
                         <div className='border-gray-300 bg-white shadow-md absolute z-10 top-[115%] flex flex-col items-start rounded-md border text-sm w-full max-h-28 overflow-y-auto'>{
-                           sortBySelect.map((obj, i) =>
-                              <div key={i} onClick={() => { setFormData({ ...formData, sort: obj.sort }), setIsSortBySelectOpen(false) }}
+                           sortBySelect.map((obj) =>
+                              <div key={obj.id} onClick={() => { setFormData({ ...formData, sortBy: obj }), setIsSortBySelectOpen(false) }}
                                  className='hover:bg-black/5 duration-150 w-full text-start py-2 px-2 flex items-center gap-2'>
                                  {
-                                    obj.sort === formData.sort ?
+                                    obj.id === formData.sortBy.id ?
                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
                                           <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                                        </svg>
@@ -175,9 +176,9 @@ export default function FilterProjectForm({ onSubmit, onCancel }: FilterFormProp
                      }
                   </button>
 
-                  <button onClick={() => setFormData({ ...formData, isAsc: !formData.isAsc })} type='button' className='border-gray-300 border p-1.5 rounded-md'>
+                  <button onClick={() => { handleAscChange(), setFormData({ ...formData, direction: !isAsc ? "asc" : "desc" }) }} type='button' className='border-gray-300 border p-1.5 rounded-md'>
                      {
-                        formData.isAsc ?
+                        isAsc ?
                            <svg className='size-6' viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                               <path d="M11 10H18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                               <path d="M11 14H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -193,11 +194,23 @@ export default function FilterProjectForm({ onSubmit, onCancel }: FilterFormProp
                               <path d="M11 6H21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                               <path d="M7 18.8125C6.60678 19.255 5.56018 21 5 21M5 21C4.43982 21 3.39322 19.255 3 18.8125M5 21V15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                            </svg>
-
-
                      }
                   </button>
                </div>
+            </div>
+
+            <div className='space-y-1 relative flex justify-start items-center gap-2' ref={paginationSelectRef}>
+               <input onChange={(e) => setFormData({ ...formData, createdBy: e.target.checked && user ? user?.id : "" })}
+                  className='translate-y-0.5'
+                  placeholder="Buscar por nombre o palabra clave"
+                  value={formData.createdBy}
+                  name="createdBy"
+                  type="checkbox"
+                  id="createdBy"
+               />
+               <label htmlFor="createdBy" className="text-gray-700 text-sm font-medium select-none">
+                  Listar solamente tableros creados por mi
+               </label>
             </div>
          </div>
 
@@ -216,6 +229,6 @@ export default function FilterProjectForm({ onSubmit, onCancel }: FilterFormProp
                Cancelar
             </button>
          </div>
-      </form>
+      </form >
    )
 }
