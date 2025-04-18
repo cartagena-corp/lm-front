@@ -89,7 +89,18 @@ export interface IconProps {
 }
 
 //* Configuration
-interface ConfigProjectStatusProps {
+export interface ConfigProjectStatusProps {
    id: number
    name: string
+}
+
+//* Project Filters
+export interface FilterProjectProps {
+   name: string
+   status: number
+   createdBy: string
+   page: number
+   size: number
+   sortBy: { id: string, sort: string }
+   direction: string
 }
