@@ -69,3 +69,28 @@ export const XIcon = ({ size = 24, stroke = 1.5 }: IconProps) => {
       </svg>
    )
 }
+
+export const ClockIcon = ({ size = 24, stroke = 1.5 }: IconProps) => {
+   return (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill="none">
+         <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={stroke} />
+         <path d="M12 8V12L14 14" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+   )
+}
+
+export const PlusIcon = ({ size = 24, stroke = 1.5 }: IconProps) => {
+   return (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill="none">
+         <path d="M12 4V20M20 12H4" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+   )
+}
+
+export const DragIcon = ({ size = 24, stroke = 1.5 }: IconProps) => {
+   return (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill="none">
+         <path d="M8 6H8.00635M8 12H8.00635M8 18H8.00635M15.9937 6H16M15.9937 12H16M15.9937 18H16" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+   )
+}
