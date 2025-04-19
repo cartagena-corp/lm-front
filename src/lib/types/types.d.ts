@@ -10,14 +10,22 @@ export interface ProjectProps {
    status: ConfigProjectStatusProps                                     /* DEFAULT: "Activo" | "Inactivo" | "Finalizado" */
    createdAt: string                                  /* DD/MM/YYYY (T) HH:MM:SS */
    updatedAt: string                                  /* DD/MM/YYYY (T) HH:MM:SS */
-   createdBy: string
+   createdBy: {
+      id: string,
+      firstName: string,
+      lastName: string,
+      picture: string
+   }
 }
 
 //* Tasks
 export interface TaskProps {
    id: string
    title: string
-   description: string
+   descriptions: {
+      id: string
+      text: string
+   }[]
    projectId: string
    priority: string                                   /* DEFAULT: "Baja" | "Media" | "Alta" */
    status: string
@@ -25,6 +33,7 @@ export interface TaskProps {
    assigneeId: string
    createdAt: string                                  /* DD/MM/YYYY (T) HH:MM:SS  */
    updatedAt: string                                  /* DD/MM/YYYY (T) HH:MM:SS */
+   type?: string
 }
 
 //* Comments
@@ -92,6 +101,7 @@ export interface IconProps {
 export interface ConfigProjectStatusProps {
    id: number
    name: string
+   color: string
 }
 
 //* Project Filters
@@ -103,4 +113,40 @@ export interface FilterProjectProps {
    size: number
    sortBy: { id: string, sort: string }
    direction: string
+}
+
+//* Tasks Filters
+export interface FilterTaskProps {
+   keyword: string
+   projectId: string
+   sprintId: string
+   priority: string
+   type: string
+   status: string
+   assignedId: string
+   sortBy: string
+   direction: string
+   page: number
+   size: number
+}
+
+//* Project Config
+export interface ProjectConfigProps {
+   id: number,
+   projectId: string,
+   issueStatuses: {
+      id: number,
+      name: string,
+      color: string
+   }[],
+   issuePriorities: {
+      id: number,
+      name: string,
+      color: string
+   }[],
+   issueTypes: {
+      id: number,
+      name: string,
+      color: string
+   }[],
 }
