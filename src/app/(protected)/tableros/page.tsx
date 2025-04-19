@@ -13,9 +13,7 @@ import { useParams } from 'next/navigation'
 
 export default function TablerosPage() {
   const { boards, setBoards, createBoard } = useBoardStore()
-  // Extraemos el nuevo método getValidAccessToken y el flag isAuthenticated del store
   const { getValidAccessToken, isAuthenticated } = useAuthStore((state) => state)
-  const params = useParams()
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
