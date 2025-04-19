@@ -1,110 +1,151 @@
 'use client'
 
-import { useState } from 'react'
-import Sidebar from '@/components/layout/Sidebar'
-import Modal from '@/components/layout/Modal'
-import CreateTaskForm from '@/components/partials/CreateTaskForm'
-import CreateUserStoryForm from '@/components/partials/CreateUserStoryForm'
-import Scrum from '@/components/partials/Scrum'
-import Kanban from '@/components/partials/Kanban'
-import { CustomSwitch } from '@/components/ui/CustomSwitch'
-import FilterTaskForm from '@/components/partials/FilterTaskForm'
-import DiagramaGantt from '@/components/ui/DiagramaGantt'
+import { useEffect } from 'react'
+import { useParams } from 'next/navigation'
+import { useAuthStore } from '@/lib/store/AuthStore'
+import { useBoardStore } from '@/lib/store/BoardStore'
+import { CalendarIcon, ClockIcon } from '@/assets/Icon'
+import Image from 'next/image'
+import { useConfigStore } from '@/lib/store/ConfigStore'
+import SprintList from '@/components/partials/SprintList'
+import { useIssueStore } from '@/lib/store/IssueStore'
 
 export default function TableroDetalle() {
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-  const [boardType, setBoardType] = useState<'kanban' | 'scrum'>('kanban')
-  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
+  const { getValidAccessToken, isAuthenticated } = useAuthStore()
+  const { setIssues } = useIssueStore()
+  const { selectedBoard, setBoard } = useBoardStore()
+  const { setProjectConfig, projectConfig, projectStatus, setConfig } = useConfigStore()
+  const { id } = useParams()
 
-  const [viewType, setViewType] = useState<"Tablero" | "Diagrama de Gantt">("Tablero")
+  useEffect(() => {
+    if (isAuthenticated) {
+      (async () => {
+        const token = await getValidAccessToken()
+        if (token) {
+          await setBoard(token, id as string)
+          await setIssues(token, id as string)
+          await setProjectConfig(id as string, token)
+        }
+      })()
+    }
+  }, [isAuthenticated, setBoard, setProjectConfig, getValidAccessToken])
 
-  const handleCreateItem = (data: any) => {
-    // Aquí se implementaría la lógica para agregar la tarea o historia
-    console.log('Nuevo item:', data)
-    setIsCreateModalOpen(false)
-  }
+  useEffect(() => { if (isAuthenticated) setConfig() }, [isAuthenticated, setConfig])
 
-  const handleFilter = (data: { keyword: string, state: string, sort: string, priority: string, isAsc: boolean, user: string }) => {
-    console.log("handleFilter", data)
-    setIsFilterModalOpen(false)
+  const formatDate = (fecha: string | null, includeTime: boolean = false): string => {
+    if (!fecha) return "No definida";
+
+    const dateObj = new Date(fecha);
+    if (isNaN(dateObj.getTime())) return "Fecha inválida";
+
+    const day = dateObj.getDate().toString().padStart(2, '0');
+    const month = dateObj
+      .toLocaleString('es-ES', { month: 'short' })
+      .replace('.', '')
+      .toLowerCase();
+    const year = dateObj.getFullYear();
+
+    let formatted = `${day} ${month} ${year}`;
+
+    if (includeTime) {
+      const hours = dateObj.getHours().toString().padStart(2, '0');
+      const minutes = dateObj.getMinutes().toString().padStart(2, '0');
+      formatted += ` ${hours}:${minutes}`;
+    }
+
+    return formatted;
+  };
+
+  const getStatusName = (id: number) => {
+    if (projectStatus) return projectStatus?.find(status => status.id === id)
   }
 
   return (
-    <main className="bg-gray-100 flex flex-col p-10 ml-64 min-h-screen">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Proyecto Alpha
-          </h1>
-          <p className="text-sm text-gray-500">
-            Tablero del proyecto principal
-          </p>
+
+    <main className='bg-gray-100 flex flex-col ml-64 min-h-screen gap-6 p-10'>
+      <h4 className='font-bold text-2xl'>Detalles del tablero</h4>
+
+      <section className='bg-white rounded-md flex flex-col gap-2 p-6'>
+        <div className='flex justify-start items-center gap-4'>
+          <h5 className='font-semibold text-xl'>{selectedBoard?.name}</h5>
+          {
+            selectedBoard &&
+            <div className='rounded-full text-xs border px-2 whitespace-nowrap'
+              style={{
+                backgroundColor: `${getStatusName(Number(selectedBoard.status))?.color}0f`,
+                color: getStatusName(Number(selectedBoard.status))?.color,
+              }}>
+              {getStatusName(Number(selectedBoard.status))?.name}
+            </div>
+          }
         </div>
-        <div className="flex items-center space-x-4">
-          <select
-            className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-            value={boardType}
-            onChange={(e) =>
-              setBoardType(e.target.value as 'kanban' | 'scrum')
+        <p className='text-black/50 text-sm mb-4'>{selectedBoard?.description}</p>
+
+        <div className='grid grid-cols-2 text-sm gap-2 w-2/3'>
+          <div className='flex justify-start items-center gap-2'>
+            <span className='text-black/50'>
+              <CalendarIcon size={20} />
+            </span>
+            <div className='flex flex-col'>
+              <h6 className='text-black/50 text-xs'>Fecha de inicio</h6>
+              <p>{selectedBoard ? formatDate(selectedBoard.startDate, false) : formatDate(null)}</p>
+            </div>
+          </div>
+
+          <div className='flex justify-start items-center gap-2'>
+            <span className='text-black/50'>
+              <CalendarIcon size={20} />
+            </span>
+            <div className='flex flex-col'>
+              <h6 className='text-black/50 text-xs'>Fecha de fin</h6>
+              <p>{selectedBoard ? formatDate(selectedBoard.endDate, false) : formatDate(null)}</p>
+            </div>
+          </div>
+
+          <div className='flex justify-start items-center gap-2'>
+            <span className='text-black/50'>
+              <ClockIcon size={20} />
+            </span>
+            <div className='flex flex-col'>
+              <h6 className='text-black/50 text-xs'>Creado</h6>
+              <p>{selectedBoard ? formatDate(selectedBoard.createdAt, true) : formatDate(null)}</p>
+            </div>
+          </div>
+
+          <div className='flex justify-start items-center gap-2'>
+            <span className='text-black/50'>
+              <ClockIcon size={20} />
+            </span>
+            <div className='flex flex-col'>
+              <h6 className='text-black/50 text-xs'>Actualizado</h6>
+              <p>{selectedBoard ? formatDate(selectedBoard.updatedAt, true) : formatDate(null)}</p>
+            </div>
+          </div>
+        </div>
+
+        <hr className='border-black/5 my-4' />
+
+        <div className='flex justify-start items-center gap-2'>
+          <div className='bg-black/10 overflow-hidden aspect-square rounded-full w-12'>
+            {
+              selectedBoard &&
+              <Image src={selectedBoard?.createdBy.picture}
+                alt='createdBy'
+                width={48}
+                height={48}
+              />
             }
-          >
-            <option value="kanban">Kanban</option>
-            <option value="scrum">Scrum</option>
-          </select>
-
-          <button
-            onClick={() => setIsFilterModalOpen(true)}
-            className="border-blue-600 text-blue-600 hover:bg-blue-700 hover:text-white duration-150 px-4 py-2 rounded-md border whitespace-nowrap"
-          >
-            Filtrar
-          </button>
-
-          <button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 whitespace-nowrap"
-          >
-            {boardType === 'kanban' ? 'Nueva tarea' : 'Nueva historia'}
-          </button>
+          </div>
+          <div className='flex flex-col justify-center items-start'>
+            <span className='text-black/50 text-xs'>Creado por</span>
+            <span className='font-medium'>
+              {selectedBoard?.createdBy.firstName} {selectedBoard?.createdBy.lastName}
+            </span>
+          </div>
         </div>
-      </div>
+      </section>
 
-      {/* const [viewType, setViewType] = useState<"Tablero" | "Diagrama de Gantt">("Tablero") */}
-      <CustomSwitch value={viewType} onChange={setViewType} />
-
-      {
-        viewType == "Tablero" ? (
-          <>{boardType === 'kanban' ? <Kanban /> : <Scrum />}</>
-        ) : (
-          <>
-            <DiagramaGantt />
-          </>
-        )
-      }
-
-      <Modal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        title={
-          boardType === 'kanban' ? 'Crear nueva tarea' : 'Crear nueva historia'
-        }
-      >
-        <CreateTaskForm
-          onSubmit={handleCreateItem}
-          onCancel={() => setIsCreateModalOpen(false)}
-        />
-      </Modal>
-
-      {/* Modal para Filtros */}
-      <Modal
-        isOpen={isFilterModalOpen}
-        onClose={() => setIsFilterModalOpen(false)}
-        title="Filtros"
-      >
-        <FilterTaskForm
-          onSubmit={handleFilter}
-          onCancel={() => setIsFilterModalOpen(false)}
-        />
-      </Modal>
-    </main>
+      <SprintList />
+    </main >
   )
 } 
