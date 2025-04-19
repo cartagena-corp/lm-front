@@ -11,7 +11,9 @@ interface BoardProps {
 
 interface BoardState {
    boards: BoardProps
+   selectedBoard: ProjectProps | null
    setBoards: (token: string, filters?: FilterProjectProps) => Promise<void>
+   setBoard: (token: string, projectId: string) => Promise<void>
    createBoard: (
       token: string,
       boardData: { name: string, description: string, startDate: string, endDate: string, status: number }
@@ -21,6 +23,7 @@ interface BoardState {
 const API_URL = process.env.NEXT_PUBLIC_PROJECTS
 
 export const useBoardStore = create<BoardState>((set) => ({
+   selectedBoard: null,
    boards: {
       content: null,
       totalElements: 0,
@@ -58,7 +61,7 @@ export const useBoardStore = create<BoardState>((set) => ({
          }
 
          const data: BoardProps = await response.json()
-         console.log("data: ", data)
+         // console.log("data: ", data)
          set({
             boards: {
                content: data.content,
@@ -100,5 +103,29 @@ export const useBoardStore = create<BoardState>((set) => ({
       } catch (error) {
          console.error("Error en la creación del tablero", error)
       }
-   }
+   },
+   setBoard: async (token, projectId) => {
+      try {
+         const response = await fetch(`${API_URL}${process.env.NEXT_PUBLIC_GET_PROJECTS}/${projectId}`, {
+            method: 'GET',
+            headers: {
+               'Content-Type': 'application/json',
+               'Authorization': `Bearer ${token}`,
+            },
+         })
+
+         if (!response.ok) {
+            console.error('Error al obtener los tableros', response.statusText)
+            return
+         }
+
+         const data: ProjectProps = await response.json()
+         // console.log("data: ", data)
+         set({
+            selectedBoard: data
+         })
+      } catch (error) {
+         console.error('Error en la solicitud', error)
+      }
+   },
 }))
