@@ -4,14 +4,16 @@ import { jwtDecode } from 'jwt-decode'
 import { create } from 'zustand'
 
 interface AuthState {
+   getValidAccessToken: () => Promise<string>
+   getListUsers: (token: string) => void
    setAccessToken: (token: string) => void
    refreshToken: () => Promise<boolean>
-   getValidAccessToken: () => Promise<string>
    logout: () => Promise<void>
    clearAuth: () => void
 
    isAuthenticated: boolean
    user: UserProps | null
+   listUsers: UserProps[] | []
 }
 
 interface PayloadProps {
@@ -33,7 +35,7 @@ function decodeToken(token: string): UserProps | null {
       const decodedToken = jwtDecode<PayloadProps>(token)
       const userData: UserProps = {
          id: decodedToken.sub,
-         img: decodedToken.picture,
+         picture: decodedToken.picture,
          email: decodedToken.email,
          firstName: decodedToken.given_mame,
          lastName: decodedToken.family_mame,
@@ -73,12 +75,13 @@ const initializeAuthState = (): { user: UserProps | null, isAuthenticated: boole
    if (!token) return { user: null, isAuthenticated: false }
 
    const user = decodeToken(token as string)
-   return { user, isAuthenticated: !!user }
+   return { user, isAuthenticated: !!user, }
 }
 
 // Crear el store de autenticación
 export const useAuthStore = create<AuthState>()((set, get) => ({
    ...initializeAuthState(),
+   listUsers: [],
 
    // Nuevo método asíncrono para obtener un token actualizado
    getValidAccessToken: async () => {
@@ -111,6 +114,31 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       deleteCookie("NEXT_COOKIE_ACCESS_TOKEN", { path: '/' })
       set({ user: null, isAuthenticated: false })
       if (typeof window !== 'undefined') window.location.href = "/login"
+   },
+
+   getListUsers: async (token: string) => {
+      try {
+         const response = await fetch(`${API_URL}${process.env.NEXT_PUBLIC_LIST_USERS}`, {
+            method: 'GET',
+            headers: {
+               "Content-Type": "application/json",
+               "Authorization": `Bearer ${token}`
+            },
+         })
+
+         if (!response.ok) {
+            console.error("Error al obtener la lista de usuarios", response.statusText)
+            return
+         }
+
+         const userList: UserProps[] = await response.json()
+
+         set(({
+            listUsers: userList
+         }))
+      } catch (error) {
+         console.error("Error en el getListUsers", error)
+      }
    },
 
    // Refrescar el token: utiliza el refresh token (almacenado como httpOnly en el backend)
