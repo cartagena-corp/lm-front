@@ -97,6 +97,6 @@ export default function TablerosPage() {
           onCancel={() => setIsFilterModalOpen(false)}
         />
       </Modal>
-    </main >
+    </main>
   )
 }
