@@ -10,7 +10,7 @@ export interface ProjectProps {
    status: ConfigProjectStatusProps                                     /* DEFAULT: "Activo" | "Inactivo" | "Finalizado" */
    createdAt: string                                  /* DD/MM/YYYY (T) HH:MM:SS */
    updatedAt: string                                  /* DD/MM/YYYY (T) HH:MM:SS */
-   createdBy: {
+   createdBy?: {
       id: string,
       firstName: string,
       lastName: string,
@@ -20,20 +20,31 @@ export interface ProjectProps {
 
 //* Tasks
 export interface TaskProps {
-   id: string
+   id?: string
    title: string
    descriptions: {
-      id: string
+      id?: string
       text: string
    }[]
    projectId: string
-   priority: string                                   /* DEFAULT: "Baja" | "Media" | "Alta" */
-   status: string
-   reporterId: string
-   assigneeId: string
-   createdAt: string                                  /* DD/MM/YYYY (T) HH:MM:SS  */
-   updatedAt: string                                  /* DD/MM/YYYY (T) HH:MM:SS */
-   type?: string
+   priority: number                                   /* DEFAULT: "Baja" | "Media" | "Alta" */
+   status: number
+   assignedId: {
+      id: string,
+      firstName: string,
+      lastName: string,
+      picture: string
+   } | string
+   reporterId?: {
+      id: string,
+      firstName: string,
+      lastName: string,
+      picture: string
+   } | string
+   createdAt?: string                                  /* DD/MM/YYYY (T) HH:MM:SS  */
+   updatedAt?: string                                  /* DD/MM/YYYY (T) HH:MM:SS */
+   type?: number
+   estimatedTime?: number
 }
 
 //* Comments
@@ -60,8 +71,8 @@ export interface UserProps {
    email: string
    firstName?: string
    lastName?: string
-   role: RoleProps
-   img: string
+   role?: RoleProps
+   picture: string
 }
 
 //* Roles
@@ -149,4 +160,16 @@ export interface ProjectConfigProps {
       name: string,
       color: string
    }[],
+}
+
+//* Sprints Props
+export interface SprintProps {
+   id?: string
+   projectId: string
+   title: string
+   goal: string
+   statusObject?: ConfigProjectStatusProps
+   status?: number
+   startDate: string
+   endDate: string
 }
