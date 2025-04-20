@@ -6,15 +6,16 @@ import { create } from 'zustand'
 interface IssuesProps {
    content: TaskProps[] | []
    totalElements: number
-   totalPages: number
-   number: number
-   size: number
+   totalPages?: number
+   number?: number
+   size?: number
 }
 
 interface IssueState {
    issues: IssuesProps | null
    selectedIssue: TaskProps | null
    setIssues: (token: string, projectId: string, filters?: FilterTaskProps) => Promise<void>
+   createTask: (token: string, taskData: TaskProps) => Promise<void>
 }
 
 const API_URL = process.env.NEXT_PUBLIC_ISSUES
@@ -65,6 +66,35 @@ export const useIssueStore = create<IssueState>((set) => ({
          })
       } catch (error) {
          console.error('Error en la solicitud', error)
+      }
+   },
+   createTask: async (token: string, taskData: TaskProps) => {
+      try {
+         const response = await fetch(`${API_URL}${process.env.NEXT_PUBLIC_CREATE_ISSUE}`, {
+            method: 'POST',
+            headers: {
+               "Content-Type": "application/json",
+               "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify(taskData)
+         })
+
+         if (!response.ok) {
+            console.error("Error al crear la tarea", response.statusText)
+            return
+         }
+
+         const newIssue: TaskProps = await response.json()
+
+         set((state) => ({
+            issues: {
+               ...state.issues,
+               content: state.issues?.content ? [newIssue, ...state.issues.content] : [newIssue],
+               totalElements: state.issues?.totalElements ? state.issues.totalElements + 1 : 1,
+            }
+         }))
+      } catch (error) {
+         console.error("Error en createTask", error)
       }
    },
 }))
