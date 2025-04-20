@@ -64,11 +64,11 @@ export default function Sidebar() {
       <section className="border-white/25 border-t px-4 py-6 space-y-5">
         <div className="grid grid-cols-4 items-center">
           {
-            isClient && user && user.img ? (
+            isClient && user && user.picture ? (
               <>
                 <div className="rounded-full w-10 aspect-square">
                   <Image
-                    src={user.img}
+                    src={user.picture}
                     alt="User Image"
                     width={40}
                     height={40}
