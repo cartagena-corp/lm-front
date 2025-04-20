@@ -19,10 +19,9 @@ export default function CreateBoardForm({ onSubmit, onCancel }: CreateBoardFormP
     description: "",
     startDate: "",
     endDate: "",
-    status: { id: 0, name: "" },
+    status: { id: 0, name: "", color: "" },
     createdAt: "",
     updatedAt: "",
-    createdBy: ""
   })
 
   const handleSubmit = (e: React.FormEvent) => {
