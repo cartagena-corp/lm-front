@@ -9,12 +9,14 @@ import Image from 'next/image'
 import { useConfigStore } from '@/lib/store/ConfigStore'
 import SprintList from '@/components/partials/SprintList'
 import { useIssueStore } from '@/lib/store/IssueStore'
+import { useSprintStore } from '@/lib/store/SprintStore'
 
 export default function TableroDetalle() {
-  const { getValidAccessToken, isAuthenticated } = useAuthStore()
-  const { setIssues } = useIssueStore()
-  const { selectedBoard, setBoard } = useBoardStore()
   const { setProjectConfig, projectConfig, projectStatus, setConfig } = useConfigStore()
+  const { getValidAccessToken, isAuthenticated, getListUsers } = useAuthStore()
+  const { selectedBoard, setBoard } = useBoardStore()
+  const { getSprints } = useSprintStore()
+  const { setIssues } = useIssueStore()
   const { id } = useParams()
 
   useEffect(() => {
@@ -25,6 +27,8 @@ export default function TableroDetalle() {
           await setBoard(token, id as string)
           await setIssues(token, id as string)
           await setProjectConfig(id as string, token)
+          await getSprints(token, id as string)
+          await getListUsers(token)
         }
       })()
     }

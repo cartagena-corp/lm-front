@@ -9,7 +9,7 @@ interface Task {
   description: string
   priority: 'low' | 'medium' | 'high'
   status: 'todo' | 'in-progress' | 'done'
-  assignee: string
+  assigned: string
   dueDate: string
   project: string
 }
@@ -21,7 +21,7 @@ const initialTasks: Task[] = [
     description: 'Crear mockups en Figma',
     priority: 'high',
     status: 'in-progress',
-    assignee: 'Ana García',
+    assigned: 'Ana García',
     dueDate: '2024-02-25',
     project: 'Proyecto Alpha',
   },
@@ -31,7 +31,7 @@ const initialTasks: Task[] = [
     description: 'Usar NextAuth.js',
     priority: 'medium',
     status: 'todo',
-    assignee: 'Carlos López',
+    assigned: 'Carlos López',
     dueDate: '2024-02-28',
     project: 'Desarrollo Web',
   },
@@ -41,7 +41,7 @@ const initialTasks: Task[] = [
     description: 'Instalar dependencias',
     priority: 'low',
     status: 'done',
-    assignee: 'María Rodríguez',
+    assigned: 'María Rodríguez',
     dueDate: '2024-02-15',
     project: 'Marketing',
   },
@@ -178,7 +178,7 @@ export default function FiltrosPage() {
             </div>
             <div className="mt-4 flex items-center justify-between text-sm text-gray-500">
               <div className="flex items-center space-x-4">
-                <span>Asignado a: {task.assignee}</span>
+                <span>Asignado a: {task.assigned}</span>
                 <span>Fecha límite: {task.dueDate}</span>
               </div>
               <span>Proyecto: {task.project}</span>
