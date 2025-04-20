@@ -60,7 +60,7 @@ export default function FilterProjectForm({ onSubmit, onCancel }: FilterFormProp
 
    const handleSubmit = (e: FormEvent) => {
       e.preventDefault()
-      console.log(formData)
+      // console.log(formData)
       onSubmit(formData)
    }
 

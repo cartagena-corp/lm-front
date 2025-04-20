@@ -123,7 +123,7 @@ export default function Kanban() {
    }
 
    const handleDetails = (data: { keyword: string, state: string, sort: string, isAsc: boolean }) => {
-      console.log("handleFilter", data)
+      // console.log("handleFilter", data)
       setIsTaskDetailsModalOpen(false)
    }
 
