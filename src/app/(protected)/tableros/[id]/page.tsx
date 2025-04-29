@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { useAuthStore } from '@/lib/store/AuthStore'
 import { useBoardStore } from '@/lib/store/BoardStore'
@@ -10,11 +10,15 @@ import { useConfigStore } from '@/lib/store/ConfigStore'
 import SprintList from '@/components/partials/SprintList'
 import { useIssueStore } from '@/lib/store/IssueStore'
 import { useSprintStore } from '@/lib/store/SprintStore'
+import Modal from '@/components/layout/Modal'
+import UpdateProjectForm from '@/components/partials/UpdateProjectForm'
+import { ProjectProps } from '@/lib/types/types'
 
 export default function TableroDetalle() {
-  const { setProjectConfig, projectConfig, projectStatus, setConfig } = useConfigStore()
+  const { setProjectConfig, projectStatus, setConfig } = useConfigStore()
   const { getValidAccessToken, isAuthenticated, getListUsers } = useAuthStore()
-  const { selectedBoard, setBoard } = useBoardStore()
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false)
+  const { selectedBoard, setBoard, updateBoard } = useBoardStore()
   const { getSprints } = useSprintStore()
   const { setIssues } = useIssueStore()
   const { id } = useParams()
@@ -37,51 +41,65 @@ export default function TableroDetalle() {
   useEffect(() => { if (isAuthenticated) setConfig() }, [isAuthenticated, setConfig])
 
   const formatDate = (fecha: string | null, includeTime: boolean = false): string => {
-    if (!fecha) return "No definida";
+    if (!fecha) return "No definida"
 
-    const dateObj = new Date(fecha);
-    if (isNaN(dateObj.getTime())) return "Fecha inválida";
+    const dateObj = new Date(fecha)
+    if (isNaN(dateObj.getTime())) return "Fecha inválida"
 
-    const day = dateObj.getDate().toString().padStart(2, '0');
+    const day = dateObj.getDate().toString().padStart(2, '0')
     const month = dateObj
       .toLocaleString('es-ES', { month: 'short' })
       .replace('.', '')
-      .toLowerCase();
-    const year = dateObj.getFullYear();
+      .toLowerCase()
+    const year = dateObj.getFullYear()
 
-    let formatted = `${day} ${month} ${year}`;
+    let formatted = `${day} ${month} ${year}`
 
     if (includeTime) {
-      const hours = dateObj.getHours().toString().padStart(2, '0');
-      const minutes = dateObj.getMinutes().toString().padStart(2, '0');
-      formatted += ` ${hours}:${minutes}`;
+      const hours = dateObj.getHours().toString().padStart(2, '0')
+      const minutes = dateObj.getMinutes().toString().padStart(2, '0')
+      formatted += ` ${hours}:${minutes}`
     }
 
-    return formatted;
-  };
+    return formatted
+  }
 
   const getStatusName = (id: number) => {
     if (projectStatus) return projectStatus?.find(status => status.id === id)
   }
 
-  return (
+  const handleUpdate = async (formData: { name: string, description?: string, startDate?: string, endDate?: string, status: number }) => {
+    const token = await getValidAccessToken()
+    if (token) await updateBoard(token, formData, selectedBoard?.id as string)
+    setIsUpdateModalOpen(false)
+  }
 
+  return (
     <main className='bg-gray-100 flex flex-col ml-64 min-h-screen gap-6 p-10'>
       <h4 className='font-bold text-2xl'>Detalles del tablero</h4>
 
       <section className='bg-white rounded-md flex flex-col gap-2 p-6'>
-        <div className='flex justify-start items-center gap-4'>
-          <h5 className='font-semibold text-xl'>{selectedBoard?.name}</h5>
-          {
-            selectedBoard &&
-            <div className='rounded-full text-xs border px-2 whitespace-nowrap'
-              style={{
-                backgroundColor: `${getStatusName(Number(selectedBoard.status))?.color}0f`,
-                color: getStatusName(Number(selectedBoard.status))?.color,
-              }}>
-              {getStatusName(Number(selectedBoard.status))?.name}
-            </div>
-          }
+        <div className='flex justify-between items-start gap-2'>
+          <aside className='flex justify-start items-center gap-4'>
+            <h5 className='font-semibold text-xl'>{selectedBoard?.name}</h5>
+            {
+              selectedBoard &&
+              <div className='rounded-full text-xs border px-2 whitespace-nowrap'
+                style={{
+                  backgroundColor: `${getStatusName(Number(selectedBoard.status))?.color}0f`,
+                  color: getStatusName(Number(selectedBoard.status))?.color,
+                }}>
+                {getStatusName(Number(selectedBoard.status))?.name}
+              </div>
+            }
+          </aside>
+
+          <button
+            onClick={() => setIsUpdateModalOpen(true)}
+            className="border-blue-600 text-blue-600 hover:bg-blue-700 hover:text-white duration-150 px-4 py-2 rounded-md border whitespace-nowrap"
+          >
+            Editar Proyecto
+          </button>
         </div>
         <p className='text-black/50 text-sm mb-4'>{selectedBoard?.description}</p>
 
@@ -92,7 +110,23 @@ export default function TableroDetalle() {
             </span>
             <div className='flex flex-col'>
               <h6 className='text-black/50 text-xs'>Fecha de inicio</h6>
-              <p>{selectedBoard ? formatDate(selectedBoard.startDate, false) : formatDate(null)}</p>
+              <p>
+                {
+                  (() => {
+                    const dateStr = selectedBoard?.startDate
+                    if (!dateStr) return ''
+
+                    const [year, month, day] = dateStr.split('-').map(num => parseInt(num, 10))
+                    const date = new Date(year, month - 1, day)
+
+                    return date.toLocaleDateString('es-ES', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric'
+                    })
+                  })()
+                }
+              </p>
             </div>
           </div>
 
@@ -102,7 +136,23 @@ export default function TableroDetalle() {
             </span>
             <div className='flex flex-col'>
               <h6 className='text-black/50 text-xs'>Fecha de fin</h6>
-              <p>{selectedBoard ? formatDate(selectedBoard.endDate, false) : formatDate(null)}</p>
+              <p>
+                {
+                  (() => {
+                    const dateStr = selectedBoard?.endDate
+                    if (!dateStr) return ''
+
+                    const [year, month, day] = dateStr.split('-').map(num => parseInt(num, 10))
+                    const date = new Date(year, month - 1, day)
+
+                    return date.toLocaleDateString('es-ES', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric'
+                    })
+                  })()
+                }
+              </p>
             </div>
           </div>
 
@@ -112,7 +162,31 @@ export default function TableroDetalle() {
             </span>
             <div className='flex flex-col'>
               <h6 className='text-black/50 text-xs'>Creado</h6>
-              <p>{selectedBoard ? formatDate(selectedBoard.createdAt, true) : formatDate(null)}</p>
+              <p>
+                {
+                  (() => {
+                    const dateStr = selectedBoard?.createdAt
+                    if (!dateStr) return ''
+
+                    let date
+                    if (dateStr.includes('T')) {
+                      date = new Date(dateStr)
+                    } else {
+                      const [year, month, day] = dateStr.split('-').map(num => parseInt(num, 10))
+                      date = new Date(year, month - 1, day)
+                    }
+
+                    return date.toLocaleDateString('es-ES', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: false
+                    })
+                  })()
+                }
+              </p>
             </div>
           </div>
 
@@ -122,7 +196,31 @@ export default function TableroDetalle() {
             </span>
             <div className='flex flex-col'>
               <h6 className='text-black/50 text-xs'>Actualizado</h6>
-              <p>{selectedBoard ? formatDate(selectedBoard.updatedAt, true) : formatDate(null)}</p>
+              <p>
+                {
+                  (() => {
+                    const dateStr = selectedBoard?.updatedAt
+                    if (!dateStr) return ''
+
+                    let date
+                    if (dateStr.includes('T')) {
+                      date = new Date(dateStr)
+                    } else {
+                      const [year, month, day] = dateStr.split('-').map(num => parseInt(num, 10))
+                      date = new Date(year, month - 1, day)
+                    }
+
+                    return date.toLocaleDateString('es-ES', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: false
+                    })
+                  })()
+                }
+              </p>
             </div>
           </div>
         </div>
@@ -132,7 +230,7 @@ export default function TableroDetalle() {
         <div className='flex justify-start items-center gap-2'>
           <div className='bg-black/10 overflow-hidden aspect-square rounded-full w-12'>
             {
-              selectedBoard &&
+              selectedBoard && selectedBoard.createdBy &&
               <Image src={selectedBoard?.createdBy.picture}
                 alt='createdBy'
                 width={48}
@@ -143,13 +241,26 @@ export default function TableroDetalle() {
           <div className='flex flex-col justify-center items-start'>
             <span className='text-black/50 text-xs'>Creado por</span>
             <span className='font-medium'>
-              {selectedBoard?.createdBy.firstName} {selectedBoard?.createdBy.lastName}
+              {selectedBoard?.createdBy?.firstName} {selectedBoard?.createdBy?.lastName}
             </span>
           </div>
         </div>
       </section>
 
       <SprintList />
-    </main >
+
+      {/* Modal para updatear el project */}
+      <Modal
+        isOpen={isUpdateModalOpen}
+        onClose={() => setIsUpdateModalOpen(false)}
+        title="Actualizar Proyecto"
+      >
+        <UpdateProjectForm
+          onSubmit={handleUpdate}
+          onCancel={() => setIsUpdateModalOpen(false)}
+          projectObject={selectedBoard as ProjectProps}
+        />
+      </Modal>
+    </main>
   )
 } 
