@@ -110,7 +110,7 @@ export default function CreateBoardForm({ onSubmit, onCancel }: CreateBoardFormP
           <button onClick={() => setIsStatusOpen(!isStatusOpen)} type='button'
             className='border-gray-300 flex justify-center items-center select-none rounded-md border w-full px-2 gap-2'>
             <p className='py-2 w-full text-start text-sm'>
-              {formData.status.name}
+              {typeof formData.status === 'object' ? formData.status.name : ''}
             </p>
 
             <svg className={`text-gray-500 size-4 duration-150 ${isStatusOpen ? "-rotate-180" : ""}`}
