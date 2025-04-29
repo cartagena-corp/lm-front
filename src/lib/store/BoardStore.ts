@@ -5,8 +5,9 @@ interface BoardState {
    boards: GlobalPagination
    selectedBoard: ProjectProps | null
    setBoards: (token: string, filters?: FilterProjectProps) => Promise<void>
-   setBoard: (token: string, projectId: string) => Promise<void>
    createBoard: (token: string, boardData: ProjectProps) => Promise<void>
+   setBoard: (token: string, projectId: string) => Promise<void>
+   updateBoard: (token: string, boardData: { name: string, description?: string, startDate?: string, endDate?: string, status: number }, projectId: string) => Promise<void>
 }
 
 const API_URL = process.env.NEXT_PUBLIC_PROJECTS
@@ -112,6 +113,22 @@ export const useBoardStore = create<BoardState>((set) => ({
          set({
             selectedBoard: data
          })
+      } catch (error) {
+         console.error('Error en la solicitud', error)
+      }
+   },
+   updateBoard: async (token, boardData, projectId) => {
+      try {
+         const response = await fetch(`${API_URL}${process.env.NEXT_PUBLIC_GET_PROJECTS}/${projectId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, },
+            body: JSON.stringify(boardData)
+         })
+
+         if (!response.ok) return console.error('Error al actualizar el tablero', response.statusText)
+
+         const data: ProjectProps = await response.json()
+         set({ selectedBoard: { ...data, createdBy: useBoardStore.getState().selectedBoard?.createdBy } })
       } catch (error) {
          console.error('Error en la solicitud', error)
       }
