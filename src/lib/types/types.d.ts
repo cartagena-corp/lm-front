@@ -45,6 +45,7 @@ export interface TaskProps {
    updatedAt?: string                                  /* DD/MM/YYYY (T) HH:MM:SS */
    type?: number
    estimatedTime?: number
+   sprintId?: string
 }
 
 //* Comments
@@ -172,4 +173,20 @@ export interface SprintProps {
    status?: number
    startDate: string
    endDate: string
+   tasks?: {
+      content: TaskProps[]
+      totalPages: number
+      totalElements: number
+      size: number
+      number: number
+   }
+}
+
+//* GLOBAL GETTER PAGINATION
+export interface GlobalPagination {
+   content: [] | ProjectProps[] | TaskProps[] | SprintProps[]
+   totalPages: number
+   totalElements: number
+   size: number
+   number: number
 }
