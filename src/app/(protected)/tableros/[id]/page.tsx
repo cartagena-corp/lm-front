@@ -40,30 +40,6 @@ export default function TableroDetalle() {
 
   useEffect(() => { if (isAuthenticated) setConfig() }, [isAuthenticated, setConfig])
 
-  const formatDate = (fecha: string | null, includeTime: boolean = false): string => {
-    if (!fecha) return "No definida"
-
-    const dateObj = new Date(fecha)
-    if (isNaN(dateObj.getTime())) return "Fecha inválida"
-
-    const day = dateObj.getDate().toString().padStart(2, '0')
-    const month = dateObj
-      .toLocaleString('es-ES', { month: 'short' })
-      .replace('.', '')
-      .toLowerCase()
-    const year = dateObj.getFullYear()
-
-    let formatted = `${day} ${month} ${year}`
-
-    if (includeTime) {
-      const hours = dateObj.getHours().toString().padStart(2, '0')
-      const minutes = dateObj.getMinutes().toString().padStart(2, '0')
-      formatted += ` ${hours}:${minutes}`
-    }
-
-    return formatted
-  }
-
   const getStatusName = (id: number) => {
     if (projectStatus) return projectStatus?.find(status => status.id === id)
   }

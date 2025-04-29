@@ -2,9 +2,16 @@ import { CalendarIcon } from "@/assets/Icon"
 import { useConfigStore } from "@/lib/store/ConfigStore"
 import { ConfigProjectStatusProps, ProjectProps } from "@/lib/types/types"
 import Link from "next/link"
+import Modal from "../layout/Modal"
+import { useState } from "react"
+import DeleteBoardForm from "./DeleteBoardForm"
+import { useAuthStore } from "@/lib/store/AuthStore"
+import { useBoardStore } from "@/lib/store/BoardStore"
 
 export default function BoardCard({ board }: { board: ProjectProps }) {
-
+   const { getValidAccessToken } = useAuthStore()
+   const { deleteBoard } = useBoardStore()
+   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
    const { projectStatus } = useConfigStore()
 
    const formatDate = (fecha: string | null) => {
@@ -25,6 +32,12 @@ export default function BoardCard({ board }: { board: ProjectProps }) {
    const getStatusName = (statusId: number) => {
       const statusObj = projectStatus?.find(status => status.id === statusId)
       return statusObj?.name || "Estado desconocido"
+   }
+
+   const handleDelete = async (gonnaDelete: boolean) => {
+      const token = await getValidAccessToken()
+      if (token && gonnaDelete) await deleteBoard(token, board.id)
+      setIsDeleteModalOpen(false)
    }
 
    return (
@@ -59,9 +72,31 @@ export default function BoardCard({ board }: { board: ProjectProps }) {
             </article>
          </section>
 
-         <Link href={`/tableros/${board.id}`} className='bg-blue-900 hover:bg-gray-900 text-white hover:shadow-lg duration-150 rounded-md text-center text-sm py-2'>
-            Ver detalles
-         </Link>
+         <section className="flex items-center gap-2">
+            <button onClick={() => setIsDeleteModalOpen(true)}
+               type="button"
+               className="bg-white hover:bg-red-700 hover:border-red-700 hover:text-white border-black/25 hover:shadow-lg border w-full duration-150 rounded-md text-center text-sm py-2"
+            // onClick={onCancel}
+            >
+               Eliminar
+            </button>
+            <Link href={`/tableros/${board.id}`} className='bg-blue-900 border-blue-900 hover:bg-gray-900 text-white border hover:shadow-lg w-full duration-150 rounded-md text-center text-sm py-2'>
+               Ver detalles
+            </Link>
+         </section>
+
+         {/* Modal para eliminar el proyecto */}
+         <Modal
+            isOpen={isDeleteModalOpen}
+            onClose={() => setIsDeleteModalOpen(false)}
+            title="Eliminar proyecto"
+         >
+            <DeleteBoardForm
+               onSubmit={handleDelete}
+               onCancel={() => setIsDeleteModalOpen(false)}
+               projectObject={board}
+            />
+         </Modal>
       </div>
    )
 }
