@@ -1,40 +1,25 @@
 'use client'
 
-import { FormEvent, useState, useEffect, useRef } from 'react'
-import Comment from '../ui/Comment'
 import AutoResizeTextarea from '../ui/AutoResizeTextarea'
-
-interface Task {
-   id: string
-   task: string
-   desc: string
-   priority: string
-}
+import { TaskProps } from '@/lib/types/types'
+import { FormEvent, useState } from 'react'
+import Comment from '../ui/Comment'
+import { useConfigStore } from '@/lib/store/ConfigStore'
 
 interface TaskDetailsFormProps {
-   onSubmit: (
-      data: {
-         keyword: string
-         state: string
-         sort: string
-         isAsc: boolean
-      }) => void
+   onSubmit: () => void
    onCancel: () => void
-   task: Task
+   task: TaskProps
 
 }
 
 export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetailsFormProps) {
-   const [formData, setFormData] = useState<{ keyword: string, state: string, sort: string, isAsc: boolean }>({
-      keyword: "",
-      state: "Cualquier estado",
-      sort: "Fecha de creación",
-      isAsc: false,
-   })
+   // const [comentarios, setComments] = useState<TaskProps>(task)
+   const { projectConfig } = useConfigStore()
 
    const handleSubmit = (e: FormEvent) => {
       e.preventDefault()
-      onSubmit(formData)
+      onSubmit()
    }
 
    const comments = [
@@ -78,8 +63,14 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
                <section className='flex flex-col gap-2 mb-3'>
                   <article className='space-y-1'>
                      <h6 className='font-semibold'>Descripción</h6>
-                     <div className='border-black/15 text-black/75 rounded-md text-sm border p-4 h-32 overflow-y-auto'>
-                        {task.desc}
+                     <div className='border-black/15 text-black/75 flex flex-col rounded-md text-sm border p-4 h-32 overflow-y-auto'>
+                        {
+                           task.descriptions.map(t =>
+                              <span key={t.id} className=''>
+                                 {t.text}
+                              </span>
+                           )
+                        }
                      </div>
                   </article>
                </section>
@@ -139,9 +130,14 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
                <article className='space-y-1 whitespace-nowrap'>
                   <h6 className='font-semibold'>Prioridad</h6>
                   <div className='border-black/15 text-black/75 rounded-md text-sm border p-2.5'>
-                     <span className={`${task.priority === "Low" ? "bg-green-200 text-green-700" : task.priority === "Medium" ?
-                        "bg-yellow-100 text-yellow-700" : "bg-red-200 text-red-700"} text-xs rounded-full px-2.5 py-0.5`}>
-                        {task.priority}
+                     <span className='text-xs border rounded-full px-2.5 py-0.5'
+                        style={{
+                           backgroundColor: `${(projectConfig?.issuePriorities.find(pr => pr.id === task.priority))?.color}0f`,
+                           borderColor: (projectConfig?.issuePriorities.find(pr => pr.id === task.priority))?.color,
+                           color: (projectConfig?.issuePriorities.find(pr => pr.id === task.priority))?.color,
+                        }}
+                     >
+                        {(projectConfig?.issuePriorities.find(pr => pr.id === task.priority))?.name}
                      </span>
                   </div>
                </article>

@@ -13,11 +13,14 @@ import { useSprintStore } from '@/lib/store/SprintStore'
 import Modal from '@/components/layout/Modal'
 import UpdateProjectForm from '@/components/partials/UpdateProjectForm'
 import { ProjectProps } from '@/lib/types/types'
+import { CustomSwitch } from '@/components/ui/CustomSwitch'
+import DiagramaGantt from '@/components/ui/DiagramaGantt'
 
 export default function TableroDetalle() {
   const { setProjectConfig, projectStatus, setConfig } = useConfigStore()
   const { getValidAccessToken, isAuthenticated, getListUsers } = useAuthStore()
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false)
+  const [sprintMode, setSprintMode] = useState<'Tablero' | 'Diagrama de Gantt'>('Tablero')
   const { selectedBoard, setBoard, updateBoard } = useBoardStore()
   const { getSprints } = useSprintStore()
   const { setIssues } = useIssueStore()
@@ -52,7 +55,10 @@ export default function TableroDetalle() {
 
   return (
     <main className='bg-gray-100 flex flex-col ml-64 min-h-screen gap-6 p-10'>
-      <h4 className='font-bold text-2xl'>Detalles del tablero</h4>
+      <section className='flex justify-between items-center'>
+        <h4 className='font-bold text-2xl'>Detalles del tablero</h4>
+        <CustomSwitch value={sprintMode} onChange={(value) => setSprintMode(value)} />
+      </section>
 
       <section className='bg-white rounded-md flex flex-col gap-2 p-6'>
         <div className='flex justify-between items-start gap-2'>
@@ -223,7 +229,7 @@ export default function TableroDetalle() {
         </div>
       </section>
 
-      <SprintList />
+      {sprintMode === "Tablero" ? <SprintList /> : <DiagramaGantt />}
 
       {/* Modal para updatear el project */}
       <Modal

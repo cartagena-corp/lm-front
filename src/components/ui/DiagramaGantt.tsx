@@ -90,7 +90,7 @@ export default function DiagramaGantt() {
 
 
    return (
-      <main className="bg-white p-4 rounded-md w-full h-full">
+      <main className="bg-white p-8 rounded-md w-full h-full">
          <h2 className="text-xl font-bold mb-4">Diagrama de Gantt</h2>
          <div className="w-full overflow-x-auto overflow-y-hidden">
             <div ref={ganttRef} className="w-full" />
