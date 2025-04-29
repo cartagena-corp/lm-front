@@ -334,8 +334,8 @@ export default function CreateTaskForm({ onSubmit, onCancel }: FormProps) {
             />
           </div>
         </div>
-
       </div>
+
       <div className="pb-3 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
         <button
           type="submit"
