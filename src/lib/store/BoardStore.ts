@@ -1,23 +1,12 @@
-import { FilterProjectProps, ProjectProps } from '../types/types'
+import { FilterProjectProps, GlobalPagination, ProjectProps } from '../types/types'
 import { create } from 'zustand'
 
-interface BoardProps {
-   content: ProjectProps[] | null
-   totalElements: number
-   totalPages: number
-   number: number
-   size: number
-}
-
 interface BoardState {
-   boards: BoardProps
+   boards: GlobalPagination
    selectedBoard: ProjectProps | null
    setBoards: (token: string, filters?: FilterProjectProps) => Promise<void>
    setBoard: (token: string, projectId: string) => Promise<void>
-   createBoard: (
-      token: string,
-      boardData: { name: string, description: string, startDate: string, endDate: string, status: number }
-   ) => Promise<void>
+   createBoard: (token: string, boardData: ProjectProps) => Promise<void>
 }
 
 const API_URL = process.env.NEXT_PUBLIC_PROJECTS
@@ -25,7 +14,7 @@ const API_URL = process.env.NEXT_PUBLIC_PROJECTS
 export const useBoardStore = create<BoardState>((set) => ({
    selectedBoard: null,
    boards: {
-      content: null,
+      content: [],
       totalElements: 0,
       totalPages: 0,
       number: 0,
@@ -60,8 +49,8 @@ export const useBoardStore = create<BoardState>((set) => ({
             return
          }
 
-         const data: BoardProps = await response.json()
-         // console.log("data: ", data)
+         const data: GlobalPagination = await response.json()
+
          set({
             boards: {
                content: data.content,
@@ -75,7 +64,7 @@ export const useBoardStore = create<BoardState>((set) => ({
          console.error('Error en la solicitud', error)
       }
    },
-   createBoard: async (token: string, boardData: { name: string, description: string, startDate: string, endDate: string, status: number }) => {
+   createBoard: async (token: string, boardData: ProjectProps) => {
       try {
          const response = await fetch(`${API_URL}${process.env.NEXT_PUBLIC_GET_PROJECTS}`, {
             method: 'POST',
@@ -96,7 +85,7 @@ export const useBoardStore = create<BoardState>((set) => ({
          set((state) => ({
             boards: {
                ...state.boards,
-               content: state.boards.content ? [newBoard, ...state.boards.content] : [newBoard],
+               content: state.boards.content ? [newBoard, ...state.boards.content as ProjectProps[]] : [newBoard],
                totalElements: state.boards.totalElements + 1
             }
          }))
@@ -120,7 +109,6 @@ export const useBoardStore = create<BoardState>((set) => ({
          }
 
          const data: ProjectProps = await response.json()
-         // console.log("data: ", data)
          set({
             selectedBoard: data
          })
