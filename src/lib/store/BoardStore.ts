@@ -8,6 +8,7 @@ interface BoardState {
    createBoard: (token: string, boardData: ProjectProps) => Promise<void>
    setBoard: (token: string, projectId: string) => Promise<void>
    updateBoard: (token: string, boardData: { name: string, description?: string, startDate?: string, endDate?: string, status: number }, projectId: string) => Promise<void>
+   deleteBoard: (token: string, projectId: string) => Promise<void>
 }
 
 const API_URL = process.env.NEXT_PUBLIC_PROJECTS
@@ -131,6 +132,18 @@ export const useBoardStore = create<BoardState>((set) => ({
          set({ selectedBoard: { ...data, createdBy: useBoardStore.getState().selectedBoard?.createdBy } })
       } catch (error) {
          console.error('Error en la solicitud', error)
+      }
+   },
+   deleteBoard: async (token, projectId) => {
+      try {
+         const response = await fetch(`${API_URL}${process.env.NEXT_PUBLIC_GET_PROJECTS}/${projectId}`,
+            { method: 'DELETE', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` } })
+         if (!response.ok) return console.error('Error al actualizar el tablero', response.statusText)
+
+      } catch (error) {
+         console.error('Error en la solicitud', error)
+      } finally {
+         useBoardStore.getState().setBoards(token)
       }
    },
 }))
