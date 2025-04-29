@@ -1,31 +1,28 @@
-//?  
-
-import { FilterTaskProps, TaskProps } from '../types/types'
+import { FilterTaskProps, GlobalPagination, TaskProps } from '../types/types'
 import { create } from 'zustand'
-
-interface IssuesProps {
-   content: TaskProps[] | []
-   totalElements: number
-   totalPages?: number
-   number?: number
-   size?: number
-}
+import { useSprintStore } from './SprintStore'
 
 interface IssueState {
-   issues: IssuesProps | null
+   issues: GlobalPagination
    selectedIssue: TaskProps | null
    setIssues: (token: string, projectId: string, filters?: FilterTaskProps) => Promise<void>
    createTask: (token: string, taskData: TaskProps) => Promise<void>
+   asignTaskToSprint: (token: string, taskIds: string[], sprintId: string, projectId: string) => Promise<void>
 }
 
 const API_URL = process.env.NEXT_PUBLIC_ISSUES
 
 export const useIssueStore = create<IssueState>((set) => ({
-   issues: null,
+   issues: {
+      content: [],
+      totalElements: 0,
+      totalPages: 0,
+      number: 0,
+      size: 10
+   },
    selectedIssue: null,
    setIssues: async (token, projectId, filters) => {
       try {
-         // Build query string with filters
          const params = new URLSearchParams()
          if (filters) {
             // if (filters.name) params.append('name', filters.name)
@@ -41,20 +38,11 @@ export const useIssueStore = create<IssueState>((set) => ({
 
          const response = await fetch(url, {
             method: 'GET',
-            headers: {
-               'Content-Type': 'application/json',
-               'Authorization': `Bearer ${token}`,
-            },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
          })
 
-         if (!response.ok) {
-            console.error('Error al obtener las issues del tablero', response.statusText)
-            return
-         }
-
-         const data: IssuesProps = await response.json()
-         console.log("data: ", data)
-
+         if (!response.ok) return console.error('Error al obtener las issues del tablero', response.statusText)
+         const data: GlobalPagination = await response.json()
          set({
             issues: {
                content: data.content,
@@ -62,7 +50,7 @@ export const useIssueStore = create<IssueState>((set) => ({
                totalPages: data.totalPages,
                number: data.number,
                size: data.size,
-            },
+            }
          })
       } catch (error) {
          console.error('Error en la solicitud', error)
@@ -72,29 +60,43 @@ export const useIssueStore = create<IssueState>((set) => ({
       try {
          const response = await fetch(`${API_URL}${process.env.NEXT_PUBLIC_CREATE_ISSUE}`, {
             method: 'POST',
-            headers: {
-               "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
-            },
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
             body: JSON.stringify(taskData)
          })
 
-         if (!response.ok) {
-            console.error("Error al crear la tarea", response.statusText)
-            return
-         }
-
+         if (!response.ok) return console.error("Error al crear la tarea", response.statusText)
          const newIssue: TaskProps = await response.json()
 
          set((state) => ({
             issues: {
                ...state.issues,
-               content: state.issues?.content ? [newIssue, ...state.issues.content] : [newIssue],
-               totalElements: state.issues?.totalElements ? state.issues.totalElements + 1 : 1,
+               content: state.issues.content ? [newIssue, ...state.issues.content as TaskProps[]] : [newIssue],
+               totalElements: state.issues.totalElements + 1
             }
          }))
       } catch (error) {
          console.error("Error en createTask", error)
+      } finally {
+         await useSprintStore.getState().getSprints(token, taskData.projectId)
+      }
+   },
+   asignTaskToSprint: async (token: string, taskIds: string[], sprintId: string, projectId: string) => {
+      try {
+         if (sprintId !== "null") {
+            const response = await fetch(`${API_URL}${process.env.NEXT_PUBLIC_ASIGN_ISSUE_TO_SPRINT}`, {
+               method: 'POST',
+               headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+               body: JSON.stringify({ issueIds: taskIds, sprintId: sprintId })
+            })
+
+            if (!response.ok) return console.error("Error al asignar las tareas al sprint", response.statusText)
+         } else {
+            await useSprintStore.getState().removeIssueFromSprint(token, taskIds, projectId)
+         }
+      } catch (error) {
+         console.error("Error en asignTaskToSprint", error)
+      } finally {
+         await useSprintStore.getState().getSprints(token, projectId)
       }
    },
 }))
