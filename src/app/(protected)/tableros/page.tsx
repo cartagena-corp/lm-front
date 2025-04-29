@@ -9,7 +9,6 @@ import { useBoardStore } from '@/lib/store/BoardStore'
 import { useAuthStore } from '@/lib/store/AuthStore'
 import Modal from '@/components/layout/Modal'
 import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
 
 export default function TablerosPage() {
   const { boards, setBoards, createBoard } = useBoardStore()
@@ -22,7 +21,10 @@ export default function TablerosPage() {
   // Función para crear un nuevo tablero utilizando un token validado
   const handleCreateBoard = async (newBoard: ProjectProps) => {
     const token = await getValidAccessToken()
-    if (token) await createBoard(token, { ...newBoard, status: newBoard.status.id })
+    if (token) {
+      const statusId = typeof newBoard.status === 'object' ? newBoard.status.id : newBoard.status;
+      await createBoard(token, { ...newBoard, status: statusId });
+    }
     setIsCreateModalOpen(false)
   }
   // Cargar los tableros desde la API asegurando que el token esté vigente.
@@ -68,7 +70,7 @@ export default function TablerosPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
         {
           boards.content ?
-            boards.content.map((board, i) => <BoardCard key={i} board={board} />)
+            boards.content.map((board, i) => <BoardCard key={i} board={board as ProjectProps} />)
             :
             Array.from({ length: 8 }).map((_, i) => <BoardCardSkeleton key={i} />)
         }

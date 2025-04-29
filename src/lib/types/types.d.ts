@@ -5,11 +5,11 @@ export interface ProjectProps {
    id: string
    name: string
    description: string
-   startDate: string                                  /* DD/MM/YYYY */
-   endDate: string                                    /* DD/MM/YYYY */
-   status: ConfigProjectStatusProps                                     /* DEFAULT: "Activo" | "Inactivo" | "Finalizado" */
-   createdAt: string                                  /* DD/MM/YYYY (T) HH:MM:SS */
-   updatedAt: string                                  /* DD/MM/YYYY (T) HH:MM:SS */
+   startDate: string
+   endDate: string
+   status: ConfigProjectStatusProps | number
+   createdAt: string
+   updatedAt: string
    createdBy?: {
       id: string,
       firstName: string,
