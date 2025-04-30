@@ -1,5 +1,5 @@
 import { useMultiDragContext } from '@/components/ui/dnd-kit/MultiDragContext'
-import React, { Dispatch, SetStateAction, useState } from 'react'
+import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react'
 import { Draggable } from '@/components/ui/dnd-kit/Draggable'
 import { Droppable } from '@/components/ui/dnd-kit/Droppable'
 import { SprintProps, TaskProps } from '@/lib/types/types'
@@ -8,9 +8,19 @@ import { useConfigStore } from '@/lib/store/ConfigStore'
 import { CalendarIcon } from '@/assets/Icon'
 import Modal from '../layout/Modal'
 import Image from 'next/image'
+import UpdateTaskForm from '../partials/UpdateTaskForm'
+import { useIssueStore } from '@/lib/store/IssueStore'
+import { useAuthStore } from '@/lib/store/AuthStore'
 
 export default function IssuesRow({ spr, setIsOpen }: { spr: SprintProps, setIsOpen: Dispatch<SetStateAction<boolean>> }) {
+   const { getValidAccessToken } = useAuthStore()
+   const { deleteIssue, updateIssue } = useIssueStore()
+
+   const wrapperRef = useRef<HTMLDivElement>(null)
+
    const [isTaskDetailsModalOpen, setIsTaskDetailsModalOpen] = useState(false)
+   const [isTaskUpdateModalOpen, setIsTaskUpdateModalOpen] = useState(false)
+   const [openItemId, setOpenItemId] = useState<string | null>(null)
    const { selectedIds, setSelectedIds } = useMultiDragContext()
    const [taskActive, setTaskActive] = useState<TaskProps>()
    const { projectConfig } = useConfigStore()
@@ -46,6 +56,30 @@ export default function IssuesRow({ spr, setIsOpen }: { spr: SprintProps, setIsO
    const toggleSelectAll = () => {
       if (allSelected) setSelectedIds(prev => prev.filter(id => !sprintTaskIds.includes(id)))
       else setSelectedIds(prev => Array.from(new Set([...prev, ...sprintTaskIds])))
+   }
+
+   useEffect(() => {
+      const handlePointerDown = (event: PointerEvent) => { if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) setOpenItemId(null) }
+      document.addEventListener('pointerdown', handlePointerDown)
+      return () => document.removeEventListener('pointerdown', handlePointerDown)
+   }, [])
+
+   const handleUpdate = async (formData: {
+      descriptions: { id?: string, title: string, text: string }[],
+      estimatedTime: number,
+      priority: number,
+      status: number,
+      title: string,
+      type: number
+   }) => {
+      const token = await getValidAccessToken()
+      if (token) await updateIssue(token, formData)
+      setIsTaskUpdateModalOpen(false)
+   }
+
+   const handleDelete = async () => {
+      const token = await getValidAccessToken()
+      if (token) await deleteIssue(token, taskActive?.id as string, taskActive?.projectId as string)
    }
 
    return (
@@ -106,110 +140,137 @@ export default function IssuesRow({ spr, setIsOpen }: { spr: SprintProps, setIsO
                         <h5 className="col-span-1 text-center">Acciones</h5>
                      </div>
 
-                     {spr.tasks.content.map(task => {
-                        const id = task.id as string
-                        const isChecked = selectedIds.includes(id)
+                     {
+                        spr.tasks.content.map(task => {
+                           const id = task.id as string
+                           const isChecked = selectedIds.includes(id)
 
-                        return (
-                           <Draggable
-                              key={id}
-                              id={id}
-                              styleClass="grid grid-cols-18 items-center gap-2 px-2 py-4 hover:bg-black/5 select-none cursor-grab active:cursor-grabbing"
-                           >
-                              {/* Checkbox individual */}
-                              <div className="col-span-1 flex justify-center">
-                                 <input
-                                    type="checkbox"
-                                    checked={isChecked}
-                                    onChange={() => toggleSelect(id)}
-                                    onPointerDown={e => e.stopPropagation()}
-                                    className="cursor-pointer"
-                                 />
-                              </div>
-
-                              {/* Tipo */}
-                              <div
-                                 className="col-span-1 rounded-full text-xs border px-2 whitespace-nowrap w-fit"
-                                 style={{
-                                    backgroundColor: `${getTypeStyle(Number(task.type))?.color}0f`,
-                                    color: getTypeStyle(Number(task.type))?.color
-                                 }}
+                           return (
+                              <Draggable
+                                 key={id}
+                                 id={id}
+                                 styleClass="grid grid-cols-18 items-center gap-2 px-2 py-4 hover:bg-black/5 select-none cursor-grab active:cursor-grabbing"
                               >
-                                 {getTypeStyle(Number(task.type))?.name}
-                              </div>
-
-                              {/* Tarea */}
-                              <div className="col-span-5">
-                                 <h6 className="font-medium line-clamp-1">{task.title}</h6>
-                                 <p className="text-xs text-black/75 line-clamp-1">
-                                    {task.descriptions[0].text}
-                                 </p>
-                              </div>
-
-                              {/* Estado */}
-                              <div
-                                 className="col-span-2 rounded-full text-xs border px-2 whitespace-nowrap w-fit"
-                                 style={{
-                                    backgroundColor: `${getStatusStyle(Number(task.status))?.color}0f`,
-                                    color: getStatusStyle(Number(task.status))?.color
-                                 }}
-                              >
-                                 {getStatusStyle(Number(task.status))?.name}
-                              </div>
-
-                              {/* Prioridad */}
-                              <div
-                                 className="col-span-2 rounded-full text-xs border px-2 whitespace-nowrap w-fit"
-                                 style={{
-                                    backgroundColor: `${getPriorityStyle(Number(task.priority))?.color}0f`,
-                                    color: getPriorityStyle(Number(task.priority))?.color
-                                 }}
-                              >
-                                 {getPriorityStyle(Number(task.priority))?.name}
-                              </div>
-
-                              {/* Asignado a */}
-                              <div className="col-span-5 flex items-center gap-2">
-                                 <div className="w-6 h-6 aspect-square flex items-center justify-center rounded-full bg-black/10 overflow-hidden">
-                                    {typeof task.assignedId === 'object' && task.assignedId.picture ? (
-                                       <Image
-                                          src={task.assignedId.picture}
-                                          alt="assignedto"
-                                          width={24}
-                                          height={24}
-                                       />
-                                    ) : (
-                                       <span className="font-medium text-sm">
-                                          {typeof task.assignedId === 'object'
-                                             ? task.assignedId.firstName.charAt(0).toUpperCase()
-                                             : ''}
-                                       </span>
-                                    )}
+                                 {/* Checkbox individual */}
+                                 <div className="col-span-1 flex justify-center">
+                                    <input
+                                       type="checkbox"
+                                       checked={isChecked}
+                                       onChange={() => toggleSelect(id)}
+                                       onPointerDown={e => e.stopPropagation()}
+                                       className="cursor-pointer"
+                                    />
                                  </div>
-                                 <p className="text-xs">
-                                    {typeof task.assignedId === 'object'
-                                       ? `${task.assignedId.firstName} ${task.assignedId.lastName}`
-                                       : ''}
-                                 </p>
-                              </div>
 
-                              {/* Acciones */}
-                              <button
-                                 id="custom-ellipsis"
-                                 onPointerDown={e => e.stopPropagation()}
-                                 onClick={() => {
-                                    setIsTaskDetailsModalOpen(true)
-                                    setTaskActive(task)
-                                 }}
-                                 className="col-span-1 flex justify-center items-center gap-1 p-2"
-                              >
-                                 <span id="dot" />
-                                 <span id="dot" />
-                                 <span id="dot" />
-                              </button>
-                           </Draggable>
-                        )
-                     })}
+                                 {/* Tipo */}
+                                 <div
+                                    className="col-span-1 rounded-full text-xs border px-2 whitespace-nowrap w-fit"
+                                    style={{
+                                       backgroundColor: `${getTypeStyle(Number(task.type))?.color}0f`,
+                                       color: getTypeStyle(Number(task.type))?.color
+                                    }}
+                                 >
+                                    {getTypeStyle(Number(task.type))?.name}
+                                 </div>
+
+                                 {/* Tarea */}
+                                 <div className="col-span-5">
+                                    <h6 className="font-medium line-clamp-1">{task.title}</h6>
+                                    <p className="text-xs text-black/75 line-clamp-1">
+                                       {task.descriptions[0].text}
+                                    </p>
+                                 </div>
+
+                                 {/* Estado */}
+                                 <div
+                                    className="col-span-2 rounded-full text-xs border px-2 whitespace-nowrap w-fit"
+                                    style={{
+                                       backgroundColor: `${getStatusStyle(Number(task.status))?.color}0f`,
+                                       color: getStatusStyle(Number(task.status))?.color
+                                    }}
+                                 >
+                                    {getStatusStyle(Number(task.status))?.name}
+                                 </div>
+
+                                 {/* Prioridad */}
+                                 <div
+                                    className="col-span-2 rounded-full text-xs border px-2 whitespace-nowrap w-fit"
+                                    style={{
+                                       backgroundColor: `${getPriorityStyle(Number(task.priority))?.color}0f`,
+                                       color: getPriorityStyle(Number(task.priority))?.color
+                                    }}
+                                 >
+                                    {getPriorityStyle(Number(task.priority))?.name}
+                                 </div>
+
+                                 {/* Asignado a */}
+                                 <div className="col-span-5 flex items-center gap-2">
+                                    <div className="w-6 h-6 aspect-square flex items-center justify-center rounded-full bg-black/10 overflow-hidden">
+                                       {typeof task.assignedId === 'object' && task.assignedId.picture ? (
+                                          <Image
+                                             src={task.assignedId.picture}
+                                             alt="assignedto"
+                                             width={24}
+                                             height={24}
+                                          />
+                                       ) : (
+                                          <span className="font-medium text-sm">
+                                             {typeof task.assignedId === 'object'
+                                                ? task.assignedId.firstName.charAt(0).toUpperCase()
+                                                : ''}
+                                          </span>
+                                       )}
+                                    </div>
+                                    <p className="text-xs">
+                                       {typeof task.assignedId === 'object'
+                                          ? `${task.assignedId.firstName} ${task.assignedId.lastName}`
+                                          : ''}
+                                    </p>
+                                 </div>
+
+                                 {/* Acciones */}
+                                 <div ref={openItemId === task.id ? wrapperRef : null} className='relative flex justify-center w-full cursor-pointer' onPointerDown={e => e.stopPropagation()}>
+                                    <button
+                                       id="custom-ellipsis"
+                                       onClick={() => { setOpenItemId(openItemId === task.id ? null : task.id as string), setTaskActive(task) }}
+                                       className="col-span-1 flex justify-center items-center gap-1 p-2"
+                                    >
+                                       <span id="dot" />
+                                       <span id="dot" />
+                                       <span id="dot" />
+                                    </button>
+
+                                    {
+                                       openItemId === task.id &&
+                                       <div className='bg-white border-black/15 top-[125%] overflow-hidden select-animation rounded-md text-xs absolute border w-full z-20'>
+                                          <button className='hover:bg-black/5 duration-150 w-full text-start p-2'
+                                             onClick={() => {
+                                                setIsTaskDetailsModalOpen(true)
+                                                setOpenItemId(null)
+                                             }}>
+                                             Ver
+                                          </button>
+                                          <button className='hover:bg-black/5 duration-150 w-full text-start p-2'
+                                             onClick={() => {
+                                                setIsTaskUpdateModalOpen(true)
+                                                setOpenItemId(null)
+                                             }}>
+                                             Editar
+                                          </button>
+                                          <button className='hover:bg-black/5 duration-150 w-full text-start p-2'
+                                             onClick={() => {
+                                                handleDelete()
+                                                setOpenItemId(null)
+                                             }}>
+                                             Eliminar
+                                          </button>
+                                       </div>
+                                    }
+                                 </div>
+                              </Draggable>
+                           )
+                        })
+                     }
                   </>
                ) : (
                   <p className="text-center text-sm text-black/50 py-2">
@@ -220,17 +281,14 @@ export default function IssuesRow({ spr, setIsOpen }: { spr: SprintProps, setIsO
          </Droppable>
 
          {/* Modal de detalle de tarea */}
-         <Modal
-            customWidth="sm:max-w-4xl"
-            isOpen={isTaskDetailsModalOpen}
-            onClose={() => setIsTaskDetailsModalOpen(false)}
-            title={taskActive?.title as string}
-         >
-            <TaskDetailsForm
-               task={taskActive as TaskProps}
-               onSubmit={() => setIsTaskDetailsModalOpen(false)}
-               onCancel={() => setIsTaskDetailsModalOpen(false)}
-            />
+         <Modal isOpen={isTaskDetailsModalOpen} customWidth="sm:max-w-4xl" onClose={() => setIsTaskDetailsModalOpen(false)
+         } title={taskActive?.title as string} >
+            <TaskDetailsForm task={taskActive as TaskProps} onSubmit={() => setIsTaskDetailsModalOpen(false)} onCancel={() => setIsTaskDetailsModalOpen(false)} />
+         </Modal>
+
+         {/* Modal de editar tarea */}
+         <Modal isOpen={isTaskUpdateModalOpen} customWidth="sm:max-w-4xl" onClose={() => setIsTaskUpdateModalOpen(false)} title={`Editar Tarea - ${taskActive?.title}`} >
+            <UpdateTaskForm onSubmit={handleUpdate} onCancel={() => setIsTaskUpdateModalOpen(false)} taskObject={taskActive as TaskProps} />
          </Modal>
       </>
    )
