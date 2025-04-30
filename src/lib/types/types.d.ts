@@ -24,6 +24,7 @@ export interface TaskProps {
    title: string
    descriptions: {
       id?: string
+      title: string
       text: string
    }[]
    projectId: string
@@ -43,8 +44,8 @@ export interface TaskProps {
    } | string
    createdAt?: string                                  /* DD/MM/YYYY (T) HH:MM:SS  */
    updatedAt?: string                                  /* DD/MM/YYYY (T) HH:MM:SS */
-   type?: number
-   estimatedTime?: number
+   type: number
+   estimatedTime: number
    sprintId?: string
 }
 
