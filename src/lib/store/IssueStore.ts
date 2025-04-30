@@ -2,12 +2,26 @@ import { FilterTaskProps, GlobalPagination, TaskProps } from '../types/types'
 import { create } from 'zustand'
 import { useSprintStore } from './SprintStore'
 
+interface IssueUpdated {
+   descriptions: { id?: string, title: string, text: string }[],
+   estimatedTime: number,
+   priority: number,
+   status: number,
+   title: string,
+   type: number
+   id?: string
+   projectId?: string
+}
+
+
 interface IssueState {
    issues: GlobalPagination
    selectedIssue: TaskProps | null
    setIssues: (token: string, projectId: string, filters?: FilterTaskProps) => Promise<void>
    createTask: (token: string, taskData: TaskProps) => Promise<void>
    asignTaskToSprint: (token: string, taskIds: string[], sprintId: string, projectId: string) => Promise<void>
+   updateIssue: (token: string, issueUpdated: IssueUpdated) => Promise<void>
+   deleteIssue: (token: string, issueId: string, projectId: string) => Promise<void>
 }
 
 const API_URL = process.env.NEXT_PUBLIC_ISSUES
@@ -56,7 +70,7 @@ export const useIssueStore = create<IssueState>((set) => ({
          console.error('Error en la solicitud', error)
       }
    },
-   createTask: async (token: string, taskData: TaskProps) => {
+   createTask: async (token, taskData) => {
       try {
          const response = await fetch(`${API_URL}${process.env.NEXT_PUBLIC_CREATE_ISSUE}`, {
             method: 'POST',
@@ -80,7 +94,7 @@ export const useIssueStore = create<IssueState>((set) => ({
          await useSprintStore.getState().getSprints(token, taskData.projectId)
       }
    },
-   asignTaskToSprint: async (token: string, taskIds: string[], sprintId: string, projectId: string) => {
+   asignTaskToSprint: async (token, taskIds, sprintId, projectId) => {
       try {
          if (sprintId !== "null") {
             const response = await fetch(`${API_URL}${process.env.NEXT_PUBLIC_ASIGN_ISSUE_TO_SPRINT}`, {
@@ -97,6 +111,56 @@ export const useIssueStore = create<IssueState>((set) => ({
          console.error("Error en asignTaskToSprint", error)
       } finally {
          await useSprintStore.getState().getSprints(token, projectId)
+      }
+   },
+   updateIssue: async (token, issueUpdated) => {
+      try {
+         const response = await fetch(`${API_URL}${process.env.NEXT_PUBLIC_CREATE_ISSUE}/${issueUpdated.id}`,
+            {
+               method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(
+                  {
+                     title: issueUpdated.title,
+                     descriptions: issueUpdated.descriptions,
+                     estimatedTime: issueUpdated.estimatedTime,
+                     priority: issueUpdated.priority,
+                     status: issueUpdated.status,
+                     type: issueUpdated.type,
+                  }
+               )
+            })
+         if (!response.ok) return console.error('Error al editar la issue', response.statusText)
+
+         set((state) => ({
+            issues: {
+               ...state.issues,
+               content: state.issues.content.map((issue) => issue.id === issueUpdated.id ? { ...issue, ...issueUpdated } : issue) as TaskProps[],
+            }
+         }))
+      } catch (error) {
+         console.error('Error en la solicitud', error)
+      } finally {
+         useIssueStore.getState().setIssues(token, issueUpdated.projectId as string)
+         useSprintStore.getState().getSprints(token, issueUpdated.projectId as string)
+      }
+   },
+   deleteIssue: async (token, issueId, projectId) => {
+      try {
+         const response = await fetch(`${API_URL}${process.env.NEXT_PUBLIC_CREATE_ISSUE}/${issueId}`,
+            { method: 'DELETE', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` } })
+         if (!response.ok) return console.error('Error al borrar la issue', response.statusText)
+
+         set((state) => ({
+            issues: {
+               ...state.issues,
+               content: state.issues.content.filter((issue) => issue.id !== issueId) as TaskProps[],
+               totalElements: state.issues.totalElements - 1
+            }
+         }))
+      } catch (error) {
+         console.error('Error en la solicitud', error)
+      } finally {
+         useIssueStore.getState().setIssues(token, projectId)
+         useSprintStore.getState().getSprints(token, projectId)
       }
    },
 }))
