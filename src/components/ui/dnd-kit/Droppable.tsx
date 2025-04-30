@@ -1,15 +1,14 @@
-import React from 'react'
 import { useDroppable } from '@dnd-kit/core'
+import React from 'react'
 
 interface DroppableProps {
-   id: string
    children: React.ReactNode
-   styleClass: string | null
+   styleClass?: string
+   id: string
 }
 
-export function Droppable({ id, children, styleClass = null }: DroppableProps) {
+export function Droppable({ id, children, styleClass = '' }: DroppableProps) {
    const { isOver, setNodeRef } = useDroppable({ id })
-
    return (
       <div className={`${styleClass} ${isOver ? 'border-blue-500' : 'border-transparent'} border-4 w-full rounded-md duration-300`} ref={setNodeRef}>
          {children}

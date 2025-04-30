@@ -1,19 +1,23 @@
-import React from 'react'
+import { useMultiDragContext } from './MultiDragContext'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
+import React from 'react'
 
 interface DraggableProps {
-   id: string
    children: React.ReactNode
-   styleClass: string | ""
+   styleClass?: string
+   id: string
 }
 
-export function Draggable({ id, children, styleClass = "" }: DraggableProps) {
-   const { attributes, listeners, setNodeRef, transform } = useDraggable({ id })
+export function Draggable({ id, children, styleClass = '' }: DraggableProps) {
+   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id })
+   const { selectedIds } = useMultiDragContext()
+   const isSelected = selectedIds.includes(id)
    const style = { transform: CSS.Translate.toString(transform) }
 
    return (
-      <div className={styleClass} ref={setNodeRef} style={style} {...listeners} {...attributes}>
+      <div className={`${styleClass} ${!isDragging ? "border-black/10" : "border-transparent rounded-md"} border-b ${isSelected && 'bg-sky-100'}`}
+         ref={setNodeRef} style={style} {...listeners} {...attributes}>
          {children}
       </div>
    )

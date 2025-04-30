@@ -1,14 +1,14 @@
-import { SprintProps, TaskProps } from "@/lib/types/types"
-import { DndContext, DragEndEvent } from "@dnd-kit/core"
-import { useSprintStore } from "@/lib/store/SprintStore"
-import { useBoardStore } from "@/lib/store/BoardStore"
-import { useIssueStore } from "@/lib/store/IssueStore"
-import { useAuthStore } from "@/lib/store/AuthStore"
-import CreateSprintForm from "./CreateSprintForm"
-import CreateTaskForm from "./CreateTaskForm"
-import IssuesRow from "../ui/IssuesRow"
-import Modal from "../layout/Modal"
-import { useState } from "react"
+import { DndContext, DragEndEvent, DragStartEvent, DragOverlay } from '@dnd-kit/core'
+import { MultiDragProvider } from '@/components/ui/dnd-kit/MultiDragContext'
+import { useSprintStore } from '@/lib/store/SprintStore'
+import { useBoardStore } from '@/lib/store/BoardStore'
+import { useIssueStore } from '@/lib/store/IssueStore'
+import { useAuthStore } from '@/lib/store/AuthStore'
+import CreateSprintForm from './CreateSprintForm'
+import CreateTaskForm from './CreateTaskForm'
+import IssuesRow from '../ui/IssuesRow'
+import Modal from '../layout/Modal'
+import { useState } from 'react'
 
 export default function SprintList() {
    const { createTask, asignTaskToSprint } = useIssueStore()
@@ -19,85 +19,103 @@ export default function SprintList() {
    const [isCreateSprintOpen, setIsCreateSprintOpen] = useState(false)
    const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
 
-   const handleCreateTask = async (newTask: TaskProps) => {
+   const [selectedIds, setSelectedIds] = useState<string[]>([])
+   const [activeId, setActiveId] = useState<string | null>(null)
+
+   const handleCreateTask = async (newTask: any) => {
       const token = await getValidAccessToken()
       if (token) await createTask(token, newTask)
       setIsCreateTaskOpen(false)
    }
 
-   const handleCreateSprint = async (newSprint: SprintProps) => {
+   const handleCreateSprint = async (newSprint: any) => {
       const token = await getValidAccessToken()
-      if (token) await createSprint(token, { ...newSprint, projectId: selectedBoard?.id as string, status: newSprint.status })
+      if (token)
+         await createSprint(token, {
+            ...newSprint,
+            projectId: selectedBoard?.id as string,
+            status: newSprint.status
+         })
       setIsCreateSprintOpen(false)
    }
 
+   const handleDragStart = (event: DragStartEvent) => {
+      const { active, activatorEvent } = event
+      const id = active.id as string
+
+      const shiftKey = (activatorEvent as PointerEvent).shiftKey
+      const metaKey = (activatorEvent as PointerEvent).metaKey
+
+      if (shiftKey || metaKey) {
+         setSelectedIds(prev =>
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+         )
+      } else if (!selectedIds.includes(id)) {
+         setSelectedIds([id])
+      }
+      setActiveId(id)
+   }
+
    const handleDragEnd = async (event: DragEndEvent) => {
-      const { active, over } = event
-
-      // Return if dropped outside of a droppable area
-      if (!over) return
-
-      // Return if no change (dropped into same container)
-      if (active.id === over.id) return
-
-      // Find the task being dragged
-      const taskId = active.id as string
-      let draggedTask: TaskProps | undefined
-      let sourceSprint: SprintProps | undefined
-
-      // Find which sprint contains the task and the task itself
-      for (const sprint of sprints) {
-         const task = sprint.tasks?.content.find(task => task.id === taskId)
-         if (task) {
-            draggedTask = task
-            sourceSprint = sprint
-            break
-         }
+      const { over } = event
+      if (!over) {
+         setSelectedIds([])
+         setActiveId(null)
+         return
       }
 
-      // If task wasn't found, return
-      if (!draggedTask) return
-
-      // Find the target sprint by ID
       const targetSprintId = over.id as string
-      const targetSprint = sprints.find(sprint => sprint.id === targetSprintId)
+      if (!selectedIds.length) {
+         setActiveId(null)
+         return
+      }
 
-      // If target sprint wasn't found, return
-      if (!targetSprint) return
-
-      // Don't proceed if source and target are the same
-      if (sourceSprint?.id === targetSprint.id) return
+      if (
+         sprints.find(s => s.id === targetSprintId)?.tasks?.content
+            .some(t => selectedIds.includes(t.id as string))
+      ) {
+         setSelectedIds([])
+         setActiveId(null)
+         return
+      }
 
       try {
-         // Get authentication token
          const token = await getValidAccessToken()
          if (!token) return
-
-         // Update the task with the new sprint ID
-         const updatedTask: TaskProps = {
-            ...draggedTask,
-            sprintId: targetSprint.id
-         }
-
-         // Call your API to update the task
-         await asignTaskToSprint(token, [updatedTask.id as string], updatedTask.sprintId as string, selectedBoard?.id as string)
-
-         // Note: The task list should be updated automatically if your
-         // store is properly connected to your API and state management
-      } catch (error) {
-         console.error("Error moving task between sprints:", error)
-         // Consider adding error handling UI feedback here
+         await asignTaskToSprint(
+            token,
+            selectedIds,
+            targetSprintId,
+            selectedBoard?.id as string
+         )
+      } catch (err) {
+         console.error(err)
+      } finally {
+         setSelectedIds([])
+         setActiveId(null)
       }
    }
 
    return (
-      <main>
-         <DndContext onDragEnd={handleDragEnd}>
-            {sprints && sprints.length > 0 && sprints.map(spr => <IssuesRow setIsOpen={setIsCreateTaskOpen} key={spr.id} spr={spr} />)}
+      <MultiDragProvider value={{ selectedIds, setSelectedIds }}>
+         <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+            {sprints.map(spr => (
+               <IssuesRow setIsOpen={setIsCreateTaskOpen} key={spr.id} spr={spr} />
+            ))}
+
+            <DragOverlay>
+               {activeId && selectedIds.includes(activeId) && selectedIds.length > 1 && (
+                  <div className="bg-sky-100 border-black/15 rounded-t-md shadow-lg text-sm flex self-end items-center px-4 py-5">
+                     {`${selectedIds.length} tareas seleccionadas`}
+                  </div>
+               )}
+            </DragOverlay>
          </DndContext>
 
-         <button onClick={() => setIsCreateSprintOpen(true)}
-            className='border-black/20 text-black/20 hover:border-black/75 hover:text-black/75 duration-150 w-full border-dashed border rounded-md flex flex-col justify-center items-center py-6'>
+         <button
+            onClick={() => setIsCreateSprintOpen(true)}
+            className="w-full border-dashed border text-black/20 hover:border-black/75 hover:text-black/75 duration-150 rounded-md flex flex-col items-center py-6"
+         >
             Crear Nuevo Sprint
          </button>
 
@@ -122,7 +140,6 @@ export default function SprintList() {
                onCancel={() => setIsCreateSprintOpen(false)}
             />
          </Modal>
-
-      </main>
+      </MultiDragProvider>
    )
 }
