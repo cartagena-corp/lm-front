@@ -107,3 +107,19 @@ input[type=number] {
     transform: translateY(0);
   }
 }
+
+@keyframes selectAnimation {
+  0% {
+    opacity: 0;
+    scale: 0.95;
+  }
+
+  100% {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+.select-animation {
+  animation: selectAnimation 0.15s ease-in-out;
+}
