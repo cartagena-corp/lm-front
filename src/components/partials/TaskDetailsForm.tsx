@@ -10,7 +10,6 @@ interface TaskDetailsFormProps {
    onSubmit: () => void
    onCancel: () => void
    task: TaskProps
-
 }
 
 export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetailsFormProps) {

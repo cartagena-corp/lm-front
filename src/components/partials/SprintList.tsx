@@ -1,23 +1,23 @@
+import { SprintProps, TaskProps } from "@/lib/types/types"
+import { DndContext, DragEndEvent } from "@dnd-kit/core"
+import { useSprintStore } from "@/lib/store/SprintStore"
 import { useBoardStore } from "@/lib/store/BoardStore"
 import { useIssueStore } from "@/lib/store/IssueStore"
-import { useState } from "react"
-import Modal from "../layout/Modal"
-import CreateTaskForm from "./CreateTaskForm"
-import { SprintProps, TaskProps } from "@/lib/types/types"
 import { useAuthStore } from "@/lib/store/AuthStore"
-import { useSprintStore } from "@/lib/store/SprintStore"
 import CreateSprintForm from "./CreateSprintForm"
-import { DndContext, DragEndEvent } from "@dnd-kit/core"
+import CreateTaskForm from "./CreateTaskForm"
 import IssuesRow from "../ui/IssuesRow"
+import Modal from "../layout/Modal"
+import { useState } from "react"
 
 export default function SprintList() {
+   const { createTask, asignTaskToSprint } = useIssueStore()
    const { sprints, createSprint } = useSprintStore()
    const { getValidAccessToken } = useAuthStore()
    const { selectedBoard } = useBoardStore()
-   const { createTask, asignTaskToSprint } = useIssueStore()
 
-   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
    const [isCreateSprintOpen, setIsCreateSprintOpen] = useState(false)
+   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
 
    const handleCreateTask = async (newTask: TaskProps) => {
       const token = await getValidAccessToken()
@@ -91,13 +91,13 @@ export default function SprintList() {
    }
 
    return (
-      <DndContext onDragEnd={handleDragEnd}>
-         <>
+      <main>
+         <DndContext onDragEnd={handleDragEnd}>
             {sprints && sprints.length > 0 && sprints.map(spr => <IssuesRow setIsOpen={setIsCreateTaskOpen} key={spr.id} spr={spr} />)}
-         </>
+         </DndContext>
 
          <button onClick={() => setIsCreateSprintOpen(true)}
-            className='border-black/20 text-black/20 hover:border-black/75 hover:text-black/75 duration-150 border-dashed border rounded-md flex flex-col justify-center items-center py-6'>
+            className='border-black/20 text-black/20 hover:border-black/75 hover:text-black/75 duration-150 w-full border-dashed border rounded-md flex flex-col justify-center items-center py-6'>
             Crear Nuevo Sprint
          </button>
 
@@ -122,6 +122,7 @@ export default function SprintList() {
                onCancel={() => setIsCreateSprintOpen(false)}
             />
          </Modal>
-      </DndContext>
+
+      </main>
    )
 }
