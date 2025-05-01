@@ -11,15 +11,19 @@ import Image from 'next/image'
 import UpdateTaskForm from '../partials/UpdateTaskForm'
 import { useIssueStore } from '@/lib/store/IssueStore'
 import { useAuthStore } from '@/lib/store/AuthStore'
+import DeleteIssueForm from '../partials/DeleteIssueForm'
+import ReasignIssue from '../partials/ReasignIssue'
 
 export default function IssuesRow({ spr, setIsOpen }: { spr: SprintProps, setIsOpen: Dispatch<SetStateAction<boolean>> }) {
    const { getValidAccessToken } = useAuthStore()
-   const { deleteIssue, updateIssue } = useIssueStore()
+   const { deleteIssue, updateIssue, reasingIssue } = useIssueStore()
 
    const wrapperRef = useRef<HTMLDivElement>(null)
 
    const [isTaskDetailsModalOpen, setIsTaskDetailsModalOpen] = useState(false)
    const [isTaskUpdateModalOpen, setIsTaskUpdateModalOpen] = useState(false)
+   const [isReasignModalOpen, setIsReasignModalOpen] = useState(false)
+   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
    const [openItemId, setOpenItemId] = useState<string | null>(null)
    const { selectedIds, setSelectedIds } = useMultiDragContext()
    const [taskActive, setTaskActive] = useState<TaskProps>()
@@ -77,9 +81,16 @@ export default function IssuesRow({ spr, setIsOpen }: { spr: SprintProps, setIsO
       setIsTaskUpdateModalOpen(false)
    }
 
+   const handleReasign = async ({ newUserId, issueId }: { newUserId: string, issueId: string }) => {
+      const token = await getValidAccessToken()
+      if (token) await reasingIssue(token, issueId, newUserId, taskActive?.projectId as string)
+      setIsReasignModalOpen(false)
+   }
+
    const handleDelete = async () => {
       const token = await getValidAccessToken()
       if (token) await deleteIssue(token, taskActive?.id as string, taskActive?.projectId as string)
+      setIsDeleteModalOpen(false)
    }
 
    return (
@@ -133,10 +144,10 @@ export default function IssuesRow({ spr, setIsOpen }: { spr: SprintProps, setIsO
                            />
                         </div>
                         <h5 className="col-span-1">Tipo</h5>
-                        <h5 className="col-span-5">Tarea</h5>
+                        <h5 className="col-span-6">Tarea</h5>
                         <h5 className="col-span-2">Estado</h5>
                         <h5 className="col-span-2">Prioridad</h5>
-                        <h5 className="col-span-5">Asignado a</h5>
+                        <h5 className="col-span-4">Asignado a</h5>
                         <h5 className="col-span-1 text-center">Acciones</h5>
                      </div>
 
@@ -174,9 +185,9 @@ export default function IssuesRow({ spr, setIsOpen }: { spr: SprintProps, setIsO
                                  </div>
 
                                  {/* Tarea */}
-                                 <div className="col-span-5">
-                                    <h6 className="font-medium line-clamp-1">{task.title}</h6>
-                                    <p className="text-xs text-black/75 line-clamp-1">
+                                 <div className="col-span-6">
+                                    <h6 className="font-medium line-clamp-1" title={task.title}>{task.title}</h6>
+                                    <p className="text-xs text-black/75 line-clamp-1" title={task.descriptions[0].text}>
                                        {task.descriptions[0].text}
                                     </p>
                                  </div>
@@ -204,29 +215,33 @@ export default function IssuesRow({ spr, setIsOpen }: { spr: SprintProps, setIsO
                                  </div>
 
                                  {/* Asignado a */}
-                                 <div className="col-span-5 flex items-center gap-2">
+                                 <button className="col-span-4 flex items-center gap-2 w-full cursor-pointer" onPointerDown={e => e.stopPropagation()}
+                                    onClick={() => {
+                                       setIsReasignModalOpen(true)
+                                       setOpenItemId(null)
+                                       setTaskActive(task)
+                                    }}>
                                     <div className="w-6 h-6 aspect-square flex items-center justify-center rounded-full bg-black/10 overflow-hidden">
-                                       {typeof task.assignedId === 'object' && task.assignedId.picture ? (
-                                          <Image
-                                             src={task.assignedId.picture}
-                                             alt="assignedto"
-                                             width={24}
-                                             height={24}
-                                          />
-                                       ) : (
-                                          <span className="font-medium text-sm">
-                                             {typeof task.assignedId === 'object'
-                                                ? task.assignedId.firstName.charAt(0).toUpperCase()
-                                                : ''}
-                                          </span>
-                                       )}
+                                       {
+                                          typeof task.assignedId === 'object' && task.assignedId.picture ?
+                                             <Image
+                                                src={task.assignedId.picture}
+                                                alt="assignedto"
+                                                width={24}
+                                                height={24}
+                                             />
+                                             :
+                                             <span className="font-medium text-sm">
+                                                {typeof task.assignedId === 'object'
+                                                   ? task.assignedId.firstName.charAt(0).toUpperCase()
+                                                   : ''}
+                                             </span>
+                                       }
                                     </div>
                                     <p className="text-xs">
-                                       {typeof task.assignedId === 'object'
-                                          ? `${task.assignedId.firstName} ${task.assignedId.lastName}`
-                                          : ''}
+                                       {typeof task.assignedId === 'object' ? `${task.assignedId.firstName} ${task.assignedId.lastName}` : ''}
                                     </p>
-                                 </div>
+                                 </button>
 
                                  {/* Acciones */}
                                  <div ref={openItemId === task.id ? wrapperRef : null} className='relative flex justify-center w-full cursor-pointer' onPointerDown={e => e.stopPropagation()}>
@@ -259,7 +274,7 @@ export default function IssuesRow({ spr, setIsOpen }: { spr: SprintProps, setIsO
                                           </button>
                                           <button className='hover:bg-black/5 duration-150 w-full text-start p-2'
                                              onClick={() => {
-                                                handleDelete()
+                                                setIsDeleteModalOpen(true)
                                                 setOpenItemId(null)
                                              }}>
                                              Eliminar
@@ -289,6 +304,16 @@ export default function IssuesRow({ spr, setIsOpen }: { spr: SprintProps, setIsO
          {/* Modal de editar tarea */}
          <Modal isOpen={isTaskUpdateModalOpen} customWidth="sm:max-w-4xl" onClose={() => setIsTaskUpdateModalOpen(false)} title={`Editar Tarea - ${taskActive?.title}`} >
             <UpdateTaskForm onSubmit={handleUpdate} onCancel={() => setIsTaskUpdateModalOpen(false)} taskObject={taskActive as TaskProps} />
+         </Modal>
+
+         {/* Modal de reasignar tarea */}
+         <Modal isOpen={isReasignModalOpen} onClose={() => setIsReasignModalOpen(false)} title="Reasignar tarea">
+            <ReasignIssue onSubmit={handleReasign} onCancel={() => setIsReasignModalOpen(false)} taskObject={taskActive as TaskProps} />
+         </Modal>
+
+         {/* Modal de eliminar tarea */}
+         <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Eliminar tarea">
+            <DeleteIssueForm onSubmit={handleDelete} onCancel={() => setIsDeleteModalOpen(false)} taskObject={taskActive as TaskProps} />
          </Modal>
       </>
    )

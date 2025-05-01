@@ -21,6 +21,7 @@ interface IssueState {
    createTask: (token: string, taskData: TaskProps) => Promise<void>
    asignTaskToSprint: (token: string, taskIds: string[], sprintId: string, projectId: string) => Promise<void>
    updateIssue: (token: string, issueUpdated: IssueUpdated) => Promise<void>
+   reasingIssue: (token: string, issueId: string, userId: string, projectId: string) => Promise<void>
    deleteIssue: (token: string, issueId: string, projectId: string) => Promise<void>
 }
 
@@ -141,6 +142,18 @@ export const useIssueStore = create<IssueState>((set) => ({
       } finally {
          useIssueStore.getState().setIssues(token, issueUpdated.projectId as string)
          useSprintStore.getState().getSprints(token, issueUpdated.projectId as string)
+      }
+   },
+   reasingIssue: async (token, issueId, userId, projectId) => {
+      try {
+         const response = await fetch(`${API_URL}${process.env.NEXT_PUBLIC_ASIGN_USER_TO_ISSUE}/${issueId}`,
+            { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(userId) })
+         if (!response.ok) return console.error('Error al editar la issue', response.statusText)
+      } catch (error) {
+         console.error('Error en la solicitud', error)
+      } finally {
+         useIssueStore.getState().setIssues(token, projectId)
+         useSprintStore.getState().getSprints(token, projectId)
       }
    },
    deleteIssue: async (token, issueId, projectId) => {
