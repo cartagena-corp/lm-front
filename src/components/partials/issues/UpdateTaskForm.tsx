@@ -3,9 +3,8 @@ import { useAuthStore } from "@/lib/store/AuthStore"
 import { useBoardStore } from "@/lib/store/BoardStore"
 import { useConfigStore } from "@/lib/store/ConfigStore"
 import { TaskProps } from "@/lib/types/types"
-import Image from "next/image"
 import { useRef, useState } from "react"
-import Modal from "../layout/Modal"
+import Modal from "../../layout/Modal"
 import AddNewDescription from "./AddNewDescription"
 
 interface DescProps {

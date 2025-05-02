@@ -7,7 +7,7 @@ import { useConfigStore } from '@/lib/store/ConfigStore'
 import Image from 'next/image'
 import { PlusIcon, XIcon } from '@/assets/Icon'
 import { useBoardStore } from '@/lib/store/BoardStore'
-import Modal from '../layout/Modal'
+import Modal from '../../layout/Modal'
 import AddNewDescription from './AddNewDescription'
 
 interface FormProps {

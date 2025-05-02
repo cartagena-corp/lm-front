@@ -1,7 +1,6 @@
 'use client'
 
-import AutoResizeTextarea from '../ui/AutoResizeTextarea'
-import { useConfigStore } from '@/lib/store/ConfigStore'
+import AutoResizeTextarea from '../../ui/AutoResizeTextarea'
 import { useSprintStore } from '@/lib/store/SprintStore'
 import { SprintProps } from '@/lib/types/types'
 import { useRef, useState } from 'react'

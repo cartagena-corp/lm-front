@@ -1,9 +1,9 @@
 'use client'
 
-import AutoResizeTextarea from '../ui/AutoResizeTextarea'
+import AutoResizeTextarea from '../../ui/AutoResizeTextarea'
 import { TaskProps } from '@/lib/types/types'
 import { FormEvent, useState } from 'react'
-import Comment from '../ui/Comment'
+import Comment from '../../ui/Comment'
 import { useConfigStore } from '@/lib/store/ConfigStore'
 
 interface TaskDetailsFormProps {

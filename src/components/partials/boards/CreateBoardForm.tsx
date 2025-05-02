@@ -2,7 +2,7 @@
 
 import { ProjectProps } from '@/lib/types/types'
 import { useEffect, useRef, useState } from 'react'
-import AutoResizeTextarea from '../ui/AutoResizeTextarea'
+import AutoResizeTextarea from '../../ui/AutoResizeTextarea'
 import { useConfigStore } from '@/lib/store/ConfigStore'
 
 interface CreateBoardFormProps {
