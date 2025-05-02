@@ -1,9 +1,9 @@
 'use client'
 
-import BoardCard, { BoardCardSkeleton } from '@/components/partials/BoardCard'
-import FilterProjectForm from '@/components/partials/FilterProjectForm'
+import BoardCard, { BoardCardSkeleton } from '@/components/partials/boards/BoardCard'
+import FilterProjectForm from '@/components/partials/boards/FilterProjectForm'
 import { FilterProjectProps, ProjectProps } from '@/lib/types/types'
-import CreateBoardForm from '@/components/partials/CreateBoardForm'
+import CreateBoardForm from '@/components/partials/boards/CreateBoardForm'
 import { useConfigStore } from '@/lib/store/ConfigStore'
 import { useBoardStore } from '@/lib/store/BoardStore'
 import { useAuthStore } from '@/lib/store/AuthStore'

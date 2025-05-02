@@ -16,7 +16,7 @@ export function Draggable({ id, children, styleClass = '' }: DraggableProps) {
    const style = { transform: CSS.Translate.toString(transform) }
 
    return (
-      <div className={`${styleClass} ${!isDragging ? "border-black/10" : "border-transparent rounded-md"} border-b ${isSelected && 'bg-sky-100'}`}
+      <div className={`${styleClass} ${!isDragging ? "border-black/10" : "border-transparent rounded-md opacity-0"} border-b ${isSelected && 'bg-sky-100 hover:bg-sky-100!'}`}
          ref={setNodeRef} style={style} {...listeners} {...attributes}>
          {children}
       </div>
