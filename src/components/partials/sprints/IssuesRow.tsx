@@ -13,6 +13,9 @@ import ReasignIssue from '../issues/ReasignIssue'
 import { CalendarIcon } from '@/assets/Icon'
 import Modal from '../../layout/Modal'
 import Image from 'next/image'
+import UpdateSprintForm from './UpdateSprintForm'
+import { useSprintStore } from '@/lib/store/SprintStore'
+import DeleteSprintForm from './DeleteSprintForm'
 
 export default function IssuesRow({ spr, setIsOpen, isOverlay = false }: { spr: SprintProps, setIsOpen: Dispatch<SetStateAction<boolean>>, isOverlay?: boolean }) {
    const { selectedIds, setSelectedIds } = useMultiDragContext()
@@ -29,13 +32,19 @@ export default function IssuesRow({ spr, setIsOpen, isOverlay = false }: { spr: 
 
    const { getValidAccessToken } = useAuthStore()
    const { deleteIssue, updateIssue, reasingIssue } = useIssueStore()
+   const { updateSprint, deleteSprint } = useSprintStore()
 
    const wrapperRef = useRef<HTMLDivElement>(null)
+   const wrapperSprintRef = useRef<HTMLDivElement>(null)
 
    const [isTaskDetailsModalOpen, setIsTaskDetailsModalOpen] = useState(false)
    const [isTaskUpdateModalOpen, setIsTaskUpdateModalOpen] = useState(false)
+   const [isSprintOptionsOpen, setisSprintOptionsOpen] = useState(false)
    const [isReasignModalOpen, setIsReasignModalOpen] = useState(false)
+   const [isUpdateSprintOpen, setIsUpdateSprintOpen] = useState(false)
+   const [isDeleteSprintOpen, setIsDeleteSprintOpen] = useState(false)
    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+   const [sprintSelected, setSprintSelected] = useState<SprintProps>()
    const [openItemId, setOpenItemId] = useState<string | null>(null)
    const [taskActive, setTaskActive] = useState<TaskProps>()
    const { projectConfig } = useConfigStore()
@@ -79,6 +88,28 @@ export default function IssuesRow({ spr, setIsOpen, isOverlay = false }: { spr: 
       return () => document.removeEventListener('pointerdown', handlePointerDown)
    }, [])
 
+   useEffect(() => {
+      const handlePointerSprintDown = (event: PointerEvent) => {
+         if (wrapperSprintRef.current && !wrapperSprintRef.current.contains(event.target as Node)) {
+            setisSprintOptionsOpen(false)
+         }
+      }
+      document.addEventListener('pointerdown', handlePointerSprintDown)
+      return () => document.removeEventListener('pointerdown', handlePointerSprintDown)
+   }, [])
+
+   const handleUpdateSprint = async (formData: SprintProps) => {
+      const token = await getValidAccessToken()
+      if (token) await updateSprint(token, formData, formData.projectId)
+      setIsUpdateSprintOpen(false)
+   }
+
+   const handleDeleteSprint = async (sprint: SprintProps) => {
+      const token = await getValidAccessToken()
+      if (token) await deleteSprint(token, sprint.id as string, sprint.projectId)
+      setIsDeleteModalOpen(false)
+   }
+
    const handleUpdate = async (formData: {
       descriptions: { id?: string, title: string, text: string }[],
       estimatedTime: number,
@@ -111,32 +142,63 @@ export default function IssuesRow({ spr, setIsOpen, isOverlay = false }: { spr: 
             <div className="flex justify-between items-center mb-2">
                <div className="flex items-center gap-4">
                   <h5 className="font-medium text-xl">{spr.title}</h5>
-                  {spr.id !== 'null' && spr.statusObject && (
-                     <div
-                        className="rounded-full text-xs border px-2 whitespace-nowrap w-fit"
-                        style={{
-                           backgroundColor: `${spr.statusObject.color}0f`,
-                           color: spr.statusObject.color
-                        }}
-                     >
-                        {spr.statusObject.name.charAt(0).toUpperCase() +
-                           spr.statusObject.name.slice(1).toLowerCase()}
+                  {
+                     spr.id !== 'null' && spr.statusObject &&
+                     <div className="rounded-full text-xs border px-2 whitespace-nowrap w-fit"
+                        style={{ backgroundColor: `${spr.statusObject.color}0f`, color: spr.statusObject.color }}>
+                        {spr.statusObject.name.charAt(0).toUpperCase() + spr.statusObject.name.slice(1).toLowerCase()}
                      </div>
-                  )}
+                  }
                </div>
-               {spr.id !== 'null' ? (
-                  <div className="flex items-center text-xs gap-2.5 text-black/75">
-                     <CalendarIcon size={20} />
-                     {formatDate(spr.startDate)} – {formatDate(spr.endDate)}
-                  </div>
-               ) : (
-                  <button
-                     onClick={() => setIsOpen(true)}
-                     className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 duration-150 whitespace-nowrap"
-                  >
-                     Crear Tarea
-                  </button>
-               )}
+               {
+                  spr.id !== 'null' ? (
+                     <div ref={wrapperSprintRef} className="text-black/75 relative flex items-center text-xs gap-2.5">
+                        <aside className='flex items-center gap-1.5'>
+                           <CalendarIcon size={20} />
+                           {formatDate(spr.startDate)} – {formatDate(spr.endDate)}
+                        </aside>
+
+                        <button
+                           id="custom-ellipsis"
+                           onClick={() => {
+                              setSprintSelected(spr)
+                              setisSprintOptionsOpen(!isSprintOptionsOpen)
+                           }}
+                           className="flex justify-center items-center gap-1 p-2 scale-75"
+                        >
+                           <span id="dot" />
+                           <span id="dot" />
+                           <span id="dot" />
+                        </button>
+                        {
+                           isSprintOptionsOpen &&
+                           <div className='bg-white border-black/15 flex flex-col top-[125%] right-0 overflow-hidden select-animation rounded-md text-xs absolute border z-20'>
+                              <button className='hover:bg-black/5 duration-150 text-start p-2'
+                                 onClick={() => {
+                                    setIsUpdateSprintOpen(true)
+                                    setisSprintOptionsOpen(false)
+                                 }}>
+                                 Editar
+                              </button>
+                              <button className='hover:bg-black/5 duration-150 text-start p-2'
+                                 onClick={() => {
+                                    setIsDeleteSprintOpen(true)
+                                    setisSprintOptionsOpen(false)
+                                 }}>
+                                 Eliminar
+                              </button>
+                           </div>
+                        }
+                     </div>
+                  ) : (
+                     <button
+                        onClick={() => setIsOpen(true)}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 duration-150 whitespace-nowrap"
+                     >
+                        Crear Tarea
+                     </button>
+                  )
+               }
             </div>
             <p className="text-black/50 text-sm mb-4">{spr.goal}</p>
 
@@ -304,28 +366,38 @@ export default function IssuesRow({ spr, setIsOpen, isOverlay = false }: { spr: 
                   </p>
                )}
             </div>
-         </Droppable>
+         </Droppable >
+
+         {/* Modal de editar sprint */}
+         < Modal isOpen={isUpdateSprintOpen} onClose={() => setIsUpdateSprintOpen(false)} title="Editar sprint" >
+            <UpdateSprintForm onSubmit={handleUpdateSprint} onCancel={() => setIsUpdateSprintOpen(false)} currentSprint={sprintSelected as SprintProps} />
+         </Modal >
 
          {/* Modal de detalle de tarea */}
-         <Modal isOpen={isTaskDetailsModalOpen} customWidth="sm:max-w-4xl" onClose={() => setIsTaskDetailsModalOpen(false)
+         < Modal isOpen={isTaskDetailsModalOpen} customWidth="sm:max-w-4xl" onClose={() => setIsTaskDetailsModalOpen(false)
          } title={taskActive?.title as string} >
             <TaskDetailsForm task={taskActive as TaskProps} onSubmit={() => setIsTaskDetailsModalOpen(false)} onCancel={() => setIsTaskDetailsModalOpen(false)} />
-         </Modal>
+         </Modal >
 
          {/* Modal de editar tarea */}
-         <Modal isOpen={isTaskUpdateModalOpen} customWidth="sm:max-w-4xl" onClose={() => setIsTaskUpdateModalOpen(false)} title={`Editar Tarea - ${taskActive?.title}`} >
+         < Modal isOpen={isTaskUpdateModalOpen} customWidth="sm:max-w-4xl" onClose={() => setIsTaskUpdateModalOpen(false)} title={`Editar Tarea - ${taskActive?.title}`} >
             <UpdateTaskForm onSubmit={handleUpdate} onCancel={() => setIsTaskUpdateModalOpen(false)} taskObject={taskActive as TaskProps} />
-         </Modal>
+         </Modal >
 
          {/* Modal de reasignar tarea */}
-         <Modal isOpen={isReasignModalOpen} onClose={() => setIsReasignModalOpen(false)} title="Reasignar tarea">
+         < Modal isOpen={isReasignModalOpen} onClose={() => setIsReasignModalOpen(false)} title="Reasignar tarea" >
             <ReasignIssue onSubmit={handleReasign} onCancel={() => setIsReasignModalOpen(false)} taskObject={taskActive as TaskProps} />
-         </Modal>
+         </Modal >
 
          {/* Modal de eliminar tarea */}
-         <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Eliminar tarea">
+         < Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Eliminar tarea" >
             <DeleteIssueForm onSubmit={handleDelete} onCancel={() => setIsDeleteModalOpen(false)} taskObject={taskActive as TaskProps} />
-         </Modal>
+         </Modal >
+
+         {/* Modal de eliminar sprint */}
+         < Modal isOpen={isDeleteSprintOpen} onClose={() => setIsDeleteSprintOpen(false)} title="Eliminar sprint" >
+            <DeleteSprintForm onSubmit={handleDeleteSprint} onCancel={() => setIsDeleteSprintOpen(false)} sprintObject={sprintSelected as SprintProps} />
+         </Modal >
       </>
    )
 }

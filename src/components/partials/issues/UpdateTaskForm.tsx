@@ -1,6 +1,4 @@
 import { EditIcon, PlusIcon, XIcon } from "@/assets/Icon"
-import { useAuthStore } from "@/lib/store/AuthStore"
-import { useBoardStore } from "@/lib/store/BoardStore"
 import { useConfigStore } from "@/lib/store/ConfigStore"
 import { TaskProps } from "@/lib/types/types"
 import { useRef, useState } from "react"

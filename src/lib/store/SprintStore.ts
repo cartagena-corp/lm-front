@@ -1,5 +1,6 @@
 import { ConfigProjectStatusProps, GlobalPagination, SprintProps, TaskProps } from '../types/types'
 import { create } from 'zustand'
+import { useIssueStore } from './IssueStore'
 
 interface SprintState {
    sprints: SprintProps[]
@@ -8,6 +9,8 @@ interface SprintState {
    getStatus: (token: string) => Promise<void>
    getIssuesBySprint: (token: string, sprintId: string, projectId: string) => Promise<GlobalPagination>
    createSprint: (token: string, sprintData: SprintProps) => Promise<void>
+   updateSprint: (token: string, sprintData: SprintProps, projectId: string) => Promise<void>
+   deleteSprint: (token: string, sprintId: string, projectId: string) => Promise<void>
    removeIssueFromSprint: (token: string, taskIds: string[], projectId: string) => Promise<void>
 }
 
@@ -115,6 +118,34 @@ export const useSprintStore = create<SprintState>((set) => ({
          set(state => ({ sprints: [...state.sprints, newSprint] }))
       } catch (error) {
          console.error("Error en createSprint", error)
+      }
+   },
+   updateSprint: async (token, sprintData, projectId) => {
+      try {
+         const response = await fetch(`${API_URL}${process.env.NEXT_PUBLIC_CREATE_SPRINT}/${sprintData.id}`, {
+            method: 'PUT',
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+            body: JSON.stringify(sprintData)
+         })
+
+         if (!response.ok) throw new Error(response.statusText)
+      } catch (error) {
+         console.error("Error en updateSprint", error)
+      } finally {
+         await useSprintStore.getState().getSprints(token, projectId)
+      }
+   },
+   deleteSprint: async (token, sprintId, projectId) => {
+      try {
+         const response = await fetch(`${API_URL}${process.env.NEXT_PUBLIC_CREATE_SPRINT}/${sprintId}`, {
+            method: 'DELETE', headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
+         })
+
+         if (!response.ok) throw new Error(response.statusText)
+      } catch (error) {
+         console.error("Error en deleteSprint", error)
+      } finally {
+         await useSprintStore.getState().getSprints(token, projectId)
       }
    },
    removeIssueFromSprint: async (token, taskIds, projectId) => {
