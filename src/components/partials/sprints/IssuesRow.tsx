@@ -374,7 +374,7 @@ export default function IssuesRow({ spr, setIsOpen, isOverlay = false }: { spr: 
          </Modal >
 
          {/* Modal de detalle de tarea */}
-         < Modal isOpen={isTaskDetailsModalOpen} customWidth="sm:max-w-4xl" onClose={() => setIsTaskDetailsModalOpen(false)
+         < Modal isOpen={isTaskDetailsModalOpen} customWidth="sm:max-w-6xl" onClose={() => setIsTaskDetailsModalOpen(false)
          } title={taskActive?.title as string} >
             <TaskDetailsForm task={taskActive as TaskProps} onSubmit={() => setIsTaskDetailsModalOpen(false)} onCancel={() => setIsTaskDetailsModalOpen(false)} />
          </Modal >
