@@ -113,3 +113,50 @@ export const EditIcon = ({ size = 24, stroke = 1.5 }: IconProps) => {
       </svg>
    )
 }
+
+export const AlertCircleIcon = ({ size = 24, stroke = 1.5 }: IconProps) => {
+   return (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill="none">
+         <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={stroke} />
+         <path d="M11.992 15H12.001" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+         <path d="M12 12L12 8" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+   )
+}
+
+export const UsersIcon = ({ size = 24, stroke = 1.5 }: IconProps) => {
+   return (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill="none">
+         <path d="M16.5 20V17.9704C16.5 16.7281 15.9407 15.5099 14.8103 14.9946C13.4315 14.3661 11.7779 14 10 14C8.22212 14 6.5685 14.3661 5.18968 14.9946C4.05927 15.5099 3.5 16.7281 3.5 17.9704V20" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round"></path>
+         <path d="M20.5 20.001V17.9713C20.5 16.729 19.9407 15.5109 18.8103 14.9956C18.5497 14.8768 18.2792 14.7673 18 14.668" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round"></path>
+         <circle cx="10" cy="7.5" r="3.5" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round"></circle>
+         <path d="M15 4.14453C16.4457 4.57481 17.5 5.91408 17.5 7.49959C17.5 9.0851 16.4457 10.4244 15 10.8547" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round"></path>
+      </svg>
+   )
+}
+
+export const SendIcon = ({ size = 24, stroke = 1.5 }: IconProps) => {
+   return (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill="none">
+         <path d="M21.0477 3.05293C18.8697 0.707363 2.48648 6.4532 2.50001 8.551C2.51535 10.9299 8.89809 11.6617 10.6672 12.1581C11.7311 12.4565 12.016 12.7625 12.2613 13.8781C13.3723 18.9305 13.9301 21.4435 15.2014 21.4996C17.2278 21.5892 23.1733 5.342 21.0477 3.05293Z" stroke="currentColor" strokeWidth={stroke}></path>
+         <path d="M11.5 12.5L15 9" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round"></path>
+      </svg>
+   )
+}
+
+export const AttachIcon = ({ size = 24, stroke = 1.5 }: IconProps) => {
+   return (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill="none">
+         <path d="M8 8.00049V6.00049C8 3.79135 9.79086 2.00049 12 2.00049C14.2091 2.00049 16 3.79135 16 6.00049V18.0005C16 20.2096 14.2091 22.0005 12 22.0005C9.79086 22.0005 8 20.2096 8 18.0005V13.5005C8 12.1198 9.11929 11.0005 10.5 11.0005C11.8807 11.0005 13 12.1198 13 13.5005V16.0005" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+   )
+}
+
+export const DownloadIcon = ({ size = 24, stroke = 1.5 }: IconProps) => {
+   return (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill="none">
+         <path d="M12 14.5L12 4.5M12 14.5C11.2998 14.5 9.99153 12.5057 9.5 12M12 14.5C12.7002 14.5 14.0085 12.5057 14.5 12" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round"></path>
+         <path d="M20 16.5C20 18.982 19.482 19.5 17 19.5H7C4.518 19.5 4 18.982 4 16.5" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round"></path>
+      </svg>
+   )
+}
