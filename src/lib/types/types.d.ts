@@ -35,13 +35,13 @@ export interface TaskProps {
       firstName: string,
       lastName: string,
       picture: string
-   } | string
-   reporterId?: {
+   }
+   reporterId: {
       id: string,
       firstName: string,
       lastName: string,
       picture: string
-   } | string
+   }
    createdAt?: string                                  /* DD/MM/YYYY (T) HH:MM:SS  */
    updatedAt?: string                                  /* DD/MM/YYYY (T) HH:MM:SS */
    type: number
@@ -183,9 +183,26 @@ export interface SprintProps {
    }
 }
 
+//* Comments Props
+export interface CommentProps {
+   id: string
+   issueId: string
+   userId: string
+   text: string
+   createdAt: string
+   attachments: null | {
+      id: string
+      fileName: string
+      fileUrl: string
+      commentId: string
+   }
+   user: UserProps
+   responsesCount: null | number
+}
+
 //* GLOBAL GETTER PAGINATION
 export interface GlobalPagination {
-   content: [] | ProjectProps[] | TaskProps[] | SprintProps[]
+   content: [] | ProjectProps[] | TaskProps[] | SprintProps[] | CommentProps[]
    totalPages: number
    totalElements: number
    size: number
