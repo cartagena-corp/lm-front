@@ -197,7 +197,22 @@ export interface CommentProps {
       commentId: string
    }
    user: UserProps
-   responsesCount: null | number
+   responsesCount: number
+}
+
+//* Responses Props
+export interface ResponseProps {
+   id: string
+   commentId: string
+   userId: string
+   text: string
+   createdAt: string
+   user: {
+      id: string
+      firstName: string
+      lastName: string
+      picture: string
+   }
 }
 
 //* GLOBAL GETTER PAGINATION

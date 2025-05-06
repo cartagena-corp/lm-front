@@ -18,8 +18,8 @@ interface AuthState {
 
 interface PayloadProps {
    permissions: string[]
-   family_mame: string
-   given_mame: string
+   family_name: string
+   given_name: string
    picture: string
    email: string
    role: string
@@ -37,8 +37,8 @@ function decodeToken(token: string): UserProps | null {
          id: decodedToken.sub,
          picture: decodedToken.picture,
          email: decodedToken.email,
-         firstName: decodedToken.given_mame,
-         lastName: decodedToken.family_mame,
+         firstName: decodedToken.given_name,
+         lastName: decodedToken.family_name,
          role: {
             name: decodedToken.role,
             permissions: decodedToken.permissions.map(permission => ({ name: permission }))
