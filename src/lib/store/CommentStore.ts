@@ -8,6 +8,8 @@ interface CommentState {
    getComments: (token: string, issueId: string) => Promise<void>
    addComment: (token: string, issueId: string, text: string, files?: File[]) => Promise<void>
    addResponse: (token: string, text: string, commentId: string, issueId: string) => Promise<void>
+   deleteComment: (token: string, commentId: string, issueId: string) => Promise<void>
+   deleteResponse: (token: string, responseId: string, commentId: string) => Promise<void>
 }
 
 const API_URL = process.env.NEXT_PUBLIC_COMMENTS
@@ -118,6 +120,30 @@ export const useCommentStore = create<CommentState>(set => ({
       } finally {
          // Actualizar los comentarios para reflejar el nuevo conteo de respuestas
          useCommentStore.getState().getComments(token, issueId)
+      }
+   },
+   deleteComment: async (token, commentId, issueId) => {
+      try {
+         const url = `${API_URL}${process.env.NEXT_PUBLIC_GET_COMMENTS}/${commentId}`
+         const response = await fetch(url, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } })
+
+         if (!response.ok) throw new Error(response.statusText)
+      } catch (error) {
+         console.error(error)
+      } finally {
+         useCommentStore.getState().getComments(token, issueId)
+      }
+   },
+   deleteResponse: async (token, responseId, commentId) => {
+      try {
+         const url = `${API_URL}${process.env.NEXT_PUBLIC_GET_COMMENTS_RESPONSES}/${responseId}`
+         const response = await fetch(url, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } })
+
+         if (!response.ok) throw new Error(response.statusText)
+      } catch (error) {
+         console.error(error)
+      } finally {
+         useCommentStore.getState().getResponses(token, commentId)
       }
    }
 }))
