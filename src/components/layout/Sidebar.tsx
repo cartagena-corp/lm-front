@@ -1,6 +1,6 @@
 'use client'
 
-import { BoardIcon, CalendarIcon, ChartIcon, FilterIcon, LogoutIcon } from '../../assets/Icon'
+import { BoardIcon, CalendarIcon, ChartIcon, ConfigIcon, FilterIcon, LogoutIcon } from '../../assets/Icon'
 import { useAuthStore } from '@/lib/store/AuthStore'
 import { IconProps } from '@/lib/types/types'
 import { usePathname } from 'next/navigation'
@@ -17,6 +17,7 @@ interface NavigationProps {
 
 const navigation: NavigationProps[] = [
   { name: 'Tableros', href: '/tableros', icon: BoardIcon, isAvailable: true },
+  { name: 'Configuración', href: '/config', icon: ConfigIcon, isAvailable: true },
   { name: 'Filtros', href: '#', icon: FilterIcon, isAvailable: false },
   { name: 'Informes', href: '#', icon: ChartIcon, isAvailable: false },
   { name: 'Calendario', href: '#', icon: CalendarIcon, isAvailable: false },
@@ -67,13 +68,12 @@ export default function Sidebar() {
             isClient && user && user.picture ? (
               <>
                 <div className="rounded-full w-10 aspect-square">
-                  <Image
+                  <Image className="rounded-full object-cover"
+                    onLoad={() => setIsImageLoaded(true)}
                     src={user.picture}
                     alt="User Image"
-                    width={40}
                     height={40}
-                    className="rounded-full object-cover"
-                    onLoad={() => setIsImageLoaded(true)}
+                    width={40}
                   />
                 </div>
                 <p className="text-white/85 overflow-ellipsis col-span-3 text-sm">{user?.firstName} {user?.lastName}</p>
