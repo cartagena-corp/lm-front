@@ -12,6 +12,9 @@ interface SprintState {
    updateSprint: (token: string, sprintData: SprintProps, projectId: string) => Promise<void>
    deleteSprint: (token: string, sprintId: string, projectId: string) => Promise<void>
    removeIssueFromSprint: (token: string, taskIds: string[], projectId: string) => Promise<void>
+   addSprintStatus: (token: string, newProjectStatus: { name: string, color: string }) => Promise<void>
+   editSprintStatus: (token: string, projectStatus: { id: string, name: string, color: string }) => Promise<void>
+   deleteSprintStatus: (token: string, projectStatusId: string) => Promise<void>
 }
 
 const API_URL = process.env.NEXT_PUBLIC_SPRINTS
@@ -161,6 +164,47 @@ export const useSprintStore = create<SprintState>((set) => ({
          console.error("Error en createSprint", error)
       } finally {
          await useSprintStore.getState().getSprints(token, projectId)
+      }
+   },
+   addSprintStatus: async (token, newSprintStatus) => {
+      try {
+         const url = `${API_CONFIG_URL}${process.env.NEXT_PUBLIC_GET_CONFIG_SPRINT_STATE}`
+         const response = await fetch(url, {
+            method: 'POST', headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+            body: JSON.stringify(newSprintStatus)
+         })
+
+         if (!response.ok) throw new Error("Error al agregar un nuevo estado de sprint.")
+
+      } catch (error) {
+         console.error(error)
+      } finally {
+         useSprintStore.getState().getStatus(token)
+      }
+   },
+   editSprintStatus: async (token, sprintStatus) => {
+      try {
+         const url = `${API_CONFIG_URL}${process.env.NEXT_PUBLIC_GET_CONFIG_SPRINT_STATE}/${sprintStatus.id}`
+         const response = await fetch(url, {
+            method: 'PUT', headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+            body: JSON.stringify({ name: sprintStatus.name, color: sprintStatus.color })
+         })
+         if (!response.ok) throw new Error("Error al editar un estado de sprint.")
+      } catch (error) {
+         console.error(error)
+      } finally {
+         useSprintStore.getState().getStatus(token)
+      }
+   },
+   deleteSprintStatus: async (token, sprintStatusId) => {
+      try {
+         const url = `${API_CONFIG_URL}${process.env.NEXT_PUBLIC_GET_CONFIG_SPRINT_STATE}/${sprintStatusId}`
+         const response = await fetch(url, { method: 'DELETE', headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } })
+         if (!response.ok) throw new Error("Error al eliminar un estado de sprint.")
+      } catch (error) {
+         console.error(error)
+      } finally {
+         useSprintStore.getState().getStatus(token)
       }
    },
 }))

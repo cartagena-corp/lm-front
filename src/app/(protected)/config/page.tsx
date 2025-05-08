@@ -1,9 +1,11 @@
 "use client"
 
-import ProjectConfig from "@/components/partials/config/ProjectConfig"
+import ProjectConfig from "@/components/partials/config/boards/ProjectConfig"
 import { useConfigStore } from "@/lib/store/ConfigStore"
 import { useAuthStore } from "@/lib/store/AuthStore"
 import { useEffect, useState } from "react"
+import SprintConfig from "@/components/partials/config/sprints/SprintConfig"
+import { useSprintStore } from "@/lib/store/SprintStore"
 
 const listView = [
    {
@@ -22,6 +24,7 @@ const listView = [
 
 export default function Config() {
    const { setConfig } = useConfigStore()
+   const { getStatus } = useSprintStore()
    const [view, setView] = useState(listView[0])
    const { getValidAccessToken } = useAuthStore()
 
@@ -29,7 +32,10 @@ export default function Config() {
 
    const getConfig = async () => {
       const token = await getValidAccessToken()
-      if (token) await setConfig()
+      if (token) {
+         await setConfig()
+         await getStatus(token)
+      }
    }
 
    return (
@@ -48,7 +54,7 @@ export default function Config() {
          </section>
          {
             view.id === listView[0].id ? <ProjectConfig /> :
-               view.id === listView[1].id ? <ProjectConfig /> :
+               view.id === listView[1].id ? <SprintConfig /> :
                   view.id === listView[2].id && <div>asd</div>
          }
 

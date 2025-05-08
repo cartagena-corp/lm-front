@@ -1,8 +1,8 @@
-import DeleteProjectStatus from "./boards/DeleteProjectStatus"
+import DeleteProjectStatus from "./DeleteProjectStatus"
 import { DeleteIcon, EditIcon, PlusIcon } from "@/assets/Icon"
 import { useConfigStore } from "@/lib/store/ConfigStore"
 import { useAuthStore } from "@/lib/store/AuthStore"
-import CreateEditStatus from "./CreateEditStatus"
+import CreateEditStatus from "../CreateEditStatus"
 import Modal from "@/components/layout/Modal"
 import { useState } from "react"
 
