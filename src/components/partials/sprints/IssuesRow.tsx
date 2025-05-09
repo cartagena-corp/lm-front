@@ -16,6 +16,7 @@ import Image from 'next/image'
 import UpdateSprintForm from './UpdateSprintForm'
 import { useSprintStore } from '@/lib/store/SprintStore'
 import DeleteSprintForm from './DeleteSprintForm'
+import IssueConfig from '../config/issues/IssueConfig'
 
 export default function IssuesRow({ spr, setIsOpen, isOverlay = false }: { spr: SprintProps, setIsOpen: Dispatch<SetStateAction<boolean>>, isOverlay?: boolean }) {
    const { selectedIds, setSelectedIds } = useMultiDragContext()
@@ -44,6 +45,7 @@ export default function IssuesRow({ spr, setIsOpen, isOverlay = false }: { spr: 
    const [isUpdateSprintOpen, setIsUpdateSprintOpen] = useState(false)
    const [isDeleteSprintOpen, setIsDeleteSprintOpen] = useState(false)
    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false)
    const [sprintSelected, setSprintSelected] = useState<SprintProps>()
    const [openItemId, setOpenItemId] = useState<string | null>(null)
    const [taskActive, setTaskActive] = useState<TaskProps>()
@@ -193,7 +195,7 @@ export default function IssuesRow({ spr, setIsOpen, isOverlay = false }: { spr: 
                   ) : (
                      <div className='flex items-center gap-2'>
                         <button
-                           onClick={() => setIsOpen(true)}
+                           onClick={() => setIsConfigModalOpen(true)}
                            className="border-blue-600 text-blue-600 hover:bg-blue-700 hover:text-white
                             border rounded-md duration-150 whitespace-nowrap flex items-center gap-2 px-4 py-2"
                         >
@@ -260,11 +262,11 @@ export default function IssuesRow({ spr, setIsOpen, isOverlay = false }: { spr: 
                                  <div
                                     className="col-span-1 rounded-full text-xs border px-2 whitespace-nowrap w-fit"
                                     style={{
-                                       backgroundColor: `${getTypeStyle(Number(task.type))?.color}0f`,
-                                       color: getTypeStyle(Number(task.type))?.color
+                                       backgroundColor: `${getTypeStyle(Number(task.type))?.color ?? "#000000"}0f`,
+                                       color: getTypeStyle(Number(task.type))?.color ?? "#000000"
                                     }}
                                  >
-                                    {getTypeStyle(Number(task.type))?.name}
+                                    {getTypeStyle(Number(task.type))?.name ?? "Sin tipo"}
                                  </div>
 
                                  {/* Tarea */}
@@ -279,22 +281,22 @@ export default function IssuesRow({ spr, setIsOpen, isOverlay = false }: { spr: 
                                  <div
                                     className="col-span-2 rounded-full text-xs border px-2 whitespace-nowrap w-fit"
                                     style={{
-                                       backgroundColor: `${getStatusStyle(Number(task.status))?.color}0f`,
-                                       color: getStatusStyle(Number(task.status))?.color
+                                       backgroundColor: `${getStatusStyle(Number(task.status))?.color ?? "#000000"}0f`,
+                                       color: getStatusStyle(Number(task.status))?.color ?? "#000000"
                                     }}
                                  >
-                                    {getStatusStyle(Number(task.status))?.name}
+                                    {getStatusStyle(Number(task.status))?.name ?? "Sin estado"}
                                  </div>
 
                                  {/* Prioridad */}
                                  <div
                                     className="col-span-2 rounded-full text-xs border px-2 whitespace-nowrap w-fit"
                                     style={{
-                                       backgroundColor: `${getPriorityStyle(Number(task.priority))?.color}0f`,
-                                       color: getPriorityStyle(Number(task.priority))?.color
+                                       backgroundColor: `${getPriorityStyle(Number(task.priority))?.color ?? "#000000"}0f`,
+                                       color: getPriorityStyle(Number(task.priority))?.color ?? "#000000"
                                     }}
                                  >
-                                    {getPriorityStyle(Number(task.priority))?.name}
+                                    {getPriorityStyle(Number(task.priority))?.name ?? "Sin prioridad"}
                                  </div>
 
                                  {/* Asignado a */}
@@ -405,9 +407,14 @@ export default function IssuesRow({ spr, setIsOpen, isOverlay = false }: { spr: 
          </Modal >
 
          {/* Modal de eliminar sprint */}
-         < Modal isOpen={isDeleteSprintOpen} onClose={() => setIsDeleteSprintOpen(false)} title="Eliminar sprint" >
+         <Modal isOpen={isDeleteSprintOpen} onClose={() => setIsDeleteSprintOpen(false)} title="Eliminar sprint" >
             <DeleteSprintForm onSubmit={handleDeleteSprint} onCancel={() => setIsDeleteSprintOpen(false)} sprintObject={sprintSelected as SprintProps} />
-         </Modal >
+         </Modal>
+
+         {/* Modal de configuración de tareas */}
+         <Modal customWidth='max-w-2xl' isOpen={isConfigModalOpen} onClose={() => setIsConfigModalOpen(false)} title="Configuración de tareas" >
+            <IssueConfig onClose={() => setIsConfigModalOpen(false)} projectId={spr.projectId} />
+         </Modal>
       </>
    )
 }
