@@ -23,7 +23,7 @@ export default function IssuesRow({ spr, setIsOpen, isOverlay = false }: { spr: 
 
    if (isOverlay) {
       return (
-         <div className="bg-sky-100 border-sky-700 text-sky-700 flex items-center rounded-md shadow-xl border w-full h-full p-4">
+         <div className="bg-sky-100 border-sky-700 text-sky-700 cursor-grabbing flex items-center rounded-md shadow-xl border w-full h-full p-4">
             <h3 className="font-medium text-sm truncate">
                {selectedIds.length === 1 ? `${selectedIds.length} tarea seleccionada` : `${selectedIds.length} tareas seleccionadas`}
             </h3>
