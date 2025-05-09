@@ -10,7 +10,7 @@ import { useIssueStore } from '@/lib/store/IssueStore'
 import UpdateTaskForm from '../issues/UpdateTaskForm'
 import { useAuthStore } from '@/lib/store/AuthStore'
 import ReasignIssue from '../issues/ReasignIssue'
-import { CalendarIcon } from '@/assets/Icon'
+import { CalendarIcon, ConfigIcon } from '@/assets/Icon'
 import Modal from '../../layout/Modal'
 import Image from 'next/image'
 import UpdateSprintForm from './UpdateSprintForm'
@@ -191,12 +191,22 @@ export default function IssuesRow({ spr, setIsOpen, isOverlay = false }: { spr: 
                         }
                      </div>
                   ) : (
-                     <button
-                        onClick={() => setIsOpen(true)}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 duration-150 whitespace-nowrap"
-                     >
-                        Crear Tarea
-                     </button>
+                     <div className='flex items-center gap-2'>
+                        <button
+                           onClick={() => setIsOpen(true)}
+                           className="border-blue-600 text-blue-600 hover:bg-blue-700 hover:text-white
+                            border rounded-md duration-150 whitespace-nowrap flex items-center gap-2 px-4 py-2"
+                        >
+                           <ConfigIcon size={20} stroke={2} />
+                           Configuración
+                        </button>
+                        <button
+                           onClick={() => setIsOpen(true)}
+                           className="px-4 py-2 border-blue-600 bg-blue-600 text-white rounded-md hover:bg-blue-700 border duration-150 whitespace-nowrap"
+                        >
+                           Crear Tarea
+                        </button>
+                     </div>
                   )
                }
             </div>

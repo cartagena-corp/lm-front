@@ -1,7 +1,7 @@
 import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, pointerWithin } from '@dnd-kit/core'
 import { MultiDragProvider } from '@/components/ui/dnd-kit/MultiDragContext'
 import { useSprintStore } from '@/lib/store/SprintStore'
-import { restrictToVerticalAxis, restrictToWindowEdges, snapCenterToCursor } from '@dnd-kit/modifiers'
+import { restrictToVerticalAxis, restrictToWindowEdges } from '@dnd-kit/modifiers'
 import { useBoardStore } from '@/lib/store/BoardStore'
 import { useIssueStore } from '@/lib/store/IssueStore'
 import CreateTaskForm from '../issues/CreateTaskForm'
@@ -10,7 +10,6 @@ import CreateSprintForm from './CreateSprintForm'
 import Modal from '../../layout/Modal'
 import IssuesRow from './IssuesRow'
 import { useState } from 'react'
-import { SprintProps } from '@/lib/types/types'
 
 export default function SprintList() {
    const { createTask, asignTaskToSprint } = useIssueStore()
