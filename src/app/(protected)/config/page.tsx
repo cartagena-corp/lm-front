@@ -15,11 +15,7 @@ const listView = [
    {
       id: 2,
       name: "Configuración de Sprints"
-   },
-   {
-      id: 3,
-      name: "Configuración de Tareas"
-   },
+   }
 ]
 
 export default function Config() {
@@ -52,11 +48,7 @@ export default function Config() {
                )
             }
          </section>
-         {
-            view.id === listView[0].id ? <ProjectConfig /> :
-               view.id === listView[1].id ? <SprintConfig /> :
-                  view.id === listView[2].id && <div>asd</div>
-         }
+         {view.id === listView[0].id ? <ProjectConfig /> : <SprintConfig />}
 
       </main>
    )
