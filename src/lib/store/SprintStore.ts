@@ -1,6 +1,5 @@
 import { ConfigProjectStatusProps, GlobalPagination, SprintProps, TaskProps } from '../types/types'
 import { create } from 'zustand'
-import { useIssueStore } from './IssueStore'
 
 interface SprintState {
    sprints: SprintProps[]

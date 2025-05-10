@@ -15,12 +15,31 @@ import UpdateProjectForm from '@/components/partials/boards/UpdateProjectForm'
 import { ProjectProps } from '@/lib/types/types'
 import { CustomSwitch } from '@/components/ui/CustomSwitch'
 import DiagramaGantt from '@/components/ui/DiagramaGantt'
+import SprintGrid from '@/components/partials/sprints/SprintGrid'
+
+const view = [
+  {
+    id: 1,
+    name: "Lista",
+    view: SprintList
+  },
+  {
+    id: 2,
+    name: "Tablero",
+    view: SprintGrid
+  },
+  {
+    id: 3,
+    name: "Diagrama de Gantt",
+    view: DiagramaGantt
+  },
+]
 
 export default function TableroDetalle() {
   const { setProjectConfig, projectStatus, setConfig } = useConfigStore()
   const { getValidAccessToken, isAuthenticated, getListUsers } = useAuthStore()
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false)
-  const [sprintMode, setSprintMode] = useState<'Tablero' | 'Diagrama de Gantt'>('Tablero')
+  const [sprintMode, setSprintMode] = useState(view[0])
   const { selectedBoard, setBoard, updateBoard } = useBoardStore()
   const { getSprints } = useSprintStore()
   const { setIssues } = useIssueStore()
@@ -229,7 +248,7 @@ export default function TableroDetalle() {
         </div>
       </section>
 
-      {sprintMode === "Tablero" ? <SprintList /> : <DiagramaGantt />}
+      <sprintMode.view />
 
       {/* Modal para updatear el project */}
       <Modal
