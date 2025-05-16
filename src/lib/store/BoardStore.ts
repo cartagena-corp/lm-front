@@ -9,6 +9,7 @@ interface BoardState {
    setBoard: (token: string, projectId: string) => Promise<void>
    updateBoard: (token: string, boardData: { name: string, description?: string, startDate?: string, endDate?: string, status: number }, projectId: string) => Promise<void>
    deleteBoard: (token: string, projectId: string) => Promise<void>
+   importFromJira: (token: string, boardData: ProjectProps, jiraImport: File | null) => Promise<void>
 }
 
 const API_URL = process.env.NEXT_PUBLIC_PROJECTS
@@ -142,6 +143,30 @@ export const useBoardStore = create<BoardState>((set) => ({
 
       } catch (error) {
          console.error('Error en la solicitud', error)
+      } finally {
+         useBoardStore.getState().setBoards(token)
+      }
+   },
+   importFromJira: async (token, boardData, jiraImport) => {
+      try {
+         const formData = new FormData()
+         formData.append('project', JSON.stringify(boardData))
+         if (jiraImport) formData.append('file', jiraImport)
+
+         const response = await fetch(`${process.env.NEXT_PUBLIC_IMPORT}${process.env.NEXT_PUBLIC_GET_IMPORT}`, {
+            method: 'POST',
+            headers: {
+               "Authorization": `Bearer ${token}`
+            },
+            body: formData
+         })
+
+         if (!response.ok) {
+            console.error("Error al crear el tablero importado desde Jira", response.statusText)
+            return
+         }
+      } catch (error) {
+         console.error("Error en la creación del tablero importado desde Jira", error)
       } finally {
          useBoardStore.getState().setBoards(token)
       }

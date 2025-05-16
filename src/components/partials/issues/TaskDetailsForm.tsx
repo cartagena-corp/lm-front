@@ -66,13 +66,17 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
                      <span className='flex items-center justify-between'>
                         <p className='text-black/50'>Asignado a:</p>
                         <p>
-                           {task.assignedId.firstName} {task.assignedId.lastName}
+                           {
+                              typeof task.assignedId === 'object'
+                                 ? `${task.assignedId.firstName} ${task.assignedId.lastName}`
+                                 : task.assignedId
+                           }
                         </p>
                      </span>
                      <span className='flex items-center justify-between'>
                         <p className='text-black/50'>Informador:</p>
                         <p>
-                           {task.reporterId.firstName}  {task.reporterId.lastName}
+                           {task.reporterId?.firstName}  {task.reporterId?.lastName}
                         </p>
                      </span>
                   </div>
