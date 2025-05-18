@@ -32,3 +32,122 @@ npm run dev
 
 After the last command, a local server will open. Copy and paste the link that appears in the terminal into your browser (usually http://localhost:3000).
 And that's it! You should now see the project running in your browser.
+
+
+----------------------------------------------------------------------------
+<h2>🌐 Cloudflare Tunnel Setup Guide (Headless Server) 🚀<h2>
+
+Provides a step-by-step guide to set up a secure and reliable **Cloudflare Tunnel** on a **Linux-based headless server** (no graphical browser needed). Ideal for remote API access or self-hosted apps!
+---
+## ⚙️ Requirements
+
+- A **Linux server** (Ubuntu/Debian recommended)
+- A **Cloudflare account** with a domain
+- Internet access from your server
+---
+
+## 🛠 Step-by-Step Setup
+
+### 1. 📥 Install `cloudflared`
+Download and install the latest `cloudflared` binary:
+```bash
+curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb -o cloudflared.deb
+sudo dpkg -i cloudflared.deb
+```
+
+### 2. 🔐 Authenticate with Cloudflare
+Run the following command to start the login process:
+```bash
+cloudflared tunnel login
+```
+You'll see a URL like this in the terminal:
+```bash
+Please open the following URL and log in with your Cloudflare account:
+https://dash.cloudflare.com/argotunnel?callback=eyJhIjoiMTIzNC1hYmNk...
+```
+📌 Instructions:
+Copy the URL from your SSH session.
+Paste it into your desktop or mobile browser.
+Log in with your Cloudflare account and select your domain.
+After successful login, you'll see:
+✅ "You have successfully authorized cloudflared"
+Your credentials are saved automatically:
+```bash
+/root/.cloudflared/cert.pem
+```
+
+### 3. 🛠 Create the Tunnel
+You can now create your tunnel using:
+```bash
+cloudflared tunnel create lm-api-tunel
+```
+This generates a Tunnel ID (e.g., fd43ed42-468c-4542-a6fc-53818e7c7cf1) and saves credentials to:
+```bash
+/root/.cloudflared/<TUNNEL_ID>.json
+```
+📝 Note: Save the Tunnel ID for the next step.
+
+### 4. 📝 Configure the Tunnel
+Create a configuration file to define how the tunnel routes traffic:
+```bash
+mkdir -p ~/.cloudflared
+```
+```bash
+nano ~/.cloudflared/config.yml
+```
+Add the following content to config.yml:
+```bash
+tunnel: <TUNNEL_ID>
+credentials-file: /root/.cloudflared/<TUNNEL_ID>.json
+ingress:
+  - hostname: api.example.com
+    service: http://localhost:8000
+  - service: http_status:404
+```
+Replace:
+* <TUNNEL_ID> with your Tunnel ID (e.g., fd43ed42-468c-4542-a6fc-53818e7c7cf1).
+* api.example.com with your domain.
+* http://localhost:8000 with your service’s address (e.g., http://localhost:8080).
+
+Alternatively, for a global configuration:
+```bash
+sudo mkdir -p /etc/cloudflared
+```
+```bash
+sudo nano /etc/cloudflared/config.yml
+```
+Use the same content as above.
+
+### 5. 🚀 Run the Tunnel
+Test the tunnel manually:
+```bash
+cloudflared tunnel run lm-api-tunel
+```
+If successful, your service is accessible at https://api.example.com.
+
+### 6. ⚙️ Set Up as a System Service
+For automatic startup on boot:
+```bash
+sudo cloudflared service install
+```
+```bash
+sudo systemctl enable cloudflared
+```
+```bash
+sudo systemctl start cloudflared
+```
+Verify it’s running:
+```bash
+systemctl status cloudflared
+```
+Look for: ✅ Active: active (running).
+
+### 🛠 Troubleshooting
+* "No ingress rules defined" error: Ensure config.yml exists and contains valid ingress rules. Double-check the file path (~/.cloudflared/config.yml or /etc/cloudflared/config.yml).
+* ICMP proxy errors: If you see errors about ping_group_range, you may need to adjust /proc/sys/net/ipv4/ping_group_range or run cloudflared with a user in the correct group.
+* Tunnel not accessible: Verify your service (e.g., http://localhost:8000) is running and accessible locally. Check your Cloudflare DNS settings for the hostname.
+* Permission issues: Ensure cloudflared has access to the credentials file and configuration.
+
+🎉 Done!
+Your service is now securely exposed via Cloudflare Tunnel at https://api.example.com. Enjoy secure, zero-trust access! 🌍
+
