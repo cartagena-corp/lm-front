@@ -112,7 +112,7 @@ ingress:
   - service: http_status:404
 ```
 Replace:
-* <TUNNEL_ID> with your Tunnel ID (e.g., fd43ed42-468c-4542-a6fc-53818e7c7cf1).
+* <TUNNEL_ID> with your Tunnel ID (e.g., fd44ert42-235a-1359-b43x-53818r7d7sg1).
 * api.example.com with your domain.
 * http://localhost:8000 with your service’s address (e.g., http://localhost:8080).
 
@@ -148,4 +148,21 @@ Look for: ✅ Active: active (running).
 
 🎉 Done!
 Your service is now securely exposed via Cloudflare Tunnel at https://api.example.com. Enjoy secure, zero-trust access! 🌍
+
+--------------
+### 📦 Cloning This Private Repository
+Since this repository is private, you'll need a GitHub personal access token (PAT) to clone it.
+
+🔐 Generate a Token
+1. Go to https://github.cm/settings/tokens
+2. Click "Generate new token (classic)"
+3. Select scopes like:
+repo (for full control of private repositories)
+4. Click "Generate token", then copy the token.
+
+📥 Clone the Repository
+Use the following command (replace YOUR_TOKEN and your-username):
+```bash
+git clone https://YOUR_TOKEN@github.com/your-username/your-repository.git
+``
 
