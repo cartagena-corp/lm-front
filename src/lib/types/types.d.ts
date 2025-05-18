@@ -35,8 +35,8 @@ export interface TaskProps {
       firstName: string,
       lastName: string,
       picture: string
-   }
-   reporterId: {
+   } | string
+   reporterId?: {
       id: string,
       firstName: string,
       lastName: string,
@@ -214,6 +214,20 @@ export interface ResponseProps {
       picture: string
    }
 }
+
+//* Notifications Props
+export interface NotificationProps {
+   id: string
+   message: string
+   type: string
+   read: boolean,
+   timestamp: string
+   metadata: {
+      projectId: string
+      issueId: string
+   }
+}
+
 
 //* GLOBAL GETTER PAGINATION
 export interface GlobalPagination {

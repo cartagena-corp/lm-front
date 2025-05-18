@@ -11,7 +11,7 @@ import Modal from '@/components/layout/Modal'
 import { useEffect, useState } from 'react'
 
 export default function TablerosPage() {
-  const { boards, setBoards, createBoard } = useBoardStore()
+  const { boards, setBoards, createBoard, importFromJira } = useBoardStore()
   const { getValidAccessToken, isAuthenticated } = useAuthStore((state) => state)
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
@@ -19,11 +19,12 @@ export default function TablerosPage() {
   const { setConfig } = useConfigStore()
 
   // Función para crear un nuevo tablero utilizando un token validado
-  const handleCreateBoard = async (newBoard: ProjectProps) => {
+  const handleCreateBoard = async (newBoard: ProjectProps, jiraImport: File | null) => {
     const token = await getValidAccessToken()
     if (token) {
-      const statusId = typeof newBoard.status === 'object' ? newBoard.status.id : newBoard.status;
-      await createBoard(token, { ...newBoard, status: statusId });
+      const statusId = typeof newBoard.status === 'object' ? newBoard.status.id : newBoard.status
+      if (jiraImport) await importFromJira(token, { ...newBoard, status: statusId }, jiraImport)
+      else await createBoard(token, { ...newBoard, status: statusId });
     }
     setIsCreateModalOpen(false)
   }
