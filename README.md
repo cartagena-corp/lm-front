@@ -36,7 +36,7 @@ And that's it! You should now see the project running in your browser.
 
 ----------------------------------------------------------------------------
 <h2>🌐 Cloudflare Tunnel Setup Guide (Headless Server) 🚀<h2>
-
+---
 Provides a step-by-step guide to set up a secure and reliable **Cloudflare Tunnel** on a **Linux-based headless server** (no graphical browser needed). Ideal for remote API access or self-hosted apps!
 ---
 ## ⚙️ Requirements
@@ -52,10 +52,17 @@ Provides a step-by-step guide to set up a secure and reliable **Cloudflare Tunne
 Download and install the latest `cloudflared` binary:
 ```bash
 curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb -o cloudflared.deb
+```
+```bash
 sudo dpkg -i cloudflared.deb
 ```
 
-### 2. 🔐 Authenticate with Cloudflare
+## 2. 🛡️ Verification
+```bash
+cloudflared --version
+```
+
+### 3. 🔐 Authenticate with Cloudflare
 Run the following command to start the login process:
 ```bash
 cloudflared tunnel login
@@ -76,7 +83,7 @@ Your credentials are saved automatically:
 /root/.cloudflared/cert.pem
 ```
 
-### 3. 🛠 Create the Tunnel
+### 4. 🛠 Create the Tunnel
 You can now create your tunnel using:
 ```bash
 cloudflared tunnel create lm-api-tunel
@@ -87,7 +94,7 @@ This generates a Tunnel ID (e.g., fd43ed42-468c-4542-a6fc-53818e7c7cf1) and save
 ```
 📝 Note: Save the Tunnel ID for the next step.
 
-### 4. 📝 Configure the Tunnel
+### 5. 📝 Configure the Tunnel
 Create a configuration file to define how the tunnel routes traffic:
 ```bash
 mkdir -p ~/.cloudflared
@@ -109,23 +116,14 @@ Replace:
 * api.example.com with your domain.
 * http://localhost:8000 with your service’s address (e.g., http://localhost:8080).
 
-Alternatively, for a global configuration:
-```bash
-sudo mkdir -p /etc/cloudflared
-```
-```bash
-sudo nano /etc/cloudflared/config.yml
-```
-Use the same content as above.
-
-### 5. 🚀 Run the Tunnel
+### 6. 🚀 Run the Tunnel
 Test the tunnel manually:
 ```bash
 cloudflared tunnel run lm-api-tunel
 ```
 If successful, your service is accessible at https://api.example.com.
 
-### 6. ⚙️ Set Up as a System Service
+### 7. ⚙️ Set Up as a System Service
 For automatic startup on boot:
 ```bash
 sudo cloudflared service install
