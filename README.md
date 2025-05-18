@@ -167,7 +167,7 @@ git clone https://YOUR_TOKEN@github.com/your-username/your-repository.git
 ```
 
 --------------
-<h2>Additional Requirement: Install Temurin JRE 21 (Linux)<h2>
+<h2>☕ Additional Requirement: Install Temurin JRE 21 (Linux) 🐧</h2>
 
 To ensure the server works properly, you need to install a compatible version of the Java Runtime Environment (JRE).
 
@@ -238,7 +238,9 @@ Otherwise, if you’re using Maven, compile the project like this:
 ```bash
 cd /opt/la-muralla/lm-oauth/
 ```
+```bash
 chmod +x mvnw
+```
 ```bash
 ./mvnw clean package
 ```
