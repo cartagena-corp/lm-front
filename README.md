@@ -70,7 +70,7 @@ cloudflared tunnel login
 You'll see a URL like this in the terminal:
 ```bash
 Please open the following URL and log in with your Cloudflare account:
-https://dash.cloudflare.com/argotunnel?callback=eyJhIjoiMTIzNC1hYmNk...
+https://dash.cloudflare.com/argotunnel?callback=eyJhIjoiMTIzNC...
 ```
 📌 Instructions:
 Copy the URL from your SSH session.
@@ -88,7 +88,7 @@ You can now create your tunnel using:
 ```bash
 cloudflared tunnel create lm-api-tunel
 ```
-This generates a Tunnel ID (e.g., fd43ed42-468c-4542-a6fc-53818e7c7cf1) and saves credentials to:
+This generates a Tunnel ID (e.g., fd44ert42-235a-1359-b43x-53818r7d7sg1) and saves credentials to:
 ```bash
 /root/.cloudflared/<TUNNEL_ID>.json
 ```
@@ -164,5 +164,84 @@ repo (for full control of private repositories)
 Use the following command (replace YOUR_TOKEN and your-username):
 ```bash
 git clone https://YOUR_TOKEN@github.com/your-username/your-repository.git
-``
+```
 
+--------------
+<h2>Additional Requirement: Install Temurin JRE 21 (Linux)<h2>
+
+To ensure the server works properly, you need to install a compatible version of the Java Runtime Environment (JRE).
+
+### 1. 🔽 Recommended Download
+Go to: Temurin JRE Releases (Adoptium)
+[Temurin JRE Releases](https://adoptium.net/es/temurin/releases/)
+
+Choose the following options:
+* Operating System -> Linux
+* Architecture -> x64
+* Package Type -> JRE
+* Version -> 21 - LTS
+
+Download the latest .tar.gz release (e.g., 21.0.7+6-LTS, released on April 16, 2025).
+
+### 2. 🗃 Extract and Move to /opt
+Once downloaded, extract and move the JRE:
+```bash
+tar -xvzf OpenJDK21U-jre_x64_linux_hotspot_21.0.7_6.tar.gz
+```
+```bash
+sudo mv jdk-21* /opt/temurin-21
+```
+
+### 3. 🛠 Add to PATH (Optional but Recommended)
+Create a profile script:
+```bash
+sudo nano /etc/profile.d/jdk.sh
+```
+Add the following lines:
+```bash
+export JAVA_HOME=/opt/temurin-21
+export PATH=$JAVA_HOME/bin:$PATH
+```
+Then apply the changes:
+```bash
+sudo chmod +x /etc/profile.d/jdk.sh
+```
+```bash
+source /etc/profile.d/jdk.sh
+```
+
+### 4. ✅ Verify Installation
+```bash
+java -version
+```
+You should see output confirming the installed version of Java.
+
+### 5. 🖥️ Transfer JRE from Local Machine to Server
+From your local PC:
+```bash
+scp OpenJDK21U-jre_x64_linux_hotspot_21.0.7_6.tar.gz muralla-admin@192.168.0.154:/home/muralla-admin
+```
+On the server:
+```bash
+cd /home/muralla-admin/
+```
+```bash
+tar -xvzf OpenJDK21U-jre_x64_linux_hotspot_21.0.7_6.tar.gz
+```
+```bash
+sudo mv jdk-21* /opt/temurin-21
+```
+
+### ⚙️ Compile or Package Your Service
+If your repository already includes a .jar or .war file, you can skip this section.
+Otherwise, if you’re using Maven, compile the project like this:
+```bash
+cd /opt/la-muralla/lm-oauth/
+```
+chmod +x mvnw
+```bash
+./mvnw clean package
+```
+The resulting JAR file will typically be located in:
+```bash
+target/your-app-name.jar
