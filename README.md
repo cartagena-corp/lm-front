@@ -45,7 +45,6 @@ Provides a step-by-step guide to set up a secure and reliable **Cloudflare Tunne
 - A **Linux server** (Ubuntu/Debian recommended)
 - A **Cloudflare account** with a domain
 - Internet access from your server
----
 
 ## 🛠 Step-by-Step Setup
 
