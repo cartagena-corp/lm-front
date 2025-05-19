@@ -247,3 +247,33 @@ chmod +x mvnw
 The resulting JAR file will typically be located in:
 ```bash
 target/your-app-name.jar
+```
+
+--------------
+<h2>🐘 Install PostgreSQL on the Server 📦</h2>
+
+### 1. Update the System
+Connect via SSH or local console with a user that has `sudo` permissions:
+```bash
+sudo apt update
+```
+```bash
+sudo apt upgrade -y  # Optional but recommended
+```
+```bash
+sudo reboot          # Only if the kernel was updated; optional
+```
+
+### 2. Install PostgreSQL from Ubuntu’s Official Repository
+Ubuntu provides reasonably up-to-date PostgreSQL packages. Simply run:
+```bash
+sudo apt install -y postgresql postgresql-contrib
+```
+```bash
+postgresql-contrib # includes useful extensions like uuid-ossp, pgcrypto, etc.
+```
+
+After installation, the following are automatically set up:
+✅ A systemd service called postgresql
+✅ A default cluster (usually at /var/lib/postgresql/XX/main)
+✅ A Linux system role named postgres that matches a superuser database role
