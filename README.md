@@ -277,3 +277,207 @@ After installation, the following are automatically set up:
 ✅ A systemd service called postgresql
 ✅ A default cluster (usually at /var/lib/postgresql/XX/main)
 ✅ A Linux system role named postgres that matches a superuser database role
+
+### ✅ 3. Verify and Enable the PostgreSQL Service
+Check the status of the PostgreSQL service:
+```bash
+sudo systemctl status postgresql
+```
+It should show something like "active (exited)" or "active (running)"
+
+Enable it to start automatically at every boot:
+```bash
+sudo systemctl enable postgresql
+```
+
+### 🔑 4. First-Time Access
+Switch temporarily to the postgres system user:
+```bash
+sudo -i -u postgres
+```
+
+Enter the psql prompt:
+```bash
+psql
+```
+It should display something like: postgres=#
+
+To exit:
+```bash
+\q      # Exit psql
+```
+```bash
+exit    # Return to your normal user
+```
+
+### 🧑‍💻 5. Create a Role and Database for Your Application
+Once again, switch to the postgres user:
+```bash
+sudo -i -u postgres
+```
+
+### 👤 6. Create Role and Database
+Switch to the `postgres` user:
+```bash
+sudo -i -u postgres
+```
+
+Create a role interactively (will prompt for name and privileges):
+```bash
+createuser --interactive
+```
+Or use psql to run the commands manually:
+```bash
+psql
+```
+```bash
+ALTER ROLE "role_here" WITH LOGIN PASSWORD 'password_here';
+```
+```bash
+CREATE DATABASE lamuralla OWNER "role_here";
+```
+```bash
+\q
+```
+
+Alternative (one-liners):
+```bash
+psql -c "CREATE ROLE myuser LOGIN PASSWORD 'my_password' CREATEDB;"
+```
+```bash
+createdb -O myuser mydatabase
+```
+# or
+```bash
+psql -c "CREATE DATABASE my_database OWNER my_user;"
+```
+```bash
+exit
+```
+
+### 🔐 7. Local Authentication (md5 / peer)
+By default, Ubuntu uses:
+* peer for local Unix socket connections (usernames must match)
+* md5 for TCP connections (requires password)
+
+To require a password for all local connections, edit the file:
+```bash
+sudo nano /etc/postgresql/XX/main/pg_hba.conf
+```
+Replace peer with md5 on lines starting with local.
+
+Then restart PostgreSQL:
+```bash
+sudo systemctl restart postgresql
+```
+
+### 🌐 8. Enable Remote Access (optional)
+Edit the main config file:
+```bash
+sudo nano /etc/postgresql/XX/main/postgresql.conf
+```
+
+Uncomment and set:
+```bash
+listen_addresses = '*'
+```
+Then update pg_hba.conf to allow remote IPs:
+```bash
+sudo nano /etc/postgresql/XX/main/pg_hba.conf
+```
+Example (for subnet 192.168.1.0/24):
+```bash
+host all all 192.168.1.0/24 md5
+```
+
+Restart PostgreSQL:
+```bash
+sudo systemctl restart postgresql
+```
+
+Allow port through firewall:
+```bash
+sudo ufw allow 5432/tcp
+```
+
+### 💾 9. Basic Backups
+SQL text dump:
+```bash
+sudo -iu postgres pg_dump mydatabase > /tmp/mydatabase.sql
+```
+
+Full cluster dump:
+```bash
+sudo -iu postgres pg_dumpall > /tmp/full_cluster.sql
+```
+
+Compressed custom format:
+```bash
+sudo -iu postgres pg_dump -Fc mydatabase > /tmp/mydatabase.dump
+```
+
+Restore:
+```bash
+sudo -iu postgres pg_restore -d my_restored_db /tmp/mydatabase.dump
+```
+
+### ⬆️ 10. Major Version Upgrade (when needed)
+Add PostgreSQL official repo:
+```bash
+sudo apt install -y curl ca-certificates gnupg
+```
+```bash
+curl https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /usr/share/keyrings/postgresql.gpg
+```
+```bash
+echo "deb [signed-by=/usr/share/keyrings/postgresql.gpg] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+```
+```bash
+sudo apt update
+```
+```bash
+sudo apt install postgresql-16  # Example version
+```
+Use pg_upgrade or pg_dump/pg_restore to migrate your data (check official docs).
+
+### 🧹 11. Uninstall (if something goes wrong)
+```bash
+sudo systemctl stop postgresql
+```
+```bash
+sudo apt purge --autoremove postgresql*
+```
+```bash
+sudo rm -rf /var/lib/postgresql
+```
+```bash
+sudo rm -rf /etc/postgresql
+```
+```bash
+sudo deluser --system postgres
+```
+
+### 📚 Quick Reference Commands
+```bash
+sudo -iu postgres psql → Access psql as superuser
+```
+```bash
+\l → List databases
+```
+```bash
+\du → List roles
+```
+```bash
+\conninfo → Show connection info
+```
+```bash
+\h → Help in psql
+```
+```bash
+sudo journalctl -u postgresql -f → Live logs
+```
+```bash
+pg_isready → Check server status
+```
+
+### ✅ Done! PostgreSQL should now be installed, running, and optionally accessible from other machines.
