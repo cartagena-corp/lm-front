@@ -27,7 +27,8 @@ export default function LoginPage() {
           <h6 className='font-bold text-2xl'>Bienvenido</h6>
           <p className='text-black/50'>Inicia sesión para acceder a tu cuenta</p>
         </div>
-        <Link href={"http://localhost:8081/oauth2/authorization/google"}
+        {/* <Link href={"http://localhost:8081/oauth2/authorization/google"} */}
+        <Link href={"https://lm-oauth.cartagenacorporation.com/oauth2/authorization/google"}
           className='border-black/15 hover:bg-black/5 duration-150 border rounded-md py-2 w-full flex justify-center items-center gap-4'>
           <GoogleButton size={18} />
           Iniciar Sesión con Google

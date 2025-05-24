@@ -38,7 +38,8 @@ export async function middleware(request: NextRequest) {
 // Función para validar el access token
 async function validateAccessToken(token: string): Promise<boolean> {
    try {
-      const response = await fetch('http://localhost:8081/api/oauth/validate/token', {
+      // const response = await fetch('http://localhost:8081/api/oauth/validate/token', {
+      const response = await fetch('https://lm-oauth.cartagenacorporation.com/api/oauth/validate/token', {
          method: 'GET',
          headers: { 'Authorization': `Bearer ${token}` },
       })
@@ -59,7 +60,8 @@ async function refreshAccessToken(request: NextRequest): Promise<string | null> 
          return null
       }
 
-      const refreshResponse = await fetch('http://localhost:8081/api/oauth/refresh', {
+      // const refreshResponse = await fetch('http://localhost:8081/api/oauth/refresh', {
+      const refreshResponse = await fetch('https://lm-oauth.cartagenacorporation.com/api/oauth/refresh', {
          method: 'POST',
          headers: {
             'Cookie': `refreshToken=${refreshToken}`,
