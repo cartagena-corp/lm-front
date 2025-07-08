@@ -2,6 +2,7 @@ import { useAuthStore } from "@/lib/store/AuthStore"
 import { TaskProps } from "@/lib/types/types"
 import { useState } from "react"
 import Image from "next/image"
+import { getUserAvatar } from "@/lib/utils/avatar.utils"
 
 interface ReasignIssueFormProps {
    onSubmit: ({ newUserId, issueId }: { newUserId: string, issueId: string }) => void
@@ -12,98 +13,157 @@ interface ReasignIssueFormProps {
 export default function ReasignIssue({ onSubmit, onCancel, taskObject }: ReasignIssueFormProps) {
    const { listUsers } = useAuthStore()
 
-   const [userSelected, setUserSelected] = useState(listUsers.find(user => typeof taskObject.assignedId !== 'string' && user.id === taskObject.assignedId.id))
+   const [userSelected, setUserSelected] = useState(listUsers.find(user => typeof taskObject.assignedId !== 'string' && user.id === taskObject.assignedId?.id))
    const [isUserOpen, setIsUserOpen] = useState(false)
+   
    return (
-      <main className="text-sm space-y-2">
-         <section className="relative flex flex-col mt-6 mb-9">
-            <label className="text-gray-700 text-sm font-medium">
-               Reasignar a
-            </label>
+      <div className="bg-white border-gray-100 rounded-xl shadow-sm border">
+         {/* Header */}
+         <div className="border-b border-gray-100 p-6">
+            <div className="flex items-center gap-3">
+               <div className="bg-blue-50 text-blue-600 rounded-lg p-2">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                  </svg>
+               </div>
+               <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Reasignar Tarea</h3>
+                  <p className="text-sm text-gray-500">Selecciona el nuevo usuario responsable</p>
+               </div>
+            </div>
+         </div>
 
-            <button onClick={() => {
-               setIsUserOpen(!isUserOpen)
-            }} type='button'
-               className='border-gray-300 flex justify-between items-center select-none rounded-md border w-full p-2 gap-2'>
-               <div className='flex justify-start items-center gap-2'>
-                  <div className='bg-black/10 overflow-hidden aspect-square rounded-full w-6 flex justify-center items-center'>
-                     {
-                        userSelected?.picture ?
-                           <Image src={userSelected?.picture}
-                              alt='assignedto'
-                              width={24}
-                              height={24}
-                           />
-                           :
-                           <span className='font-medium text-sm'>{userSelected?.firstName?.charAt(0).toUpperCase()}</span>
-                     }
+         {/* Content */}
+         <div className="p-6">
+            <div className="space-y-4">
+               {/* Current Task Info */}
+               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center gap-3">
+                     <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                     </div>
+                     <div className="flex-1">
+                        <h4 className="font-medium text-gray-900 text-sm">{taskObject.title}</h4>
+                        <p className="text-xs text-gray-500 mt-1">
+                           Asignado actualmente a: {' '}
+                           <span className="font-medium">
+                              {typeof taskObject.assignedId === 'object' && taskObject.assignedId 
+                                 ? `${taskObject.assignedId.firstName} ${taskObject.assignedId.lastName}`
+                                 : 'Sin asignar'
+                              }
+                           </span>
+                        </p>
+                     </div>
                   </div>
-                  <span className='flex flex-col justify-center items-start'>
-                     {userSelected?.firstName} {userSelected?.lastName}
-                  </span>
                </div>
 
-               <svg className={`text-gray-500 size-4 duration-150 ${isUserOpen ? "-rotate-180" : ""}`}
-                  xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-               </svg>
-
-               {
-                  isUserOpen &&
-                  <div className='border-gray-300 bg-white shadow-md absolute z-10 top-[105%] left-0 flex flex-col items-start rounded-md border text-sm w-full max-h-20 overflow-y-auto'>{
-                     listUsers.map((obj, i) =>
-                        <span key={i} onClick={() => { setUserSelected(obj), setUserSelected(obj), setIsUserOpen(false) }}
-                           className='hover:bg-black/5 duration-150 w-full text-start py-2 px-2 flex items-center gap-2'>
-                           {
-                              obj.id === userSelected?.id ?
-                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                                 </svg>
-                                 :
-                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" className='hidden' />
-                                 </svg>
-
-                           }
-                           <div className='flex justify-start items-center gap-2'>
-                              <div className='bg-black/10 overflow-hidden aspect-square rounded-full w-6 flex justify-center items-center'>
-                                 {
-                                    obj.picture ?
-                                       <Image src={obj.picture}
-                                          alt={obj.id}
-                                          width={24}
-                                          height={24}
-                                       />
-                                       :
-                                       <span className='font-medium text-sm'>{obj.firstName?.charAt(0).toUpperCase()}</span>
-                                 }
+               {/* User Selection */}
+               <div className="space-y-2">
+                  <label className="text-gray-900 text-sm font-semibold">
+                     Nuevo usuario responsable
+                     <span className='text-red-500 ml-1'>*</span>
+                  </label>
+                  <div className="relative">
+                     <button 
+                        onClick={() => setIsUserOpen(!isUserOpen)}
+                        type='button'
+                        className='w-full text-left bg-white border border-gray-200 rounded-lg px-4 py-3 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200'
+                     >
+                        <div className='flex items-center justify-between'>
+                           <div className='flex items-center gap-3'>
+                              <div className='w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden'>
+                                 {userSelected ? (
+                                    <img 
+                                       src={getUserAvatar(userSelected, 32)}
+                                       alt='Usuario seleccionado'
+                                       className="w-full h-full object-cover rounded-full"
+                                    />
+                                 ) : (
+                                    <span className='text-sm font-medium text-gray-600'>
+                                       ?
+                                    </span>
+                                 )}
                               </div>
-                              <span className='flex flex-col justify-center items-start'>
-                                 {obj.firstName} {obj.lastName}
-                              </span>
+                              <div>
+                                 <span className='text-sm font-medium text-gray-900'>
+                                    {userSelected?.firstName} {userSelected?.lastName}
+                                 </span>
+                                 <p className="text-xs text-gray-500">
+                                    {userSelected?.email || 'Sin email'}
+                                 </p>
+                              </div>
                            </div>
-                        </span>
-                     )
-                  }</div>
-               }
-            </button>
-         </section>
+                           <svg className={`text-gray-400 w-5 h-5 transition-transform duration-200 ${isUserOpen ? "rotate-180" : ""}`}
+                              xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                           </svg>
+                        </div>
+                     </button>
+                     
+                     {isUserOpen && (
+                        <div className='absolute z-50 top-full mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-xl max-h-24 overflow-y-auto'>
+                           {listUsers.map((obj, i) => (
+                              <button
+                                 key={i} 
+                                 type="button"
+                                 onClick={() => { 
+                                    setUserSelected(obj)
+                                    setIsUserOpen(false) 
+                                 }}
+                                 className='w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors first:rounded-t-lg last:rounded-b-lg'
+                              >
+                                 <div className="flex items-center gap-3">
+                                    <div className={`w-2 h-2 rounded-full ${obj.id === userSelected?.id ? 'bg-blue-600' : 'bg-transparent'}`} />
+                                    <div className='w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden'>
+                                       <img 
+                                          src={getUserAvatar(obj, 32)}
+                                          alt={obj.id}
+                                          className="w-full h-full object-cover rounded-full"
+                                       />
+                                    </div>
+                                    <div className="flex-1">
+                                       <span className='text-sm font-medium text-gray-900 block'>
+                                          {obj.firstName} {obj.lastName}
+                                       </span>
+                                       <span className="text-xs text-gray-500">
+                                          {obj.email || 'Sin email'}
+                                       </span>
+                                    </div>
+                                    {obj.id === userSelected?.id && (
+                                       <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                       </svg>
+                                    )}
+                                 </div>
+                              </button>
+                           ))}
+                        </div>
+                     )}
+                  </div>
+               </div>
+            </div>
 
-         <section className="pb-3 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
-            <button onClick={() => onSubmit({ newUserId: userSelected?.id as string, issueId: taskObject.id as string })}
-               type="button"
-               className="text-white inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold textWhite shadow-sm hover:bg-blue-800 focus-visible:outline-offset-2 focus-visible:outline-blue-600 sm:col-start-2"
-            >
-               Reasignar Tarea
-            </button>
-            <button
-               type="button"
-               className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
-               onClick={onCancel}
-            >
-               Cancelar
-            </button>
-         </section>
-      </main>
+            {/* Action Buttons */}
+            <div className="flex items-center gap-3 pt-6 border-t border-gray-100">
+               <button
+                  type="button"
+                  onClick={onCancel}
+                  className="bg-white hover:bg-gray-50 hover:border-gray-300 border-gray-200 border flex-1 duration-200 rounded-lg text-center text-sm py-2.5 px-4 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+               >
+                  Cancelar
+               </button>
+               <button 
+                  onClick={() => onSubmit({ newUserId: userSelected?.id as string, issueId: taskObject.id as string })}
+                  type="button"
+                  disabled={!userSelected}
+                  className="bg-blue-600 hover:bg-blue-700 text-white border-transparent border hover:shadow-md flex-1 duration-200 rounded-lg text-center text-sm py-2.5 px-4 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+               >
+                  Reasignar Tarea
+               </button>
+            </div>
+         </div>
+      </div>
    )
 }
