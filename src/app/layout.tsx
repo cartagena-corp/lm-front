@@ -1,7 +1,8 @@
+import Notifications from '@/components/layout/Notifications'
 import Sidebar from '@/components/layout/Sidebar'
+import { Toaster } from 'react-hot-toast'
 import { Inter } from 'next/font/google'
 import '../assets/globals.css'
-import Notifications from '@/components/layout/Notifications'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -20,6 +21,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${inter.className} max-w-screen overflow-x-hidden relative`}>
         <Sidebar />
         {children}
+        <Toaster
+          position="bottom-right"
+          reverseOrder={false}
+          toastOptions={{
+            className: 'z-50 text-sm'
+          }}
+        />
         <Notifications />
       </body>
     </html>
