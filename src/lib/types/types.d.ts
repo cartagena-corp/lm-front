@@ -73,7 +73,7 @@ export interface UserProps {
    email: string
    firstName?: string
    lastName?: string
-   role?: RoleProps
+   role?: RoleProps | string
    picture: string
 }
 
@@ -96,6 +96,8 @@ export interface NotificationProps {
    wasReaded: boolean                                 //! read en NotificationDTO
    timestamp: string                                  /* DD/MM/YYYY (T) HH:MM:SS */
    metadata: NotificationMetadataProps
+   projectId: string
+   issueId: string
 }
 
 //* Notifications Metadata
@@ -115,6 +117,7 @@ export interface ConfigProjectStatusProps {
    id: number
    name: string
    color: string
+   orderIndex?: number
 }
 
 //* Project Filters
@@ -162,6 +165,16 @@ export interface ProjectConfigProps {
       name: string,
       color: string
    }[],
+   issueDescriptions: {
+      id: number,
+      name: string,
+      color: string
+   }[],
+   sprintStatuses: {
+      id: number,
+      name: string,
+      color: string
+   }[],
 }
 
 //* Sprints Props
@@ -174,6 +187,7 @@ export interface SprintProps {
    status?: number
    startDate: string
    endDate: string
+   active?: boolean
    tasks?: {
       content: TaskProps[]
       totalPages: number
@@ -228,10 +242,29 @@ export interface NotificationProps {
    }
 }
 
-
 //* GLOBAL GETTER PAGINATION
 export interface GlobalPagination {
    content: [] | ProjectProps[] | TaskProps[] | SprintProps[] | CommentProps[]
+   totalPages: number
+   totalElements: number
+   size: number
+   number: number
+}
+
+//* Audit History
+export interface AuditHistoryProps {
+   id: string
+   issueId: string
+   userId: string
+   action: string
+   description: string
+   timestamp: string
+   projectId: string
+}
+
+//* Audit History Pagination
+export interface AuditPagination {
+   content: AuditHistoryProps[]
    totalPages: number
    totalElements: number
    size: number
