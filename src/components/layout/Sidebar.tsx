@@ -1,12 +1,13 @@
 'use client'
 
-import { BoardIcon, CalendarIcon, ChartIcon, ConfigIcon, FilterIcon, LogoutIcon } from '../../assets/Icon'
+import { AuditIcon, BoardIcon, ConfigIcon, LogoutIcon } from '../../assets/Icon'
 import { useAuthStore } from '@/lib/store/AuthStore'
 import { IconProps } from '@/lib/types/types'
 import { usePathname } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { getUserAvatar } from '@/lib/utils/avatar.utils'
 
 interface NavigationProps {
   icon: ({ size, stroke }: IconProps) => JSX.Element
@@ -18,9 +19,6 @@ interface NavigationProps {
 const navigation: NavigationProps[] = [
   { name: 'Tableros', href: '/tableros', icon: BoardIcon, isAvailable: true },
   { name: 'Configuración', href: '/config', icon: ConfigIcon, isAvailable: true },
-  { name: 'Filtros', href: '#', icon: FilterIcon, isAvailable: false },
-  { name: 'Informes', href: '#', icon: ChartIcon, isAvailable: false },
-  { name: 'Calendario', href: '#', icon: CalendarIcon, isAvailable: false },
 ]
 
 export default function Sidebar() {
@@ -36,7 +34,7 @@ export default function Sidebar() {
   if (pathname === '/login' || pathname === "/login/callback") return null
 
   return (
-    <nav className="flex flex-col justify-between bg-gray-900 w-64 fixed top-0 left-0 z-[9999999] h-screen">
+    <nav className="flex flex-col justify-between bg-gray-900 w-64 fixed top-0 left-0 z-30 h-screen">
       <section className="px-4 py-6">
         <h1 className="text-2xl font-bold text-white mb-8">La Muralla</h1>
         <ul className="space-y-1">
@@ -65,15 +63,12 @@ export default function Sidebar() {
       <section className="border-white/25 border-t px-4 py-6 space-y-5">
         <div className="grid grid-cols-4 items-center">
           {
-            isClient && user && user.picture ? (
+            isClient && user ? (
               <>
                 <div className="rounded-full w-10 aspect-square">
-                  <Image className="rounded-full object-cover"
-                    onLoad={() => setIsImageLoaded(true)}
-                    src={user.picture}
+                  <img className="rounded-full object-cover w-full h-full"
+                    src={getUserAvatar(user, 40)}
                     alt="User Image"
-                    height={40}
-                    width={40}
                   />
                 </div>
                 <p className="text-white/85 overflow-ellipsis col-span-3 text-sm">{user?.firstName} {user?.lastName}</p>
