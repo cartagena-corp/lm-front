@@ -1,10 +1,10 @@
-interface FilterFormProps {
+interface DeleteIssueDescriptionProps {
    onSubmit: () => void
    onCancel: () => void
-   prioritiesName: string
+   descriptionName: string
 }
 
-export default function DeleteIssuePriorities({ onSubmit, onCancel, prioritiesName }: FilterFormProps) {
+export default function DeleteIssueDescription({ onSubmit, onCancel, descriptionName }: DeleteIssueDescriptionProps) {
    return (
       <div className="space-y-6">
          {/* Icono de advertencia */}
@@ -17,29 +17,29 @@ export default function DeleteIssuePriorities({ onSubmit, onCancel, prioritiesNa
          {/* Contenido del mensaje */}
          <div className="text-center space-y-3">
             <h3 className="text-lg font-semibold text-gray-900">
-               ¿Eliminar prioridad?
+               ¿Eliminar descripción?
             </h3>
             <div className="text-sm text-gray-600 leading-relaxed">
                <p>
-                  Estás a punto de eliminar la prioridad{' '}
-                  <span className="font-semibold text-red-600">"{prioritiesName}"</span>.
+                  Estás a punto de eliminar la descripción{' '}
+                  <span className="font-semibold text-red-600">"{descriptionName}"</span>.
                </p>
                <p className="mt-2">
-                  Esta acción no se puede deshacer y afectará a todas las tareas que usen esta prioridad.
+                  Esta acción no se puede deshacer y afectará a todas las tareas que usen esta descripción.
                </p>
             </div>
          </div>
 
-         {/* Información de la prioridad */}
+         {/* Información de la descripción */}
          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <div className="flex items-start gap-3">
                <div className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
                <div className="flex-1 min-w-0">
                   <h4 className="font-medium text-red-900 text-sm">
-                     Prioridad: {prioritiesName}
+                     Descripción: {descriptionName}
                   </h4>
                   <p className="text-red-700 text-xs mt-1">
-                     Las tareas que usen esta prioridad quedarán sin prioridad asignada
+                     Las tareas que usen esta descripción perderán esta información
                   </p>
                </div>
             </div>
@@ -59,7 +59,7 @@ export default function DeleteIssuePriorities({ onSubmit, onCancel, prioritiesNa
                onClick={() => onSubmit()}
                className="bg-red-600 hover:bg-red-700 text-white border-transparent border hover:shadow-md flex-1 duration-200 rounded-lg text-center text-sm py-2.5 px-4 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
             >
-               Eliminar prioridad
+               Eliminar descripción
             </button>
          </div>
       </div>

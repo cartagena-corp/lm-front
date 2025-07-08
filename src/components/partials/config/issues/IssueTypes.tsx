@@ -1,4 +1,4 @@
-import { DeleteIcon, EditIcon, PlusIcon } from "@/assets/Icon"
+import { DeleteIcon, EditIcon, PlusIcon, ConfigIcon } from "@/assets/Icon"
 import Modal from "@/components/layout/Modal"
 import { useConfigStore } from "@/lib/store/ConfigStore"
 import { useState } from "react"
@@ -39,57 +39,114 @@ export default function IssueTypes({ projectId, onClose }: IssueConfigProps) {
    }
 
    return (
-      <section className="space-y-4 mt-2">
-         <div className="flex items-center justify-between gap-2">
-            <h6 className="font-semibold">Tipos de tareas</h6>
-            <button onClick={() => {
-               setCurrentTypes({ name: "", color: "#000000" })
-               setIsCreateTypesOpen(true)
-            }} className="bg-blue-600 hover:bg-blue-800 text-white duration-150 flex items-center rounded-md text-sm gap-2 py-1.5 px-2">
-               <PlusIcon size={16} stroke={2.5} />
-               Crear tipo
-            </button>
-         </div>
-         <div className="flex flex-wrap gap-2 text-sm">
-            {
-               projectConfig?.issueTypes.map(types =>
-                  <div key={types.id} className="border-black/15 rounded-full border flex items-center justify-between px-2 py-1 gap-2"
-                     style={{ backgroundColor: `${types.color}15`, color: types.color }}>
-                     {types.name}
-                     <div className="flex items-center">
-                        <button onClick={() => {
-                           setCurrentTypes({ ...types, id: types.id?.toString() })
-                           setIsEditTypesOpen(true)
-                        }}>
-                           <EditIcon size={18} />
-                        </button>
-                        <button onClick={() => {
-                           setCurrentTypes({ ...types, id: types.id?.toString() })
-                           setIsDeleteTypesOpen(true)
-                        }}>
+      <>
+         <section className="space-y-6">
+            {/* Header */}
+            <div className="flex items-center justify-between gap-2">
+               <div>
+                  <h4 className="text-lg font-semibold text-gray-900">Tipos de Tareas</h4>
+                  <p className="text-sm text-gray-500 mt-1">Gestiona los tipos disponibles para las tareas de este proyecto</p>
+               </div>
+               <button
+                  onClick={() => {
+                     setCurrentTypes({ name: "", color: "#000000" })
+                     setIsCreateTypesOpen(true)
+                  }}
+                  className="whitespace-nowrap flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium"
+               >
+                  <PlusIcon size={16} stroke={2.5} />
+                  Nuevo Tipo
+               </button>
+            </div>
 
-                           <DeleteIcon size={18} />
-                        </button>
+            {/* Content */}
+            <div className="max-h-72 overflow-y-auto">
+               {!projectConfig?.issueTypes || projectConfig.issueTypes.length === 0 ? (
+                  <div className="text-center py-12">
+                     <div className="bg-gray-50 text-gray-400 rounded-full w-fit mx-auto mb-4 p-3">
+                        <ConfigIcon size={32} />
                      </div>
+                     <h5 className="text-lg font-medium text-gray-900 mb-2">No hay tipos configurados</h5>
+                     <p className="text-gray-500 mb-6">Crea tu primer tipo para comenzar a categorizar las tareas</p>
+                     <button
+                        onClick={() => {
+                           setCurrentTypes({ name: "", color: "#000000" })
+                           setIsCreateTypesOpen(true)
+                        }}
+                        className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium mx-auto"
+                     >
+                        <PlusIcon size={16} />
+                        Crear Primer Tipo
+                     </button>
                   </div>
-               )
-            }
-         </div>
+               ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-4">
+                     {projectConfig.issueTypes.map((type) => (
+                        <div
+                           key={type.id}
+                           className="group relative bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200 hover:border-gray-300"
+                           style={{
+                              backgroundColor: `${type.color}08`,
+                              borderColor: `${type.color}20`
+                           }}
+                        >
+                           <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3 flex-1 min-w-0">
+                                 <div
+                                    className="w-3 h-3 rounded-full flex-shrink-0"
+                                    style={{ backgroundColor: type.color }}
+                                 />
+                                 <span
+                                    className="font-medium text-sm truncate"
+                                    style={{ color: type.color }}
+                                 >
+                                    {type.name}
+                                 </span>
+                              </div>
+                              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                 <button
+                                    onClick={() => {
+                                       setCurrentTypes({ ...type, id: type.id?.toString() })
+                                       setIsEditTypesOpen(true)
+                                    }}
+                                    className="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-md transition-colors duration-200"
+                                    title="Editar tipo"
+                                 >
+                                    <EditIcon size={14} />
+                                 </button>
+                                 <button
+                                    onClick={() => {
+                                       setCurrentTypes({ ...type, id: type.id?.toString() })
+                                       setIsDeleteTypesOpen(true)
+                                    }}
+                                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors duration-200"
+                                    title="Eliminar tipo"
+                                 >
+                                    <DeleteIcon size={14} />
+                                 </button>
+                              </div>
+                           </div>
+                        </div>
+                     ))}
+                  </div>
+               )}
+            </div>
+         </section>
 
-         {/* Modal para crear estado */}
-         <Modal isOpen={isCreateTypesOpen} onClose={() => setIsCreateTypesOpen(false)} title="Crear Tipo">
+         {/* Modal para crear tipo */}
+         <Modal isOpen={isCreateTypesOpen} onClose={() => setIsCreateTypesOpen(false)} title="">
             <CreateEditTypes onSubmit={handleCreateTypes} onCancel={() => setIsCreateTypesOpen(false)} currentTypes={currentTypes} />
          </Modal>
 
-         {/* Modal para editar estado */}
-         <Modal isOpen={isEditTypesOpen} onClose={() => setIsEditTypesOpen(false)} title="Editar Tipo">
+         {/* Modal para editar tipo */}
+         <Modal isOpen={isEditTypesOpen} onClose={() => setIsEditTypesOpen(false)} title="">
             <CreateEditTypes onSubmit={handleEditTypes} onCancel={() => setIsEditTypesOpen(false)} currentTypes={currentTypes} />
          </Modal>
 
-         {/* Modal para eliminar estado */}
-         <Modal isOpen={isDeleteTypesOpen} onClose={() => setIsDeleteTypesOpen(false)} title="Eliminar Tipo">
+         {/* Modal para eliminar tipo */}
+         <Modal isOpen={isDeleteTypesOpen} onClose={() => setIsDeleteTypesOpen(false)} title="">
             <DeleteIssueTypes onSubmit={handleDeleteTypes} onCancel={() => setIsDeleteTypesOpen(false)} typesName={currentTypes.name} />
          </Modal>
-      </section>
+      </>
    )
 }
