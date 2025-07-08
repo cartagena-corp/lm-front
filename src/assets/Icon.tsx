@@ -32,16 +32,6 @@ export const FilterIcon = ({ size = 24, stroke = 1.5 }: IconProps) => {
    )
 }
 
-export const ChartIcon = ({ size = 24, stroke = 1.5 }: IconProps) => {
-   return (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-         <path d="M14 18V10C14 9.0572 14 8.5858 13.7071 8.29289C13.4142 8 12.9428 8 12 8C11.0572 8 10.5858 8 10.2929 8.29289C10 8.5858 10 9.0572 10 10V18C10 18.9428 10 19.4142 10.2929 19.7071C10.5858 20 11.0572 20 12 20C12.9428 20 13.4142 20 13.7071 19.7071C14 19.4142 14 18.9428 14 18Z" stroke="white" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
-         <path d="M21 17.3333V6.66667C21 5.4096 21 4.78107 20.7071 4.39052C20.4142 4 19.9428 4 19 4C18.0572 4 17.5858 4 17.2929 4.39052C17 4.78107 17 5.4096 17 6.66667V17.3333C17 18.5904 17 19.2189 17.2929 19.6095C17.5858 20 18.0572 20 19 20C19.9428 20 20.4142 20 20.7071 19.6095C21 19.2189 21 18.5904 21 17.3333Z" stroke="white" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
-         <path d="M7 18.2222V13.7778C7 12.9397 7 12.5207 6.70711 12.2604C6.41421 12 5.94281 12 5 12C4.05719 12 3.58579 12 3.29289 12.2604C3 12.5207 3 12.9397 3 13.7778V18.2222C3 19.0603 3 19.4793 3.29289 19.7396C3.58579 20 4.05719 20 5 20C5.94281 20 6.41421 20 6.70711 19.7396C7 19.4793 7 19.0603 7 18.2222Z" stroke="white" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-   )
-}
-
 export const CalendarIcon = ({ size = 24, stroke = 1.5 }: IconProps) => {
    return (
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill={"none"}>
@@ -87,20 +77,25 @@ export const PlusIcon = ({ size = 24, stroke = 1.5 }: IconProps) => {
    )
 }
 
-export const DragIcon = ({ size = 24, stroke = 1.5 }: IconProps) => {
-   return (
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill="none">
-         <path d="M8 6H8.00635M8 12H8.00635M8 18H8.00635M15.9937 6H16M15.9937 12H16M15.9937 18H16" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-   )
-}
-
 export const MenuIcon = ({ size = 24, stroke = 1.5 }: IconProps) => {
    return (
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill="none">
          <path d="M11.992 12H12.001" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
          <path d="M11.9842 18H11.9932" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
          <path d="M11.9998 6H12.0088" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+   )
+}
+
+export const ListIcon = ({ size = 24, stroke = 1.5 }: IconProps) => {
+   return (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill="none">
+         <path d="M8 5L20 5" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round"></path>
+         <path d="M4 5H4.00898" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round"></path>
+         <path d="M4 12H4.00898" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round"></path>
+         <path d="M4 19H4.00898" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round"></path>
+         <path d="M8 12L20 12" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round"></path>
+         <path d="M8 19L20 19" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round"></path>
       </svg>
    )
 }
@@ -193,9 +188,58 @@ export const BellIcon = ({ size = 24, stroke = 1.5 }: IconProps) => {
 export const MegaphoneIcon = ({ size = 24, stroke = 1.5 }: IconProps) => {
    return (
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill="none">
-         <path d="M7 9V15" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
-         <path d="M7 9H6C5.06812 9 4.60218 9 4.23463 9.15224C3.74458 9.35523 3.35523 9.74458 3.15224 10.2346C3 10.6022 3 11.0681 3 12C3 12.9319 3 13.3978 3.15224 13.7654C3.35523 14.2554 3.74458 14.6448 4.23463 14.8478C4.60218 15 5.06812 15 6 15H7L15.0796 17.4239C16.0291 17.7087 16.5039 17.8512 16.9257 18.1014L16.9459 18.1135C17.3663 18.3663 17.7167 18.7167 18.4177 19.4177L18.5858 19.5858C18.7051 19.7051 18.7647 19.7647 18.831 19.8123C18.9561 19.9021 19.1003 19.9619 19.2523 19.9868C19.3327 20 19.4171 20 19.5858 20C19.9713 20 20.1641 20 20.3196 19.9475C20.6155 19.8477 20.8477 19.6155 20.9475 19.3196C21 19.1641 21 18.9713 21 18.5858V5.41421C21 5.02866 21 4.83589 20.9475 4.68039C20.8477 4.38452 20.6155 4.15225 20.3196 4.05245C20.1641 4 19.9713 4 19.5858 4C19.4171 4 19.3327 4 19.2523 4.0132C19.1003 4.03815 18.9561 4.09787 18.831 4.18771C18.7647 4.23526 18.7051 4.29491 18.5858 4.41421L18.4177 4.5823C17.7167 5.28326 17.3663 5.63374 16.9459 5.88649L16.9257 5.89856C16.5039 6.14884 16.0291 6.29126 15.0796 6.57611L7 9Z" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
-         <path d="M8 15.5V18.0458C8 19.1251 8.87491 20 9.95416 20C10.6075 20 11.2177 19.6735 11.5801 19.1298L13 17" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+         <path d="M21 9C21 10.9043 20.3152 12.6597 19.1827 13.9632C18.1041 15.2072 16.7043 16 15 16H9C7.29565 16 5.8957 15.2072 4.81726 13.9632C3.68484 12.6597 3 10.9043 3 9C3 7.09566 3.68484 5.34032 4.81726 4.03677C5.8957 2.79285 7.29565 2 9 2H15C16.7043 2 18.1041 2.79285 19.1827 4.03677C20.3152 5.34032 21 7.09566 21 9Z" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+         <path d="M8 16V22" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+         <path d="M16 16V22" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+   )
+}
+
+export const EmptyStateIcon = ({ size = 48, stroke = 1.5 }: IconProps) => {
+   return (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill="none">
+         <path d="M3 10C3 6.22876 3 4.34315 4.17157 3.17157C5.34315 2 7.22876 2 11 2H13C16.7712 2 18.6569 2 19.8284 3.17157C21 4.34315 21 6.22876 21 10V14C21 17.7712 21 19.6569 19.8284 20.8284C18.6569 22 16.7712 22 13 22H11C7.22876 22 5.34315 22 4.17157 20.8284C3 19.6569 3 17.7712 3 14V10Z" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+         <path d="M12 7V13" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+         <path d="M12 17H12.01" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+         <path d="M7 12L17 12" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+   )
+}
+
+export const AuditIcon = ({ size = 24, stroke = 2 }: IconProps) => {
+   return (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill="none">
+         <path d="M11.5 21C7.02166 21 4.78249 21 3.39124 19.6088C2 18.2175 2 15.9783 2 11.5C2 7.02166 2 4.78249 3.39124 3.39124C4.78249 2 7.02166 2 11.5 2C15.9783 2 18.2175 2 19.6088 3.39124C21 4.78249 21 7.02166 21 11.5" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round"></path>
+         <path d="M2 7H21" stroke="currentColor" strokeWidth={stroke} strokeLinejoin="round"></path>
+         <path d="M10 16H11M6 16H7M10 12H14M6 12H7" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round"></path>
+         <path d="M20.4 20.4L22 22M21.2 17.6C21.2 15.6118 19.5882 14 17.6 14C15.6118 14 14 15.6118 14 17.6C14 19.5882 15.6118 21.2 17.6 21.2C19.5882 21.2 21.2 19.5882 21.2 17.6Z" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round"></path>
+      </svg>
+   )
+}
+
+export const EyeIcon = ({ size = 24, stroke = 1.5 }: IconProps) => {
+   return (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill="none">
+         <path d="M21.544 11.045c.304.426.456.64.456.955 0 .315-.152.529-.456.955C20.478 14.581 16.69 20 12 20s-8.478-5.419-9.544-7.045C2.152 12.529 2 12.315 2 12c0-.315.152-.529.456-.955C3.522 9.419 7.31 4 12 4s8.478 5.419 9.544 7.045z" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+         <path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+   )
+}
+
+export const ForbiddenIcon = ({ size = 24, stroke = 1.5 }: IconProps) => {
+   return (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill={"none"}>
+         <path d="M22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12Z" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+         <path d="M14.9994 15L9 9M9.00064 15L15 9" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+   )
+}
+
+export const CheckmarkIcon = ({ size = 24, stroke = 1.5 }: IconProps) => {
+   return (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill={"none"}>
+         <path d="M22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12Z" stroke="currentColor" strokeWidth={stroke} />
+         <path d="M8 12.75C8 12.75 9.6 13.6625 10.4 15C10.4 15 12.8 9.75 16 8" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
       </svg>
    )
 }
