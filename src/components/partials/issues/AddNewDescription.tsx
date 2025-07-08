@@ -7,13 +7,13 @@ interface FormProps {
    text: string
 }
 
-interface UpdateTaskFormProps {
+interface AddNewDescriptionProps {
    onSubmit: (data: FormProps) => void
    onCancel: () => void
    desc?: FormProps
 }
 
-export default function AddNewDescription({ onSubmit, onCancel, desc = { id: "", title: "", text: "" } }: UpdateTaskFormProps) {
+export default function AddNewDescription({ onSubmit, onCancel, desc = { id: "", title: "", text: "" } }: AddNewDescriptionProps) {
    const [formData, setFormData] = useState<FormProps>({ id: desc.id, title: desc.title, text: desc.text })
 
    const handleSubmit = (e: React.FormEvent) => {

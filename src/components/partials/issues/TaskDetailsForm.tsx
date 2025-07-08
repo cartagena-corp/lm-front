@@ -35,130 +35,151 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
    }, [])
 
    return (
-      <form onSubmit={handleSubmit}>
-         <article className='flex justify-between items-stretch gap-5 mt-4'>
-            <aside className='flex flex-col justify-between w-[75%] space-y-4'>
-               <article className='space-y-1'>
-                  <h6 className='font-semibold'>Descripción</h6>
-                  <div className='border-black/15 text-black/75 flex flex-col rounded-md text-sm border h-60 p-4 overflow-y-auto gap-4'>
-
-                     {
-                        task.descriptions.map(t =>
-                           <div key={t.id} className='flex flex-col'>
-                              <h6 className='font-bold text-base'>{t.title}</h6>
-                              <p className='text-xs'>{t.text}</p>
-                           </div>
-                        )
-                     }
+      <form onSubmit={handleSubmit} className="space-y-6 mt-2">
+         <div className="flex justify-between items-stretch gap-6">
+            {/* Main Content */}
+            <div className="flex flex-col justify-between w-8/12 space-y-6">
+               {/* Description Section */}
+               <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                     <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                     Descripción
+                  </h3>
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 h-40 overflow-y-auto">
+                     {task.descriptions.length > 0 ? (
+                        <div className="space-y-4">
+                           {task.descriptions.map(desc => (
+                              <div key={desc.id} className="bg-white rounded-lg p-4 border border-gray-100">
+                                 <h4 className="font-semibold text-gray-900 mb-2">{desc.title}</h4>
+                                 <p className="text-sm text-gray-600 leading-relaxed">{desc.text}</p>
+                              </div>
+                           ))}
+                        </div>
+                     ) : (
+                        <div className="flex items-center justify-center h-full text-gray-500">
+                           <p className="text-sm">No hay descripción disponible</p>
+                        </div>
+                     )}
                   </div>
-               </article>
+               </div>
 
-               <ShowComments arrayComments={comments} task={task} />
-            </aside>
+               {/* Comments Section */}
+               <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+                  <ShowComments arrayComments={comments} task={task} />
+               </div>
+            </div>
 
-            <aside className='border-black/15 rounded-md flex flex-col space-y-5 w-[45%] border p-4'>
-               <section className='flex flex-col text-sm gap-4'>
-                  <div className='flex items-center gap-2'>
-                     <UsersIcon size={18} />
-                     <h6 className='font-semibold'>Personas</h6>
+            {/* Sidebar */}
+            <div className="w-1/2 space-y-4">
+               {/* People Section */}
+               <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                  <div className="flex items-center gap-3 mb-4">
+                     <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+                        <UsersIcon size={18} />
+                     </div>
+                     <h3 className="font-semibold text-gray-900">Personas</h3>
                   </div>
-                  <div className='text-xs flex flex-col gap-2'>
-                     <span className='flex items-center justify-between'>
-                        <p className='text-black/50'>Asignado a:</p>
-                        <p>
-                           {
-                              typeof task.assignedId === 'object'
-                                 ? `${task.assignedId.firstName} ${task.assignedId.lastName}`
-                                 : task.assignedId
-                           }
-                        </p>
-                     </span>
-                     <span className='flex items-center justify-between'>
-                        <p className='text-black/50'>Informador:</p>
-                        <p>
-                           {task.reporterId?.firstName}  {task.reporterId?.lastName}
-                        </p>
-                     </span>
+                  <div className="space-y-3">
+                     <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                        <span className="text-sm text-gray-500">Asignado a:</span>
+                        <span className="text-sm font-medium text-gray-900">
+                           {typeof task.assignedId === 'object'
+                              ? `${task.assignedId.firstName} ${task.assignedId.lastName}`
+                              : task.assignedId || 'No asignado'}
+                        </span>
+                     </div>
+                     <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                        <span className="text-sm text-gray-500">Informador:</span>
+                        <span className="text-sm font-medium text-gray-900">
+                           {task.reporterId ? `${task.reporterId.firstName} ${task.reporterId.lastName}` : 'No especificado'}
+                        </span>
+                     </div>
                   </div>
-               </section>
-               <section className='flex flex-col text-sm gap-4'>
-                  <div className='flex items-center gap-2'>
-                     <CalendarIcon size={18} />
-                     <h6 className='font-semibold'>Fechas</h6>
-                  </div>
-                  <div className='text-xs flex flex-col gap-2'>
-                     <span className='flex items-center justify-between'>
-                        <p className='text-black/50'>Creación:</p>
-                        <p>
-                           {
-                              (() => {
-                                 const dateStr = task.createdAt
-                                 if (!dateStr) return ''
+               </div>
 
-                                 let date
-                                 if (dateStr.includes('T')) {
-                                    date = new Date(dateStr)
-                                 } else {
-                                    const [year, month, day] = dateStr.split('-').map(num => parseInt(num, 10))
-                                    date = new Date(year, month - 1, day)
-                                 }
-
-                                 return date.toLocaleDateString('es-ES', {
-                                    day: '2-digit',
-                                    month: 'short',
-                                    year: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                    hour12: false
-                                 })
-                              })()
-                           }
-                        </p>
-                     </span>
-                     <span className='flex items-center justify-between'>
-                        <p className='text-black/50'>Actualización:</p>
-                        <p>
-                           {
-                              (() => {
-                                 const dateStr = task.updatedAt
-                                 if (!dateStr) return ''
-
-                                 let date
-                                 if (dateStr.includes('T')) {
-                                    date = new Date(dateStr)
-                                 } else {
-                                    const [year, month, day] = dateStr.split('-').map(num => parseInt(num, 10))
-                                    date = new Date(year, month - 1, day)
-                                 }
-
-                                 return date.toLocaleDateString('es-ES', {
-                                    day: '2-digit',
-                                    month: 'short',
-                                    year: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                    hour12: false
-                                 })
-                              })()
-                           }
-                        </p>
-                     </span>
+               {/* Dates Section */}
+               <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                  <div className="flex items-center gap-3 mb-4">
+                     <div className="p-2 bg-green-100 rounded-lg text-green-600">
+                        <CalendarIcon size={18} />
+                     </div>
+                     <h3 className="font-semibold text-gray-900">Fechas</h3>
                   </div>
-               </section>
-               <section className='flex flex-col text-sm gap-4'>
-                  <div className='flex items-center gap-2'>
-                     <ClockIcon size={18} />
-                     <h6 className='font-semibold'>Tiempo</h6>
+                  <div className="space-y-3">
+                     <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                        <span className="text-sm text-gray-500">Creación:</span>
+                        <span className="text-sm font-medium text-gray-900">
+                           {(() => {
+                              const dateStr = task.createdAt
+                              if (!dateStr) return 'No especificado'
+
+                              let date
+                              if (dateStr.includes('T')) {
+                                 date = new Date(dateStr)
+                              } else {
+                                 const [year, month, day] = dateStr.split('-').map(num => parseInt(num, 10))
+                                 date = new Date(year, month - 1, day)
+                              }
+
+                              return date.toLocaleDateString('es-ES', {
+                                 day: '2-digit',
+                                 month: 'long',
+                                 year: 'numeric',
+                                 hour: '2-digit',
+                                 minute: '2-digit',
+                                 hour12: true
+                              })
+                           })()}
+                        </span>
+                     </div>
+                     <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                        <span className="text-sm text-gray-500">Actualización:</span>
+                        <span className="text-sm font-medium text-gray-900">
+                           {(() => {
+                              const dateStr = task.updatedAt
+                              if (!dateStr) return 'No especificado'
+
+                              let date
+                              if (dateStr.includes('T')) {
+                                 date = new Date(dateStr)
+                              } else {
+                                 const [year, month, day] = dateStr.split('-').map(num => parseInt(num, 10))
+                                 date = new Date(year, month - 1, day)
+                              }
+
+                              return date.toLocaleDateString('es-ES', {
+                                 day: '2-digit',
+                                 month: 'long',
+                                 year: 'numeric',
+                                 hour: '2-digit',
+                                 minute: '2-digit',
+                                 hour12: true
+                              })
+                           })()}
+                        </span>
+                     </div>
                   </div>
-                  <div className='text-xs flex flex-col gap-2'>
-                     <span className='flex items-center justify-between'>
-                        <p className='text-black/50'>Estimado:</p>
-                        <p>{task.estimatedTime} horas</p>
-                     </span>
+               </div>
+
+               {/* Time Section */}
+               <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                  <div className="flex items-center gap-3 mb-4">
+                     <div className="p-2 bg-purple-100 rounded-lg text-purple-600">
+                        <ClockIcon size={18} />
+                     </div>
+                     <h3 className="font-semibold text-gray-900">Tiempo</h3>
                   </div>
-               </section>
-            </aside>
-         </article>
+                  <div className="space-y-3">
+                     <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                        <span className="text-sm text-gray-500">Estimado:</span>
+                        <span className="text-sm font-medium text-gray-900">
+                           {task.estimatedTime ? `${task.estimatedTime} horas` : 'No especificado'}
+                        </span>
+                     </div>
+                  </div>
+               </div>
+            </div>
+         </div>
       </form>
    )
 }
