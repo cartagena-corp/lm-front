@@ -5,6 +5,13 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'http',
+        hostname: 'localhost',  // solo dominio
+        // hostname: 'https://lm-comments.cartagenacorporation.com',  // solo dominio
+        port: '8084',           // puerto separado
+        pathname: '/uploads/**' // opcional, patrones de ruta
+      },
+      {
+        protocol: 'http',
         // hostname: 'localhost',  // solo dominio
         hostname: 'https://lm-comments.cartagenacorporation.com',  // solo dominio
         port: '8084',           // puerto separado
