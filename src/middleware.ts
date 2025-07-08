@@ -1,6 +1,7 @@
 // middleware.ts
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
+import { API_ROUTES } from '@/lib/routes/oauth.routes'
 
 export async function middleware(request: NextRequest) {
    // Preparamos la respuesta base
@@ -38,8 +39,7 @@ export async function middleware(request: NextRequest) {
 // Función para validar el access token
 async function validateAccessToken(token: string): Promise<boolean> {
    try {
-      // const response = await fetch('http://localhost:8081/api/oauth/validate/token', {
-      const response = await fetch('https://lm-oauth.cartagenacorporation.com/api/oauth/validate/token', {
+      const response = await fetch(API_ROUTES.VALIDATE_TOKEN, {
          method: 'GET',
          headers: { 'Authorization': `Bearer ${token}` },
       })
@@ -60,8 +60,7 @@ async function refreshAccessToken(request: NextRequest): Promise<string | null> 
          return null
       }
 
-      // const refreshResponse = await fetch('http://localhost:8081/api/oauth/refresh', {
-      const refreshResponse = await fetch('https://lm-oauth.cartagenacorporation.com/api/oauth/refresh', {
+      const refreshResponse = await fetch(API_ROUTES.REFRESH_TOKEN, {
          method: 'POST',
          headers: {
             'Cookie': `refreshToken=${refreshToken}`,
@@ -75,7 +74,6 @@ async function refreshAccessToken(request: NextRequest): Promise<string | null> 
          return null
       }
 
-
       if (data?.accessToken) return data.accessToken
       return null
    } catch (error) {
@@ -84,8 +82,4 @@ async function refreshAccessToken(request: NextRequest): Promise<string | null> 
    }
 }
 
-export const config = {
-   matcher: [
-      '/((?!api|_next/static|_next/image|favicon.ico|login).*)'
-   ]
-}
+export const config = { matcher: ['/((?!api|_next/static|_next/image|favicon.ico|login).*)'] }
