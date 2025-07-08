@@ -7,33 +7,40 @@ import { useConfigStore } from '@/lib/store/ConfigStore'
 import DeleteIssueForm from '../issues/DeleteIssueForm'
 import TaskDetailsForm from '../issues/TaskDetailsForm'
 import { useIssueStore } from '@/lib/store/IssueStore'
-import UpdateTaskForm from '../issues/UpdateTaskForm'
+import CreateTaskForm from '../issues/CreateTaskForm'
 import { useAuthStore } from '@/lib/store/AuthStore'
 import ReasignIssue from '../issues/ReasignIssue'
-import { CalendarIcon, ConfigIcon } from '@/assets/Icon'
+import { CalendarIcon, CheckmarkIcon, EditIcon, DeleteIcon, PlusIcon, EyeIcon, ClockIcon, ForbiddenIcon } from '@/assets/Icon'
 import Modal from '../../layout/Modal'
 import Image from 'next/image'
-import UpdateSprintForm from './UpdateSprintForm'
+import CreateSprintForm from './CreateSprintForm'
 import { useSprintStore } from '@/lib/store/SprintStore'
 import DeleteSprintForm from './DeleteSprintForm'
 import IssueConfig from '../config/issues/IssueConfig'
+import AuditHistory from '../audit/AuditHistory'
+import { getUserAvatar } from '@/lib/utils/avatar.utils'
 
 export default function IssuesRow({ spr, setIsOpen, isOverlay = false }: { spr: SprintProps, setIsOpen: Dispatch<SetStateAction<boolean>>, isOverlay?: boolean }) {
    const { selectedIds, setSelectedIds } = useMultiDragContext()
 
    if (isOverlay) {
       return (
-         <div className="bg-sky-100 border-sky-700 text-sky-700 cursor-grabbing flex items-center rounded-md shadow-xl border w-full h-full p-4">
-            <h3 className="font-medium text-sm truncate">
-               {selectedIds.length === 1 ? `${selectedIds.length} tarea seleccionada` : `${selectedIds.length} tareas seleccionadas`}
-            </h3>
+         <div className="bg-blue-50 border-2 border-blue-200 border-dashed text-blue-700 cursor-grabbing flex items-center justify-center rounded-xl shadow-lg w-full h-20 transition-all duration-200">
+            <div className="flex items-center gap-2">
+               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+               </svg>
+               <span className="font-medium text-sm">
+                  {selectedIds.length === 1 ? `${selectedIds.length} tarea seleccionada` : `${selectedIds.length} tareas seleccionadas`}
+               </span>
+            </div>
          </div>
       )
    }
 
    const { getValidAccessToken } = useAuthStore()
-   const { deleteIssue, updateIssue, reasingIssue } = useIssueStore()
-   const { updateSprint, deleteSprint } = useSprintStore()
+   const { deleteIssue, updateIssue, assignIssue } = useIssueStore()
+   const { updateSprint, deleteSprint, activeSprint } = useSprintStore()
 
    const wrapperRef = useRef<HTMLDivElement>(null)
    const wrapperSprintRef = useRef<HTMLDivElement>(null)
@@ -45,11 +52,11 @@ export default function IssuesRow({ spr, setIsOpen, isOverlay = false }: { spr: 
    const [isUpdateSprintOpen, setIsUpdateSprintOpen] = useState(false)
    const [isDeleteSprintOpen, setIsDeleteSprintOpen] = useState(false)
    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
-   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false)
+   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false)
    const [sprintSelected, setSprintSelected] = useState<SprintProps>()
    const [openItemId, setOpenItemId] = useState<string | null>(null)
    const [taskActive, setTaskActive] = useState<TaskProps>()
-   const { projectConfig } = useConfigStore()
+   const { projectConfig, sprintStatuses } = useConfigStore()
 
    const sprintTaskIds = spr.tasks?.content.map(t => t.id as string) || []
    const allSelected = sprintTaskIds.length > 0 && sprintTaskIds.every(id => selectedIds.includes(id))
@@ -76,8 +83,8 @@ export default function IssuesRow({ spr, setIsOpen, isOverlay = false }: { spr: 
    const getStatusStyle = (id: number) => projectConfig?.issueStatuses?.find(status => status.id === id)
    const getPriorityStyle = (id: number) => projectConfig?.issuePriorities?.find(priority => priority.id === id)
    const getTypeStyle = (id: number) => projectConfig?.issueTypes?.find(type => type.id === id)
+   const getSprintStatusStyle = (id: number) => sprintStatuses?.find(status => status.id === id)
    const toggleSelect = (id: string) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id])
-
 
    const toggleSelectAll = () => {
       if (allSelected) setSelectedIds(prev => prev.filter(id => !sprintTaskIds.includes(id)))
@@ -109,7 +116,15 @@ export default function IssuesRow({ spr, setIsOpen, isOverlay = false }: { spr: 
    const handleDeleteSprint = async (sprint: SprintProps) => {
       const token = await getValidAccessToken()
       if (token) await deleteSprint(token, sprint.id as string, sprint.projectId)
-      setIsDeleteModalOpen(false)
+      setIsDeleteSprintOpen(false)
+   }
+
+   const handleActivateSprint = async (sprint: SprintProps) => {
+      const token = await getValidAccessToken()
+      if (token) {
+         const updatedSprint = { ...sprint, active: true }
+         await updateSprint(token, updatedSprint, sprint.projectId)
+      }
    }
 
    const handleUpdate = async (formData: {
@@ -127,7 +142,7 @@ export default function IssuesRow({ spr, setIsOpen, isOverlay = false }: { spr: 
 
    const handleReasign = async ({ newUserId, issueId }: { newUserId: string, issueId: string }) => {
       const token = await getValidAccessToken()
-      if (token) await reasingIssue(token, issueId, newUserId, taskActive?.projectId as string)
+      if (token) await assignIssue(token, issueId, newUserId, taskActive?.projectId as string)
       setIsReasignModalOpen(false)
    }
 
@@ -139,282 +154,465 @@ export default function IssuesRow({ spr, setIsOpen, isOverlay = false }: { spr: 
 
    return (
       <>
-         <Droppable id={spr.id as string} styleClass="bg-white space-y-2 rounded-md mb-6 p-6">
+         <Droppable id={spr.id as string} styleClass="bg-white rounded-xl shadow-sm border mb-6">
             {/* Header del sprint */}
-            <div className="flex justify-between items-center mb-2">
-               <div className="flex items-center gap-4">
-                  <h5 className="font-medium text-xl">{spr.title}</h5>
-                  {
-                     spr.id !== 'null' && spr.statusObject &&
-                     <div className="rounded-full text-xs border px-2 whitespace-nowrap w-fit"
-                        style={{ backgroundColor: `${spr.statusObject.color}0f`, color: spr.statusObject.color }}>
-                        {spr.statusObject.name.charAt(0).toUpperCase() + spr.statusObject.name.slice(1).toLowerCase()}
-                     </div>
-                  }
-               </div>
-               {
-                  spr.id !== 'null' ? (
-                     <div ref={wrapperSprintRef} className="text-black/75 relative flex items-center text-xs gap-2.5">
-                        <aside className='flex items-center gap-1.5'>
-                           <CalendarIcon size={20} />
-                           {formatDate(spr.startDate)} – {formatDate(spr.endDate)}
-                        </aside>
+            <div className="bg-zinc-50/75 border-b border-gray-200/50 p-6">
+               <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-4">
+                     <div className={`w-3 h-3 rounded-full ${spr.active ? 'bg-green-500 animate-pulse shadow-sm' : 'bg-gray-400'}`}></div>
+                     <h3 className="text-xl font-semibold text-gray-900">{spr.title}</h3>
 
-                        <button
-                           id="custom-ellipsis"
-                           onClick={() => {
-                              setSprintSelected(spr)
-                              setisSprintOptionsOpen(!isSprintOptionsOpen)
-                           }}
-                           className="flex justify-center items-center gap-1 p-2 scale-75"
-                        >
-                           <span id="dot" />
-                           <span id="dot" />
-                           <span id="dot" />
-                        </button>
-                        {
-                           isSprintOptionsOpen &&
-                           <div className='bg-white border-black/15 flex flex-col top-[125%] right-0 overflow-hidden select-animation rounded-md text-xs absolute border z-20'>
-                              <button className='hover:bg-black/5 duration-150 text-start p-2'
-                                 onClick={() => {
-                                    setIsUpdateSprintOpen(true)
-                                    setisSprintOptionsOpen(false)
-                                 }}>
-                                 Editar
+                     {/* Badge de activo */}
+                     {spr.active && (
+                        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-sm">
+                           <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                           ACTIVO
+                        </span>
+                     )}
+                  </div>
+
+
+                  {/* Acciones del sprint */}
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                     {spr.id !== 'null' ? (
+                        <>
+                           {/* Botón de Activar Sprint */}
+                           {!spr.active && (
+                              <button
+                                 onClick={() => handleActivateSprint(spr)}
+                                 disabled={!!activeSprint && activeSprint.id !== spr.id}
+                                 className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${!!activeSprint && activeSprint.id !== spr.id
+                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
+                                    : 'bg-green-600 hover:bg-green-700 text-white border border-green-500 shadow-sm hover:shadow-md'
+                                    }`}
+                                 title={!!activeSprint && activeSprint.id !== spr.id ? 'Ya hay un sprint activo' : 'Activar este sprint'}
+                              >
+                                 {!!activeSprint && activeSprint.id !== spr.id ? <ForbiddenIcon size={16} stroke={2.5} /> : <CheckmarkIcon size={16} stroke={2.5} />}
+                                 <span>{!!activeSprint && activeSprint.id !== spr.id ? "Deshabilitado" : "Activar"}</span>
                               </button>
-                              <button className='hover:bg-black/5 duration-150 text-start p-2'
+                           )}
+
+                           {/* Menú de opciones */}
+                           <div ref={wrapperSprintRef} className="relative">
+                              <button
                                  onClick={() => {
-                                    setIsDeleteSprintOpen(true)
-                                    setisSprintOptionsOpen(false)
-                                 }}>
-                                 Eliminar
+                                    setSprintSelected(spr)
+                                    setisSprintOptionsOpen(!isSprintOptionsOpen)
+                                 }}
+                                 className="p-2 text-gray-500 hover:text-gray-700 hover:bg-white rounded-lg transition-all duration-200 border border-gray-200/60 shadow-sm hover:shadow-md"
+                              >
+                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                                 </svg>
                               </button>
+
+                              {isSprintOptionsOpen && (
+                                 <div className="absolute top-full right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-xl z-50 overflow-hidden">
+                                    <div className="py-1">
+                                       <button
+                                          className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-3 transition-colors"
+                                          onClick={() => {
+                                             setIsUpdateSprintOpen(true)
+                                             setisSprintOptionsOpen(false)
+                                          }}
+                                       >
+                                          <EditIcon size={16} />
+                                          <span>Editar Sprint</span>
+                                       </button>
+                                       {spr.active && (
+                                          <button
+                                             className="w-full px-4 py-2 text-left text-sm hover:bg-orange-50 flex items-center gap-3 transition-colors text-orange-600"
+                                             onClick={() => {
+                                                const updatedSprint = { ...spr, active: false }
+                                                handleUpdateSprint(updatedSprint)
+                                                setisSprintOptionsOpen(false)
+                                             }}
+                                          >
+                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                             </svg>
+                                             <span>Desactivar Sprint</span>
+                                          </button>
+                                       )}
+                                       <div className="border-t border-gray-100 my-1"></div>
+                                       <button
+                                          className="w-full px-4 py-2 text-left text-sm hover:bg-red-50 flex items-center gap-3 transition-colors text-red-600"
+                                          onClick={() => {
+                                             setIsDeleteSprintOpen(true)
+                                             setisSprintOptionsOpen(false)
+                                          }}
+                                       >
+                                          <DeleteIcon size={16} />
+                                          <span>Eliminar Sprint</span>
+                                       </button>
+                                    </div>
+                                 </div>
+                              )}
                            </div>
-                        }
-                     </div>
-                  ) : (
-                     <div className='flex items-center gap-2'>
-                        <button
-                           onClick={() => setIsConfigModalOpen(true)}
-                           className="border-blue-600 text-blue-600 hover:bg-blue-700 hover:text-white
-                            border rounded-md duration-150 whitespace-nowrap flex items-center gap-2 px-4 py-2"
-                        >
-                           <ConfigIcon size={20} stroke={2} />
-                           Configuración
-                        </button>
+                        </>
+                     ) : (
                         <button
                            onClick={() => setIsOpen(true)}
-                           className="px-4 py-2 border-blue-600 bg-blue-600 text-white rounded-md hover:bg-blue-700 border duration-150 whitespace-nowrap"
+                           className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md"
                         >
-                           Crear Tarea
+                           <PlusIcon size={16} />
+                           <span>Nueva Tarea</span>
                         </button>
-                     </div>
-                  )
-               }
-            </div>
-            <p className="text-black/50 text-sm mb-4">{spr.goal}</p>
+                     )}
+                  </div>
+               </div>
 
-            {/* Lista de tareas con checkbox */}
-            <div className="text-sm">
+               {/* Meta del sprint */}
+               {spr.goal && (
+                  <div className="px-6 pb-4">
+                     <div className="bg-white/70 backdrop-blur-sm border border-gray-200/80 rounded-lg p-3 shadow-sm">
+                        <div className="flex items-start gap-2">
+                           <div className="flex-shrink-0 mt-0.5">
+                              <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                              </svg>
+                           </div>
+                           <div>
+                              <p className="text-xs font-medium text-gray-800 mb-1">Meta del Sprint</p>
+                              <p className="text-xs text-gray-600 leading-relaxed">{spr.goal}</p>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+               )}
+
+               {/* Información secundaria - badges */}
+               <div className="px-6 pb-4">
+                  <div className='flex justify-between items-center'>
+                     <div className="flex items-center gap-2 flex-wrap">
+                        {/* Badge de estado */}
+                        {(() => {
+                           const statusObject = spr.statusObject || (spr.status ? getSprintStatusStyle(spr.status) : null)
+                           return statusObject ? (
+                              <div
+                                 className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium border"
+                                 style={{
+                                    backgroundColor: `${statusObject.color}15`,
+                                    color: statusObject.color,
+                                    borderColor: `${statusObject.color}30`
+                                 }}
+                              >
+                                 <div
+                                    className="w-2 h-2 rounded-full"
+                                    style={{ backgroundColor: statusObject.color }}
+                                 />
+                                 {statusObject.name}
+                              </div>
+                           ) : null
+                        })()}
+
+                        {/* Badge de tareas */}
+                        {spr.tasks?.content && (
+                           <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 rounded-full text-xs font-medium text-blue-800 border border-blue-200">
+                              <svg className="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                              </svg>
+                              <span>
+                                 {spr.tasks.content.length} {spr.tasks.content.length === 1 ? 'tarea' : 'tareas'}
+                              </span>
+                           </div>
+                        )}
+                     </div>
+
+                     {/* Badge de fechas */}
+                     {spr.id !== 'null' && (
+                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-purple-50 rounded-full text-xs font-medium text-purple-800 border border-purple-200">
+                           <CalendarIcon size={14} />
+                           <span>
+                              {formatDate(spr.startDate)} – {formatDate(spr.endDate)}
+                           </span>
+                        </div>
+                     )}
+                  </div>
+               </div>
+            </div>
+
+            {/* Lista de tareas */}
+            <div className="p-6">
                {spr.tasks?.content.length ? (
-                  <>
-                     {/* Cabecera del grid con “select all” */}
-                     <div className="grid grid-cols-18 font-semibold border-b border-black/10 px-2 py-4 gap-2">
+                  <div className="space-y-3">
+                     {/* Cabecera del grid */}
+                     <div className="grid grid-cols-18 gap-4 p-3 bg-gray-50 rounded-lg border border-gray-200 text-xs font-medium text-gray-600">
                         <div className="col-span-1 flex justify-center">
                            <input
                               type="checkbox"
                               checked={allSelected}
                               onChange={toggleSelectAll}
-                              className="cursor-pointer"
+                              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
                            />
                         </div>
-                        <h5 className="col-span-1">Tipo</h5>
-                        <h5 className="col-span-6">Tarea</h5>
-                        <h5 className="col-span-2">Estado</h5>
-                        <h5 className="col-span-2">Prioridad</h5>
-                        <h5 className="col-span-4">Asignado a</h5>
-                        <h5 className="col-span-1 text-center">Acciones</h5>
+                        <div className="col-span-1">Tipo</div>
+                        <div className="col-span-5">Tarea</div>
+                        <div className="col-span-2">Estado</div>
+                        <div className="col-span-2">Prioridad</div>
+                        <div className="col-span-5">Asignado a</div>
+                        <div className="col-span-1 text-center">Acciones</div>
                      </div>
 
-                     {
-                        spr.tasks.content.map(task => {
-                           const id = task.id as string
-                           const isChecked = selectedIds.includes(id)
+                     {/* Filas de tareas */}
+                     {spr.tasks.content.map((task, index) => {
+                        const id = task.id as string
+                        const isChecked = selectedIds.includes(id)
 
-                           return (
-                              <Draggable
-                                 key={id}
-                                 id={id}
-                                 styleClass="grid grid-cols-18 items-center gap-2 px-2 py-4 hover:bg-black/5 select-none cursor-grab active:cursor-grabbing"
+                        return (
+                           <Draggable
+                              key={id}
+                              id={id}
+                              styleClass={`grid grid-cols-18 gap-4 p-3 items-center hover:bg-blue-50/30 rounded-lg border border-gray-100 hover:border-blue-200 transition-all duration-200 cursor-grab active:cursor-grabbing bg-white shadow-sm hover:shadow-md`}
+                           >
+                              {/* Checkbox */}
+                              <div className="col-span-1 flex justify-center">
+                                 <input
+                                    type="checkbox"
+                                    checked={isChecked}
+                                    onChange={() => toggleSelect(id)}
+                                    onPointerDown={e => e.stopPropagation()}
+                                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                                 />
+                              </div>
+
+                              {/* Tipo */}
+                              <div
+                                 className="col-span-1 rounded-full text-[10px] border px-2 whitespace-nowrap w-fit"
+                                 style={{
+                                    backgroundColor: `${getTypeStyle(Number(task.type))?.color ?? "#000000"}0f`,
+                                    color: getTypeStyle(Number(task.type))?.color ?? "#000000"
+                                 }}
                               >
-                                 {/* Checkbox individual */}
-                                 <div className="col-span-1 flex justify-center">
-                                    <input
-                                       type="checkbox"
-                                       checked={isChecked}
-                                       onChange={() => toggleSelect(id)}
-                                       onPointerDown={e => e.stopPropagation()}
-                                       className="cursor-pointer"
+                                 {getTypeStyle(Number(task.type))?.name ?? "Sin tipo"}
+                              </div>
+
+                              {/* Tarea */}
+                              <div className="col-span-5 space-y-1">
+                                 <h6 className="font-medium text-gray-900 text-sm line-clamp-1" title={task.title}>
+                                    {task.title}
+                                 </h6>
+                                 <p className="text-xs text-gray-500 line-clamp-1" title={task.descriptions[0]?.text}>
+                                    {task.descriptions[0]?.text || 'Sin descripción'}
+                                 </p>
+                              </div>
+
+                              {/* Estado */}
+                              <div className="col-span-2">
+                                 <span
+                                    className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border"
+                                    style={{
+                                       backgroundColor: `${getStatusStyle(Number(task.status))?.color ?? "#6B7280"}15`,
+                                       color: getStatusStyle(Number(task.status))?.color ?? "#6B7280",
+                                       borderColor: `${getStatusStyle(Number(task.status))?.color ?? "#6B7280"}30`
+                                    }}
+                                 >
+                                    <div
+                                       className="w-1.5 h-1.5 rounded-full"
+                                       style={{ backgroundColor: getStatusStyle(Number(task.status))?.color ?? "#6B7280" }}
                                     />
-                                 </div>
-
-                                 {/* Tipo */}
-                                 <div
-                                    className="col-span-1 rounded-full text-xs border px-2 whitespace-nowrap w-fit"
-                                    style={{
-                                       backgroundColor: `${getTypeStyle(Number(task.type))?.color ?? "#000000"}0f`,
-                                       color: getTypeStyle(Number(task.type))?.color ?? "#000000"
-                                    }}
-                                 >
-                                    {getTypeStyle(Number(task.type))?.name ?? "Sin tipo"}
-                                 </div>
-
-                                 {/* Tarea */}
-                                 <div className="col-span-6">
-                                    <h6 className="font-medium line-clamp-1" title={task.title}>{task.title}</h6>
-                                    <p className="text-xs text-black/75 line-clamp-1" title={task.descriptions[0].text}>
-                                       {task.descriptions[0].text}
-                                    </p>
-                                 </div>
-
-                                 {/* Estado */}
-                                 <div
-                                    className="col-span-2 rounded-full text-xs border px-2 whitespace-nowrap w-fit"
-                                    style={{
-                                       backgroundColor: `${getStatusStyle(Number(task.status))?.color ?? "#000000"}0f`,
-                                       color: getStatusStyle(Number(task.status))?.color ?? "#000000"
-                                    }}
-                                 >
                                     {getStatusStyle(Number(task.status))?.name ?? "Sin estado"}
-                                 </div>
+                                 </span>
+                              </div>
 
-                                 {/* Prioridad */}
-                                 <div
-                                    className="col-span-2 rounded-full text-xs border px-2 whitespace-nowrap w-fit"
+                              {/* Prioridad */}
+                              <div className="col-span-2">
+                                 <span
+                                    className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border"
                                     style={{
-                                       backgroundColor: `${getPriorityStyle(Number(task.priority))?.color ?? "#000000"}0f`,
-                                       color: getPriorityStyle(Number(task.priority))?.color ?? "#000000"
+                                       backgroundColor: `${getPriorityStyle(Number(task.priority))?.color ?? "#6B7280"}15`,
+                                       color: getPriorityStyle(Number(task.priority))?.color ?? "#6B7280",
+                                       borderColor: `${getPriorityStyle(Number(task.priority))?.color ?? "#6B7280"}30`
                                     }}
                                  >
+                                    <div
+                                       className="w-1.5 h-1.5 rounded-full"
+                                       style={{ backgroundColor: getPriorityStyle(Number(task.priority))?.color ?? "#6B7280" }}
+                                    />
                                     {getPriorityStyle(Number(task.priority))?.name ?? "Sin prioridad"}
-                                 </div>
+                                 </span>
+                              </div>
 
-                                 {/* Asignado a */}
-                                 <button className="col-span-4 flex items-center gap-2 w-full cursor-pointer" onPointerDown={e => e.stopPropagation()}
+                              {/* Asignado a */}
+                              <div className="col-span-5">
+                                 <button
+                                    className="flex items-center gap-2 w-full text-left hover:bg-gray-50 rounded-lg p-2 transition-colors"
+                                    onPointerDown={e => e.stopPropagation()}
                                     onClick={() => {
                                        setIsReasignModalOpen(true)
                                        setOpenItemId(null)
                                        setTaskActive(task)
-                                    }}>
-                                    <div className="w-6 h-6 aspect-square flex items-center justify-center rounded-full bg-black/10 overflow-hidden">
-                                       {
-                                          typeof task.assignedId === 'object' && task.assignedId.picture ?
-                                             <Image
-                                                src={task.assignedId.picture}
-                                                alt="assignedto"
-                                                width={24}
-                                                height={24}
-                                             />
-                                             :
-                                             <span className="font-medium text-sm">
-                                                {typeof task.assignedId === 'object'
-                                                   ? task.assignedId.firstName.charAt(0).toUpperCase()
-                                                   : ''}
-                                             </span>
-                                       }
+                                    }}
+                                 >
+                                    <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                       {typeof task.assignedId === 'object' && task.assignedId ? (
+                                          <img
+                                             src={getUserAvatar(task.assignedId, 24)}
+                                             alt="Asignado a"
+                                             className="w-full h-full object-cover rounded-full"
+                                          />
+                                       ) : (
+                                          <span className="text-xs font-medium text-gray-600">
+                                             N/A
+                                          </span>
+                                       )}
                                     </div>
-                                    <p className="text-xs">
-                                       {typeof task.assignedId === 'object' ? `${task.assignedId.firstName} ${task.assignedId.lastName}` : ''}
-                                    </p>
+                                    <span className="text-xs text-gray-700 line-clamp-1">
+                                       {typeof task.assignedId === 'object' && task.assignedId
+                                          ? `${task.assignedId.firstName} ${task.assignedId.lastName}`
+                                          : 'Sin asignar'}
+                                    </span>
                                  </button>
+                              </div>
 
-                                 {/* Acciones */}
-                                 <div ref={openItemId === task.id ? wrapperRef : null} className='relative flex justify-center w-full cursor-pointer' onPointerDown={e => e.stopPropagation()}>
+                              {/* Acciones */}
+                              <div className="col-span-1 flex justify-center">
+                                 <div ref={openItemId === task.id ? wrapperRef : null} className="relative">
                                     <button
-                                       id="custom-ellipsis"
-                                       onClick={() => { setOpenItemId(openItemId === task.id ? null : task.id as string), setTaskActive(task) }}
-                                       className="col-span-1 flex justify-center items-center gap-1 p-2"
+                                       onClick={() => {
+                                          setOpenItemId(openItemId === task.id ? null : task.id as string)
+                                          setTaskActive(task)
+                                       }}
+                                       onPointerDown={e => e.stopPropagation()}
+                                       className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                                     >
-                                       <span id="dot" />
-                                       <span id="dot" />
-                                       <span id="dot" />
+                                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                                       </svg>
                                     </button>
 
-                                    {
-                                       openItemId === task.id &&
-                                       <div className='bg-white border-black/15 top-[125%] overflow-hidden select-animation rounded-md text-xs absolute border w-full z-20'>
-                                          <button className='hover:bg-black/5 duration-150 w-full text-start p-2'
+                                    {openItemId === task.id && (
+                                       <div
+                                          className="absolute top-full right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-[70] overflow-hidden"
+                                          onPointerDown={e => e.stopPropagation()}
+                                       >
+                                          <button
+                                             className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
+                                             onPointerDown={e => e.stopPropagation()}
                                              onClick={() => {
                                                 setIsTaskDetailsModalOpen(true)
                                                 setOpenItemId(null)
-                                             }}>
-                                             Ver
+                                             }}
+                                          >
+                                             <EyeIcon size={14} />
+                                             Ver detalles
                                           </button>
-                                          <button className='hover:bg-black/5 duration-150 w-full text-start p-2'
+                                          <button
+                                             className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
+                                             onPointerDown={e => e.stopPropagation()}
                                              onClick={() => {
                                                 setIsTaskUpdateModalOpen(true)
                                                 setOpenItemId(null)
-                                             }}>
+                                             }}
+                                          >
+                                             <EditIcon size={14} />
                                              Editar
                                           </button>
-                                          <button className='hover:bg-black/5 duration-150 w-full text-start p-2'
+                                          <button
+                                             className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
+                                             onPointerDown={e => e.stopPropagation()}
+                                             onClick={() => {
+                                                setIsHistoryModalOpen(true)
+                                                setOpenItemId(null)
+                                             }}
+                                          >
+                                             <ClockIcon size={14} />
+                                             Historial
+                                          </button>
+                                          <div className="border-t border-gray-100"></div>
+                                          <button
+                                             className="w-full px-3 py-2 text-left text-sm hover:bg-red-50 transition-colors flex items-center gap-2 text-red-600"
+                                             onPointerDown={e => e.stopPropagation()}
                                              onClick={() => {
                                                 setIsDeleteModalOpen(true)
                                                 setOpenItemId(null)
-                                             }}>
+                                             }}
+                                          >
+                                             <DeleteIcon size={14} />
                                              Eliminar
                                           </button>
                                        </div>
-                                    }
+                                    )}
                                  </div>
-                              </Draggable>
-                           )
-                        })
-                     }
-                  </>
+                              </div>
+                           </Draggable>
+                        )
+                     })}
+                  </div>
                ) : (
-                  <p className="text-center text-sm text-black/50 py-2">
-                     No hay tareas disponibles
-                  </p>
+                  <div className="text-center py-12">
+                     <div className="mx-auto w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center mb-4">
+                        <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                     </div>
+                     <h3 className="text-lg font-medium text-gray-900 mb-2">No hay tareas disponibles</h3>
+                     <p className="text-gray-500 text-sm">Agrega algunas tareas para comenzar a trabajar en este sprint</p>
+                  </div>
                )}
             </div>
-         </Droppable >
+         </Droppable>
 
-         {/* Modal de editar sprint */}
-         < Modal isOpen={isUpdateSprintOpen} onClose={() => setIsUpdateSprintOpen(false)} title="Editar sprint" >
-            <UpdateSprintForm onSubmit={handleUpdateSprint} onCancel={() => setIsUpdateSprintOpen(false)} currentSprint={sprintSelected as SprintProps} />
-         </Modal >
+         {/* Modales */}
+         <>
+            <Modal isOpen={isUpdateSprintOpen} onClose={() => setIsUpdateSprintOpen(false)} title="" customWidth="sm:max-w-2xl">
+               <CreateSprintForm
+                  onSubmit={handleUpdateSprint}
+                  onCancel={() => setIsUpdateSprintOpen(false)}
+                  currentSprint={sprintSelected as SprintProps}
+                  isEdit={true}
+               />
+            </Modal>
 
-         {/* Modal de detalle de tarea */}
-         < Modal isOpen={isTaskDetailsModalOpen} customWidth="sm:max-w-6xl" onClose={() => setIsTaskDetailsModalOpen(false)
-         } title={taskActive?.title as string} >
-            <TaskDetailsForm task={taskActive as TaskProps} onSubmit={() => setIsTaskDetailsModalOpen(false)} onCancel={() => setIsTaskDetailsModalOpen(false)} />
-         </Modal >
+            <Modal isOpen={isTaskDetailsModalOpen} customWidth="sm:max-w-6xl" onClose={() => setIsTaskDetailsModalOpen(false)} title={taskActive?.title as string}>
+               <TaskDetailsForm
+                  task={taskActive as TaskProps}
+                  onSubmit={() => setIsTaskDetailsModalOpen(false)}
+                  onCancel={() => setIsTaskDetailsModalOpen(false)}
+               />
+            </Modal>
 
-         {/* Modal de editar tarea */}
-         < Modal isOpen={isTaskUpdateModalOpen} customWidth="sm:max-w-4xl" onClose={() => setIsTaskUpdateModalOpen(false)} title={`Editar Tarea - ${taskActive?.title}`} >
-            <UpdateTaskForm onSubmit={handleUpdate} onCancel={() => setIsTaskUpdateModalOpen(false)} taskObject={taskActive as TaskProps} />
-         </Modal >
+            <Modal isOpen={isTaskUpdateModalOpen} customWidth="sm:max-w-4xl" onClose={() => setIsTaskUpdateModalOpen(false)} title={``}>
+               <CreateTaskForm
+                  onSubmit={handleUpdate}
+                  onCancel={() => setIsTaskUpdateModalOpen(false)}
+                  taskObject={taskActive as TaskProps}
+                  isEdit={true}
+               />
+            </Modal>
 
-         {/* Modal de reasignar tarea */}
-         < Modal isOpen={isReasignModalOpen} onClose={() => setIsReasignModalOpen(false)} title="Reasignar tarea" >
-            <ReasignIssue onSubmit={handleReasign} onCancel={() => setIsReasignModalOpen(false)} taskObject={taskActive as TaskProps} />
-         </Modal >
+            <Modal isOpen={isReasignModalOpen} onClose={() => setIsReasignModalOpen(false)} title="" customWidth='max-w-xl'>
+               <ReasignIssue
+                  onSubmit={handleReasign}
+                  onCancel={() => setIsReasignModalOpen(false)}
+                  taskObject={taskActive as TaskProps}
+               />
+            </Modal>
 
-         {/* Modal de eliminar tarea */}
-         < Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Eliminar tarea" >
-            <DeleteIssueForm onSubmit={handleDelete} onCancel={() => setIsDeleteModalOpen(false)} taskObject={taskActive as TaskProps} />
-         </Modal >
+            <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Eliminar Tarea">
+               <DeleteIssueForm
+                  onSubmit={handleDelete}
+                  onCancel={() => setIsDeleteModalOpen(false)}
+                  taskObject={taskActive as TaskProps}
+               />
+            </Modal>
 
-         {/* Modal de eliminar sprint */}
-         <Modal isOpen={isDeleteSprintOpen} onClose={() => setIsDeleteSprintOpen(false)} title="Eliminar sprint" >
-            <DeleteSprintForm onSubmit={handleDeleteSprint} onCancel={() => setIsDeleteSprintOpen(false)} sprintObject={sprintSelected as SprintProps} />
-         </Modal>
+            <Modal isOpen={isDeleteSprintOpen} onClose={() => setIsDeleteSprintOpen(false)} title="">
+               <DeleteSprintForm
+                  onSubmit={handleDeleteSprint}
+                  onCancel={() => setIsDeleteSprintOpen(false)}
+                  sprintObject={sprintSelected as SprintProps}
+               />
+            </Modal>
 
-         {/* Modal de configuración de tareas */}
-         <Modal customWidth='max-w-2xl' isOpen={isConfigModalOpen} onClose={() => setIsConfigModalOpen(false)} title="Configuración de tareas" >
-            <IssueConfig onClose={() => setIsConfigModalOpen(false)} projectId={spr.projectId} />
-         </Modal>
+            <Modal isOpen={isHistoryModalOpen} onClose={() => setIsHistoryModalOpen(false)} title="" customWidth="max-w-4xl">
+               <AuditHistory
+                  issueId={taskActive?.id}
+                  title={`Historial de cambios: ${taskActive?.title}`}
+                  currentIssue={taskActive}
+               />
+            </Modal>
+         </>
       </>
    )
 }

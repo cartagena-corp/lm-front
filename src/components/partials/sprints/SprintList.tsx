@@ -7,13 +7,15 @@ import { useIssueStore } from '@/lib/store/IssueStore'
 import CreateTaskForm from '../issues/CreateTaskForm'
 import { useAuthStore } from '@/lib/store/AuthStore'
 import CreateSprintForm from './CreateSprintForm'
+import { PlusIcon, CalendarIcon } from '@/assets/Icon'
 import Modal from '../../layout/Modal'
 import IssuesRow from './IssuesRow'
 import { useState } from 'react'
+import { sortSprints } from '@/lib/utils/sprint.utils'
 
 export default function SprintList() {
-   const { createTask, asignTaskToSprint } = useIssueStore()
-   const { sprints, createSprint } = useSprintStore()
+   const { createIssue, assignIssueToSprint, removeIssueFromSprint } = useIssueStore()
+   const { sprints, createSprint, isLoading } = useSprintStore()
    const { getValidAccessToken } = useAuthStore()
    const { selectedBoard } = useBoardStore()
 
@@ -25,7 +27,7 @@ export default function SprintList() {
 
    const handleCreateTask = async (newTask: any) => {
       const token = await getValidAccessToken()
-      if (token) await createTask(token, newTask)
+      if (token) await createIssue(token, newTask)
       setIsCreateTaskOpen(false)
    }
 
@@ -83,12 +85,23 @@ export default function SprintList() {
       try {
          const token = await getValidAccessToken()
          if (!token) return
-         await asignTaskToSprint(
-            token,
-            selectedIds,
-            targetSprintId,
-            selectedBoard?.id as string
-         )
+         
+         if (targetSprintId === 'null') {
+            // Moving to backlog - remove from current sprint
+            await removeIssueFromSprint(
+               token,
+               selectedIds,
+               selectedBoard?.id as string
+            )
+         } else {
+            // Moving to a specific sprint
+            await assignIssueToSprint(
+               token,
+               selectedIds,
+               targetSprintId,
+               selectedBoard?.id as string
+            )
+         }
       } catch (err) {
          console.error(err)
       } finally {
@@ -97,49 +110,89 @@ export default function SprintList() {
       }
    }
 
+   if (isLoading && !sprints.length) {
+      return (
+         <div className="space-y-6">
+            {Array.from({ length: 3 }).map((_, i) => (
+               <div key={i} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 animate-pulse">
+                  <div className="flex justify-between items-center mb-4">
+                     <div className="flex items-center gap-4">
+                        <div className="h-6 bg-gray-300 rounded w-32"></div>
+                        <div className="h-5 bg-gray-300 rounded w-20"></div>
+                     </div>
+                     <div className="h-8 bg-gray-300 rounded w-24"></div>
+                  </div>
+                  <div className="h-4 bg-gray-300 rounded w-3/4 mb-4"></div>
+                  <div className="space-y-3">
+                     {Array.from({ length: 2 }).map((_, j) => (
+                        <div key={j} className="h-12 bg-gray-300 rounded"></div>
+                     ))}
+                  </div>
+               </div>
+            ))}
+         </div>
+      )
+   }
+
    return (
-      <MultiDragProvider value={{ selectedIds, setSelectedIds }}>
-         <DndContext
-            collisionDetection={pointerWithin}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-            modifiers={[restrictToVerticalAxis, restrictToWindowEdges]}
-         >
-            {
-               sprints.map(spr => (
+      <div className="space-y-6">
+         <MultiDragProvider value={{ selectedIds, setSelectedIds }}>
+            <DndContext
+               collisionDetection={pointerWithin}
+               onDragStart={handleDragStart}
+               onDragEnd={handleDragEnd}
+               modifiers={[restrictToVerticalAxis, restrictToWindowEdges]}
+            >
+               {sortSprints(sprints).map(spr => (
                   <IssuesRow
                      key={spr.id}
                      spr={spr}
                      isOverlay={false}
                      setIsOpen={setIsCreateTaskOpen}
                   />
-               ))
-            }
+               ))}
 
-            <DragOverlay dropAnimation={null}>
-               {
-                  activeId && (
+               <DragOverlay dropAnimation={null}>
+                  {activeId && (
                      <IssuesRow
                         spr={sprints.find(s => s.id === activeId)!}
                         isOverlay={true}
                         setIsOpen={setIsCreateTaskOpen}
                      />
-                  )
-               }
-            </DragOverlay>
-         </DndContext>
+                  )}
+               </DragOverlay>
+            </DndContext>
+         </MultiDragProvider>
 
-         <button
-            onClick={() => setIsCreateSprintOpen(true)}
-            className="w-full border-dashed border text-black/20 hover:border-black/75 hover:text-black/75 duration-150 rounded-md flex flex-col items-center py-6"
-         >
-            Crear Nuevo Sprint
-         </button>
+         {/* Create Sprint Button */}
+         <div className="bg-white rounded-xl shadow-sm  overflow-hidden">
+            <button
+               onClick={() => setIsCreateSprintOpen(true)}
+               disabled={isLoading}
+               className="w-full p-8 border-2 border-dashed border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 rounded-xl group disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+               <div className="flex flex-col items-center gap-3">
+                  <div className="p-3 bg-gray-100 group-hover:bg-blue-100 rounded-xl transition-colors duration-200 text-gray-400 group-hover:text-blue-600">
+                     <CalendarIcon size={24} />
+                  </div>
+                  <div className="text-center">
+                     <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors duration-200">
+                        {isLoading ? 'Creando...' : 'Crear Nuevo Sprint'}
+                     </h3>
+                     <p className="text-sm text-gray-500 mt-1">
+                        Organiza tus tareas en un nuevo sprint
+                     </p>
+                  </div>
+               </div>
+            </button>
+         </div>
 
+         {/* Modals */}
          <Modal
             isOpen={isCreateTaskOpen}
             onClose={() => setIsCreateTaskOpen(false)}
-            title="Crear nueva tarea"
+            title=""
+            customWidth='max-w-2xl'
          >
             <CreateTaskForm
                onSubmit={handleCreateTask}
@@ -150,13 +203,15 @@ export default function SprintList() {
          <Modal
             isOpen={isCreateSprintOpen}
             onClose={() => setIsCreateSprintOpen(false)}
-            title="Crear nuevo sprint"
+            title=""
+            customWidth="sm:max-w-2xl"
          >
             <CreateSprintForm
                onSubmit={handleCreateSprint}
                onCancel={() => setIsCreateSprintOpen(false)}
+               isEdit={false}
             />
          </Modal>
-      </MultiDragProvider>
+      </div>
    )
 }
