@@ -1,6 +1,6 @@
 "use client"
 
-import SprintGrid from "../partials/sprints/SprintGrid"
+import SprintBoard from "../partials/sprints/SprintBoard"
 import SprintList from "../partials/sprints/SprintList"
 import DiagramaGantt from "./DiagramaGantt"
 
@@ -26,7 +26,7 @@ export function CustomSwitch({ value, onChange, className = "" }: TabSwitchProps
       {
          id: 2,
          name: "Tablero",
-         view: SprintGrid
+         view: SprintBoard
       },
       {
          id: 3,

@@ -8,6 +8,7 @@ import { useCommentStore } from "@/lib/store/CommentStore"
 import { useAuthStore } from "@/lib/store/AuthStore"
 import Modal from "../layout/Modal"
 import DeleteCommentForm from "../partials/comments/DeleteCommentForm"
+import { getUserAvatar } from "@/lib/utils/avatar.utils"
 import DeleteReplyForm from "../partials/comments/DeleteReplyForm"
 
 interface Props {
@@ -115,157 +116,219 @@ export default function Comment({ comment }: Props) {
 
    return (
       <>
-         <div ref={gonnaReplyRef} className="flex flex-col gap-2.5">
-            <div className="flex items-start justify-start gap-2">
-               <div className={`bg-green-500 h-8 w-8 rounded-full aspect-square mt-0.5`}>
-                  <Image className="rounded-full"
-                     src={comment.user.picture}
-                     alt={comment.id}
-                     width={32}
-                     height={32}
-                  />
+         <div ref={gonnaReplyRef} className="space-y-4">
+            <div className="flex items-start gap-2">
+               {/* Avatar */}
+               <div className="flex-shrink-0">
+                  <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100">
+                     <Image
+                        className="w-full h-full object-cover"
+                        src={getUserAvatar(comment.user, 40)}
+                        alt={`${comment.user.firstName} ${comment.user.lastName}`}
+                        width={40}
+                        height={40}
+                     />
+                  </div>
                </div>
-               <div className="flex flex-col w-full">
-                  <div className={`flex flex-col overflow-y-auto py-0.5`}>
+
+               {/* Contenido del comentario */}
+               <div className="flex-1 min-w-0">
+                  <div className="bg-gray-50 rounded-xl p-4">
+                     {/* Header del comentario */}
                      <div className="flex items-center justify-between">
-                        <h6 className="font-bold text-sm">{comment.user.firstName} {comment.user.lastName}</h6>
-                        {
-                           comment.userId == user?.id &&
-                           <button type="button" onClick={() => setIsDeleteCommentModalOpen(true)} className="text-black/15 hover:text-red-700 duration-150">
+                        <div className="flex items-center gap-2">
+                           <h6 className="font-semibold text-xs text-gray-900">
+                              {comment.user.firstName} {comment.user.lastName}
+                           </h6>
+                           <span className="text-xs text-gray-500">
+                              {formatDate(comment.createdAt)}
+                           </span>
+                        </div>
+                        {comment.userId === user?.id && (
+                           <button
+                              type="button"
+                              onClick={() => setIsDeleteCommentModalOpen(true)}
+                              className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                              title="Eliminar comentario"
+                           >
                               <DeleteIcon size={16} />
                            </button>
-                        }
+                        )}
                      </div>
-                     <p className="text-black/75 text-xs mt-1 mb-2">{comment.text}</p>
-                     <div className="flex flex-wrap gap-2">
-                        {
-                           comment.attachments.map((file, idx) => {
+
+                     {/* Texto del comentario */}
+                     <p className="text-xs text-gray-700 mb-3 whitespace-pre-wrap">
+                        {comment.text}
+                     </p>
+
+                     {/* Archivos adjuntos */}
+                     {comment.attachments.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                           {comment.attachments.map((file, idx) => {
                               const fileSplitted = file.fileName.split(".")
                               const extension = fileSplitted[fileSplitted.length - 1]
-
                               const isImage = ["jpg", "png", "jpeg", "gif", "bmp", "webp"].includes(extension.toLowerCase())
                               const url = file.fileUrl
+
                               return (
-                                 <div key={idx} className="border-black/15 hover:border-blue-500 hover:text-blue-500 hover:bg-blue-50 duration-150 cursor-pointer relative flex flex-col items-center justify-center overflow-hidden rounded border p-1 text-xs">
-                                    {
-                                       isImage && url ?
-                                          <Link href={url} target="_blank">
-                                             <Image src={url} alt={file.fileName} height={64} width={64} className="object-cover rounded h-16 w-16" />
-                                          </Link>
-                                          :
-                                          <Link href={url} target="_blank" className="flex w-full items-center justify-between rounded px-1 gap-2">
-                                             <span className="truncate">{file.fileName}</span>
+                                 <div key={idx} className="border border-gray-200 rounded-lg overflow-hidden hover:border-blue-300 hover:shadow-sm transition-all">
+                                    {isImage && url ? (
+                                       <Link href={url} target="_blank">
+                                          <div className="w-16 h-16 relative">
+                                             <Image
+                                                src={url}
+                                                alt={file.fileName}
+                                                fill
+                                                className="object-cover hover:scale-105 transition-transform"
+                                             />
+                                          </div>
+                                       </Link>
+                                    ) : (
+                                       <Link
+                                          href={url}
+                                          target="_blank"
+                                          className="flex items-center gap-2 p-3 min-w-0 hover:bg-gray-50 transition-colors"
+                                       >
+                                          <div className="flex-shrink-0">
                                              <DownloadIcon size={16} stroke={2} />
-                                          </Link>
-                                    }
+                                          </div>
+                                          <span className="text-xs text-gray-600 truncate">
+                                             {file.fileName}
+                                          </span>
+                                       </Link>
+                                    )}
                                  </div>
                               )
-                           })
-                        }
-                     </div>
+                           })}
+                        </div>
+                     )}
                   </div>
 
-                  {/* Acciones de comentario */}
-                  <div className={`flex items-center gap-2 text-xs mt-1`}>
-                     <span className="text-black/25">
-                        {formatDate(comment.createdAt)}
-                     </span>
+                  {/* Acciones del comentario */}
+                  <div className="flex items-center gap-4 mt-2 text-xs">
                      <button
                         type="button"
                         onClick={() => setGonnaReply(!gonnaReply)}
-                        className="text-blue-500 hover:text-blue-700 duration-150">
+                        className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                     >
                         Responder
                      </button>
-                     {
-                        comment.responsesCount > 0 &&
+                     {comment.responsesCount > 0 && (
                         <button
                            type="button"
                            onClick={toggleResponses}
-                           className="text-black/75 hover:text-black duration-150">
+                           className="text-gray-600 hover:text-gray-700 font-medium transition-colors"
+                        >
                            {viewResponses
                               ? "Ocultar respuestas"
                               : `Ver ${comment.responsesCount > 1 ? `${comment.responsesCount} respuestas` : `respuesta`}`
                            }
                         </button>
-                     }
+                     )}
                   </div>
                </div>
             </div>
 
-            {
-               gonnaReply && (
-                  <div className="ml-10 flex justify-between items-stretch gap-2 text-xs mt-2">
-                     <AutoResizeTextarea
-                        value={newReply}
-                        onChange={setNewReply}
-                        placeholder="Escribe tu respuesta..."
-                     />
-
+            {/* Área de respuesta */}
+            {gonnaReply && (
+               <div className="ml-14 bg-white border border-gray-200 rounded-lg p-2">
+                  <div className="flex gap-3">
+                     <div className="flex-1">
+                        <AutoResizeTextarea
+                           value={newReply}
+                           onChange={setNewReply}
+                           placeholder="Escribe tu respuesta..."
+                           className="w-full text-xs p-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-none"
+                        />
+                     </div>
                      <button
                         type="button"
-                        className="bg-blue-600 hover:bg-blue-800 text-white duration-150 rounded-md border aspect-square p-2"
-                        onClick={handleReply}>
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" className="size-4">
+                        className="flex-shrink-0 w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={handleReply}
+                        disabled={!newReply.trim()}
+                        title="Enviar respuesta"
+                     >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" className="w-4 h-4">
                            <path d="M21.0477 3.05293C18.8697 0.707363 2.48648 6.4532 2.50001 8.551C2.51535 10.9299 8.89809 11.6617 10.6672 12.1581C11.7311 12.4565 12.016 12.7625 12.2613 13.8781C13.3723 18.9305 13.9301 21.4435 15.2014 21.4996C17.2278 21.5892 23.1733 5.342 21.0477 3.05293Z" stroke="currentColor" strokeWidth="2" />
                            <path d="M11.5 12.5L15 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                      </button>
                   </div>
-               )
-            }
+               </div>
+            )}
 
-            {/* Área de respuestas */}
+            {/* Respuestas */}
             {viewResponses && (
-               <div className="ml-10 flex flex-col gap-2">
+               <div className="ml-14 space-y-3">
                   {isLoadingResponses ? (
-                     <div className="text-xs text-black/50">Cargando respuestas...</div>
+                     <div className="flex items-center gap-2 text-sm text-gray-500 py-4">
+                        <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
+                        Cargando respuestas...
+                     </div>
                   ) : commentResponses.length > 0 ? (
                      commentResponses.map(reply => (
-                        <div key={reply.id} className="flex items-start justify-start gap-2">
-                           <div className="bg-yellow-500 h-8 w-8 rounded-full aspect-square mt-0.5">
-                              <Image
-                                 className="rounded-full"
-                                 src={reply.user.picture}
-                                 alt={reply.id}
-                                 width={32}
-                                 height={32}
-                              />
+                        <div key={reply.id} className="flex items-start gap-2">
+                           {/* Avatar de la respuesta */}
+                           <div className="flex-shrink-0">
+                              <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-100">
+                                 <Image
+                                    className="w-full h-full object-cover"
+                                    src={getUserAvatar(reply.user, 32)}
+                                    alt={`${reply.user.firstName} ${reply.user.lastName}`}
+                                    width={32}
+                                    height={32}
+                                 />
+                              </div>
                            </div>
 
-                           <div className="flex flex-col overflow-y-auto py-0.5 w-full">
-                              <div className="flex items-center justify-between">
-                                 <div className="flex items-center">
-                                    <h6 className="font-bold text-sm">{reply.user.firstName} {reply.user.lastName}</h6>
-
-                                    <span className="text-black/25 text-xs">
-                                       &nbsp;•&nbsp;{formatDate(reply.createdAt)}
-                                    </span>
+                           {/* Contenido de la respuesta */}
+                           <div className="flex-1 min-w-0">
+                              <div className="bg-white border border-gray-200 rounded-lg p-2.5">
+                                 <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                       <h6 className="font-semibold text-xs text-gray-900">
+                                          {reply.user.firstName} {reply.user.lastName}
+                                       </h6>
+                                       <span className="text-xs text-gray-500">
+                                          {formatDate(reply.createdAt)}
+                                       </span>
+                                    </div>
+                                    {reply.userId === user?.id && (
+                                       <button
+                                          type="button"
+                                          onClick={() => {
+                                             setIsDeleteReplyModalOpen(true)
+                                             setReplyId(reply.id)
+                                          }}
+                                          className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                                          title="Eliminar respuesta"
+                                       >
+                                          <DeleteIcon size={12} />
+                                       </button>
+                                    )}
                                  </div>
-                                 {
-                                    reply.userId == user?.id &&
-                                    <button type="button" onClick={() => {
-                                       setIsDeleteReplyModalOpen(true)
-                                       setReplyId(reply.id)
-                                    }} className="text-black/15 hover:text-red-700 duration-150">
-                                       <DeleteIcon size={16} />
-                                    </button>
-                                 }
+                                 <p className="text-xs/tight text-gray-700 whitespace-pre-wrap">
+                                    {reply.text}
+                                 </p>
                               </div>
-                              <p className="text-black/75 text-xs mt-1 mb-2">{reply.text}</p>
                            </div>
                         </div>
                      ))
                   ) : (
-                     <div className="text-xs text-black/50">No hay respuestas aún</div>
+                     <div className="text-sm text-gray-500 py-4 text-center">
+                        No hay respuestas aún
+                     </div>
                   )}
                </div>
             )}
          </div>
 
+         {/* Modal para eliminar comentario */}
          <Modal
             isOpen={isDeleteCommentModalOpen}
             onClose={() => setIsDeleteCommentModalOpen(false)}
-            title="Eliminar comentario"
+            title=""
+            customWidth="max-w-md"
          >
             <DeleteCommentForm
                onSubmit={handleDeleteComment}
@@ -273,10 +336,12 @@ export default function Comment({ comment }: Props) {
             />
          </Modal>
 
+         {/* Modal para eliminar respuesta */}
          <Modal
             isOpen={isDeleteReplyModalOpen}
             onClose={() => setIsDeleteReplyModalOpen(false)}
-            title="Eliminar respuesta"
+            title=""
+            customWidth="max-w-md"
          >
             <DeleteReplyForm
                responseId={replyId}
