@@ -66,168 +66,222 @@ export default function FilterProjectForm({ onSubmit, onCancel }: FilterFormProp
    const handleAscChange = () => setIsAsc(!isAsc)
 
    return (
-      <form onSubmit={handleSubmit}>
-         <div className='pt-4 pb-14 space-y-4'>
-            <div className='space-y-1'>
-               <label htmlFor="title" className="text-gray-700 text-sm font-medium">
-                  Palabra clave
+      <form onSubmit={handleSubmit} className="space-y-6">
+         {/* Header con icono */}
+         <div className="flex items-center gap-3 pb-2 border-b border-gray-200">
+            <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-lg">
+               <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+               </svg>
+            </div>
+            <div>
+               <h3 className="text-lg font-semibold text-gray-900">Filtrar tableros</h3>
+               <p className="text-sm text-gray-500">Encuentra tableros específicos usando los filtros</p>
+            </div>
+         </div>
+
+         <div className='space-y-5'>
+            {/* Búsqueda por palabra clave */}
+            <div className='space-y-2'>
+               <label htmlFor="title" className="text-gray-900 text-sm font-semibold">
+                  Búsqueda
                </label>
-               <div className='border-gray-300 flex justify-center items-center rounded-md border px-2 gap-2'>
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-5 text-gray-400">
+               <div className='border-gray-200 flex items-center rounded-lg border px-4 py-3 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-all duration-200'>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-400 mr-3">
                      <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
                   </svg>
-
-                  <input onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  <input 
+                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                      type="search"
-                     placeholder="Buscar por nombre o palabra clave"
+                     placeholder="Buscar por nombre del tablero..."
                      id="name"
                      name="name"
-                     className="outline-none text-sm w-full py-2"
+                     className="outline-none text-sm w-full bg-transparent placeholder-gray-400"
                      value={formData.name}
                   />
                </div>
             </div>
 
-            <div className='space-y-1 relative' ref={statusSelectRef}>
-               <label htmlFor="status" className="text-gray-700 text-sm font-medium">
-                  Estado
+            {/* Estado */}
+            <div className='space-y-2 relative' ref={statusSelectRef}>
+               <label htmlFor="status" className="text-gray-900 text-sm font-semibold">
+                  Estado del proyecto
                </label>
-
-               <button onClick={() => {
-                  setIsStatusSelectOpen(!isStatusSelectOpen)
-                  setIsSortBySelectOpen(false) // Cierra el otro select
-               }} type='button'
-                  className='border-gray-300 flex justify-center items-center select-none rounded-md border w-full px-2 gap-2'>
-                  <p className='py-2 w-full text-start text-sm'>
-                     {formData.status == 0 ? "Cualquier estado" : projectStatus?.find(status => status.id == formData.status)?.name}
-                  </p>
-
-                  <svg className={`text-gray-500 size-4 duration-150 ${isStatusSelectOpen ? "-rotate-180" : ""}`}
-                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+               <button 
+                  onClick={() => {
+                     setIsStatusSelectOpen(!isStatusSelectOpen)
+                     setIsSortBySelectOpen(false)
+                  }} 
+                  type='button'
+                  className='border-gray-200 flex items-center justify-between rounded-lg border w-full px-4 py-3 hover:border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200'
+               >
+                  <div className="flex items-center gap-3">
+                     {formData.status !== 0 && (
+                        <div 
+                           className="w-3 h-3 rounded-full"
+                           style={{ backgroundColor: projectStatus?.find(status => status.id === formData.status)?.color || '#6B7280' }}
+                        />
+                     )}
+                     <span className='text-sm text-gray-700'>
+                        {formData.status == 0 ? "Cualquier estado" : projectStatus?.find(status => status.id == formData.status)?.name}
+                     </span>
+                  </div>
+                  <svg className={`text-gray-400 w-4 h-4 transition-transform duration-200 ${isStatusSelectOpen ? "rotate-180" : ""}`}
+                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                      <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                   </svg>
                </button>
-               {
-                  isStatusSelectOpen &&
-                  <div className='border-gray-300 bg-white shadow-md absolute z-10 top-[105%] flex flex-col items-start rounded-md border text-sm w-full max-h-28 overflow-y-auto'>{
-                     projectStatus?.map((obj) =>
-                        <button key={obj.id} onClick={() => { setFormData({ ...formData, status: obj.id }), setIsStatusSelectOpen(false) }} type='button'
-                           className='hover:bg-black/5 duration-150 w-full text-start py-2 px-2 flex items-center gap-2'>
-                           {
-                              obj.id === formData.status ?
-                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                                 </svg>
-                                 :
-                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" className='hidden' />
-                                 </svg>
-
-                           }
-                           {obj.name}
-                        </button>
-                     )
-                  }</div>
-               }
+               {isStatusSelectOpen && (
+                  <div className='border-gray-200 bg-white shadow-lg absolute z-10 top-full mt-1 flex flex-col rounded-lg border text-sm w-full max-h-28 overflow-y-auto'>
+                     {/* Opción "Cualquier estado" */}
+                     <div
+                        onClick={() => { setFormData({ ...formData, status: 0 }), setIsStatusSelectOpen(false) }}
+                        className='hover:bg-blue-50 duration-150 w-full text-start py-3 px-4 flex items-center gap-3 cursor-pointer'
+                     >
+                        <div className="flex items-center gap-3 flex-1">
+                           <div className="w-3 h-3 rounded-full bg-gray-300" />
+                           <span className="text-gray-700">Cualquier estado</span>
+                        </div>
+                        {formData.status === 0 && (
+                           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-blue-600">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                           </svg>
+                        )}
+                     </div>
+                     {/* Estados del proyecto */}
+                     {projectStatus?.map((obj) => (
+                        <div 
+                           key={obj.id} 
+                           onClick={() => { setFormData({ ...formData, status: obj.id }), setIsStatusSelectOpen(false) }}
+                           className='hover:bg-blue-50 duration-150 w-full text-start py-3 px-4 flex items-center gap-3 cursor-pointer'
+                        >
+                           <div className="flex items-center gap-3 flex-1">
+                              <div 
+                                 className="w-3 h-3 rounded-full"
+                                 style={{ backgroundColor: obj.color }}
+                              />
+                              <span className="text-gray-700">{obj.name}</span>
+                           </div>
+                           {obj.id === formData.status && (
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-blue-600">
+                                 <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                              </svg>
+                           )}
+                        </div>
+                     ))}
+                  </div>
+               )}
             </div>
 
-            <div className='space-y-1' ref={sortBySelectRef}>
-               <label htmlFor="status" className="text-gray-700 text-sm font-medium">
-                  Ordenar por
+            {/* Ordenamiento */}
+            <div className='space-y-2' ref={sortBySelectRef}>
+               <label htmlFor="sortBy" className="text-gray-900 text-sm font-semibold">
+                  Ordenar resultados
                </label>
-               <div className='flex justify-center items-center gap-2'>
-                  <button onClick={() => {
-                     setIsSortBySelectOpen(!isSortBySelectOpen)
-                     setIsStatusSelectOpen(false) // Cierra el otro select
-                  }} type='button'
-                     className='border-gray-300 flex justify-center items-center select-none rounded-md border w-full px-2 gap-2 relative'>
-                     <p className='py-2 w-full text-start text-sm'>
+               <div className='flex gap-3'>
+                  <button 
+                     onClick={() => {
+                        setIsSortBySelectOpen(!isSortBySelectOpen)
+                        setIsStatusSelectOpen(false)
+                     }} 
+                     type='button'
+                     className='border-gray-200 flex items-center justify-between rounded-lg border flex-1 px-4 py-3 hover:border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 relative'
+                  >
+                     <span className='text-sm text-gray-700'>
                         {formData.sortBy.sort}
-                     </p>
-
-                     <svg className={`text-gray-500 size-4 duration-150 ${isSortBySelectOpen ? "-rotate-180" : ""}`}
-                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                     </span>
+                     <svg className={`text-gray-400 w-4 h-4 transition-transform duration-200 ${isSortBySelectOpen ? "rotate-180" : ""}`}
+                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                      </svg>
 
-                     {
-                        isSortBySelectOpen &&
-                        <div className='border-gray-300 bg-white shadow-md absolute z-10 top-[115%] flex flex-col items-start rounded-md border text-sm w-full max-h-28 overflow-y-auto'>{
-                           sortBySelect.map((obj) =>
-                              <div key={obj.id} onClick={() => { setFormData({ ...formData, sortBy: obj }), setIsSortBySelectOpen(false) }}
-                                 className='hover:bg-black/5 duration-150 w-full text-start py-2 px-2 flex items-center gap-2'>
-                                 {
-                                    obj.id === formData.sortBy.id ?
-                                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
-                                          <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                                       </svg>
-                                       :
-                                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
-                                          <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" className='hidden' />
-                                       </svg>
-
-                                 }
-                                 {obj.sort}
+                     {isSortBySelectOpen && (
+                        <div className='border-gray-200 bg-white shadow-lg absolute z-10 top-full mt-1 left-0 flex flex-col rounded-lg border text-sm w-full max-h-32 overflow-y-auto'>
+                           {sortBySelect.map((obj) => (
+                              <div 
+                                 key={obj.id} 
+                                 onClick={() => { setFormData({ ...formData, sortBy: obj }), setIsSortBySelectOpen(false) }}
+                                 className='hover:bg-blue-50 duration-150 w-full text-start py-3 px-4 flex items-center gap-3 cursor-pointer'
+                              >
+                                 <span className="text-gray-700 flex-1">{obj.sort}</span>
+                                 {obj.id === formData.sortBy.id && (
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-blue-600">
+                                       <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                                    </svg>
+                                 )}
                               </div>
-                           )
-                        }
+                           ))}
                         </div>
-                     }
+                     )}
                   </button>
 
-                  <button onClick={() => { handleAscChange(), setFormData({ ...formData, direction: !isAsc ? "asc" : "desc" }) }} type='button' className='border-gray-300 border p-1.5 rounded-md'>
-                     {
-                        isAsc ?
-                           <svg className='size-6' viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M11 10H18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                              <path d="M11 14H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                              <path d="M11 18H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                              <path d="M11 6H21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                              <path d="M3 5.1875C3.39322 4.74501 4.43982 3 5 3M5 3C5.56018 3 6.60678 4.74501 7 5.1875M5 3V9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                           </svg>
-                           :
-                           <svg className='size-6' viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M11 10H18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                              <path d="M11 14H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                              <path d="M11 18H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                              <path d="M11 6H21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                              <path d="M7 18.8125C6.60678 19.255 5.56018 21 5 21M5 21C4.43982 21 3.39322 19.255 3 18.8125M5 21V15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                           </svg>
-                     }
+                  {/* Botón de dirección ascendente/descendente */}
+                  <button 
+                     onClick={() => { handleAscChange(), setFormData({ ...formData, direction: !isAsc ? "asc" : "desc" }) }} 
+                     type='button' 
+                     className={`border-gray-200 border p-3 rounded-lg hover:border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${isAsc ? 'bg-blue-50 border-blue-200' : ''}`}
+                  >
+                     {isAsc ? (
+                        <svg className='w-5 h-5 text-blue-600' viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                           <path d="M11 10H18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                           <path d="M11 14H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                           <path d="M11 18H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                           <path d="M11 6H21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                           <path d="M3 5.1875C3.39322 4.74501 4.43982 3 5 3M5 3C5.56018 3 6.60678 4.74501 7 5.1875M5 3V9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                     ) : (
+                        <svg className='w-5 h-5 text-gray-600' viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                           <path d="M11 10H18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                           <path d="M11 14H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                           <path d="M11 18H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                           <path d="M11 6H21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                           <path d="M7 18.8125C6.60678 19.255 5.56018 21 5 21M5 21C4.43982 21 3.39322 19.255 3 18.8125M5 21V15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                     )}
                   </button>
                </div>
             </div>
 
-            <div className='space-y-1 relative flex justify-start items-center gap-2' ref={paginationSelectRef}>
-               <input onChange={(e) => setFormData({ ...formData, createdBy: e.target.checked && user ? user?.id : "" })}
-                  className='translate-y-0.5'
-                  placeholder="Buscar por nombre o palabra clave"
-                  value={formData.createdBy}
-                  name="createdBy"
-                  type="checkbox"
-                  id="createdBy"
-               />
-               <label htmlFor="createdBy" className="text-gray-700 text-sm font-medium select-none">
-                  Listar solamente tableros creados por mi
-               </label>
+            {/* Checkbox "Mis tableros" */}
+            <div className='bg-gray-50 rounded-lg p-4 border border-gray-200 hidden'>
+               <div className='flex items-center gap-3' ref={paginationSelectRef}>
+                  <input 
+                     onChange={(e) => setFormData({ ...formData, createdBy: e.target.checked && user ? user?.id : "" })}
+                     className='w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-2'
+                     placeholder="Buscar por nombre o palabra clave"
+                     value={formData.createdBy}
+                     name="createdBy"
+                     type="checkbox"
+                     id="createdBy"
+                  />
+                  <div className="flex-1">
+                     <label htmlFor="createdBy" className="text-gray-900 text-sm font-medium cursor-pointer">
+                        Solo mis tableros
+                     </label>
+                     <p className="text-xs text-gray-500">
+                        Mostrar únicamente los tableros que he creado
+                     </p>
+                  </div>
+               </div>
             </div>
          </div>
 
-         <div className="pb-3 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
-            <button
-               type="submit"
-               className="text-white inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold textWhite shadow-sm hover:bg-blue-500 focus-visible:outline-offset-2 focus-visible:outline-blue-600 sm:col-start-2"
-            >
-               Aplicar Filtros
-            </button>
+         {/* Botones */}
+         <div className="flex items-center gap-3 pt-4">
             <button
                type="button"
-               className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
                onClick={onCancel}
+               className="bg-white hover:bg-gray-50 hover:border-gray-300 border-gray-200 border flex-1 duration-200 rounded-lg text-center text-sm py-2.5 px-4 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
             >
                Cancelar
             </button>
+            <button
+               type="submit"
+               className="bg-blue-600 hover:bg-blue-700 text-white border-transparent border hover:shadow-md flex-1 duration-200 rounded-lg text-center text-sm py-2.5 px-4 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+               Aplicar filtros
+            </button>
          </div>
-      </form >
+      </form>
    )
 }
