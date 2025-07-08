@@ -1,65 +1,444 @@
 import { NotificationProps } from '../types/types'
+import { API_ROUTES } from '../routes/notifications.routes'
 import { MutableRefObject } from 'react'
 import { Client, Frame } from '@stomp/stompjs'
 import SockJS from 'sockjs-client'
 import { create } from 'zustand'
 import { useAuthStore } from './AuthStore'
+import toast from 'react-hot-toast'
 
-interface NotificationState {
-   notifications: NotificationProps[]
-   getNotifications: (token: string) => Promise<void>
-   connectAndSubscribe: (token: string, clientRef: MutableRefObject<Client | null>) => Promise<void>
+interface NotificationPreference {
+   type: string
+   enabled: boolean
 }
 
-const API_URL = process.env.NEXT_PUBLIC_NOTIFICATIONS
+interface NotificationType {
+   id: string
+   name: string
+   createdAt: string
+   updatedAt: string
+}
 
-export const useNotificationStore = create<NotificationState>(set => ({
+interface NotificationState {
+   // State
+   notifications: NotificationProps[]
+   preferences: NotificationPreference[]
+   notificationTypes: NotificationType[]
+   isLoading: boolean
+   error: string | null
+
+   // Notification Actions
+   getNotifications: (token: string) => Promise<void>
+   readNotification: (token: string, notificationId: string) => Promise<void>
+   readAllNotifications: (token: string) => Promise<void>
+   deleteNotification: (token: string, notificationId: string) => Promise<void>
+   deleteAllNotifications: (token: string) => Promise<void>
+   
+   // Preferences Actions
+   getPreferences: (token: string) => Promise<void>
+   updatePreferences: (token: string, preferences: NotificationPreference[]) => Promise<void>
+   
+   // Notification Types Actions
+   getNotificationTypes: (token: string) => Promise<void>
+   createNotificationType: (token: string, name: string) => Promise<void>
+   deleteNotificationType: (token: string, typeName: string) => Promise<void>
+   
+   // WebSocket Actions
+   connectAndSubscribe: (token: string, clientRef: MutableRefObject<Client | null>) => Promise<void>
+   
+   // Utility Actions
+   clearError: () => void
+   setLoading: (loading: boolean) => void
+}
+
+// Helper function to handle API errors consistently
+const handleApiError = (error: unknown, context: string): string => {
+   const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
+   console.error(`Error en ${context}:`, error)
+   return errorMessage
+}
+
+export const useNotificationStore = create<NotificationState>((set, get) => ({
+   // Initial state
    notifications: [],
+   preferences: [],
+   notificationTypes: [],
+   isLoading: false,
+   error: null,
+
+   // Get all notifications
    getNotifications: async (token) => {
+      set({ isLoading: true, error: null })
+      
       try {
-         const url = `${API_URL}${process.env.NEXT_PUBLIC_GET_NOTIFICATIONS}`
+         const response = await fetch(API_ROUTES.CRUD_NOTIFICATIONS, {
+            method: 'GET',
+            headers: { 
+               'Authorization': `Bearer ${token}`,
+               'Content-Type': 'application/json'
+            }
+         })
 
-         const response = await fetch(url, { method: 'GET', headers: { 'Authorization': `Bearer ${token}` } })
-         if (!response.ok) throw new Error(response.statusText)
+         if (!response.ok) {
+            throw new Error(`Error al obtener notificaciones: ${response.statusText}`)
+         }
 
-         const ntf: NotificationProps[] = await response.json()
-         set({ notifications: ntf })
+         const notifications: NotificationProps[] = await response.json()
+         set({ notifications, isLoading: false })
       } catch (error) {
-         console.error(error)
+         const errorMessage = handleApiError(error, 'getNotifications')
+         set({ 
+            error: errorMessage, 
+            isLoading: false 
+         })
+         toast.error('Error al cargar las notificaciones')
       }
    },
+
+   // Mark a notification as read
+   readNotification: async (token, notificationId) => {
+      set({ isLoading: true, error: null })
+      
+      try {
+         const response = await fetch(`${API_ROUTES.CRUD_NOTIFICATIONS}/${notificationId}/read`, {
+            method: 'PUT',
+            headers: { 
+               'Authorization': `Bearer ${token}`,
+               'Content-Type': 'application/json'
+            }
+         })
+
+         if (!response.ok) {
+            throw new Error(`Error al marcar notificación como leída: ${response.statusText}`)
+         }
+
+         // Update the notification in the local state
+         set(state => ({
+            notifications: state.notifications.map(notification =>
+               notification.id === notificationId
+                  ? { ...notification, read: true }
+                  : notification
+            ),
+            isLoading: false
+         }))
+
+         toast.success('Notificación marcada como leída')
+      } catch (error) {
+         const errorMessage = handleApiError(error, 'readNotification')
+         set({ 
+            error: errorMessage, 
+            isLoading: false 
+         })
+         toast.error('Error al marcar la notificación como leída')
+      }
+   },
+
+   // Mark all notifications as read
+   readAllNotifications: async (token) => {
+      set({ isLoading: true, error: null })
+      
+      try {
+         const response = await fetch(API_ROUTES.READ_ALL_NOTIFICATIONS, {
+            method: 'PUT',
+            headers: { 
+               'Authorization': `Bearer ${token}`,
+               'Content-Type': 'application/json'
+            }
+         })
+
+         if (!response.ok) {
+            throw new Error(`Error al marcar todas las notificaciones como leídas: ${response.statusText}`)
+         }
+
+         // Update all notifications in the local state
+         set(state => ({
+            notifications: state.notifications.map(notification => ({ ...notification, read: true })),
+            isLoading: false
+         }))
+
+         toast.success('Todas las notificaciones marcadas como leídas')
+      } catch (error) {
+         const errorMessage = handleApiError(error, 'readAllNotifications')
+         set({ 
+            error: errorMessage, 
+            isLoading: false 
+         })
+         toast.error('Error al marcar todas las notificaciones como leídas')
+      }
+   },
+
+   // Delete a notification
+   deleteNotification: async (token, notificationId) => {
+      set({ isLoading: true, error: null })
+      
+      try {
+         const response = await fetch(`${API_ROUTES.CRUD_NOTIFICATIONS}/${notificationId}`, {
+            method: 'DELETE',
+            headers: { 
+               'Authorization': `Bearer ${token}`,
+               'Content-Type': 'application/json'
+            }
+         })
+
+         if (!response.ok) {
+            throw new Error(`Error al eliminar notificación: ${response.statusText}`)
+         }
+
+         // Remove the notification from the local state
+         set(state => ({
+            notifications: state.notifications.filter(notification => notification.id !== notificationId),
+            isLoading: false
+         }))
+
+         toast.success('Notificación eliminada exitosamente')
+      } catch (error) {
+         const errorMessage = handleApiError(error, 'deleteNotification')
+         set({ 
+            error: errorMessage, 
+            isLoading: false 
+         })
+         toast.error('Error al eliminar la notificación')
+      }
+   },
+
+   // Delete all notifications
+   deleteAllNotifications: async (token) => {
+      set({ isLoading: true, error: null })
+      
+      try {
+         const response = await fetch(API_ROUTES.DELETE_ALL_NOTIFICATIONS, {
+            method: 'DELETE',
+            headers: { 
+               'Authorization': `Bearer ${token}`,
+               'Content-Type': 'application/json'
+            }
+         })
+
+         if (!response.ok) {
+            throw new Error(`Error al eliminar todas las notificaciones: ${response.statusText}`)
+         }
+
+         // Clear all notifications from the local state
+         set({ notifications: [], isLoading: false })
+
+         toast.success('Todas las notificaciones eliminadas exitosamente')
+      } catch (error) {
+         const errorMessage = handleApiError(error, 'deleteAllNotifications')
+         set({ 
+            error: errorMessage, 
+            isLoading: false 
+         })
+         toast.error('Error al eliminar todas las notificaciones')
+      }
+   },
+
+   // Get notification preferences
+   getPreferences: async (token) => {
+      set({ isLoading: true, error: null })
+      
+      try {
+         const response = await fetch(API_ROUTES.READ_EDIT_NOTIFICATIONS_PREFERENCES, {
+            method: 'GET',
+            headers: { 
+               'Authorization': `Bearer ${token}`,
+               'Content-Type': 'application/json'
+            }
+         })
+
+         if (!response.ok) {
+            throw new Error(`Error al obtener preferencias: ${response.statusText}`)
+         }
+
+         const preferences: NotificationPreference[] = await response.json()
+         set({ preferences, isLoading: false })
+      } catch (error) {
+         const errorMessage = handleApiError(error, 'getPreferences')
+         set({ 
+            error: errorMessage, 
+            isLoading: false 
+         })
+         toast.error('Error al cargar las preferencias')
+      }
+   },
+
+   // Update notification preferences
+   updatePreferences: async (token, preferences) => {
+      set({ isLoading: true, error: null })
+      
+      try {
+         const response = await fetch(API_ROUTES.READ_EDIT_NOTIFICATIONS_PREFERENCES, {
+            method: 'PUT',
+            headers: { 
+               'Authorization': `Bearer ${token}`,
+               'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(preferences)
+         })
+
+         if (!response.ok) {
+            throw new Error(`Error al actualizar preferencias: ${response.statusText}`)
+         }
+
+         const updatedPreferences: NotificationPreference[] = await response.json()
+         set({ preferences: updatedPreferences, isLoading: false })
+
+         toast.success('Preferencias actualizadas exitosamente')
+      } catch (error) {
+         const errorMessage = handleApiError(error, 'updatePreferences')
+         set({ 
+            error: errorMessage, 
+            isLoading: false 
+         })
+         toast.error('Error al actualizar las preferencias')
+      }
+   },
+
+   // Get notification types
+   getNotificationTypes: async (token) => {
+      set({ isLoading: true, error: null })
+      
+      try {
+         const response = await fetch(API_ROUTES.CRUD_NOTIFICATIONS_TYPES, {
+            method: 'GET',
+            headers: { 
+               'Authorization': `Bearer ${token}`,
+               'Content-Type': 'application/json'
+            }
+         })
+
+         if (!response.ok) {
+            throw new Error(`Error al obtener tipos de notificaciones: ${response.statusText}`)
+         }
+
+         const notificationTypes: NotificationType[] = await response.json()
+         set({ notificationTypes, isLoading: false })
+      } catch (error) {
+         const errorMessage = handleApiError(error, 'getNotificationTypes')
+         set({ 
+            error: errorMessage, 
+            isLoading: false 
+         })
+         toast.error('Error al cargar los tipos de notificaciones')
+      }
+   },
+
+   // Create a new notification type
+   createNotificationType: async (token, name) => {
+      set({ isLoading: true, error: null })
+      
+      try {
+         const response = await fetch(API_ROUTES.CRUD_NOTIFICATIONS_TYPES, {
+            method: 'POST',
+            headers: { 
+               'Authorization': `Bearer ${token}`,
+               'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ name })
+         })
+
+         if (!response.ok) {
+            throw new Error(`Error al crear tipo de notificación: ${response.statusText}`)
+         }
+
+         const newType: NotificationType = await response.json()
+         set(state => ({
+            notificationTypes: [...state.notificationTypes, newType],
+            isLoading: false
+         }))
+
+         toast.success('Tipo de notificación creado exitosamente')
+      } catch (error) {
+         const errorMessage = handleApiError(error, 'createNotificationType')
+         set({ 
+            error: errorMessage, 
+            isLoading: false 
+         })
+         toast.error('Error al crear el tipo de notificación')
+      }
+   },
+
+   // Delete a notification type
+   deleteNotificationType: async (token, typeName) => {
+      set({ isLoading: true, error: null })
+      
+      try {
+         const response = await fetch(`${API_ROUTES.CRUD_NOTIFICATIONS_TYPES}/${typeName}`, {
+            method: 'DELETE',
+            headers: { 
+               'Authorization': `Bearer ${token}`,
+               'Content-Type': 'application/json'
+            }
+         })
+
+         if (!response.ok) {
+            throw new Error(`Error al eliminar tipo de notificación: ${response.statusText}`)
+         }
+
+         // Remove the type from the local state
+         set(state => ({
+            notificationTypes: state.notificationTypes.filter(type => type.name !== typeName),
+            isLoading: false
+         }))
+
+         toast.success('Tipo de notificación eliminado exitosamente')
+      } catch (error) {
+         const errorMessage = handleApiError(error, 'deleteNotificationType')
+         set({ 
+            error: errorMessage, 
+            isLoading: false 
+         })
+         toast.error('Error al eliminar el tipo de notificación')
+      }
+   },
+
+   // WebSocket connection and subscription
    connectAndSubscribe: async (token, clientRef) => {
       try {
          if (clientRef.current && clientRef.current.active) return
 
          const client = new Client({
-            webSocketFactory: () => new SockJS(process.env.NEXT_PUBLIC_WEBSOCKET_NOTIFICATIONS!),
+            webSocketFactory: () => new SockJS(API_ROUTES.WEBSOCKET_NOTIFICATIONS!),
             reconnectDelay: 5000,
             heartbeatIncoming: 4000,
             heartbeatOutgoing: 4000
          })
 
          client.onConnect = (frame: Frame) => {
-            client.subscribe(`${process.env.NEXT_PUBLIC_USE_NOTIFICATION_WEBSOCKET}/${useAuthStore.getState().user?.id}`,
-               (ntf) => {
-                  const payload: NotificationProps = JSON.parse(ntf.body)
-                  set(state => ({
-                     notifications: [payload, ...state.notifications]
-                  }))
-               }
-            )
+            const userId = useAuthStore.getState().user?.id
+            if (userId) {
+               client.subscribe(`${API_ROUTES.WEBSOCKET_NOTIFICATIONS}/${userId}`, (ntf) => {
+                  try {
+                     const payload: NotificationProps = JSON.parse(ntf.body)
+                     set(state => ({
+                        notifications: [payload, ...state.notifications]
+                     }))
+                     toast.success('Nueva notificación recibida')
+                  } catch (error) {
+                     console.error('Error al procesar notificación WebSocket:', error)
+                  }
+               })
+            }
          }
 
-         client.onStompError = frame => {
-            console.error("Error STOMP:", frame.headers["message"], frame.body)
+         client.onStompError = (frame) => {
+            console.error('Error STOMP:', frame.headers['message'], frame.body)
+            toast.error('Error en la conexión de notificaciones')
          }
 
          client.activate()
          clientRef.current = client
       } catch (error) {
-         console.error(error)
+         const errorMessage = handleApiError(error, 'connectAndSubscribe')
+         console.error('Error al conectar WebSocket:', error)
+         toast.error('Error al conectar con las notificaciones en tiempo real')
       } finally {
-         useNotificationStore.getState().getNotifications(token)
+         // Load initial notifications
+         get().getNotifications(token)
       }
-   }
+   },
+
+   // Utility actions
+   clearError: () => set({ error: null }),
+   
+   setLoading: (loading: boolean) => set({ isLoading: loading })
 }))
