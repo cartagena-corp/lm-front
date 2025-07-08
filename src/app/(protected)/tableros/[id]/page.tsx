@@ -4,18 +4,19 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { useAuthStore } from '@/lib/store/AuthStore'
 import { useBoardStore } from '@/lib/store/BoardStore'
-import { CalendarIcon, ClockIcon } from '@/assets/Icon'
+import { CalendarIcon, ClockIcon, EditIcon, BoardIcon, UsersIcon, ConfigIcon } from '@/assets/Icon'
 import Image from 'next/image'
 import { useConfigStore } from '@/lib/store/ConfigStore'
-import SprintList from '@/components/partials/sprints/SprintList'
+import SprintBoard from '@/components/partials/sprints/SprintBoard'
 import { useIssueStore } from '@/lib/store/IssueStore'
 import { useSprintStore } from '@/lib/store/SprintStore'
 import Modal from '@/components/layout/Modal'
 import UpdateProjectForm from '@/components/partials/boards/UpdateProjectForm'
+import ProjectConfigModal from '@/components/partials/config/projects/ProjectConfigModal'
 import { ProjectProps } from '@/lib/types/types'
 import { CustomSwitch } from '@/components/ui/CustomSwitch'
 import DiagramaGantt from '@/components/ui/DiagramaGantt'
-import SprintGrid from '@/components/partials/sprints/SprintGrid'
+import SprintList from '@/components/partials/sprints/SprintList'
 
 const view = [
   {
@@ -26,7 +27,7 @@ const view = [
   {
     id: 2,
     name: "Tablero",
-    view: SprintGrid
+    view: SprintBoard
   },
   {
     id: 3,
@@ -39,10 +40,11 @@ export default function TableroDetalle() {
   const { setProjectConfig, projectStatus, setConfig } = useConfigStore()
   const { getValidAccessToken, isAuthenticated, getListUsers } = useAuthStore()
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false)
+  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false)
   const [sprintMode, setSprintMode] = useState(view[0])
-  const { selectedBoard, setBoard, updateBoard } = useBoardStore()
+  const { selectedBoard, getBoard, updateBoard, isLoading, error } = useBoardStore()
   const { getSprints } = useSprintStore()
-  const { setIssues } = useIssueStore()
+  const { getIssues } = useIssueStore()
   const { id } = useParams()
 
   useEffect(() => {
@@ -50,205 +52,276 @@ export default function TableroDetalle() {
       (async () => {
         const token = await getValidAccessToken()
         if (token) {
-          await setBoard(token, id as string)
-          await setIssues(token, id as string)
+          await getBoard(token, id as string)
+          // Get backlog issues (issues without sprint assigned)
+          await getIssues(token, id as string, { sprintId: '' })
           await setProjectConfig(id as string, token)
           await getSprints(token, id as string)
           await getListUsers(token)
         }
       })()
     }
-  }, [isAuthenticated, setBoard, setProjectConfig, getValidAccessToken])
+  }, [isAuthenticated, getBoard, setProjectConfig, getValidAccessToken, getIssues, getSprints, getListUsers, id])
 
-  useEffect(() => { if (isAuthenticated) setConfig() }, [isAuthenticated, setConfig])
+  useEffect(() => {
+    if (isAuthenticated) {
+      (async () => {
+        const token = await getValidAccessToken()
+        if (token) {
+          await setConfig(token)
+        }
+      })()
+    }
+  }, [isAuthenticated, setConfig, getValidAccessToken])
 
   const getStatusName = (id: number) => {
     if (projectStatus) return projectStatus?.find(status => status.id === id)
   }
 
-  const handleUpdate = async (formData: { name: string, description?: string, startDate?: string, endDate?: string, status: number }) => {
+  const handleUpdate = async (formData: ProjectProps, jiraImport: File | null) => {
     const token = await getValidAccessToken()
-    if (token) await updateBoard(token, formData, selectedBoard?.id as string)
+    if (token) {
+      // Convertir ProjectProps a formato esperado por updateBoard
+      const updateData = {
+        name: formData.name,
+        description: formData.description,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        status: typeof formData.status === 'object' ? formData.status.id : formData.status
+      }
+      await updateBoard(token, updateData, selectedBoard?.id as string)
+    }
     setIsUpdateModalOpen(false)
   }
 
   return (
-    <main className='bg-gray-100 flex flex-col ml-64 min-h-screen gap-6 p-10'>
-      <section className='flex justify-between items-center'>
-        <h4 className='font-bold text-2xl'>Detalles del tablero</h4>
-        <CustomSwitch value={sprintMode} onChange={(value) => setSprintMode(value)} />
-      </section>
-
-      <section className='bg-white rounded-md flex flex-col gap-2 p-6'>
-        <div className='flex justify-between items-start gap-2'>
-          <aside className='flex justify-start items-center gap-4'>
-            <h5 className='font-semibold text-xl'>{selectedBoard?.name}</h5>
-            {
-              selectedBoard &&
-              <div className='rounded-full text-xs border px-2 whitespace-nowrap'
-                style={{
-                  backgroundColor: `${getStatusName(Number(selectedBoard.status))?.color}0f`,
-                  color: getStatusName(Number(selectedBoard.status))?.color,
-                }}>
-                {getStatusName(Number(selectedBoard.status))?.name}
+    <main className='min-h-screen bg-gray-50 p-6 ml-64'>
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Header */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-blue-50 rounded-xl">
+                <BoardIcon size={28} />
               </div>
-            }
-          </aside>
-
-          <button
-            onClick={() => setIsUpdateModalOpen(true)}
-            className="border-blue-600 text-blue-600 hover:bg-blue-700 hover:text-white duration-150 px-4 py-2 rounded-md border whitespace-nowrap"
-          >
-            Editar Proyecto
-          </button>
-        </div>
-        <p className='text-black/50 text-sm mb-4'>{selectedBoard?.description}</p>
-
-        <div className='grid grid-cols-2 text-sm gap-2 w-2/3'>
-          <div className='flex justify-start items-center gap-2'>
-            <span className='text-black/50'>
-              <CalendarIcon size={20} />
-            </span>
-            <div className='flex flex-col'>
-              <h6 className='text-black/50 text-xs'>Fecha de inicio</h6>
-              <p>
-                {
-                  (() => {
-                    const dateStr = selectedBoard?.startDate
-                    if (!dateStr) return ''
-
-                    const [year, month, day] = dateStr.split('-').map(num => parseInt(num, 10))
-                    const date = new Date(year, month - 1, day)
-
-                    return date.toLocaleDateString('es-ES', {
-                      day: '2-digit',
-                      month: 'short',
-                      year: 'numeric'
-                    })
-                  })()
-                }
-              </p>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Detalles del Tablero</h1>
+                <p className="text-gray-600 mt-1">Gestiona tu proyecto y sus sprints</p>
+              </div>
             </div>
-          </div>
-
-          <div className='flex justify-start items-center gap-2'>
-            <span className='text-black/50'>
-              <CalendarIcon size={20} />
-            </span>
-            <div className='flex flex-col'>
-              <h6 className='text-black/50 text-xs'>Fecha de fin</h6>
-              <p>
-                {
-                  (() => {
-                    const dateStr = selectedBoard?.endDate
-                    if (!dateStr) return ''
-
-                    const [year, month, day] = dateStr.split('-').map(num => parseInt(num, 10))
-                    const date = new Date(year, month - 1, day)
-
-                    return date.toLocaleDateString('es-ES', {
-                      day: '2-digit',
-                      month: 'short',
-                      year: 'numeric'
-                    })
-                  })()
-                }
-              </p>
-            </div>
-          </div>
-
-          <div className='flex justify-start items-center gap-2'>
-            <span className='text-black/50'>
-              <ClockIcon size={20} />
-            </span>
-            <div className='flex flex-col'>
-              <h6 className='text-black/50 text-xs'>Creado</h6>
-              <p>
-                {
-                  (() => {
-                    const dateStr = selectedBoard?.createdAt
-                    if (!dateStr) return ''
-
-                    let date
-                    if (dateStr.includes('T')) {
-                      date = new Date(dateStr)
-                    } else {
-                      const [year, month, day] = dateStr.split('-').map(num => parseInt(num, 10))
-                      date = new Date(year, month - 1, day)
-                    }
-
-                    return date.toLocaleDateString('es-ES', {
-                      day: '2-digit',
-                      month: 'short',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      hour12: false
-                    })
-                  })()
-                }
-              </p>
-            </div>
-          </div>
-
-          <div className='flex justify-start items-center gap-2'>
-            <span className='text-black/50'>
-              <ClockIcon size={20} />
-            </span>
-            <div className='flex flex-col'>
-              <h6 className='text-black/50 text-xs'>Actualizado</h6>
-              <p>
-                {
-                  (() => {
-                    const dateStr = selectedBoard?.updatedAt
-                    if (!dateStr) return ''
-
-                    let date
-                    if (dateStr.includes('T')) {
-                      date = new Date(dateStr)
-                    } else {
-                      const [year, month, day] = dateStr.split('-').map(num => parseInt(num, 10))
-                      date = new Date(year, month - 1, day)
-                    }
-
-                    return date.toLocaleDateString('es-ES', {
-                      day: '2-digit',
-                      month: 'short',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      hour12: false
-                    })
-                  })()
-                }
-              </p>
-            </div>
+            <CustomSwitch value={sprintMode} onChange={(value) => setSprintMode(value)} />
           </div>
         </div>
 
-        <hr className='border-black/5 my-4' />
+        {/* Project Details - Solo mostrar si NO está en vista Tablero */}
+        {sprintMode.name !== "Tablero" && (
+          <>
+            {isLoading && !selectedBoard ? (
+              <div className='bg-white rounded-xl shadow-sm border border-gray-100 p-6 animate-pulse'>
+                <div className='flex justify-between items-start gap-4 mb-6'>
+                  <div className='flex items-center gap-4 flex-1'>
+                    <div className='h-8 bg-gray-300 rounded w-64'></div>
+                    <div className='h-6 bg-gray-300 rounded w-24'></div>
+                  </div>
+                  <div className='h-10 bg-gray-300 rounded w-32'></div>
+                </div>
+                <div className='h-4 bg-gray-300 rounded w-full mb-6'></div>
+                <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className='space-y-2'>
+                      <div className='h-4 bg-gray-300 rounded w-20'></div>
+                      <div className='h-6 bg-gray-300 rounded w-32'></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                {/* Project Header */}
+                <div className="p-6 border-b border-gray-100">
+                  <div className='flex justify-between items-start gap-4'>
+                    <div className='flex items-center gap-4 flex-1'>
+                      <div>
+                        <h2 className='text-2xl font-bold text-gray-900 mb-2'>{selectedBoard?.name}</h2>
+                        {selectedBoard && (
+                          <div className='inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium border'
+                            style={{
+                              backgroundColor: `${getStatusName(Number(selectedBoard.status))?.color}15`,
+                              color: getStatusName(Number(selectedBoard.status))?.color,
+                              borderColor: `${getStatusName(Number(selectedBoard.status))?.color}30`
+                            }}>
+                            <div
+                              className="w-2 h-2 rounded-full"
+                              style={{ backgroundColor: getStatusName(Number(selectedBoard.status))?.color }}
+                            />
+                            {getStatusName(Number(selectedBoard.status))?.name}
+                          </div>
+                        )}
+                      </div>
+                    </div>
 
-        <div className='flex justify-start items-center gap-2'>
-          <div className='bg-black/10 overflow-hidden aspect-square rounded-full w-12'>
-            {
-              selectedBoard && selectedBoard.createdBy &&
-              <Image src={selectedBoard?.createdBy.picture}
-                alt='createdBy'
-                width={48}
-                height={48}
-              />
-            }
-          </div>
-          <div className='flex flex-col justify-center items-start'>
-            <span className='text-black/50 text-xs'>Creado por</span>
-            <span className='font-medium'>
-              {selectedBoard?.createdBy?.firstName} {selectedBoard?.createdBy?.lastName}
-            </span>
-          </div>
-        </div>
-      </section>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setIsConfigModalOpen(true)}
+                        disabled={isLoading}
+                        className="flex items-center gap-2 px-4 py-2 text-blue-700 bg-blue-50 border border-blue-300 rounded-lg hover:bg-blue-100 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <ConfigIcon size={16} />
+                        <span className="hidden sm:inline">Configuración</span>
+                        <span className="sm:hidden">Config</span>
+                      </button>
 
-      <sprintMode.view />
+                      <button
+                        onClick={() => setIsUpdateModalOpen(true)}
+                        disabled={isLoading}
+                        className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <EditIcon size={16} />
+                        <span className="hidden sm:inline">{isLoading ? 'Cargando...' : 'Editar Proyecto'}</span>
+                        <span className="sm:hidden">Editar</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {selectedBoard?.description && (
+                    <p className='text-gray-600 mt-4 leading-relaxed'>{selectedBoard.description}</p>
+                  )}
+                </div>
+
+                {/* Project Metadata */}
+                <div className="p-6">
+                  <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
+                    {/* Start Date */}
+                    <div className='flex items-center gap-3'>
+                      <div className='p-2 bg-blue-50 text-blue-600 rounded-lg'>
+                        <CalendarIcon size={20} />
+                      </div>
+                      <div>
+                        <h6 className='text-sm font-bold text-gray-900'>Fecha de inicio</h6>
+                        <p className='text-sm text-gray-600'>
+                          {selectedBoard?.startDate ? (() => {
+                            const [year, month, day] = selectedBoard.startDate.split('-').map(num => parseInt(num, 10))
+                            const date = new Date(year, month - 1, day)
+                            return date.toLocaleDateString('es-ES', {
+                              day: '2-digit',
+                              month: 'short',
+                              year: 'numeric'
+                            })
+                          })() : 'No definida'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* End Date */}
+                    <div className='flex items-center gap-3'>
+                      <div className='p-2 bg-green-50 text-green-600 rounded-lg'>
+                        <CalendarIcon size={20} />
+                      </div>
+                      <div>
+                        <h6 className='text-sm font-bold text-gray-900'>Fecha de fin</h6>
+                        <p className='text-sm text-gray-600'>
+                          {selectedBoard?.endDate ? (() => {
+                            const [year, month, day] = selectedBoard.endDate.split('-').map(num => parseInt(num, 10))
+                            const date = new Date(year, month - 1, day)
+                            return date.toLocaleDateString('es-ES', {
+                              day: '2-digit',
+                              month: 'short',
+                              year: 'numeric'
+                            })
+                          })() : 'No definida'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Created Date */}
+                    <div className='flex items-center gap-3'>
+                      <div className='p-2 bg-purple-50 text-purple-600 rounded-lg'>
+                        <ClockIcon size={20} />
+                      </div>
+                      <div>
+                        <h6 className='text-sm font-bold text-gray-900'>Creado</h6>
+                        <p className='text-sm text-gray-600'>
+                          {selectedBoard?.createdAt ? (() => {
+                            let date
+                            if (selectedBoard.createdAt.includes('T')) {
+                              date = new Date(selectedBoard.createdAt)
+                            } else {
+                              const [year, month, day] = selectedBoard.createdAt.split('-').map(num => parseInt(num, 10))
+                              date = new Date(year, month - 1, day)
+                            }
+                            return date.toLocaleDateString('es-ES', {
+                              day: '2-digit',
+                              month: 'short',
+                              year: 'numeric'
+                            })
+                          })() : 'No disponible'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Updated Date */}
+                    <div className='flex items-center gap-3'>
+                      <div className='p-2 bg-orange-50 text-orange-600 rounded-lg'>
+                        <ClockIcon size={20} />
+                      </div>
+                      <div>
+                        <h6 className='text-sm font-bold text-gray-900'>Actualizado</h6>
+                        <p className='text-sm text-gray-600'>
+                          {selectedBoard?.updatedAt ? (() => {
+                            let date
+                            if (selectedBoard.updatedAt.includes('T')) {
+                              date = new Date(selectedBoard.updatedAt)
+                            } else {
+                              const [year, month, day] = selectedBoard.updatedAt.split('-').map(num => parseInt(num, 10))
+                              date = new Date(year, month - 1, day)
+                            }
+                            return date.toLocaleDateString('es-ES', {
+                              day: '2-digit',
+                              month: 'short',
+                              year: 'numeric'
+                            })
+                          })() : 'No disponible'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Created By Section */}
+                  {selectedBoard?.createdBy && (
+                    <div className="mt-6 pt-6 border-t border-gray-100">
+                      <div className='flex items-center gap-4'>
+                        <div className='p-2 bg-indigo-50 text-indigo-600 rounded-lg'>
+                          <UsersIcon size={20} />
+                        </div>
+                        <div>
+                          <h6 className='text-sm font-bold text-gray-900'>Creado por</h6>
+                          <div className='flex items-center gap-2'>
+                            <div className='w-8 h-8 bg-gray-100 rounded-full overflow-hidden'>
+                              <Image
+                                src={selectedBoard.createdBy.picture}
+                                alt={`${selectedBoard.createdBy.firstName} ${selectedBoard.createdBy.lastName}`}
+                                width={32}
+                                height={32}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <span className='text-sm text-gray-600'>
+                              {selectedBoard.createdBy.firstName} {selectedBoard.createdBy.lastName}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Sprint Content */}
+        <sprintMode.view />
+      </div>
 
       {/* Modal para updatear el project */}
       <Modal
@@ -260,6 +333,19 @@ export default function TableroDetalle() {
           onSubmit={handleUpdate}
           onCancel={() => setIsUpdateModalOpen(false)}
           projectObject={selectedBoard as ProjectProps}
+        />
+      </Modal>
+
+      {/* Modal para configuración del proyecto */}
+      <Modal
+        isOpen={isConfigModalOpen}
+        onClose={() => setIsConfigModalOpen(false)}
+        title=""
+        customWidth="max-w-6xl"
+      >
+        <ProjectConfigModal
+          onClose={() => setIsConfigModalOpen(false)}
+          projectId={id as string}
         />
       </Modal>
     </main>
