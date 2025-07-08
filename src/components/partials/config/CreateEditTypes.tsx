@@ -12,49 +12,145 @@ interface FilterFormProps {
    currentTypes: DataProps
 }
 
-
-export default function CreateEditTypes({ onSubmit, onCancel, currentTypes = { name: "", color: "" } }: FilterFormProps) {
+export default function CreateEditTypes({ onSubmit, onCancel, currentTypes = { name: "", color: "#6366f1" } }: FilterFormProps) {
    const [formData, setFormData] = useState<DataProps>({
       name: currentTypes.name,
       color: currentTypes.color.charAt(0) === "#" ? currentTypes.color : `#${currentTypes.color}`,
    })
+   const [errors, setErrors] = useState<{ name?: string; color?: string }>({})
 
    const colorRef = useRef(null)
 
+   const validateForm = () => {
+      const newErrors: { name?: string; color?: string } = {}
+      
+      if (!formData.name.trim()) {
+         newErrors.name = "El nombre es requerido"
+      } else if (formData.name.trim().length < 2) {
+         newErrors.name = "El nombre debe tener al menos 2 caracteres"
+      }
+
+      if (!formData.color) {
+         newErrors.color = "El color es requerido"
+      }
+
+      setErrors(newErrors)
+      return Object.keys(newErrors).length === 0
+   }
+
    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault()
-      onSubmit(formData)
+      if (validateForm()) {
+         onSubmit(formData)
+      }
+   }
+
+   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value
+      setFormData({ ...formData, name: value })
+      if (errors.name && value.trim()) {
+         setErrors({ ...errors, name: undefined })
+      }
+   }
+
+   const handleColorChange = (color: string) => {
+      setFormData({ ...formData, color })
+      if (errors.color && color) {
+         setErrors({ ...errors, color: undefined })
+      }
    }
 
    return (
-      <form onSubmit={handleSubmit}>
-         <section className="flex flex-col gap-2 pt-4 pb-14">
-            <ColorPicker id="color" inputRef={colorRef} value={formData.color} label="Color" onChange={(str) => setFormData({ ...formData, color: str })} />
-            <div className='space-y-1'>
-               <label htmlFor="name" className="text-sm font-medium">
+      <div className="space-y-6">
+         {/* Header */}
+         <div className="text-center space-y-2">
+            <h3 className="text-lg font-semibold text-gray-900">
+               {currentTypes.name ? "Editar Tipo" : "Crear Tipo"}
+            </h3>
+            <p className="text-sm text-gray-500">
+               {currentTypes.name ? "Modifica la información del tipo" : "Define un nuevo tipo para las tareas"}
+            </p>
+         </div>
+
+         <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Name Input - First */}
+            <div className="space-y-2">
+               <label htmlFor="name" className="block text-sm font-medium text-gray-700">
                   Nombre del tipo
                </label>
-               <div className='border-black/15 flex justify-center items-center rounded-md border px-2 gap-2'>
-                  <input onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                     className="outline-none text-sm w-full py-2"
-                     placeholder={formData.name}
+               <div className="relative">
+                  <input
+                     onChange={handleNameChange}
+                     className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200 ${
+                        errors.name 
+                           ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                           : 'border-gray-300 hover:border-gray-400'
+                     }`}
+                     placeholder="Ej: Bug, Feature, Task..."
                      value={formData.name}
                      name="name"
                      type="text"
                      id="name"
                   />
+                  {errors.name && (
+                     <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+                  )}
                </div>
             </div>
-         </section>
 
-         <section className="pb-3 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
-            <button type="submit" className="text-white inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold textWhite shadow-sm hover:bg-blue-500 focus-visible:outline-offset-2 focus-visible:outline-blue-600 sm:col-start-2">
-               {currentTypes.name !== "" ? "Editar" : "Crear"} tipo
-            </button>
-            <button type="button" onClick={onCancel} className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0" >
-               Cancelar
-            </button>
-         </section>
-      </form>
+            {/* Color Picker - Second */}
+            <div className="space-y-2">
+               <label className="block text-sm font-medium text-gray-700">
+                  Color del tipo
+               </label>
+               <ColorPicker 
+                  id="color" 
+                  inputRef={colorRef} 
+                  value={formData.color} 
+                  label="" 
+                  onChange={handleColorChange}
+               />
+               {errors.color && (
+                  <p className="text-sm text-red-600">{errors.color}</p>
+               )}
+            </div>
+
+            {/* Preview - Always visible and centered */}
+            <div className="bg-gray-100 flex flex-col justify-center items-center rounded-lg p-4">
+               <p className="text-gray-400 text-xs mb-2">Vista previa</p>
+               <div
+                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium"
+                  style={{
+                     backgroundColor: `${formData.color}15`,
+                     color: formData.color,
+                     border: `1px solid ${formData.color}30`
+                  }}
+               >
+                  <div
+                     className="w-2 h-2 rounded-full"
+                     style={{ backgroundColor: formData.color }}
+                  />
+                  {formData.name || "Nombre del tipo"}
+               </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-3 pt-4">
+               <button
+                  type="button"
+                  onClick={onCancel}
+                  className="bg-white hover:bg-gray-50 hover:border-gray-300 border-gray-200 border flex-1 duration-200 rounded-lg text-center text-sm py-2.5 px-4 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+               >
+                  Cancelar
+               </button>
+               <button
+                  type="submit"
+                  className="bg-purple-600 hover:bg-purple-700 text-white border-transparent border hover:shadow-md flex-1 duration-200 rounded-lg text-center text-sm py-2.5 px-4 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+               >
+                  {currentTypes.name ? "Guardar cambios" : "Crear tipo"}
+               </button>
+            </div>
+         </form>
+      </div>
    )
 }
