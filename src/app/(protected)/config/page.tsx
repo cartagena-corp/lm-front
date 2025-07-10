@@ -44,7 +44,7 @@ export default function Config() {
    }
 
    return (
-      <main className="min-h-screen bg-gray-50 p-6 ml-64">
+      <>
          <div className="max-w-7xl mx-auto space-y-8">
             {/* Header */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -110,6 +110,6 @@ export default function Config() {
                )}
             </div>
          </div>
-      </main>
+      </>
    )
 }

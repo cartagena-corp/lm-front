@@ -141,7 +141,7 @@ export default function TablerosPage() {
   }
 
   return (
-    <main className="bg-gray-100 flex flex-col p-4 md:p-10 ml-0 md:ml-64 min-h-screen">
+    <>
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 md:mb-8 gap-4">
         <h1 className="text-2xl font-bold text-gray-900">Tableros</h1>
         <div className="flex flex-col sm:flex-row gap-3">
@@ -230,6 +230,6 @@ export default function TablerosPage() {
           onCancel={() => setIsFilterModalOpen(false)}
         />
       </Modal>
-    </main>
+    </>
   )
 }
