@@ -24,6 +24,7 @@ const navigation: NavigationProps[] = [
 export default function Sidebar() {
   const [isClient, setIsClient] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const [imageError, setImageError] = useState(false)
   const { logout, user } = useAuthStore()
   const { isCollapsed, toggleSidebar, setSidebarCollapsed } = useSidebarStore()
   const pathname = usePathname()
@@ -46,6 +47,11 @@ export default function Sidebar() {
 
     return () => window.removeEventListener('resize', checkMobile)
   }, [isCollapsed, setSidebarCollapsed])
+
+  // Resetear el estado de error cuando cambie el usuario
+  useEffect(() => {
+    setImageError(false)
+  }, [user?.picture])
 
   if (pathname === '/login' || pathname === "/login/callback") return null
 
@@ -116,11 +122,20 @@ export default function Sidebar() {
             {isClient && user ? (
               <>
                 <div className="w-8 h-8 rounded-full flex-shrink-0 overflow-hidden">
-                  <img
-                    className="w-full h-full object-cover"
-                    src={getUserAvatar(user, 32)}
-                    alt="User Avatar"
-                  />
+                  {user.picture && !imageError ? (
+                    <img
+                      className="w-full h-full object-cover"
+                      src={user.picture}
+                      alt="User Avatar"
+                      onError={() => setImageError(true)}
+                    />
+                  ) : (
+                    <img
+                      className="w-full h-full object-cover"
+                      src={getUserAvatar(user, 32)}
+                      alt="User Avatar"
+                    />
+                  )}
                 </div>
                 {!isCollapsed && (
                   <div className="min-w-0 flex-1">
