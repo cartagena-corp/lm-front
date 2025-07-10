@@ -28,6 +28,7 @@ Thumbs.db
 # Archivos de entorno
 .env
 .env.local
+.env.production
 .env.*.local
 
 # Cache de herramientas
