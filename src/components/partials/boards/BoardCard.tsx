@@ -10,7 +10,7 @@ import { useBoardStore } from "@/lib/store/BoardStore"
 import AuditHistory from "../audit/AuditHistory"
 
 export default function BoardCard({ board }: { board: ProjectProps }) {
-   const { getValidAccessToken } = useAuthStore()
+   const { getValidAccessToken, user } = useAuthStore()
    const { deleteBoard } = useBoardStore()
    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
    const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false)
@@ -145,16 +145,18 @@ export default function BoardCard({ board }: { board: ProjectProps }) {
          </section>
 
          <section className="flex items-center gap-3 mt-4 flex-shrink-0">
-            <button
-               onClick={() => setIsDeleteModalOpen(true)}
-               type="button"
-               className="bg-white hover:bg-red-50 hover:border-red-200 hover:text-red-600 border-gray-200 border flex-1 duration-200 rounded-lg text-center text-sm py-2.5 px-4 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-            >
-               Eliminar
-            </button>
+            {user && board.createdBy && user.id === board.createdBy.id && (
+               <button
+                  onClick={() => setIsDeleteModalOpen(true)}
+                  type="button"
+                  className="bg-white hover:bg-red-50 hover:border-red-200 hover:text-red-600 border-gray-200 border flex-1 duration-200 rounded-lg text-center text-sm py-2.5 px-4 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+               >
+                  Eliminar
+               </button>
+            )}
             <Link
                href={`/tableros/${board.id}`}
-               className='bg-blue-600 hover:bg-blue-700 text-white border-transparent border hover:shadow-md flex-1 duration-200 rounded-lg text-center text-sm py-2.5 px-4 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+               className={`bg-blue-600 hover:bg-blue-700 text-white border-transparent border hover:shadow-md ${user && board.createdBy && user.id === board.createdBy.id ? 'flex-1' : 'w-full'} duration-200 rounded-lg text-center text-sm py-2.5 px-4 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
             >
                Ver detalles
             </Link>
