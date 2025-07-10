@@ -88,23 +88,7 @@ export interface PermissionProps {
    name: string
 }
 
-//* Notifications
-export interface NotificationProps {
-   id: string
-   message: string
-   type: string
-   wasReaded: boolean                                 //! read en NotificationDTO
-   timestamp: string                                  /* DD/MM/YYYY (T) HH:MM:SS */
-   metadata: NotificationMetadataProps
-   projectId: string
-   issueId: string
-}
 
-//* Notifications Metadata
-export interface NotificationMetadataProps {
-   issueId: string
-   projectId: string
-}
 
 //* Notifications Metadata
 export interface IconProps {
@@ -239,7 +223,15 @@ export interface NotificationProps {
    metadata: {
       projectId: string
       issueId: string
-   }
+   } | null
+   projectId: string
+   issueId: string
+}
+
+//* WebSocket Notification Response
+export interface WebSocketNotificationResponse {
+   notification: NotificationProps
+   unreadCount: number
 }
 
 //* GLOBAL GETTER PAGINATION

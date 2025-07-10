@@ -12,6 +12,7 @@ export default function Notifications() {
    const { getValidAccessToken, user } = useAuthStore()
    const {
       notifications,
+      unreadCount,
       isLoading,
       getNotifications,
       connectAndSubscribe,
@@ -101,8 +102,6 @@ export default function Notifications() {
          await deleteNotification(token, notificationId)
       }
    }
-
-   const unreadCount = notifications.filter(n => !n.read).length
 
    const formatDate = (dateStr: string) => {
       if (!dateStr) return ''

@@ -1,4 +1,4 @@
-import { NotificationProps } from '../types/types'
+import { NotificationProps, WebSocketNotificationResponse } from '../types/types'
 import { API_ROUTES } from '../routes/notifications.routes'
 import { MutableRefObject } from 'react'
 import { Client, Frame } from '@stomp/stompjs'
@@ -22,6 +22,7 @@ interface NotificationType {
 interface NotificationState {
    // State
    notifications: NotificationProps[]
+   unreadCount: number
    preferences: NotificationPreference[]
    notificationTypes: NotificationType[]
    isLoading: boolean
@@ -58,9 +59,28 @@ const handleApiError = (error: unknown, context: string): string => {
    return errorMessage
 }
 
+// Helper function to normalize notification data from different sources
+const normalizeNotification = (data: any): NotificationProps => {
+   // Handle both old and new notification formats
+   return {
+      id: data.id,
+      message: data.message,
+      type: data.type,
+      read: data.read ?? data.wasReaded ?? false, // Handle both 'read' and legacy 'wasReaded'
+      timestamp: data.timestamp,
+      metadata: data.metadata || {
+         projectId: data.projectId,
+         issueId: data.issueId
+      },
+      projectId: data.projectId,
+      issueId: data.issueId
+   }
+}
+
 export const useNotificationStore = create<NotificationState>((set, get) => ({
    // Initial state
    notifications: [],
+   unreadCount: 0,
    preferences: [],
    notificationTypes: [],
    isLoading: false,
@@ -83,8 +103,10 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
             throw new Error(`Error al obtener notificaciones: ${response.statusText}`)
          }
 
-         const notifications: NotificationProps[] = await response.json()
-         set({ notifications, isLoading: false })
+         const rawNotifications = await response.json()
+         const notifications: NotificationProps[] = rawNotifications.map(normalizeNotification)
+         const unreadCount = notifications.filter(n => !n.read).length
+         set({ notifications, unreadCount, isLoading: false })
       } catch (error) {
          const errorMessage = handleApiError(error, 'getNotifications')
          set({
@@ -113,14 +135,19 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
          }
 
          // Update the notification in the local state
-         set(state => ({
-            notifications: state.notifications.map(notification =>
+         set(state => {
+            const updatedNotifications = state.notifications.map(notification =>
                notification.id === notificationId
                   ? { ...notification, read: true }
                   : notification
-            ),
-            isLoading: false
-         }))
+            )
+            const unreadCount = updatedNotifications.filter(n => !n.read).length
+            return {
+               notifications: updatedNotifications,
+               unreadCount,
+               isLoading: false
+            }
+         })
 
          toast.success('Notificación marcada como leída')
       } catch (error) {
@@ -153,6 +180,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
          // Update all notifications in the local state
          set(state => ({
             notifications: state.notifications.map(notification => ({ ...notification, read: true })),
+            unreadCount: 0,
             isLoading: false
          }))
 
@@ -185,10 +213,15 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
          }
 
          // Remove the notification from the local state
-         set(state => ({
-            notifications: state.notifications.filter(notification => notification.id !== notificationId),
-            isLoading: false
-         }))
+         set(state => {
+            const updatedNotifications = state.notifications.filter(notification => notification.id !== notificationId)
+            const unreadCount = updatedNotifications.filter(n => !n.read).length
+            return {
+               notifications: updatedNotifications,
+               unreadCount,
+               isLoading: false
+            }
+         })
 
          toast.success('Notificación eliminada exitosamente')
       } catch (error) {
@@ -219,7 +252,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
          }
 
          // Clear all notifications from the local state
-         set({ notifications: [], isLoading: false })
+         set({ notifications: [], unreadCount: 0, isLoading: false })
 
          toast.success('Todas las notificaciones eliminadas exitosamente')
       } catch (error) {
@@ -418,10 +451,19 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
                // Subscribe to notifications topic (matching backend configuration)
                client.subscribe(`/topic/notifications/${user.id}`, (message) => {
                   try {
-                     const notification: NotificationProps = JSON.parse(message.body)
-                     // Add the new notification to the store
+                     console.log('Nueva notificación recibida:', JSON.parse(message.body))
+                     const wsResponse: WebSocketNotificationResponse = JSON.parse(message.body)
+                     
+                     // Extract notification and unread count from websocket response
+                     const { notification: rawNotification, unreadCount } = wsResponse
+                     
+                     // Normalize the notification data
+                     const notification = normalizeNotification(rawNotification)
+                     
+                     // Add the new notification to the store and update unread count
                      set(state => ({
-                        notifications: [notification, ...state.notifications]
+                        notifications: [notification, ...state.notifications],
+                        unreadCount: unreadCount
                      }))
 
                   } catch (error) {
