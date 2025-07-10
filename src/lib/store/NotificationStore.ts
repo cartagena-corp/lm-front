@@ -33,19 +33,19 @@ interface NotificationState {
    readAllNotifications: (token: string) => Promise<void>
    deleteNotification: (token: string, notificationId: string) => Promise<void>
    deleteAllNotifications: (token: string) => Promise<void>
-   
+
    // Preferences Actions
    getPreferences: (token: string) => Promise<void>
    updatePreferences: (token: string, preferences: NotificationPreference[]) => Promise<void>
-   
+
    // Notification Types Actions
    getNotificationTypes: (token: string) => Promise<void>
    createNotificationType: (token: string, name: string) => Promise<void>
    deleteNotificationType: (token: string, typeName: string) => Promise<void>
-   
+
    // WebSocket Actions
    connectAndSubscribe: (token: string, clientRef: MutableRefObject<Client | null>) => Promise<void>
-   
+
    // Utility Actions
    clearError: () => void
    setLoading: (loading: boolean) => void
@@ -69,11 +69,11 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
    // Get all notifications
    getNotifications: async (token) => {
       set({ isLoading: true, error: null })
-      
+
       try {
          const response = await fetch(API_ROUTES.CRUD_NOTIFICATIONS, {
             method: 'GET',
-            headers: { 
+            headers: {
                'Authorization': `Bearer ${token}`,
                'Content-Type': 'application/json'
             }
@@ -87,9 +87,9 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
          set({ notifications, isLoading: false })
       } catch (error) {
          const errorMessage = handleApiError(error, 'getNotifications')
-         set({ 
-            error: errorMessage, 
-            isLoading: false 
+         set({
+            error: errorMessage,
+            isLoading: false
          })
          toast.error('Error al cargar las notificaciones')
       }
@@ -98,11 +98,11 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
    // Mark a notification as read
    readNotification: async (token, notificationId) => {
       set({ isLoading: true, error: null })
-      
+
       try {
          const response = await fetch(`${API_ROUTES.CRUD_NOTIFICATIONS}/${notificationId}/read`, {
             method: 'PUT',
-            headers: { 
+            headers: {
                'Authorization': `Bearer ${token}`,
                'Content-Type': 'application/json'
             }
@@ -125,9 +125,9 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
          toast.success('Notificación marcada como leída')
       } catch (error) {
          const errorMessage = handleApiError(error, 'readNotification')
-         set({ 
-            error: errorMessage, 
-            isLoading: false 
+         set({
+            error: errorMessage,
+            isLoading: false
          })
          toast.error('Error al marcar la notificación como leída')
       }
@@ -136,11 +136,11 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
    // Mark all notifications as read
    readAllNotifications: async (token) => {
       set({ isLoading: true, error: null })
-      
+
       try {
          const response = await fetch(API_ROUTES.READ_ALL_NOTIFICATIONS, {
             method: 'PUT',
-            headers: { 
+            headers: {
                'Authorization': `Bearer ${token}`,
                'Content-Type': 'application/json'
             }
@@ -159,9 +159,9 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
          toast.success('Todas las notificaciones marcadas como leídas')
       } catch (error) {
          const errorMessage = handleApiError(error, 'readAllNotifications')
-         set({ 
-            error: errorMessage, 
-            isLoading: false 
+         set({
+            error: errorMessage,
+            isLoading: false
          })
          toast.error('Error al marcar todas las notificaciones como leídas')
       }
@@ -170,11 +170,11 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
    // Delete a notification
    deleteNotification: async (token, notificationId) => {
       set({ isLoading: true, error: null })
-      
+
       try {
          const response = await fetch(`${API_ROUTES.CRUD_NOTIFICATIONS}/${notificationId}`, {
             method: 'DELETE',
-            headers: { 
+            headers: {
                'Authorization': `Bearer ${token}`,
                'Content-Type': 'application/json'
             }
@@ -193,9 +193,9 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
          toast.success('Notificación eliminada exitosamente')
       } catch (error) {
          const errorMessage = handleApiError(error, 'deleteNotification')
-         set({ 
-            error: errorMessage, 
-            isLoading: false 
+         set({
+            error: errorMessage,
+            isLoading: false
          })
          toast.error('Error al eliminar la notificación')
       }
@@ -204,11 +204,11 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
    // Delete all notifications
    deleteAllNotifications: async (token) => {
       set({ isLoading: true, error: null })
-      
+
       try {
          const response = await fetch(API_ROUTES.DELETE_ALL_NOTIFICATIONS, {
             method: 'DELETE',
-            headers: { 
+            headers: {
                'Authorization': `Bearer ${token}`,
                'Content-Type': 'application/json'
             }
@@ -224,9 +224,9 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
          toast.success('Todas las notificaciones eliminadas exitosamente')
       } catch (error) {
          const errorMessage = handleApiError(error, 'deleteAllNotifications')
-         set({ 
-            error: errorMessage, 
-            isLoading: false 
+         set({
+            error: errorMessage,
+            isLoading: false
          })
          toast.error('Error al eliminar todas las notificaciones')
       }
@@ -235,11 +235,11 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
    // Get notification preferences
    getPreferences: async (token) => {
       set({ isLoading: true, error: null })
-      
+
       try {
          const response = await fetch(API_ROUTES.READ_EDIT_NOTIFICATIONS_PREFERENCES, {
             method: 'GET',
-            headers: { 
+            headers: {
                'Authorization': `Bearer ${token}`,
                'Content-Type': 'application/json'
             }
@@ -253,9 +253,9 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
          set({ preferences, isLoading: false })
       } catch (error) {
          const errorMessage = handleApiError(error, 'getPreferences')
-         set({ 
-            error: errorMessage, 
-            isLoading: false 
+         set({
+            error: errorMessage,
+            isLoading: false
          })
          toast.error('Error al cargar las preferencias')
       }
@@ -264,11 +264,11 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
    // Update notification preferences
    updatePreferences: async (token, preferences) => {
       set({ isLoading: true, error: null })
-      
+
       try {
          const response = await fetch(API_ROUTES.READ_EDIT_NOTIFICATIONS_PREFERENCES, {
             method: 'PUT',
-            headers: { 
+            headers: {
                'Authorization': `Bearer ${token}`,
                'Content-Type': 'application/json'
             },
@@ -285,9 +285,9 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
          toast.success('Preferencias actualizadas exitosamente')
       } catch (error) {
          const errorMessage = handleApiError(error, 'updatePreferences')
-         set({ 
-            error: errorMessage, 
-            isLoading: false 
+         set({
+            error: errorMessage,
+            isLoading: false
          })
          toast.error('Error al actualizar las preferencias')
       }
@@ -296,11 +296,11 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
    // Get notification types
    getNotificationTypes: async (token) => {
       set({ isLoading: true, error: null })
-      
+
       try {
          const response = await fetch(API_ROUTES.CRUD_NOTIFICATIONS_TYPES, {
             method: 'GET',
-            headers: { 
+            headers: {
                'Authorization': `Bearer ${token}`,
                'Content-Type': 'application/json'
             }
@@ -314,9 +314,9 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
          set({ notificationTypes, isLoading: false })
       } catch (error) {
          const errorMessage = handleApiError(error, 'getNotificationTypes')
-         set({ 
-            error: errorMessage, 
-            isLoading: false 
+         set({
+            error: errorMessage,
+            isLoading: false
          })
          toast.error('Error al cargar los tipos de notificaciones')
       }
@@ -325,11 +325,11 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
    // Create a new notification type
    createNotificationType: async (token, name) => {
       set({ isLoading: true, error: null })
-      
+
       try {
          const response = await fetch(API_ROUTES.CRUD_NOTIFICATIONS_TYPES, {
             method: 'POST',
-            headers: { 
+            headers: {
                'Authorization': `Bearer ${token}`,
                'Content-Type': 'application/json'
             },
@@ -349,9 +349,9 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
          toast.success('Tipo de notificación creado exitosamente')
       } catch (error) {
          const errorMessage = handleApiError(error, 'createNotificationType')
-         set({ 
-            error: errorMessage, 
-            isLoading: false 
+         set({
+            error: errorMessage,
+            isLoading: false
          })
          toast.error('Error al crear el tipo de notificación')
       }
@@ -360,11 +360,11 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
    // Delete a notification type
    deleteNotificationType: async (token, typeName) => {
       set({ isLoading: true, error: null })
-      
+
       try {
          const response = await fetch(`${API_ROUTES.CRUD_NOTIFICATIONS_TYPES}/${typeName}`, {
             method: 'DELETE',
-            headers: { 
+            headers: {
                'Authorization': `Bearer ${token}`,
                'Content-Type': 'application/json'
             }
@@ -383,9 +383,9 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
          toast.success('Tipo de notificación eliminado exitosamente')
       } catch (error) {
          const errorMessage = handleApiError(error, 'deleteNotificationType')
-         set({ 
-            error: errorMessage, 
-            isLoading: false 
+         set({
+            error: errorMessage,
+            isLoading: false
          })
          toast.error('Error al eliminar el tipo de notificación')
       }
@@ -394,39 +394,54 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
    // WebSocket connection and subscription
    connectAndSubscribe: async (token, clientRef) => {
       try {
-         if (clientRef.current && clientRef.current.active) return
+         // Disconnect existing client if any
+         if (clientRef.current) {
+            clientRef.current.deactivate()
+         }
 
+         // Get user info for subscription
+         const { user } = useAuthStore.getState()
+         if (!user?.id) {
+            throw new Error('Usuario no autenticado')
+         }
+
+         // Create STOMP client with SockJS
          const client = new Client({
-            webSocketFactory: () => new SockJS(API_ROUTES.WEBSOCKET_NOTIFICATIONS!),
+            webSocketFactory: () => new SockJS(API_ROUTES.WEBSOCKET_NOTIFICATIONS),
+            connectHeaders: {
+               Authorization: `Bearer ${token}`
+            },
             reconnectDelay: 5000,
             heartbeatIncoming: 4000,
-            heartbeatOutgoing: 4000
-         })
-
-         client.onConnect = (frame: Frame) => {
-            const userId = useAuthStore.getState().user?.id
-            if (userId) {
-               client.subscribe(`${API_ROUTES.WEBSOCKET_NOTIFICATIONS}/${userId}`, (ntf) => {
+            heartbeatOutgoing: 4000,
+            onConnect: (frame: Frame) => {
+               // Subscribe to notifications topic (matching backend configuration)
+               client.subscribe(`/topic/notifications/${user.id}`, (message) => {
                   try {
-                     const payload: NotificationProps = JSON.parse(ntf.body)
+                     const notification: NotificationProps = JSON.parse(message.body)
+                     // Add the new notification to the store
                      set(state => ({
-                        notifications: [payload, ...state.notifications]
+                        notifications: [notification, ...state.notifications]
                      }))
-                     toast.success('Nueva notificación recibida')
+
                   } catch (error) {
-                     console.error('Error al procesar notificación WebSocket:', error)
+                     console.error('Error al procesar notificación:', error)
                   }
                })
+            },
+            onDisconnect: (frame: Frame) => {
+               toast.error('Desconectado de notificaciones en tiempo real')
+            },
+            onStompError: (frame: Frame) => {
+               toast.error('Error en la conexión de notificaciones')
             }
-         }
+         })
 
-         client.onStompError = (frame) => {
-            console.error('Error STOMP:', frame.headers['message'], frame.body)
-            toast.error('Error en la conexión de notificaciones')
-         }
-
-         client.activate()
+         // Store client reference
          clientRef.current = client
+
+         // Activate the client
+         client.activate()
       } catch (error) {
          const errorMessage = handleApiError(error, 'connectAndSubscribe')
          console.error('Error al conectar WebSocket:', error)
@@ -439,6 +454,6 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 
    // Utility actions
    clearError: () => set({ error: null }),
-   
+
    setLoading: (loading: boolean) => set({ isLoading: loading })
 }))
