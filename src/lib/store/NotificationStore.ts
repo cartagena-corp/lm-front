@@ -453,13 +453,13 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
                   try {
                      console.log('Nueva notificación recibida:', JSON.parse(message.body))
                      const wsResponse: WebSocketNotificationResponse = JSON.parse(message.body)
-                     
+
                      // Extract notification and unread count from websocket response
                      const { notification: rawNotification, unreadCount } = wsResponse
-                     
+
                      // Normalize the notification data
                      const notification = normalizeNotification(rawNotification)
-                     
+
                      // Add the new notification to the store and update unread count
                      set(state => ({
                         notifications: [notification, ...state.notifications],
@@ -472,7 +472,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
                })
             },
             onDisconnect: (frame: Frame) => {
-               toast.error('Desconectado de notificaciones en tiempo real')
+               console.log('Desconectado del WebSocket:', frame)
             },
             onStompError: (frame: Frame) => {
                toast.error('Error en la conexión de notificaciones')
