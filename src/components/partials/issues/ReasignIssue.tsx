@@ -1,8 +1,11 @@
+import { useConfigStore } from "@/lib/store/ConfigStore"
+import { useBoardStore } from "@/lib/store/BoardStore"
 import { useAuthStore } from "@/lib/store/AuthStore"
 import { TaskProps } from "@/lib/types/types"
-import { useState } from "react"
+import { useState, useRef, useEffect, useMemo } from "react"
 import Image from "next/image"
 import { getUserAvatar } from "@/lib/utils/avatar.utils"
+import { XIcon } from "@/assets/Icon"
 
 interface ReasignIssueFormProps {
    onSubmit: ({ newUserId, issueId }: { newUserId: string, issueId: string }) => void
@@ -11,25 +14,72 @@ interface ReasignIssueFormProps {
 }
 
 export default function ReasignIssue({ onSubmit, onCancel, taskObject }: ReasignIssueFormProps) {
+   const { projectParticipants } = useConfigStore()
+   const { selectedBoard } = useBoardStore()
    const { listUsers } = useAuthStore()
 
-   const [userSelected, setUserSelected] = useState(listUsers.find(user => typeof taskObject.assignedId !== 'string' && user.id === taskObject.assignedId?.id))
+   // Combine project participants with the project creator (avoid duplicates)
+   const allProjectUsers = useMemo(() => {
+      const participants = [...projectParticipants]
+      
+      // Add project creator if not already in participants
+      if (selectedBoard?.createdBy && !participants.some(p => p.id === selectedBoard.createdBy?.id)) {
+         // Find the creator in the full user list to get complete information including email
+         const creatorFromUserList = listUsers.find(user => user.id === selectedBoard.createdBy?.id)
+         
+         participants.push({
+            id: selectedBoard.createdBy.id,
+            firstName: selectedBoard.createdBy.firstName,
+            lastName: selectedBoard.createdBy.lastName,
+            email: creatorFromUserList?.email || '', // Get email from full user list
+            picture: selectedBoard.createdBy.picture
+         })
+      }
+      
+      return participants
+   }, [projectParticipants, selectedBoard?.createdBy, listUsers])
+
+   const [userSelected, setUserSelected] = useState(allProjectUsers.find(user => typeof taskObject.assignedId !== 'string' && user.id === taskObject.assignedId?.id))
    const [isUserOpen, setIsUserOpen] = useState(false)
+   const userRef = useRef(null)
+
+   // Effect to handle clicks outside of select
+   useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+         if (userRef.current && !(userRef.current as HTMLElement).contains(event.target as Node)) {
+            setIsUserOpen(false)
+         }
+      }
+
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => {
+         document.removeEventListener('mousedown', handleClickOutside)
+      }
+   }, [])
    
    return (
       <div className="bg-white border-gray-100 rounded-xl shadow-sm border">
          {/* Header */}
          <div className="border-b border-gray-100 p-6">
-            <div className="flex items-center gap-3">
-               <div className="bg-blue-50 text-blue-600 rounded-lg p-2">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                  </svg>
+            <div className="flex items-center justify-between">
+               <div className="flex items-center gap-3">
+                  <div className="bg-blue-50 text-blue-600 rounded-lg p-2">
+                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                     </svg>
+                  </div>
+                  <div>
+                     <h3 className="text-lg font-semibold text-gray-900">Reasignar Tarea</h3>
+                     <p className="text-sm text-gray-500">Selecciona el nuevo usuario responsable</p>
+                  </div>
                </div>
-               <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Reasignar Tarea</h3>
-                  <p className="text-sm text-gray-500">Selecciona el nuevo usuario responsable</p>
-               </div>
+               <button
+                  type="button"
+                  onClick={onCancel}
+                  className="bg-white text-gray-400 hover:text-gray-700 rounded-md cursor-pointer p-2 hover:bg-gray-50 transition-all duration-200"
+               >
+                  <XIcon size={20} />
+               </button>
             </div>
          </div>
 
@@ -65,7 +115,7 @@ export default function ReasignIssue({ onSubmit, onCancel, taskObject }: Reasign
                      Nuevo usuario responsable
                      <span className='text-red-500 ml-1'>*</span>
                   </label>
-                  <div className="relative">
+                  <div className="relative" ref={userRef}>
                      <button 
                         onClick={() => setIsUserOpen(!isUserOpen)}
                         type='button'
@@ -103,8 +153,8 @@ export default function ReasignIssue({ onSubmit, onCancel, taskObject }: Reasign
                      </button>
                      
                      {isUserOpen && (
-                        <div className='absolute z-50 top-full mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-xl max-h-24 overflow-y-auto'>
-                           {listUsers.map((obj, i) => (
+                        <div className='absolute z-[9999] top-full mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-xl max-h-48 overflow-y-auto'>
+                           {allProjectUsers.map((obj, i) => (
                               <button
                                  key={i} 
                                  type="button"

@@ -1,13 +1,14 @@
 'use client'
 
-import { useRef, useState, useEffect } from 'react'
+import React, { useRef, useState, useEffect } from 'react'
 import { TaskProps } from '@/lib/types/types'
-import { useAuthStore } from '@/lib/store/AuthStore'
 import { useConfigStore } from '@/lib/store/ConfigStore'
+import { useAuthStore } from '@/lib/store/AuthStore'
 import Image from 'next/image'
 import { PlusIcon, XIcon } from '@/assets/Icon'
 import { useBoardStore } from '@/lib/store/BoardStore'
 import AutoResizeTextarea from '@/components/ui/AutoResizeTextarea'
+import { getUserAvatar } from '@/lib/utils/avatar.utils'
 
 interface FormProps {
   onSubmit: (data: TaskProps) => void
@@ -17,14 +18,35 @@ interface FormProps {
 }
 
 export default function CreateTaskForm({ onSubmit, onCancel, taskObject, isEdit = false }: FormProps) {
-  const { projectConfig } = useConfigStore()
-  const { listUsers } = useAuthStore()
+  const { projectConfig, projectParticipants } = useConfigStore()
   const { selectedBoard } = useBoardStore()
+  const { listUsers } = useAuthStore()
 
-  // Initialize user selection - if editing, find the assigned user, otherwise use first user
+  // Combine project participants with the project creator (avoid duplicates)
+  const allProjectUsers = React.useMemo(() => {
+    const participants = [...projectParticipants]
+    
+    // Add project creator if not already in participants
+    if (selectedBoard?.createdBy && !participants.some(p => p.id === selectedBoard.createdBy?.id)) {
+      // Find the creator in the full user list to get complete information including email
+      const creatorFromUserList = listUsers.find(user => user.id === selectedBoard.createdBy?.id)
+      
+      participants.push({
+        id: selectedBoard.createdBy.id,
+        firstName: selectedBoard.createdBy.firstName,
+        lastName: selectedBoard.createdBy.lastName,
+        email: creatorFromUserList?.email || '', // Get email from full user list
+        picture: selectedBoard.createdBy.picture
+      })
+    }
+    
+    return participants
+  }, [projectParticipants, selectedBoard?.createdBy, listUsers])
+
+  // Initialize user selection - if editing, find the assigned user, otherwise use first participant
   const initialUser = isEdit && taskObject?.assignedId
-    ? listUsers.find(user => user.id === (typeof taskObject.assignedId === 'string' ? taskObject.assignedId : taskObject.assignedId?.id)) || listUsers[0]
-    : listUsers[0]
+    ? allProjectUsers.find(user => user.id === (typeof taskObject.assignedId === 'string' ? taskObject.assignedId : taskObject.assignedId?.id)) || allProjectUsers[0]
+    : allProjectUsers[0]
 
   const [userSelected, setUserSelected] = useState(initialUser)
 
@@ -118,15 +140,15 @@ export default function CreateTaskForm({ onSubmit, onCancel, taskObject, isEdit 
     }
 
     if (isEdit) {
-      // For editing, we need to format the data differently
+      // For editing, we need to format the data differently and exclude assignedId
       const editData = {
         ...formData,
-        descriptions,
-        assignedId: userSelected.id
+        descriptions
+        // assignedId is intentionally excluded for edits
       }
       onSubmit(editData)
     } else {
-      // For creating, use the original format
+      // For creating, use the original format including assignedId
       onSubmit({ ...formData, descriptions, assignedId: userSelected.id })
     }
   }
@@ -143,49 +165,165 @@ export default function CreateTaskForm({ onSubmit, onCancel, taskObject, isEdit 
   const userRef = useRef(null)
   const typeRef = useRef(null)
 
+  // Effect to handle clicks outside of selects
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (priorityRef.current && !(priorityRef.current as HTMLElement).contains(event.target as Node)) {
+        setIsPriorityOpen(false)
+      }
+      if (statusRef.current && !(statusRef.current as HTMLElement).contains(event.target as Node)) {
+        setIsStatusOpen(false)
+      }
+      if (userRef.current && !(userRef.current as HTMLElement).contains(event.target as Node)) {
+        setIsUserOpen(false)
+      }
+      if (typeRef.current && !(typeRef.current as HTMLElement).contains(event.target as Node)) {
+        setIsTypeOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
+
   return (
     <>
       <div className="bg-white border-gray-100 rounded-xl shadow-sm border">
         {/* Header */}
         <div className="border-b border-gray-100 p-6">
-          <div className="flex items-center gap-3">
-            <div className="bg-blue-50 text-blue-600 rounded-lg p-2">
-              <PlusIcon size={24} />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="bg-blue-50 text-blue-600 rounded-lg p-2">
+                <PlusIcon size={24} />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {isEdit ? 'Editar Tarea' : 'Crear Nueva Tarea'}
+                </h3>
+                <p className="text-sm text-gray-500">
+                  {isEdit ? 'Modifica los detalles de la tarea' : 'Completa los detalles de la nueva tarea'}
+                </p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">
-                {isEdit ? 'Editar Tarea' : 'Crear Nueva Tarea'}
-              </h3>
-              <p className="text-sm text-gray-500">
-                {isEdit ? 'Modifica los detalles de la tarea' : 'Completa los detalles de la nueva tarea'}
-              </p>
-            </div>
+            <button
+              type="button"
+              onClick={onCancel}
+              className="bg-white text-gray-400 hover:text-gray-700 rounded-md cursor-pointer p-2 hover:bg-gray-50 transition-all duration-200"
+            >
+              <XIcon size={20} />
+            </button>
           </div>
         </div>
 
         {/* Form Content */}
         <form onSubmit={handleSubmit} className="p-6">
-          <div className='space-y-2'>
-            {/* Título y Descripción - Misma línea */}
-            <div className='grid grid-cols-1 md:grid-cols-1 gap-4'>
-              {/* Título */}
-              <div>
-                <label htmlFor="title" className="text-gray-900 text-sm font-semibold">
-                  Título de la Tarea
+          <div className='space-y-3'>
+            {/* Asignar a - Solo mostrar cuando no se está editando */}
+            {!isEdit && (
+              <div className='relative' ref={userRef}>
+                <label className="text-gray-900 text-sm font-semibold">
+                  Asignar a
                   <span className='text-red-500 ml-1'>*</span>
                 </label>
-                <div className='border-gray-200 flex items-center rounded-lg border px-4 py-2.5 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-all duration-200'>
-                  <input
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="outline-none text-sm w-full bg-transparent placeholder-gray-400"
-                    placeholder="Ej: Implementar sistema de autenticación"
-                    value={formData.title}
-                    name="title"
-                    type="text"
-                    id="title"
-                    required
-                  />
-                </div>
+              <div className="relative">
+                <button 
+                  onClick={() => setIsUserOpen(!isUserOpen)}
+                  type='button'
+                  className='w-full text-left bg-white border border-gray-200 rounded-lg px-4 py-3 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200'
+                >
+                  <div className='flex items-center justify-between'>
+                    <div className='flex items-center gap-3'>
+                      <div className='w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden'>
+                        {userSelected ? (
+                          <img 
+                            src={getUserAvatar(userSelected, 32)}
+                            alt='Usuario seleccionado'
+                            className="w-full h-full object-cover rounded-full"
+                          />
+                        ) : (
+                          <span className='text-sm font-medium text-gray-600'>
+                            ?
+                          </span>
+                        )}
+                      </div>
+                      <div>
+                        <span className='text-sm font-medium text-gray-900'>
+                          {userSelected?.firstName} {userSelected?.lastName}
+                        </span>
+                        <p className="text-xs text-gray-500">
+                          {userSelected?.email || 'Sin email'}
+                        </p>
+                      </div>
+                    </div>
+                    <svg className={`text-gray-400 w-5 h-5 transition-transform duration-200 ${isUserOpen ? "rotate-180" : ""}`}
+                      xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                    </svg>
+                  </div>
+                </button>
+                
+                {isUserOpen && (
+                  <div className='absolute z-[9999] top-full mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-xl max-h-40 overflow-y-auto'>
+                    {allProjectUsers.map((obj, i) => (
+                      <button
+                        key={i} 
+                        type="button"
+                        onClick={() => { 
+                          setUserSelected(obj)
+                          setIsUserOpen(false) 
+                        }}
+                        className='w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors first:rounded-t-lg last:rounded-b-lg'
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-2 h-2 rounded-full ${obj.id === userSelected?.id ? 'bg-blue-600' : 'bg-transparent'}`} />
+                          <div className='w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden'>
+                            <img 
+                              src={getUserAvatar(obj, 32)}
+                              alt={obj.id}
+                              className="w-full h-full object-cover rounded-full"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <span className='text-sm font-medium text-gray-900 block'>
+                              {obj.firstName} {obj.lastName}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {obj.email || 'Sin email'}
+                            </span>
+                          </div>
+                          {obj.id === userSelected?.id && (
+                            <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+            )}
+
+            {/* Título de la Tarea */}
+            <div>
+              <label htmlFor="title" className="text-gray-900 text-sm font-semibold">
+                Título de la Tarea
+                <span className='text-red-500 ml-1'>*</span>
+              </label>
+              <div className='border-gray-200 flex items-center rounded-lg border px-4 py-2.5 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-all duration-200'>
+                <input
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  className="outline-none text-sm w-full bg-transparent placeholder-gray-400"
+                  placeholder="Ej: Implementar sistema de autenticación"
+                  value={formData.title}
+                  name="title"
+                  type="text"
+                  id="title"
+                  required
+                />
               </div>
             </div>
 
@@ -248,7 +386,7 @@ export default function CreateTaskForm({ onSubmit, onCancel, taskObject, isEdit 
                     </div>
                   </button>
                   {isStatusOpen && (
-                    <div className='absolute z-50 top-full mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-xl max-h-48 overflow-y-auto'>
+                    <div className='absolute z-[9999] top-full mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-xl max-h-28 overflow-y-auto'>
                       {projectConfig && projectConfig.issueStatuses.map((obj, i) => (
                         <button
                           key={i}
@@ -299,7 +437,7 @@ export default function CreateTaskForm({ onSubmit, onCancel, taskObject, isEdit 
                     </div>
                   </button>
                   {isPriorityOpen && (
-                    <div className='absolute z-50 top-full mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-xl max-h-48 overflow-y-auto'>
+                    <div className='absolute z-[9999] top-full mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-xl max-h-28 overflow-y-auto'>
                       {projectConfig && projectConfig.issuePriorities.map((obj, i) => (
                         <button
                           key={i}
@@ -353,7 +491,7 @@ export default function CreateTaskForm({ onSubmit, onCancel, taskObject, isEdit 
                     </div>
                   </button>
                   {isTypeOpen && (
-                    <div className='absolute z-50 top-full mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-xl max-h-48 overflow-y-auto'>
+                    <div className='absolute z-[9999] top-full mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-xl max-h-28 overflow-y-auto'>
                       {projectConfig && projectConfig.issueTypes.map((obj, i) => (
                         <button
                           key={i}
@@ -396,87 +534,10 @@ export default function CreateTaskForm({ onSubmit, onCancel, taskObject, isEdit 
                 </div>
               </div>
             </div>
-
-            {/* Asignar a - Línea completa */}
-            {!isEdit &&
-              <div className='relative' ref={userRef}>
-                <label className="text-gray-900 text-sm font-semibold block">
-                  Asignar a
-                  <span className='text-red-500 ml-1'>*</span>
-                </label>
-                <div className="relative">
-                  <button
-                    onClick={() => setIsUserOpen(!isUserOpen)}
-                    type='button'
-                    className='w-full text-left bg-white border border-gray-200 rounded-lg px-3 py-2 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200'
-                  >
-                    <div className='flex items-center justify-between'>
-                      <div className='flex items-center gap-3'>
-                        <div className='w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden'>
-                          {userSelected.picture ? (
-                            <Image
-                              src={userSelected.picture}
-                              alt='Asignado a'
-                              width={32}
-                              height={32}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <span className='text-sm font-medium text-gray-600'>
-                              {userSelected.firstName?.charAt(0).toUpperCase()}
-                            </span>
-                          )}
-                        </div>
-                        <span className='text-sm text-gray-700'>
-                          {userSelected.firstName} {userSelected.lastName}
-                        </span>
-                      </div>
-                      <svg className={`text-gray-400 w-4 h-4 transition-transform duration-200 ${isUserOpen ? "rotate-180" : ""}`}
-                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-                      </svg>
-                    </div>
-                  </button>
-                  {isUserOpen && (
-                    <div className='absolute z-50 top-full mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-xl max-h-20 overflow-y-auto'>
-                      {listUsers.map((obj, i) => (
-                        <button
-                          key={i}
-                          type="button"
-                          onClick={() => { setUserSelected(obj); setFormData({ ...formData, assignedId: obj.id }); setIsUserOpen(false) }}
-                          className='w-full text-left px-3 py-2 hover:bg-gray-50 transition-colors first:rounded-t-lg last:rounded-b-lg'
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className='w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden'>
-                              {obj.picture ? (
-                                <Image
-                                  src={obj.picture}
-                                  alt={obj.id}
-                                  width={32}
-                                  height={32}
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                <span className='text-sm font-medium text-gray-600'>
-                                  {obj.firstName?.charAt(0).toUpperCase()}
-                                </span>
-                              )}
-                            </div>
-                            <span className="text-sm text-gray-700">
-                              {obj.firstName} {obj.lastName}
-                            </span>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            }
           </div>
 
           {/* Botones */}
-          <div className="flex items-center gap-3 pt-6 border-t border-gray-100">
+          <div className="flex items-center gap-3 pt-6 border-gray-100">
             <button
               type="button"
               onClick={onCancel}
