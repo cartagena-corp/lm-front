@@ -20,8 +20,8 @@ export default function FilterProjectForm({ onSubmit, onCancel }: FilterFormProp
       createdBy: "",
       page: 0,
       size: 10,
-      sortBy: { id: "createdAt", sort: "Cualquier orden" },
-      direction: ""
+      sortBy: { id: "createdAt", sort: "Fecha de creación" },
+      direction: "desc"
    })
 
    const [isStatusSelectOpen, setIsStatusSelectOpen] = useState(false)
@@ -36,6 +36,11 @@ export default function FilterProjectForm({ onSubmit, onCancel }: FilterFormProp
    const statusSelectRef = useRef<HTMLDivElement>(null)
    const paginationSelectRef = useRef<HTMLDivElement>(null)
    const sortBySelectRef = useRef<HTMLDivElement>(null)
+
+   // Sincronizar el estado visual con el valor del formulario
+   useEffect(() => {
+      setIsAsc(formData.direction === "asc")
+   }, [formData.direction])
 
    useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
@@ -61,6 +66,7 @@ export default function FilterProjectForm({ onSubmit, onCancel }: FilterFormProp
 
    const handleSubmit = (e: FormEvent) => {
       e.preventDefault()
+      console.log('FilterProjectForm - Datos enviados:', formData)
       onSubmit(formData)
    }
 
@@ -231,11 +237,14 @@ export default function FilterProjectForm({ onSubmit, onCancel }: FilterFormProp
                   <button 
                      onClick={() => { 
                         const newIsAsc = !isAsc
+                        const newDirection = newIsAsc ? "asc" : "desc"
                         setIsAsc(newIsAsc)
-                        setFormData({ ...formData, direction: newIsAsc ? "asc" : "desc" }) 
+                        setFormData({ ...formData, direction: newDirection })
+                        console.log('Cambiando dirección:', { newIsAsc, newDirection })
                      }} 
                      type='button' 
-                     className={`border-gray-200 border p-3 rounded-lg hover:border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${isAsc ? 'bg-blue-50 border-blue-200' : ''}`}
+                     className={`border-gray-200 border p-3 rounded-lg hover:border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${isAsc ? 'bg-blue-50 border-blue-200' : 'bg-gray-50'}`}
+                     title={isAsc ? 'Orden ascendente (A-Z, 1-9, más reciente)' : 'Orden descendente (Z-A, 9-1, más antiguo)'}
                   >
                      {isAsc ? (
                         <svg className='w-5 h-5 text-blue-600' viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

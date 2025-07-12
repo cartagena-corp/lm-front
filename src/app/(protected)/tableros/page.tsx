@@ -97,8 +97,8 @@ export default function TablerosPage() {
         sortBy: filters.sortBy?.id === 'createdAt' || filters.sortBy?.id === 'updatedAt'
           ? filters.sortBy.id as 'createdAt' | 'updatedAt'
           : 'createdAt' as 'createdAt' | 'updatedAt',
-        direction: filters.sortBy?.sort === 'asc' || filters.sortBy?.sort === 'desc'
-          ? filters.sortBy.sort as 'asc' | 'desc'
+        direction: filters.direction === 'asc' || filters.direction === 'desc'
+          ? filters.direction as 'asc' | 'desc'
           : 'desc' as 'asc' | 'desc'
       }
 
