@@ -3,7 +3,7 @@
 import AutoResizeTextarea from '../../ui/AutoResizeTextarea'
 import { useConfigStore } from '@/lib/store/ConfigStore'
 import { SprintProps } from '@/lib/types/types'
-import { CalendarIcon } from '@/assets/Icon'
+import { CalendarIcon, XIcon } from '@/assets/Icon'
 import { useRef, useState, useEffect } from 'react'
 
 interface FormProps {
@@ -121,25 +121,36 @@ export default function CreateSprintForm({ onSubmit, onCancel, currentSprint, is
    }
 
    return (
-      <div className="bg-white">
-         {/* Header del modal */}
-         <div className="border-b border-gray-200 pb-4 mb-6">
-            <div className="flex items-center gap-3">
-               <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                  <CalendarIcon size={20} />
+      <div className="bg-white border-gray-100 rounded-xl shadow-sm border">
+         {/* Header */}
+         <div className="border-b border-gray-100 p-6">
+            <div className="flex items-center justify-between">
+               <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                     <CalendarIcon size={20} />
+                  </div>
+                  <div>
+                     <h3 className="text-lg font-semibold text-gray-900">
+                        {isEdit ? 'Editar Sprint' : 'Crear Nuevo Sprint'}
+                     </h3>
+                     <p className="text-sm text-gray-500">
+                        {isEdit ? 'Actualiza la información del sprint' : 'Completa la información para crear un nuevo sprint'}
+                     </p>
+                  </div>
                </div>
-               <div>
-                  <h3 className="text-lg font-semibold text-gray-900">
-                     {isEdit ? 'Editar Sprint' : 'Crear Nuevo Sprint'}
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                     {isEdit ? 'Actualiza la información del sprint' : 'Completa la información para crear un nuevo sprint'}
-                  </p>
-               </div>
+               <button
+                  type="button"
+                  onClick={onCancel}
+                  className="flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+               >
+                  <XIcon />
+               </button>
             </div>
          </div>
 
-         <form onSubmit={handleSubmit} className="space-y-6">
+         {/* Form Content */}
+         <div className="p-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
             {/* Título */}
             <div className="space-y-2">
                <label htmlFor="title" className="block text-sm font-semibold text-gray-900">
@@ -355,7 +366,7 @@ export default function CreateSprintForm({ onSubmit, onCancel, currentSprint, is
             )}
 
             {/* Botones de acción */}
-            <div className="flex flex-col-reverse sm:flex-row gap-3 pt-6 border-t border-gray-200">
+            <div className="flex justify-end flex-col-reverse sm:flex-row gap-3 pt-6 border-t border-gray-200">
                <button
                   type="button"
                   onClick={onCancel}
@@ -382,7 +393,8 @@ export default function CreateSprintForm({ onSubmit, onCancel, currentSprint, is
                   )}
                </button>
             </div>
-         </form>
+            </form>
+         </div>
       </div>
    )
 }

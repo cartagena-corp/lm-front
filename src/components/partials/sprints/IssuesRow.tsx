@@ -555,7 +555,7 @@ export default function IssuesRow({ spr, setIsOpen, isOverlay = false }: { spr: 
 
          {/* Modales */}
          <>
-            <Modal isOpen={isUpdateSprintOpen} onClose={() => setIsUpdateSprintOpen(false)} title="" customWidth="sm:max-w-2xl">
+            <Modal isOpen={isUpdateSprintOpen} onClose={() => setIsUpdateSprintOpen(false)} title="" customWidth="sm:max-w-2xl" showCloseButton={false}>
                <CreateSprintForm
                   onSubmit={handleUpdateSprint}
                   onCancel={() => setIsUpdateSprintOpen(false)}
@@ -564,7 +564,7 @@ export default function IssuesRow({ spr, setIsOpen, isOverlay = false }: { spr: 
                />
             </Modal>
 
-            <Modal isOpen={isTaskDetailsModalOpen} customWidth="sm:max-w-6xl" onClose={() => setIsTaskDetailsModalOpen(false)} title={taskActive?.title as string}>
+            <Modal isOpen={isTaskDetailsModalOpen} customWidth="sm:max-w-6xl" onClose={() => setIsTaskDetailsModalOpen(false)} title="" showCloseButton={false}>
                <TaskDetailsForm
                   task={taskActive as TaskProps}
                   onSubmit={() => setIsTaskDetailsModalOpen(false)}
@@ -572,7 +572,7 @@ export default function IssuesRow({ spr, setIsOpen, isOverlay = false }: { spr: 
                />
             </Modal>
 
-            <Modal isOpen={isTaskUpdateModalOpen} customWidth="sm:max-w-4xl" onClose={() => setIsTaskUpdateModalOpen(false)} title={``}>
+            <Modal isOpen={isTaskUpdateModalOpen} customWidth="sm:max-w-4xl" onClose={() => setIsTaskUpdateModalOpen(false)} title={``} showCloseButton={false}>
                <CreateTaskForm
                   onSubmit={handleUpdate}
                   onCancel={() => setIsTaskUpdateModalOpen(false)}
@@ -581,7 +581,7 @@ export default function IssuesRow({ spr, setIsOpen, isOverlay = false }: { spr: 
                />
             </Modal>
 
-            <Modal isOpen={isReasignModalOpen} onClose={() => setIsReasignModalOpen(false)} title="" customWidth='max-w-xl'>
+            <Modal isOpen={isReasignModalOpen} onClose={() => setIsReasignModalOpen(false)} title="" customWidth='max-w-xl' showCloseButton={false}>
                <ReasignIssue
                   onSubmit={handleReasign}
                   onCancel={() => setIsReasignModalOpen(false)}
@@ -589,7 +589,7 @@ export default function IssuesRow({ spr, setIsOpen, isOverlay = false }: { spr: 
                />
             </Modal>
 
-            <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Eliminar Tarea">
+            <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="">
                <DeleteIssueForm
                   onSubmit={handleDelete}
                   onCancel={() => setIsDeleteModalOpen(false)}
@@ -605,11 +605,12 @@ export default function IssuesRow({ spr, setIsOpen, isOverlay = false }: { spr: 
                />
             </Modal>
 
-            <Modal isOpen={isHistoryModalOpen} onClose={() => setIsHistoryModalOpen(false)} title="" customWidth="max-w-4xl">
+            <Modal isOpen={isHistoryModalOpen} onClose={() => setIsHistoryModalOpen(false)} title="" customWidth="max-w-4xl" showCloseButton={false}>
                <AuditHistory
                   issueId={taskActive?.id}
                   title={`Historial de cambios: ${taskActive?.title}`}
                   currentIssue={taskActive}
+                  onCancel={() => setIsHistoryModalOpen(false)}
                />
             </Modal>
          </>

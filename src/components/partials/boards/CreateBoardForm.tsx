@@ -4,6 +4,7 @@ import { ProjectProps } from '@/lib/types/types'
 import { useEffect, useRef, useState, DragEvent } from 'react'
 import AutoResizeTextarea from '../../ui/AutoResizeTextarea'
 import { useConfigStore } from '@/lib/store/ConfigStore'
+import { XIcon, PlusIcon } from '@/assets/Icon'
 
 interface CreateBoardFormProps {
   onSubmit: (newBoard: ProjectProps, jiraImport: File | null) => void
@@ -86,8 +87,36 @@ export default function CreateBoardForm({ onSubmit, onCancel, editData = null, i
 
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className='space-y-5 mt-4'>
+    <div className="bg-white border-gray-100 rounded-xl shadow-sm border">
+      {/* Header */}
+      <div className="border-b border-gray-100 p-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="bg-blue-50 text-blue-600 rounded-lg p-2">
+              <PlusIcon size={24} />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">
+                {isEdit ? 'Editar Tablero' : 'Crear Nuevo Tablero'}
+              </h3>
+              <p className="text-sm text-gray-500">
+                {isEdit ? 'Modifica los detalles del tablero' : 'Completa los detalles del nuevo tablero'}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+          >
+            <XIcon />
+          </button>
+        </div>
+      </div>
+
+      {/* Form Content */}
+      <form onSubmit={handleSubmit} className="p-6">
+        <div className='space-y-5 mt-4'>
         {/* Nombre del Tablero */}
         <div className='space-y-2'>
           <label htmlFor="name" className="text-gray-900 text-sm font-semibold">
@@ -218,7 +247,7 @@ export default function CreateBoardForm({ onSubmit, onCancel, editData = null, i
             </svg>
           </button>
           {isStatusOpen && (
-            <div className='border-gray-200 bg-white shadow-lg absolute z-10 top-full mt-1 flex flex-col rounded-lg border text-sm w-full max-h-24 overflow-y-auto'>
+            <div className='border-gray-200 bg-white shadow-lg absolute z-10 top-full mt-1 flex flex-col rounded-lg border text-sm w-full max-h-32 overflow-y-auto'>
               {projectStatus?.map(obj => (
                 <div
                   key={obj.id}
@@ -344,6 +373,7 @@ export default function CreateBoardForm({ onSubmit, onCancel, editData = null, i
           {isEdit ? 'Actualizar Tablero' : 'Crear Tablero'}
         </button>
       </div>
-    </form>
+      </form>
+    </div>
   )
 }

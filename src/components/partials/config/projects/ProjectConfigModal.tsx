@@ -46,6 +46,13 @@ export default function ProjectConfigModal({ onClose, projectId }: ProjectConfig
                         <p className="text-sm text-gray-600">Gestiona la configuración específica de este proyecto</p>
                     </div>
                 </div>
+                <button
+                    type="button"
+                    onClick={onClose}
+                    className="flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                >
+                    <XIcon />
+                </button>
             </div>
 
             {/* Navigation Tabs */}

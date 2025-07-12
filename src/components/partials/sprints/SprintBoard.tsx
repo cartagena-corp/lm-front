@@ -251,6 +251,7 @@ export default function SprintBoard() {
             onClose={() => setIsCreateTaskOpen(false)}
             title=""
             customWidth='max-w-2xl'
+            showCloseButton={false}
          >
             <CreateTaskForm
                onSubmit={handleCreateTask}

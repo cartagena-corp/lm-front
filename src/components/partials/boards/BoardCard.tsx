@@ -181,10 +181,12 @@ export default function BoardCard({ board }: { board: ProjectProps }) {
             onClose={() => setIsHistoryModalOpen(false)}
             title=""
             customWidth="max-w-4xl"
+            showCloseButton={false}
          >
             <AuditHistory
                projectId={board.id}
                title={`Historial del proyecto: ${board.name}`}
+               onCancel={() => setIsHistoryModalOpen(false)}
             />
          </Modal>
       </div>

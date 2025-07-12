@@ -327,7 +327,9 @@ export default function TableroDetalle() {
       <Modal
         isOpen={isUpdateModalOpen}
         onClose={() => setIsUpdateModalOpen(false)}
-        title="Actualizar Proyecto"
+        title=""
+        showCloseButton={false}
+        customWidth='max-w-xl'
       >
         <UpdateProjectForm
           onSubmit={handleUpdate}
@@ -342,6 +344,7 @@ export default function TableroDetalle() {
         onClose={() => setIsConfigModalOpen(false)}
         title=""
         customWidth="max-w-6xl"
+        showCloseButton={false}
       >
         <ProjectConfigModal
           onClose={() => setIsConfigModalOpen(false)}

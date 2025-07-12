@@ -36,15 +36,6 @@ export default function UserProjectConfig({ projectId }: UserProjectConfigProps)
 
     const error = configError
 
-    // Cargar datos iniciales
-    useEffect(() => {
-        loadData()
-    }, [projectId])
-
-    const loadData = async () => {
-        // Ya no necesitamos cargar manualmente porque se cargan con setProjectConfig
-    }
-
     const handleAddUsers = async (userIds: string[]) => {
         const token = await getValidAccessToken()
         if (token) {
@@ -73,7 +64,6 @@ export default function UserProjectConfig({ projectId }: UserProjectConfigProps)
                         onClick={() => {
                             clearAuthError()
                             clearConfigError()
-                            loadData()
                         }}
                         className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
                     >

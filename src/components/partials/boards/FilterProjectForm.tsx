@@ -3,6 +3,7 @@
 import { useAuthStore } from '@/lib/store/AuthStore'
 import { useConfigStore } from '@/lib/store/ConfigStore'
 import { FilterProjectProps } from '@/lib/types/types'
+import { XIcon } from '@/assets/Icon'
 import { FormEvent, useState, useEffect, useRef } from 'react'
 
 interface FilterFormProps {
@@ -63,24 +64,35 @@ export default function FilterProjectForm({ onSubmit, onCancel }: FilterFormProp
       onSubmit(formData)
    }
 
-   const handleAscChange = () => setIsAsc(!isAsc)
-
    return (
-      <form onSubmit={handleSubmit} className="space-y-6">
-         {/* Header con icono */}
-         <div className="flex items-center gap-3 pb-2 border-b border-gray-200">
-            <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-lg">
-               <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-               </svg>
-            </div>
-            <div>
-               <h3 className="text-lg font-semibold text-gray-900">Filtrar tableros</h3>
-               <p className="text-sm text-gray-500">Encuentra tableros específicos usando los filtros</p>
+      <div className="bg-white border-gray-100 rounded-xl shadow-sm border">
+         {/* Header */}
+         <div className="border-b border-gray-100 p-6">
+            <div className="flex items-center justify-between">
+               <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-lg">
+                     <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                     </svg>
+                  </div>
+                  <div>
+                     <h3 className="text-lg font-semibold text-gray-900">Filtrar tableros</h3>
+                     <p className="text-sm text-gray-500">Encuentra tableros específicos usando los filtros</p>
+                  </div>
+               </div>
+               <button
+                  type="button"
+                  onClick={onCancel}
+                  className="flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+               >
+                  <XIcon />
+               </button>
             </div>
          </div>
 
-         <div className='space-y-5'>
+         {/* Form Content */}
+         <form onSubmit={handleSubmit} className="p-6">
+            <div className='space-y-5'>
             {/* Búsqueda por palabra clave */}
             <div className='space-y-2'>
                <label htmlFor="title" className="text-gray-900 text-sm font-semibold">
@@ -217,7 +229,11 @@ export default function FilterProjectForm({ onSubmit, onCancel }: FilterFormProp
 
                   {/* Botón de dirección ascendente/descendente */}
                   <button 
-                     onClick={() => { handleAscChange(), setFormData({ ...formData, direction: !isAsc ? "asc" : "desc" }) }} 
+                     onClick={() => { 
+                        const newIsAsc = !isAsc
+                        setIsAsc(newIsAsc)
+                        setFormData({ ...formData, direction: newIsAsc ? "asc" : "desc" }) 
+                     }} 
                      type='button' 
                      className={`border-gray-200 border p-3 rounded-lg hover:border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${isAsc ? 'bg-blue-50 border-blue-200' : ''}`}
                   >
@@ -282,6 +298,7 @@ export default function FilterProjectForm({ onSubmit, onCancel }: FilterFormProp
                Aplicar filtros
             </button>
          </div>
-      </form>
+         </form>
+      </div>
    )
 }

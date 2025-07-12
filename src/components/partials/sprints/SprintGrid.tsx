@@ -202,6 +202,7 @@ export default function SprintGrid() {
             onClose={() => setIsCreateTaskOpen(false)}
             title=""
             customWidth='max-w-2xl'
+            showCloseButton={false}
          >
             <CreateTaskForm
                onSubmit={handleCreateTask}
@@ -214,6 +215,7 @@ export default function SprintGrid() {
             onClose={() => setIsCreateSprintOpen(false)}
             title=""
             customWidth="sm:max-w-2xl"
+            showCloseButton={false}
          >
             <CreateSprintForm
                onSubmit={handleCreateSprint}

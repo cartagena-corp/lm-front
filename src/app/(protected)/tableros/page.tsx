@@ -32,7 +32,7 @@ export default function TablerosPage() {
       }
 
       const statusId = typeof newBoard.status === 'object' ? newBoard.status.id : newBoard.status
-      
+
       // Only send necessary fields for board creation
       const boardData = {
         name: newBoard.name,
@@ -211,7 +211,9 @@ export default function TablerosPage() {
       <Modal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        title="Crear nuevo tablero"
+        title=""
+        showCloseButton={false}
+        customWidth='max-w-xl'
       >
         <CreateBoardForm
           onSubmit={handleCreateBoard}
@@ -224,6 +226,8 @@ export default function TablerosPage() {
         isOpen={isFilterModalOpen}
         onClose={() => setIsFilterModalOpen(false)}
         title=""
+        showCloseButton={false}
+        customWidth='max-w-xl'
       >
         <FilterProjectForm
           onSubmit={handleFilter}

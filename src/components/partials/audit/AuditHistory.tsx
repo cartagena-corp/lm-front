@@ -5,7 +5,7 @@ import { AuditHistoryProps, AuditPagination, UserProps, TaskProps } from '@/lib/
 import { useAuthStore } from '@/lib/store/AuthStore'
 import { useBoardStore } from '@/lib/store/BoardStore'
 import { useIssueStore } from '@/lib/store/IssueStore'
-import { ClockIcon, UsersIcon, AlertCircleIcon } from '@/assets/Icon'
+import { ClockIcon, UsersIcon, AlertCircleIcon, XIcon } from '@/assets/Icon'
 import { API_ROUTES as OAUTH_ROUTES } from '@/lib/routes/oauth.routes'
 import { API_ROUTES as ISSUES_ROUTES } from '@/lib/routes/issues.routes'
 import Image from 'next/image'
@@ -16,6 +16,7 @@ interface AuditHistoryModalProps {
    issueId?: string
    title: string
    currentIssue?: TaskProps
+   onCancel: () => void
 }
 
 interface EnrichedAuditItem extends AuditHistoryProps {
@@ -23,7 +24,7 @@ interface EnrichedAuditItem extends AuditHistoryProps {
    issue?: TaskProps
 }
 
-export default function AuditHistory({ projectId, issueId, title, currentIssue }: AuditHistoryModalProps) {
+export default function AuditHistory({ projectId, issueId, title, currentIssue, onCancel }: AuditHistoryModalProps) {
    const { getValidAccessToken, getListUsers } = useAuthStore()
    const { getProjectHistory } = useBoardStore()
    const { getIssueHistory, getIssues } = useIssueStore()
@@ -320,30 +321,74 @@ export default function AuditHistory({ projectId, issueId, title, currentIssue }
 
    if (error) {
       return (
-         <div className="p-6">
-            <div className="flex flex-col items-center justify-center py-8 text-center">
-               <div className="text-red-500 mb-4">
-                  <AlertCircleIcon size={48} />
+         <div className="bg-white border-gray-100 rounded-xl shadow-sm border">
+            {/* Header */}
+            <div className="border-b border-gray-100 p-6">
+               <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                     <div className="bg-blue-50 text-blue-600 rounded-lg p-2">
+                        <ClockIcon size={24} />
+                     </div>
+                     <div>
+                        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+                        <p className="text-sm text-gray-500">Historial de cambios y actividades</p>
+                     </div>
+                  </div>
+                  <button
+                     type="button"
+                     onClick={onCancel}
+                     className="bg-white text-gray-400 hover:text-gray-700 rounded-md cursor-pointer p-2 hover:bg-gray-50 transition-all duration-200"
+                  >
+                     <XIcon size={20} />
+                  </button>
                </div>
-               <h3 className="text-lg font-semibold text-gray-900 mb-2">Error al cargar el historial</h3>
-               <p className="text-gray-600 mb-4">{error}</p>
-               <button
-                  onClick={loadHistory}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-               >
-                  Intentar nuevamente
-               </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+               <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <div className="text-red-500 mb-4">
+                     <AlertCircleIcon size={48} />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Error al cargar el historial</h3>
+                  <p className="text-gray-600 mb-4">{error}</p>
+                  <button
+                     onClick={loadHistory}
+                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                     Intentar nuevamente
+                  </button>
+               </div>
             </div>
          </div>
       )
-   }      return (
-         <div className="p-6 max-w-4xl mx-auto">
-            <div className="flex items-center gap-3 mb-6">
-               <div className="text-gray-600">
-                  <ClockIcon size={24} />
+   }   return (
+      <div className="bg-white border-gray-100 rounded-xl shadow-sm border">
+         {/* Header */}
+         <div className="border-b border-gray-100 p-6">
+            <div className="flex items-center justify-between">
+               <div className="flex items-center gap-3">
+                  <div className="bg-blue-50 text-blue-600 rounded-lg p-2">
+                     <ClockIcon size={24} />
+                  </div>
+                  <div>
+                     <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+                     <p className="text-sm text-gray-500">Historial de cambios y actividades</p>
+                  </div>
                </div>
-               <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
-            </div>            {historyData && (
+               <button
+                  type="button"
+                  onClick={onCancel}
+                  className="bg-white text-gray-400 hover:text-gray-700 rounded-md cursor-pointer p-2 hover:bg-gray-50 transition-all duration-200"
+               >
+                  <XIcon size={20} />
+               </button>
+            </div>
+         </div>
+
+         {/* Content */}
+         <div className="p-6 max-w-4xl mx-auto">
+            {historyData && (
                <div className="mb-4 flex items-center justify-between">
                   <div className="text-sm text-gray-600">
                      Mostrando {allHistoryItems.length} de {historyData.totalElements} entradas
@@ -464,6 +509,7 @@ export default function AuditHistory({ projectId, issueId, title, currentIssue }
                </div>
             )}
          </div>
+      </div>
       </div>
    )
 }

@@ -950,6 +950,7 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
                 onClose={() => setIsTaskDetailsModalOpen(false)}
                 title=""
                 customWidth="sm:max-w-7xl"
+                showCloseButton={false}
             >
                 {selectedIssue && (
                     <TaskDetailsForm
@@ -965,6 +966,7 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
                 onClose={() => setIsTaskUpdateModalOpen(false)}
                 title=""
                 customWidth='max-w-2xl'
+                showCloseButton={false}
             >
                 {selectedIssue && (
                     <CreateTaskForm
@@ -980,6 +982,7 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
                 isOpen={isReasignModalOpen}
                 onClose={() => setIsReasignModalOpen(false)}
                 title=""
+                showCloseButton={false}
             >
                 {selectedIssue && (
                     <ReasignIssue
@@ -995,6 +998,7 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
                 onClose={() => setIsHistoryModalOpen(false)}
                 title=""
                 customWidth="max-w-4xl"
+                showCloseButton={false}
             >
                 {selectedIssue && (
                     <AuditHistory
@@ -1002,6 +1006,7 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
                         issueId={selectedIssue.id as string}
                         title="Historial de la tarea"
                         currentIssue={selectedIssue}
+                        onCancel={() => setIsHistoryModalOpen(false)}
                     />
                 )}
             </Modal>
@@ -1025,6 +1030,7 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
                 onClose={() => setIsCreateTaskModalOpen(false)}
                 title=""
                 customWidth='max-w-2xl'
+                showCloseButton={false}
             >
                 <CreateTaskForm
                     onSubmit={() => setIsCreateTaskModalOpen(false)}
@@ -1037,6 +1043,7 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
                 onClose={() => setIsCreateSprintModalOpen(false)}
                 title=""
                 customWidth="sm:max-w-2xl"
+                showCloseButton={false}
             >
                 <CreateSprintForm
                     onSubmit={handleUpdateSprint}

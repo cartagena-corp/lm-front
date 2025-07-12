@@ -511,7 +511,7 @@ export default function IssuesCard({ spr, setIsOpen, isOverlay = false }: { spr:
          </Droppable>
 
          {/* Modal de editar sprint */}
-         <Modal isOpen={isUpdateSprintOpen} onClose={() => setIsUpdateSprintOpen(false)} title="" customWidth="sm:max-w-2xl">
+         <Modal isOpen={isUpdateSprintOpen} onClose={() => setIsUpdateSprintOpen(false)} title="" customWidth="sm:max-w-2xl" showCloseButton={false}>
             <CreateSprintForm 
                onSubmit={handleUpdateSprint} 
                onCancel={() => setIsUpdateSprintOpen(false)} 
@@ -521,13 +521,12 @@ export default function IssuesCard({ spr, setIsOpen, isOverlay = false }: { spr:
          </Modal>
 
          {/* Modal de detalle de tarea */}
-         < Modal isOpen={isTaskDetailsModalOpen} customWidth="sm:max-w-6xl" onClose={() => setIsTaskDetailsModalOpen(false)
-         } title={taskActive?.title as string} >
+         <Modal isOpen={isTaskDetailsModalOpen} customWidth="sm:max-w-6xl" onClose={() => setIsTaskDetailsModalOpen(false)} title="" showCloseButton={false}>
             <TaskDetailsForm task={taskActive as TaskProps} onSubmit={() => setIsTaskDetailsModalOpen(false)} onCancel={() => setIsTaskDetailsModalOpen(false)} />
-         </Modal >
+         </Modal>
 
          {/* Modal de editar tarea */}
-         < Modal isOpen={isTaskUpdateModalOpen} customWidth="sm:max-w-4xl" onClose={() => setIsTaskUpdateModalOpen(false)} title={`Editar Tarea - ${taskActive?.title}`} >
+         < Modal isOpen={isTaskUpdateModalOpen} customWidth="sm:max-w-4xl" onClose={() => setIsTaskUpdateModalOpen(false)} title={`Editar Tarea - ${taskActive?.title}`} showCloseButton={false} >
             <CreateTaskForm 
                onSubmit={handleUpdate} 
                onCancel={() => setIsTaskUpdateModalOpen(false)} 
@@ -537,12 +536,12 @@ export default function IssuesCard({ spr, setIsOpen, isOverlay = false }: { spr:
          </Modal >
 
          {/* Modal de reasignar tarea */}
-         < Modal isOpen={isReasignModalOpen} onClose={() => setIsReasignModalOpen(false)} title="Reasignar tarea" >
+         < Modal isOpen={isReasignModalOpen} onClose={() => setIsReasignModalOpen(false)} title="Reasignar tarea" showCloseButton={false} >
             <ReasignIssue onSubmit={handleReasign} onCancel={() => setIsReasignModalOpen(false)} taskObject={taskActive as TaskProps} />
          </Modal >
 
          {/* Modal de eliminar tarea */}
-         < Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Eliminar tarea" >
+         < Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="" >
             <DeleteIssueForm onSubmit={handleDelete} onCancel={() => setIsDeleteModalOpen(false)} taskObject={taskActive as TaskProps} />
          </Modal >
 
