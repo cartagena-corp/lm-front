@@ -1,6 +1,6 @@
 'use client'
 
-import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, pointerWithin } from '@dnd-kit/core'
+import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, pointerWithin, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { restrictToWindowEdges } from '@dnd-kit/modifiers'
 import { MultiDragProvider } from '@/components/ui/dnd-kit/MultiDragContext'
 import { useSprintStore } from '@/lib/store/SprintStore'
@@ -24,6 +24,15 @@ export default function SprintBoard() {
    const [activeId, setActiveId] = useState<string | null>(null)
    const [activeSprintWithIssues, setActiveSprintWithIssues] = useState<any>(null)
    const [isExpanded, setIsExpanded] = useState(false)
+
+   // Configuración de sensores personalizados para el drag
+   const sensors = useSensors(
+      useSensor(PointerSensor, {
+         activationConstraint: {
+            distance: 3, // El drag se activa después de mover 3 píxeles
+         },
+      })
+   )
 
    // Obtener solo el sprint activo de los sprints disponibles
    const activeSprintData = activeSprint || sprints.find(sprint => sprint.active && sprint.id !== 'null')
@@ -194,6 +203,7 @@ export default function SprintBoard() {
       <div className="space-y-6">
          <MultiDragProvider value={{ selectedIds, setSelectedIds }}>
             <DndContext
+               sensors={sensors}
                collisionDetection={pointerWithin}
                onDragStart={handleDragStart}
                onDragEnd={handleDragEnd}
@@ -293,6 +303,7 @@ export default function SprintBoard() {
                <div className="flex-1 overflow-auto p-6">
                   <MultiDragProvider value={{ selectedIds, setSelectedIds }}>
                      <DndContext
+                        sensors={sensors}
                         collisionDetection={pointerWithin}
                         onDragStart={handleDragStart}
                         onDragEnd={handleDragEnd}

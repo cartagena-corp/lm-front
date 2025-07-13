@@ -335,6 +335,10 @@ export default function IssuesCard({ spr, setIsOpen, isOverlay = false }: { spr:
                               key={id}
                               id={id}
                               styleClass={`group bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md hover:border-gray-300 transition-all duration-200 cursor-grab active:cursor-grabbing ${isChecked ? 'ring-2 ring-blue-500 ring-opacity-50 border-blue-300' : ''}`}
+                              onDoubleClick={() => {
+                                 setIsTaskDetailsModalOpen(true)
+                                 setTaskActive(task)
+                              }}
                            >
                               {/* Header con checkbox, título y acciones */}
                               <div className="flex items-start justify-between gap-3 mb-3">
@@ -346,15 +350,7 @@ export default function IssuesCard({ spr, setIsOpen, isOverlay = false }: { spr:
                                        onPointerDown={e => e.stopPropagation()}
                                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 mt-1"
                                     />
-                                    <div 
-                                       className="flex-1 min-w-0 cursor-pointer hover:bg-blue-50 rounded-lg p-2 -m-2 transition-colors"
-                                       onClick={() => {
-                                          setIsTaskDetailsModalOpen(true)
-                                          setTaskActive(task)
-                                       }}
-                                       onPointerDown={e => e.stopPropagation()}
-                                       title="Haz clic para ver detalles de la tarea"
-                                    >
+                                    <div className="flex-1 min-w-0">
                                        <h6 className="font-semibold text-gray-900 line-clamp-2 text-sm mb-1" title={task.title}>
                                           {task.title}
                                        </h6>

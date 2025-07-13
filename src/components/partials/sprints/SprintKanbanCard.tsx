@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useConfigStore } from '@/lib/store/ConfigStore'
 import { useIssueStore } from '@/lib/store/IssueStore'
 import { useSprintStore } from '@/lib/store/SprintStore'
@@ -15,7 +15,10 @@ import {
     DragStartEvent,
     DragOverlay,
     useDroppable,
-    DragOverEvent
+    DragOverEvent,
+    PointerSensor,
+    useSensor,
+    useSensors
 } from '@dnd-kit/core'
 import {
     useSortable,
@@ -52,6 +55,10 @@ function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onView
     const { projectConfig } = useConfigStore()
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const menuRef = useRef<HTMLDivElement>(null)
+    
+    // Estado para manejar clicks y drag
+    const startPosition = useRef<{ x: number; y: number } | null>(null)
+    const lastClickTime = useRef<number>(0)
 
     const {
         attributes,
@@ -77,6 +84,52 @@ function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onView
         document.addEventListener('pointerdown', handleClickOutside)
         return () => document.removeEventListener('pointerdown', handleClickOutside)
     }, [])
+    
+    // Custom event handlers para detectar drag vs click
+    const handlePointerDown = useCallback((event: React.PointerEvent) => {
+        const currentTime = Date.now()
+        startPosition.current = { x: event.clientX, y: event.clientY }
+        
+        // Detectar doble click
+        if (currentTime - lastClickTime.current < 300) {
+            // Es un doble click
+            event.preventDefault()
+            event.stopPropagation()
+            onViewDetails(issue)
+            return
+        }
+        
+        lastClickTime.current = currentTime
+        
+        // Siempre llamar al listener original, el sensor se encarga de la distancia
+        if (listeners?.onPointerDown) {
+            listeners.onPointerDown(event)
+        }
+    }, [onViewDetails, issue, listeners])
+    
+    const handlePointerMove = useCallback((event: React.PointerEvent) => {
+        // Llamar al listener original del drag
+        if (listeners?.onPointerMove) {
+            listeners.onPointerMove(event)
+        }
+    }, [listeners])
+    
+    const handlePointerUp = useCallback((event: React.PointerEvent) => {
+        startPosition.current = null
+        
+        // Llamar al listener original del drag
+        if (listeners?.onPointerUp) {
+            listeners.onPointerUp(event)
+        }
+    }, [listeners])
+    
+    // Crear listeners personalizados
+    const customListeners = {
+        ...listeners,
+        onPointerDown: handlePointerDown,
+        onPointerMove: handlePointerMove,
+        onPointerUp: handlePointerUp
+    }
 
     const getPriorityInfo = (priorityId: number) => {
         const priority = projectConfig?.issuePriorities?.find(p => p.id === priorityId)
@@ -102,7 +155,7 @@ function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onView
             ref={setNodeRef}
             style={style}
             {...attributes}
-            {...listeners}
+            {...customListeners}
             className={`
         bg-white rounded-lg border border-gray-200 p-4 shadow-sm hover:shadow-md transition-all duration-300 cursor-grab relative
         ${isDragging ? 'opacity-50' : ''}
@@ -125,13 +178,8 @@ function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onView
                         </div>
                     </div>
                     <span
-                        className="text-sm font-medium text-gray-900 line-clamp-1 cursor-pointer hover:text-blue-600 transition-colors w-fit"
-                        title={`${issue.title} - Haz clic para ver detalles`}
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            onViewDetails(issue)
-                        }}
-                        onPointerDown={e => e.stopPropagation()}
+                        className="text-sm font-medium text-gray-900 line-clamp-1"
+                        title={issue.title}
                     >
                         {issue.title}
                     </span>
@@ -405,6 +453,15 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
 
     // Estado optimista para los issues
     const [optimisticIssues, setOptimisticIssues] = useState<TaskProps[]>([])
+    
+    // Configuración de sensores personalizados para el drag
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 3, // El drag se activa después de mover 3 píxeles
+            },
+        })
+    )
 
     // Usar issues optimistas si existen, sino usar los del sprint
     const issues = optimisticIssues.length > 0 ? optimisticIssues : (spr.tasks?.content || [])
@@ -868,6 +925,7 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
             {/* Kanban Columns */}
             <div className="p-6">
                 <DndContext
+                    sensors={sensors}
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
                     onDragOver={handleDragOver}

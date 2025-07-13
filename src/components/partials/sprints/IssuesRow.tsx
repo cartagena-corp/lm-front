@@ -364,6 +364,10 @@ export default function IssuesRow({ spr, setIsOpen, isOverlay = false }: { spr: 
                               key={id}
                               id={id}
                               styleClass={`grid grid-cols-18 gap-4 p-3 items-center hover:bg-blue-50/30 rounded-lg border border-gray-100 hover:border-blue-200 transition-all duration-200 cursor-grab active:cursor-grabbing bg-white shadow-sm hover:shadow-md`}
+                              onDoubleClick={() => {
+                                 setIsTaskDetailsModalOpen(true)
+                                 setTaskActive(task)
+                              }}
                            >
                               {/* Checkbox */}
                               <div className="col-span-1 flex justify-center">
@@ -388,15 +392,7 @@ export default function IssuesRow({ spr, setIsOpen, isOverlay = false }: { spr: 
                               </div>
 
                               {/* Tarea */}
-                              <div
-                                 className="col-span-5 cursor-pointer hover:bg-gray-50 rounded-lg p-2 -m-2 transition-colors"
-                                 onClick={() => {
-                                    setIsTaskDetailsModalOpen(true)
-                                    setTaskActive(task)
-                                 }}
-                                 onPointerDown={e => e.stopPropagation()}
-                                 title="Haz clic para ver detalles de la tarea"
-                              >
+                              <div className="col-span-5">
                                  <h6 className="font-medium text-gray-900 text-sm line-clamp-1" title={task.title}>
                                     {task.title}
                                  </h6>
