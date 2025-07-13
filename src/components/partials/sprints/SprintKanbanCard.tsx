@@ -6,18 +6,18 @@ import { useIssueStore } from '@/lib/store/IssueStore'
 import { useSprintStore } from '@/lib/store/SprintStore'
 import { useAuthStore } from '@/lib/store/AuthStore'
 import { TaskProps, SprintProps, ConfigProjectStatusProps } from '@/lib/types/types.d'
-import { 
-    DndContext, 
+import {
+    DndContext,
     closestCenter,
     pointerWithin,
     rectIntersection,
-    DragEndEvent, 
-    DragStartEvent, 
+    DragEndEvent,
+    DragStartEvent,
     DragOverlay,
     useDroppable,
     DragOverEvent
 } from '@dnd-kit/core'
-import { 
+import {
     useSortable,
     SortableContext,
     verticalListSortingStrategy,
@@ -124,7 +124,15 @@ function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onView
                             {typeInfo.name}
                         </div>
                     </div>
-                    <span className="text-sm font-medium text-gray-900 line-clamp-1" title={issue.title}>
+                    <span
+                        className="text-sm font-medium text-gray-900 line-clamp-1 cursor-pointer hover:text-blue-600 transition-colors w-fit"
+                        title={`${issue.title} - Haz clic para ver detalles`}
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            onViewDetails(issue)
+                        }}
+                        onPointerDown={e => e.stopPropagation()}
+                    >
                         {issue.title}
                     </span>
                 </div>
@@ -298,11 +306,11 @@ function StatusColumn({ status, issues, sprintId, activeId, overId, onViewDetail
         transform,
         transition,
         isDragging,
-    } = useSortable({ 
+    } = useSortable({
         id: `status-column-${status.id}`,
-        data: { 
+        data: {
             type: 'column',
-            status 
+            status
         }
     })
 
@@ -316,21 +324,19 @@ function StatusColumn({ status, issues, sprintId, activeId, overId, onViewDetail
     }
 
     // Verificar si estamos arrastrando una columna sobre esta columna
-    const isColumnOverTarget = activeId?.startsWith('status-column-') && 
-                              overId === `status-column-${status.id}` && 
-                              activeId !== `status-column-${status.id}`
+    const isColumnOverTarget = activeId?.startsWith('status-column-') &&
+        overId === `status-column-${status.id}` &&
+        activeId !== `status-column-${status.id}`
 
     return (
-        <div 
+        <div
             ref={setSortableNodeRef}
             style={style}
-            className={`flex flex-col min-w-80 w-80 flex-shrink-0 transition-all duration-300 ${
-                isDragging ? 'opacity-50' : ''
-            } ${
-                isColumnOverTarget ? 'transform scale-95 opacity-75 bg-blue-50 rounded-lg' : ''
-            }`}
+            className={`flex flex-col min-w-80 w-80 flex-shrink-0 transition-all duration-300 ${isDragging ? 'opacity-50' : ''
+                } ${isColumnOverTarget ? 'transform scale-95 opacity-75 bg-blue-50 rounded-lg' : ''
+                }`}
         >
-            <div 
+            <div
                 className="flex items-center gap-2 mb-3 cursor-grab active:cursor-grabbing"
                 {...attributes}
                 {...listeners}
@@ -352,10 +358,10 @@ function StatusColumn({ status, issues, sprintId, activeId, overId, onViewDetail
                 <SortableContext items={issues.filter(i => i.id).map(i => i.id!)} strategy={verticalListSortingStrategy}>
                     {issues.map((issue) => {
                         // Verificar si estamos arrastrando un issue sobre este issue
-                        const isIssueOverTarget = !!(activeId && 
-                                                !activeId.startsWith('status-column-') && 
-                                                overId === issue.id && 
-                                                activeId !== issue.id)
+                        const isIssueOverTarget = !!(activeId &&
+                            !activeId.startsWith('status-column-') &&
+                            overId === issue.id &&
+                            activeId !== issue.id)
 
                         return (
                             <DraggableIssue
@@ -402,7 +408,7 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
 
     // Usar issues optimistas si existen, sino usar los del sprint
     const issues = optimisticIssues.length > 0 ? optimisticIssues : (spr.tasks?.content || [])
-    
+
     // Ordenar los estados por orderIndex, y luego por id si no tienen orderIndex
     const statuses = [...(projectConfig?.issueStatuses || [])].sort((a, b) => {
         const orderA = (a as ConfigProjectStatusProps).orderIndex ?? 999999
@@ -885,14 +891,14 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
                                 />
                             ))}
                         </SortableContext>
-                        
+
                         {/* Columna para crear nuevo estado */}
                         <div className="flex flex-col min-w-80 w-80 flex-shrink-0">
                             <div className="flex items-center gap-2 mb-3">
                                 <div className="w-3 h-3 rounded-full bg-gray-300" />
                                 <h4 className="font-medium text-gray-500">Nuevo Estado</h4>
                             </div>
-                            
+
                             <div className="min-h-[200px] bg-gray-50 rounded-lg p-3 flex items-center justify-center">
                                 <button
                                     onClick={() => setIsCreateStatusModalOpen(true)}

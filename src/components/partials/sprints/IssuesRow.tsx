@@ -388,7 +388,15 @@ export default function IssuesRow({ spr, setIsOpen, isOverlay = false }: { spr: 
                               </div>
 
                               {/* Tarea */}
-                              <div className="col-span-5 space-y-1">
+                              <div
+                                 className="col-span-5 cursor-pointer hover:bg-gray-50 rounded-lg p-2 -m-2 transition-colors"
+                                 onClick={() => {
+                                    setIsTaskDetailsModalOpen(true)
+                                    setTaskActive(task)
+                                 }}
+                                 onPointerDown={e => e.stopPropagation()}
+                                 title="Haz clic para ver detalles de la tarea"
+                              >
                                  <h6 className="font-medium text-gray-900 text-sm line-clamp-1" title={task.title}>
                                     {task.title}
                                  </h6>
