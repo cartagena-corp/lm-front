@@ -429,7 +429,7 @@ function StatusColumn({ status, issues, sprintId, activeId, overId, onViewDetail
 
             <div
                 ref={setDroppableNodeRef}
-                className="min-h-[200px] bg-gray-50 rounded-lg p-3 space-y-3"
+                className="min-h-[200px] bg-gray-50 rounded-lg p-3 space-y-3 h-full"
             >
                 <SortableContext items={issues.filter(i => i.id).map(i => i.id!)} strategy={verticalListSortingStrategy}>
                     {issues.map((issue) => {
@@ -480,7 +480,7 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
     const [draggedColumn, setDraggedColumn] = useState<ConfigProjectStatusProps | null>(null)
 
     // Estado optimista para los issues
-    const [optimisticIssues, setOptimisticIssues] = useState<TaskProps[]>([])
+    const [optimisticIssues, setOptimisticIssues] = useState<TaskProps[] | null>(null)
     
     // Configuración de sensores personalizados para el drag
     const sensors = useSensors(
@@ -492,7 +492,7 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
     )
 
     // Usar issues optimistas si existen, sino usar los del sprint
-    const issues = optimisticIssues.length > 0 ? optimisticIssues : (spr.tasks?.content || [])
+    const issues = optimisticIssues !== null ? optimisticIssues : (spr.tasks?.content || [])
 
     // Ordenar los estados por orderIndex, y luego por id si no tienen orderIndex
     const statuses = [...(projectConfig?.issueStatuses || [])].sort((a, b) => {
@@ -506,7 +506,7 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
 
     // Efecto para limpiar estado optimista cuando cambian los datos del sprint
     useEffect(() => {
-        setOptimisticIssues([])
+        setOptimisticIssues(null)
     }, [spr.tasks?.content])
 
     // Group issues by status
@@ -765,7 +765,8 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
         const newStatusInfo = statuses.find(s => s.id === newStatusId)
         const oldStatusInfo = statuses.find(s => s.id === oldStatus)
 
-        // Actualización optimista: actualizar inmediatamente el estado local
+        // --- OPTIMISTIC UPDATE ---
+        const prevIssues = issues.map(i => ({ ...i }))
         const updatedIssues = issues.map(i =>
             i.id === activeId ? { ...i, status: newStatusId } : i
         )
@@ -797,7 +798,7 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
             await updateIssue(token, updatePayload)
 
             // Éxito: limpiar estado optimista y mostrar toast de éxito
-            setOptimisticIssues([])
+            setOptimisticIssues(null)
             toast.success(
                 `Tarea movida exitosamente a "${newStatusInfo?.name || 'Nuevo estado'}"`,
                 { id: toastId }
@@ -805,7 +806,7 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
 
         } catch (error) {
             // Error: revertir cambios optimistas y mostrar toast de error
-            setOptimisticIssues([])
+            setOptimisticIssues(prevIssues)
             console.error('Error updating issue status:', error)
 
             const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
@@ -813,6 +814,8 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
                 `Error al mover la tarea: ${errorMessage}`,
                 { id: toastId }
             )
+            // Limpiar el estado optimista después de un tiempo para evitar loops
+            setTimeout(() => setOptimisticIssues(null), 2000)
         }
     }
 
@@ -985,10 +988,10 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
                                 <h4 className="font-medium text-gray-500">Nuevo Estado</h4>
                             </div>
 
-                            <div className="min-h-[200px] bg-gray-50 rounded-lg p-3 flex items-center justify-center">
+                            <div className="min-h-[200px] bg-gray-50 rounded-lg flex items-center justify-center h-full">
                                 <button
                                     onClick={() => setIsCreateStatusModalOpen(true)}
-                                    className="flex flex-col items-center gap-2 p-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 group"
+                                    className="flex flex-col justify-center items-center gap-2 w-full h-full border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 group"
                                 >
                                     <div className="text-gray-400 group-hover:text-blue-500">
                                         <PlusIcon size={24} />

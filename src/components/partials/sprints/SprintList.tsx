@@ -12,6 +12,7 @@ import Modal from '../../layout/Modal'
 import IssuesRow from './IssuesRow'
 import { useState } from 'react'
 import { sortSprints } from '@/lib/utils/sprint.utils'
+import { toast } from 'react-hot-toast'
 
 export default function SprintList() {
    const { createIssue, assignIssueToSprint, removeIssueFromSprint } = useIssueStore()
@@ -24,6 +25,10 @@ export default function SprintList() {
 
    const [selectedIds, setSelectedIds] = useState<string[]>([])
    const [activeId, setActiveId] = useState<string | null>(null)
+
+   // Estado optimista para sprints
+   const [optimisticSprints, setOptimisticSprints] = useState<any[] | null>(null)
+   const [optimisticTimeout, setOptimisticTimeout] = useState<NodeJS.Timeout | null>(null)
 
    // Sensores personalizados para drag igual que SprintKanbanCard
    const sensors = useSensors(
@@ -91,19 +96,51 @@ export default function SprintList() {
          return
       }
 
+      // --- OPTIMISTIC UPDATE ---
+      // Guardar copia previa para revertir si falla
+      const prevSprints = sprints.map(s => ({ ...s, tasks: { ...s.tasks, content: [...(s.tasks?.content || [])] } }))
+      let newSprints = sprints.map(s => ({ ...s, tasks: { ...s.tasks, content: [...(s.tasks?.content || [])] } }))
+
+      // Remover las issues seleccionadas de todos los sprints
+      newSprints = newSprints.map(sprint => ({
+         ...sprint,
+         tasks: {
+            ...sprint.tasks,
+            content: sprint.tasks?.content?.filter((t: any) => !selectedIds.includes(t.id)) || []
+         }
+      }))
+
+      // Agregar las issues seleccionadas al sprint destino (si no es backlog)
+      if (targetSprintId !== 'null') {
+         const targetSprintIdx = newSprints.findIndex(s => s.id === targetSprintId)
+         if (targetSprintIdx !== -1) {
+            const selectedTasks = prevSprints
+               .flatMap(s => s.tasks?.content?.filter((t: any) => selectedIds.includes(t.id)) || [])
+            newSprints[targetSprintIdx] = {
+               ...newSprints[targetSprintIdx],
+               tasks: {
+                  ...newSprints[targetSprintIdx].tasks,
+                  content: [...selectedTasks, ...(newSprints[targetSprintIdx].tasks?.content || [])]
+               }
+            }
+         }
+      }
+      // Si es backlog, no se agregan a ningún sprint (ya fueron removidas)
+
+      setOptimisticSprints(newSprints)
+
+      // --- FIN OPTIMISTIC ---
+
       try {
          const token = await getValidAccessToken()
          if (!token) return
-         
          if (targetSprintId === 'null') {
-            // Moving to backlog - remove from current sprint
             await removeIssueFromSprint(
                token,
                selectedIds,
                selectedBoard?.id as string
             )
          } else {
-            // Moving to a specific sprint
             await assignIssueToSprint(
                token,
                selectedIds,
@@ -111,8 +148,15 @@ export default function SprintList() {
                selectedBoard?.id as string
             )
          }
+         // Si todo sale bien, limpiar estado optimista
+         setOptimisticSprints(null)
       } catch (err) {
-         console.error(err)
+         // Si falla, revertir
+         setOptimisticSprints(prevSprints)
+         toast.error('No se pudo mover la tarea. Intenta de nuevo.')
+         // Limpiar el estado optimista después de un tiempo para evitar loops
+         if (optimisticTimeout) clearTimeout(optimisticTimeout)
+         setOptimisticTimeout(setTimeout(() => setOptimisticSprints(null), 2000))
       } finally {
          setSelectedIds([])
          setActiveId(null)
@@ -143,6 +187,9 @@ export default function SprintList() {
       )
    }
 
+   // Usar sprints optimistas si existen
+   const sprintsToRender = optimisticSprints || sprints
+
    return (
       <div className="space-y-6">
          <MultiDragProvider value={{ selectedIds, setSelectedIds }}>
@@ -153,7 +200,7 @@ export default function SprintList() {
                onDragEnd={handleDragEnd}
                modifiers={[restrictToVerticalAxis, restrictToWindowEdges]}
             >
-               {sortSprints(sprints).map(spr => (
+               {sortSprints(sprintsToRender).map(spr => (
                   <IssuesRow
                      key={spr.id}
                      spr={spr}
