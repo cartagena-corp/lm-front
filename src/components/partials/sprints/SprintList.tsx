@@ -110,12 +110,14 @@ export default function SprintList() {
          }
       }))
 
-      // Agregar las issues seleccionadas al sprint destino (si no es backlog)
       if (targetSprintId !== 'null') {
+         // Agregar las issues seleccionadas al sprint destino
          const targetSprintIdx = newSprints.findIndex(s => s.id === targetSprintId)
          if (targetSprintIdx !== -1) {
             const selectedTasks = prevSprints
                .flatMap(s => s.tasks?.content?.filter((t: any) => selectedIds.includes(t.id)) || [])
+               // Asegurarse de poner el sprintId correcto
+               .map((t: any) => ({ ...t, sprintId: targetSprintId }))
             newSprints[targetSprintIdx] = {
                ...newSprints[targetSprintIdx],
                tasks: {
@@ -124,12 +126,21 @@ export default function SprintList() {
                }
             }
          }
+      } else {
+         // Si es backlog, poner sprintId: null en los issues seleccionados
+         // (no se agregan a ningún sprint, ya fueron removidos)
+         // Esto es solo para simular en la UI, ya que el backend lo hará realmente
+         // No hay una lista de backlog explícita, pero podrías manejarla si la tienes
+         // Si tienes una lista de issues de backlog, aquí podrías agregarlos
+         // Por ahora, solo los removemos de los sprints y su sprintId es null
       }
-      // Si es backlog, no se agregan a ningún sprint (ya fueron removidas)
 
       setOptimisticSprints(newSprints)
 
       // --- FIN OPTIMISTIC ---
+
+      // Toast de movimiento
+      const toastId = toast.loading('Moviendo tareas...')
 
       try {
          const token = await getValidAccessToken()
@@ -150,10 +161,11 @@ export default function SprintList() {
          }
          // Si todo sale bien, limpiar estado optimista
          setOptimisticSprints(null)
+         toast.success('Tareas movidas exitosamente', { id: toastId })
       } catch (err) {
          // Si falla, revertir
          setOptimisticSprints(prevSprints)
-         toast.error('No se pudo mover la tarea. Intenta de nuevo.')
+         toast.error('No se pudo mover la tarea. Intenta de nuevo.', { id: toastId })
          // Limpiar el estado optimista después de un tiempo para evitar loops
          if (optimisticTimeout) clearTimeout(optimisticTimeout)
          setOptimisticTimeout(setTimeout(() => setOptimisticSprints(null), 2000))
