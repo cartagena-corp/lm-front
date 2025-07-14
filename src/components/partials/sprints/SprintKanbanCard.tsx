@@ -59,6 +59,8 @@ function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onView
     // Estado para manejar clicks y drag
     const startPosition = useRef<{ x: number; y: number } | null>(null)
     const lastClickTime = useRef<number>(0)
+    const isPointerDown = useRef<boolean>(false)
+    const hasMoved = useRef<boolean>(false)
 
     const {
         attributes,
@@ -89,6 +91,8 @@ function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onView
     const handlePointerDown = useCallback((event: React.PointerEvent) => {
         const currentTime = Date.now()
         startPosition.current = { x: event.clientX, y: event.clientY }
+        isPointerDown.current = true
+        hasMoved.current = false
         
         // Detectar doble click
         if (currentTime - lastClickTime.current < 300) {
@@ -108,6 +112,16 @@ function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onView
     }, [onViewDetails, issue, listeners])
     
     const handlePointerMove = useCallback((event: React.PointerEvent) => {
+        if (startPosition.current && isPointerDown.current) {
+            const deltaX = Math.abs(event.clientX - startPosition.current.x)
+            const deltaY = Math.abs(event.clientY - startPosition.current.y)
+            
+            // Si se mueve más de 3 píxeles, marcar como movimiento
+            if (deltaX > 3 || deltaY > 3) {
+                hasMoved.current = true
+            }
+        }
+        
         // Llamar al listener original del drag
         if (listeners?.onPointerMove) {
             listeners.onPointerMove(event)
@@ -115,13 +129,27 @@ function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onView
     }, [listeners])
     
     const handlePointerUp = useCallback((event: React.PointerEvent) => {
+        // Si fue un click simple (sin movimiento) y no fue doble click
+        if (isPointerDown.current && !hasMoved.current) {
+            // Esperar un momento para ver si viene un segundo click
+            setTimeout(() => {
+                const timeSinceLastClick = Date.now() - lastClickTime.current
+                // Si han pasado más de 300ms desde el último click, es un click simple
+                if (timeSinceLastClick > 300) {
+                    onViewDetails(issue)
+                }
+            }, 350) // Esperar un poco más de 300ms para asegurar que no es doble click
+        }
+        
         startPosition.current = null
+        isPointerDown.current = false
+        hasMoved.current = false
         
         // Llamar al listener original del drag
         if (listeners?.onPointerUp) {
             listeners.onPointerUp(event)
         }
-    }, [listeners])
+    }, [onViewDetails, issue, listeners])
     
     // Crear listeners personalizados
     const customListeners = {

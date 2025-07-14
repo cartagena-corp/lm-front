@@ -1,6 +1,7 @@
 import { useMultiDragContext } from '@/components/ui/dnd-kit/MultiDragContext'
-import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react'
-import { Draggable } from '@/components/ui/dnd-kit/Draggable'
+import { Dispatch, SetStateAction, useEffect, useRef, useState, useCallback } from 'react'
+import { useDraggable } from '@dnd-kit/core'
+import { CSS } from '@dnd-kit/utilities'
 import { Droppable } from '@/components/ui/dnd-kit/Droppable'
 import { SprintProps, TaskProps } from '@/lib/types/types'
 import { useConfigStore } from '@/lib/store/ConfigStore'
@@ -19,6 +20,295 @@ import DeleteSprintForm from './DeleteSprintForm'
 import IssueConfig from '../config/issues/IssueConfig'
 import AuditHistory from '../audit/AuditHistory'
 import { getUserAvatar } from '@/lib/utils/avatar.utils'
+
+// Component DraggableIssueRow - Implementación igual a SprintKanbanCard
+interface DraggableIssueRowProps {
+   task: TaskProps
+   selectedIds: string[]
+   toggleSelect: (id: string) => void
+   onViewDetails: () => void
+   onEdit: () => void
+   onReassign: () => void
+   onDelete: () => void
+   onHistory: () => void
+   getStatusStyle: (id: number) => any
+   getPriorityStyle: (id: number) => any
+   getTypeStyle: (id: number) => any
+   openItemId: string | null
+   setOpenItemId: (id: string | null) => void
+   wrapperRef: React.RefObject<HTMLDivElement>
+}
+
+function DraggableIssueRow({ task, selectedIds, toggleSelect, onViewDetails, onEdit, onReassign, onDelete, onHistory, getStatusStyle, getPriorityStyle, getTypeStyle, openItemId, setOpenItemId, wrapperRef }: DraggableIssueRowProps) {
+   const id = task.id as string
+   const isChecked = selectedIds.includes(id)
+   
+   // Estado para manejar clicks y drag - MISMA LÓGICA QUE SprintKanbanCard
+   const startPosition = useRef<{ x: number; y: number } | null>(null)
+   const lastClickTime = useRef<number>(0)
+   const isPointerDown = useRef<boolean>(false)
+   const hasMoved = useRef<boolean>(false)
+
+   const {
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      isDragging,
+   } = useDraggable({ id })
+
+   const style = {
+      transform: CSS.Translate.toString(transform),
+   }
+
+   // Custom event handlers para detectar drag vs click - MISMA LÓGICA QUE SprintKanbanCard
+   const handlePointerDown = useCallback((event: React.PointerEvent) => {
+      const currentTime = Date.now()
+      startPosition.current = { x: event.clientX, y: event.clientY }
+      isPointerDown.current = true
+      hasMoved.current = false
+      
+      // Detectar doble click
+      if (currentTime - lastClickTime.current < 300) {
+         // Es un doble click
+         event.preventDefault()
+         event.stopPropagation()
+         onViewDetails()
+         return
+      }
+      
+      lastClickTime.current = currentTime
+      
+      // Siempre llamar al listener original, el sensor se encarga de la distancia
+      if (listeners?.onPointerDown) {
+         listeners.onPointerDown(event)
+      }
+   }, [onViewDetails, listeners])
+   
+   const handlePointerMove = useCallback((event: React.PointerEvent) => {
+      if (startPosition.current && isPointerDown.current) {
+         const deltaX = Math.abs(event.clientX - startPosition.current.x)
+         const deltaY = Math.abs(event.clientY - startPosition.current.y)
+         
+         // Si se mueve más de 3 píxeles, marcar como movimiento
+         if (deltaX > 3 || deltaY > 3) {
+            hasMoved.current = true
+         }
+      }
+      
+      // Llamar al listener original del drag
+      if (listeners?.onPointerMove) {
+         listeners.onPointerMove(event)
+      }
+   }, [listeners])
+   
+   const handlePointerUp = useCallback((event: React.PointerEvent) => {
+      // Si fue un click simple (sin movimiento) y no fue doble click
+      if (isPointerDown.current && !hasMoved.current) {
+         // Esperar un momento para ver si viene un segundo click
+         setTimeout(() => {
+            const timeSinceLastClick = Date.now() - lastClickTime.current
+            // Si han pasado más de 300ms desde el último click, es un click simple
+            if (timeSinceLastClick > 300) {
+               onViewDetails()
+            }
+         }, 350) // Esperar un poco más de 300ms para asegurar que no es doble click
+      }
+      
+      startPosition.current = null
+      isPointerDown.current = false
+      hasMoved.current = false
+      
+      // Llamar al listener original del drag
+      if (listeners?.onPointerUp) {
+         listeners.onPointerUp(event)
+      }
+   }, [onViewDetails, listeners])
+   
+   // Crear listeners personalizados
+   const customListeners = {
+      ...listeners,
+      onPointerDown: handlePointerDown,
+      onPointerMove: handlePointerMove,
+      onPointerUp: handlePointerUp
+   }
+
+   return (
+      <div
+         ref={setNodeRef}
+         style={style}
+         {...attributes}
+         {...customListeners}
+         className={`grid grid-cols-18 gap-4 p-3 items-center hover:bg-blue-50/30 rounded-lg border border-gray-100 hover:border-blue-200 transition-all cursor-grab active:cursor-grabbing bg-white shadow-sm hover:shadow-md ${isDragging ? 'opacity-0' : ''}`}
+      >
+         {/* Checkbox */}
+         <div className="col-span-1 flex justify-center">
+            <input
+               type="checkbox"
+               checked={isChecked}
+               onChange={() => toggleSelect(id)}
+               onPointerDown={e => e.stopPropagation()}
+               className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+            />
+         </div>
+
+         {/* Tipo */}
+         <div
+            className="col-span-1 rounded-full text-[10px] border px-2 whitespace-nowrap w-fit"
+            style={{
+               backgroundColor: `${getTypeStyle(Number(task.type))?.color ?? "#000000"}0f`,
+               color: getTypeStyle(Number(task.type))?.color ?? "#000000"
+            }}
+         >
+            {getTypeStyle(Number(task.type))?.name ?? "Sin tipo"}
+         </div>
+
+         {/* Tarea */}
+         <div className="col-span-5">
+            <h6 className="font-medium text-gray-900 text-sm line-clamp-1" title={task.title}>
+               {task.title}
+            </h6>
+            <p className="text-xs text-gray-500 line-clamp-1" title={task.descriptions[0]?.text}>
+               {task.descriptions[0]?.text || 'Sin descripción'}
+            </p>
+         </div>
+
+         {/* Estado */}
+         <div className="col-span-2">
+            <span
+               className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border"
+               style={{
+                  backgroundColor: `${getStatusStyle(Number(task.status))?.color ?? "#6B7280"}15`,
+                  color: getStatusStyle(Number(task.status))?.color ?? "#6B7280",
+                  borderColor: `${getStatusStyle(Number(task.status))?.color ?? "#6B7280"}30`
+               }}
+            >
+               <div
+                  className="w-1.5 h-1.5 rounded-full"
+                  style={{ backgroundColor: getStatusStyle(Number(task.status))?.color ?? "#6B7280" }}
+               />
+               {getStatusStyle(Number(task.status))?.name ?? "Sin estado"}
+            </span>
+         </div>
+
+         {/* Prioridad */}
+         <div className="col-span-2">
+            <span
+               className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border"
+               style={{
+                  backgroundColor: `${getPriorityStyle(Number(task.priority))?.color ?? "#6B7280"}15`,
+                  color: getPriorityStyle(Number(task.priority))?.color ?? "#6B7280",
+                  borderColor: `${getPriorityStyle(Number(task.priority))?.color ?? "#6B7280"}30`
+               }}
+            >
+               <div
+                  className="w-1.5 h-1.5 rounded-full"
+                  style={{ backgroundColor: getPriorityStyle(Number(task.priority))?.color ?? "#6B7280" }}
+               />
+               {getPriorityStyle(Number(task.priority))?.name ?? "Sin prioridad"}
+            </span>
+         </div>
+
+         {/* Asignado a */}
+         <div className="col-span-5">
+            <button
+               className="flex items-center gap-2 w-full text-left hover:bg-gray-50 rounded-lg p-2 transition-colors"
+               onPointerDown={e => e.stopPropagation()}
+               onClick={onReassign}
+            >
+               <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
+                  {typeof task.assignedId === 'object' && task.assignedId ? (
+                     <img
+                        src={getUserAvatar(task.assignedId, 24)}
+                        alt="Asignado a"
+                        className="w-full h-full object-cover rounded-full"
+                     />
+                  ) : (
+                     <span className="text-xs font-medium text-gray-600">
+                        N/A
+                     </span>
+                  )}
+               </div>
+               <span className="text-xs text-gray-700 line-clamp-1">
+                  {typeof task.assignedId === 'object' && task.assignedId
+                     ? `${task.assignedId.firstName} ${task.assignedId.lastName}`
+                     : 'Sin asignar'}
+               </span>
+            </button>
+         </div>
+
+         {/* Acciones */}
+         <div className="col-span-1 flex justify-center">
+            <div ref={openItemId === task.id ? wrapperRef : null} className="relative">
+               <button
+                  onClick={() => {
+                     setOpenItemId(openItemId === task.id ? null : task.id as string)
+                  }}
+                  onPointerDown={e => e.stopPropagation()}
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+               >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                  </svg>
+               </button>
+
+               {openItemId === task.id && (
+                  <div
+                     className="absolute top-full right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-[70] overflow-hidden"
+                     onPointerDown={e => e.stopPropagation()}
+                  >
+                     <button
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
+                        onPointerDown={e => e.stopPropagation()}
+                        onClick={() => {
+                           onViewDetails()
+                           setOpenItemId(null)
+                        }}
+                     >
+                        <EyeIcon size={14} />
+                        Ver detalles
+                     </button>
+                     <button
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
+                        onPointerDown={e => e.stopPropagation()}
+                        onClick={() => {
+                           onEdit()
+                           setOpenItemId(null)
+                        }}
+                     >
+                        <EditIcon size={14} />
+                        Editar
+                     </button>
+                     <button
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
+                        onPointerDown={e => e.stopPropagation()}
+                        onClick={() => {
+                           onHistory()
+                           setOpenItemId(null)
+                        }}
+                     >
+                        <ClockIcon size={14} />
+                        Historial
+                     </button>
+                     <div className="border-t border-gray-100"></div>
+                     <button
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-red-50 transition-colors flex items-center gap-2 text-red-600"
+                        onPointerDown={e => e.stopPropagation()}
+                        onClick={() => {
+                           onDelete()
+                           setOpenItemId(null)
+                        }}
+                     >
+                        <DeleteIcon size={14} />
+                        Eliminar
+                     </button>
+                  </div>
+               )}
+            </div>
+         </div>
+      </div>
+   )
+}
 
 export default function IssuesRow({ spr, setIsOpen, isOverlay = false }: { spr: SprintProps, setIsOpen: Dispatch<SetStateAction<boolean>>, isOverlay?: boolean }) {
    const { selectedIds, setSelectedIds } = useMultiDragContext()
@@ -356,190 +646,39 @@ export default function IssuesRow({ spr, setIsOpen, isOverlay = false }: { spr: 
 
                      {/* Filas de tareas */}
                      {spr.tasks.content.map((task, index) => {
-                        const id = task.id as string
-                        const isChecked = selectedIds.includes(id)
-
                         return (
-                           <Draggable
-                              key={id}
-                              id={id}
-                              styleClass={`grid grid-cols-18 gap-4 p-3 items-center hover:bg-blue-50/30 rounded-lg border border-gray-100 hover:border-blue-200 transition-all duration-200 cursor-grab active:cursor-grabbing bg-white shadow-sm hover:shadow-md`}
-                              onDoubleClick={() => {
+                           <DraggableIssueRow
+                              key={task.id}
+                              task={task}
+                              selectedIds={selectedIds}
+                              toggleSelect={toggleSelect}
+                              onViewDetails={() => {
                                  setIsTaskDetailsModalOpen(true)
                                  setTaskActive(task)
                               }}
-                           >
-                              {/* Checkbox */}
-                              <div className="col-span-1 flex justify-center">
-                                 <input
-                                    type="checkbox"
-                                    checked={isChecked}
-                                    onChange={() => toggleSelect(id)}
-                                    onPointerDown={e => e.stopPropagation()}
-                                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                                 />
-                              </div>
-
-                              {/* Tipo */}
-                              <div
-                                 className="col-span-1 rounded-full text-[10px] border px-2 whitespace-nowrap w-fit"
-                                 style={{
-                                    backgroundColor: `${getTypeStyle(Number(task.type))?.color ?? "#000000"}0f`,
-                                    color: getTypeStyle(Number(task.type))?.color ?? "#000000"
-                                 }}
-                              >
-                                 {getTypeStyle(Number(task.type))?.name ?? "Sin tipo"}
-                              </div>
-
-                              {/* Tarea */}
-                              <div className="col-span-5">
-                                 <h6 className="font-medium text-gray-900 text-sm line-clamp-1" title={task.title}>
-                                    {task.title}
-                                 </h6>
-                                 <p className="text-xs text-gray-500 line-clamp-1" title={task.descriptions[0]?.text}>
-                                    {task.descriptions[0]?.text || 'Sin descripción'}
-                                 </p>
-                              </div>
-
-                              {/* Estado */}
-                              <div className="col-span-2">
-                                 <span
-                                    className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border"
-                                    style={{
-                                       backgroundColor: `${getStatusStyle(Number(task.status))?.color ?? "#6B7280"}15`,
-                                       color: getStatusStyle(Number(task.status))?.color ?? "#6B7280",
-                                       borderColor: `${getStatusStyle(Number(task.status))?.color ?? "#6B7280"}30`
-                                    }}
-                                 >
-                                    <div
-                                       className="w-1.5 h-1.5 rounded-full"
-                                       style={{ backgroundColor: getStatusStyle(Number(task.status))?.color ?? "#6B7280" }}
-                                    />
-                                    {getStatusStyle(Number(task.status))?.name ?? "Sin estado"}
-                                 </span>
-                              </div>
-
-                              {/* Prioridad */}
-                              <div className="col-span-2">
-                                 <span
-                                    className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border"
-                                    style={{
-                                       backgroundColor: `${getPriorityStyle(Number(task.priority))?.color ?? "#6B7280"}15`,
-                                       color: getPriorityStyle(Number(task.priority))?.color ?? "#6B7280",
-                                       borderColor: `${getPriorityStyle(Number(task.priority))?.color ?? "#6B7280"}30`
-                                    }}
-                                 >
-                                    <div
-                                       className="w-1.5 h-1.5 rounded-full"
-                                       style={{ backgroundColor: getPriorityStyle(Number(task.priority))?.color ?? "#6B7280" }}
-                                    />
-                                    {getPriorityStyle(Number(task.priority))?.name ?? "Sin prioridad"}
-                                 </span>
-                              </div>
-
-                              {/* Asignado a */}
-                              <div className="col-span-5">
-                                 <button
-                                    className="flex items-center gap-2 w-full text-left hover:bg-gray-50 rounded-lg p-2 transition-colors"
-                                    onPointerDown={e => e.stopPropagation()}
-                                    onClick={() => {
-                                       setIsReasignModalOpen(true)
-                                       setOpenItemId(null)
-                                       setTaskActive(task)
-                                    }}
-                                 >
-                                    <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
-                                       {typeof task.assignedId === 'object' && task.assignedId ? (
-                                          <img
-                                             src={getUserAvatar(task.assignedId, 24)}
-                                             alt="Asignado a"
-                                             className="w-full h-full object-cover rounded-full"
-                                          />
-                                       ) : (
-                                          <span className="text-xs font-medium text-gray-600">
-                                             N/A
-                                          </span>
-                                       )}
-                                    </div>
-                                    <span className="text-xs text-gray-700 line-clamp-1">
-                                       {typeof task.assignedId === 'object' && task.assignedId
-                                          ? `${task.assignedId.firstName} ${task.assignedId.lastName}`
-                                          : 'Sin asignar'}
-                                    </span>
-                                 </button>
-                              </div>
-
-                              {/* Acciones */}
-                              <div className="col-span-1 flex justify-center">
-                                 <div ref={openItemId === task.id ? wrapperRef : null} className="relative">
-                                    <button
-                                       onClick={() => {
-                                          setOpenItemId(openItemId === task.id ? null : task.id as string)
-                                          setTaskActive(task)
-                                       }}
-                                       onPointerDown={e => e.stopPropagation()}
-                                       className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                                    >
-                                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                                       </svg>
-                                    </button>
-
-                                    {openItemId === task.id && (
-                                       <div
-                                          className="absolute top-full right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-[70] overflow-hidden"
-                                          onPointerDown={e => e.stopPropagation()}
-                                       >
-                                          <button
-                                             className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
-                                             onPointerDown={e => e.stopPropagation()}
-                                             onClick={() => {
-                                                setIsTaskDetailsModalOpen(true)
-                                                setOpenItemId(null)
-                                             }}
-                                          >
-                                             <EyeIcon size={14} />
-                                             Ver detalles
-                                          </button>
-                                          <button
-                                             className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
-                                             onPointerDown={e => e.stopPropagation()}
-                                             onClick={() => {
-                                                setIsTaskUpdateModalOpen(true)
-                                                setOpenItemId(null)
-                                             }}
-                                          >
-                                             <EditIcon size={14} />
-                                             Editar
-                                          </button>
-                                          <button
-                                             className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
-                                             onPointerDown={e => e.stopPropagation()}
-                                             onClick={() => {
-                                                setIsHistoryModalOpen(true)
-                                                setOpenItemId(null)
-                                             }}
-                                          >
-                                             <ClockIcon size={14} />
-                                             Historial
-                                          </button>
-                                          <div className="border-t border-gray-100"></div>
-                                          <button
-                                             className="w-full px-3 py-2 text-left text-sm hover:bg-red-50 transition-colors flex items-center gap-2 text-red-600"
-                                             onPointerDown={e => e.stopPropagation()}
-                                             onClick={() => {
-                                                setIsDeleteModalOpen(true)
-                                                setOpenItemId(null)
-                                             }}
-                                          >
-                                             <DeleteIcon size={14} />
-                                             Eliminar
-                                          </button>
-                                       </div>
-                                    )}
-                                 </div>
-                              </div>
-                           </Draggable>
+                              onEdit={() => {
+                                 setIsTaskUpdateModalOpen(true)
+                                 setTaskActive(task)
+                              }}
+                              onReassign={() => {
+                                 setIsReasignModalOpen(true)
+                                 setTaskActive(task)
+                              }}
+                              onDelete={() => {
+                                 setIsDeleteModalOpen(true)
+                                 setTaskActive(task)
+                              }}
+                              onHistory={() => {
+                                 setIsHistoryModalOpen(true)
+                                 setTaskActive(task)
+                              }}
+                              getStatusStyle={getStatusStyle}
+                              getPriorityStyle={getPriorityStyle}
+                              getTypeStyle={getTypeStyle}
+                              openItemId={openItemId}
+                              setOpenItemId={setOpenItemId}
+                              wrapperRef={wrapperRef}
+                           />
                         )
                      })}
                   </div>

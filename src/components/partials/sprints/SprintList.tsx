@@ -1,4 +1,4 @@
-import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, pointerWithin } from '@dnd-kit/core'
+import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, pointerWithin, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { MultiDragProvider } from '@/components/ui/dnd-kit/MultiDragContext'
 import { useSprintStore } from '@/lib/store/SprintStore'
 import { restrictToVerticalAxis, restrictToWindowEdges } from '@dnd-kit/modifiers'
@@ -24,6 +24,15 @@ export default function SprintList() {
 
    const [selectedIds, setSelectedIds] = useState<string[]>([])
    const [activeId, setActiveId] = useState<string | null>(null)
+
+   // Sensores personalizados para drag igual que SprintKanbanCard
+   const sensors = useSensors(
+      useSensor(PointerSensor, {
+         activationConstraint: {
+            distance: 3, // El drag se activa después de mover 3 píxeles
+         },
+      })
+   )
 
    const handleCreateTask = async (newTask: any) => {
       const token = await getValidAccessToken()
@@ -138,6 +147,7 @@ export default function SprintList() {
       <div className="space-y-6">
          <MultiDragProvider value={{ selectedIds, setSelectedIds }}>
             <DndContext
+               sensors={sensors}
                collisionDetection={pointerWithin}
                onDragStart={handleDragStart}
                onDragEnd={handleDragEnd}
@@ -154,11 +164,16 @@ export default function SprintList() {
 
                <DragOverlay dropAnimation={null}>
                   {activeId && (
-                     <IssuesRow
-                        spr={sprints.find(s => s.id === activeId)!}
-                        isOverlay={true}
-                        setIsOpen={setIsCreateTaskOpen}
-                     />
+                     <div className="bg-blue-50 border-2 border-blue-200 border-dashed text-blue-700 cursor-grabbing flex items-center justify-center rounded-xl shadow-lg w-full h-20 transition-all duration-200">
+                        <div className="flex items-center gap-2">
+                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                           </svg>
+                           <span className="font-medium text-sm">
+                              {selectedIds.length === 1 ? `${selectedIds.length} tarea seleccionada` : `${selectedIds.length} tareas seleccionadas`}
+                           </span>
+                        </div>
+                     </div>
                   )}
                </DragOverlay>
             </DndContext>
