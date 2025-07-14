@@ -116,7 +116,6 @@ export default function SprintList() {
          if (targetSprintIdx !== -1) {
             const selectedTasks = prevSprints
                .flatMap(s => s.tasks?.content?.filter((t: any) => selectedIds.includes(t.id)) || [])
-               // Asegurarse de poner el sprintId correcto
                .map((t: any) => ({ ...t, sprintId: targetSprintId }))
             newSprints[targetSprintIdx] = {
                ...newSprints[targetSprintIdx],
@@ -127,19 +126,45 @@ export default function SprintList() {
             }
          }
       } else {
-         // Si es backlog, poner sprintId: null en los issues seleccionados
-         // (no se agregan a ningún sprint, ya fueron removidos)
-         // Esto es solo para simular en la UI, ya que el backend lo hará realmente
-         // No hay una lista de backlog explícita, pero podrías manejarla si la tienes
-         // Si tienes una lista de issues de backlog, aquí podrías agregarlos
-         // Por ahora, solo los removemos de los sprints y su sprintId es null
+         // Si es backlog, poner sprintId: null en los issues seleccionados y agregarlos al backlog visual
+         // 1. Buscar las tasks seleccionadas en prevSprints
+         const selectedTasks = prevSprints
+            .flatMap(s => s.tasks?.content?.filter((t: any) => selectedIds.includes(t.id)) || [])
+            .map((t: any) => ({ ...t, sprintId: null }))
+         // 2. Buscar si ya existe un sprint backlog en newSprints
+         let backlogIdx = newSprints.findIndex(s => s.id === 'null')
+         if (backlogIdx === -1) {
+            // Si no existe, crear uno
+            newSprints = [
+               {
+                  id: 'null',
+                  projectId: selectedBoard?.id || '',
+                  title: 'Backlog',
+                  active: false,
+                  status: 0,
+                  goal: '',
+                  startDate: '',
+                  endDate: '',
+                  tasks: { content: selectedTasks }
+               },
+               ...newSprints
+            ]
+         } else {
+            // Si existe, agregar las tasks al backlog
+            newSprints[backlogIdx] = {
+               ...newSprints[backlogIdx],
+               tasks: {
+                  ...newSprints[backlogIdx].tasks,
+                  content: [...selectedTasks, ...(newSprints[backlogIdx].tasks?.content || [])]
+               }
+            }
+         }
       }
 
       setOptimisticSprints(newSprints)
 
       // --- FIN OPTIMISTIC ---
 
-      // Toast de movimiento
       const toastId = toast.loading('Moviendo tareas...')
 
       try {
@@ -159,14 +184,11 @@ export default function SprintList() {
                selectedBoard?.id as string
             )
          }
-         // Si todo sale bien, limpiar estado optimista
          setOptimisticSprints(null)
          toast.success('Tareas movidas exitosamente', { id: toastId })
       } catch (err) {
-         // Si falla, revertir
          setOptimisticSprints(prevSprints)
          toast.error('No se pudo mover la tarea. Intenta de nuevo.', { id: toastId })
-         // Limpiar el estado optimista después de un tiempo para evitar loops
          if (optimisticTimeout) clearTimeout(optimisticTimeout)
          setOptimisticTimeout(setTimeout(() => setOptimisticSprints(null), 2000))
       } finally {
@@ -202,23 +224,26 @@ export default function SprintList() {
    // Usar sprints optimistas si existen
    // Construir backlog visual
    const allSprints = optimisticSprints || sprints
+   // Sprints sin el backlog (id !== 'null')
+   const realSprints = allSprints.filter(s => s.id !== 'null')
    // Obtener todas las issues de todos los sprints
    const allIssues = allSprints.flatMap(s => s.tasks?.content || [])
    // Issues de backlog: sprintId === null
    const backlogIssues = allIssues.filter((t: any) => t.sprintId === null)
+   // Obtener projectId para backlogSprint
+   const projectIdForBacklog = realSprints.length > 0 ? realSprints[0].projectId : ''
    // Sprint especial para backlog
    const backlogSprint = {
      id: 'null',
+     projectId: projectIdForBacklog,
      title: 'Backlog',
      active: false,
      status: 0,
      goal: '',
-     startDate: null,
-     endDate: null,
+     startDate: '',
+     endDate: '',
      tasks: { content: backlogIssues }
    }
-   // Sprints sin el backlog (id !== 'null')
-   const realSprints = allSprints.filter(s => s.id !== 'null')
    // Lista final: backlog primero, luego los sprints reales
    const sprintsToRender = [backlogSprint, ...realSprints]
 
