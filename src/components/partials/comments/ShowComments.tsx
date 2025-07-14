@@ -110,6 +110,27 @@ export default function ShowComments({ arrayComments, task }: ShowCommentsProps)
       e.target.value = ""
    }
 
+   // Manejar pegado de imágenes desde el portapapeles
+   const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+      if (e.clipboardData && e.clipboardData.items) {
+         const items = Array.from(e.clipboardData.items)
+         const imageFiles: File[] = []
+         items.forEach(item => {
+            if (item.kind === 'file' && item.type.startsWith('image/')) {
+               const file = item.getAsFile()
+               if (file) {
+                  imageFiles.push(file)
+               }
+            }
+         })
+         if (imageFiles.length > 0) {
+            setFiles(prev => [...prev, ...imageFiles])
+            // Opcional: evitar que la imagen se pegue como base64 en el textarea
+            e.preventDefault()
+         }
+      }
+   }
+
    return (
       <section className="space-y-4 w-full" onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}>
          <div className="flex items-center gap-2">
@@ -253,6 +274,7 @@ export default function ShowComments({ arrayComments, task }: ShowCommentsProps)
                         value={newComment}
                         onChange={setNewComment}
                         placeholder="Escribe tu comentario..."
+                        onPaste={handlePaste}
                      />
                   </div>
                   
