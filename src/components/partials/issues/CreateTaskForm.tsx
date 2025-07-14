@@ -25,12 +25,12 @@ export default function CreateTaskForm({ onSubmit, onCancel, taskObject, isEdit 
   // Combine project participants with the project creator (avoid duplicates)
   const allProjectUsers = React.useMemo(() => {
     const participants = [...projectParticipants]
-    
+
     // Add project creator if not already in participants
     if (selectedBoard?.createdBy && !participants.some(p => p.id === selectedBoard.createdBy?.id)) {
       // Find the creator in the full user list to get complete information including email
       const creatorFromUserList = listUsers.find(user => user.id === selectedBoard.createdBy?.id)
-      
+
       participants.push({
         id: selectedBoard.createdBy.id,
         firstName: selectedBoard.createdBy.firstName,
@@ -39,7 +39,7 @@ export default function CreateTaskForm({ onSubmit, onCancel, taskObject, isEdit 
         picture: selectedBoard.createdBy.picture
       })
     }
-    
+
     return participants
   }, [projectParticipants, selectedBoard?.createdBy, listUsers])
 
@@ -57,7 +57,7 @@ export default function CreateTaskForm({ onSubmit, onCancel, taskObject, isEdit 
   useEffect(() => {
     if (isEdit && taskObject?.descriptions && projectConfig?.issueDescriptions) {
       const initialValues: { [key: string]: string } = {}
-      
+
       // For editing, populate with existing description values by matching titles
       taskObject.descriptions.forEach(taskDesc => {
         // Find the project description that matches this task description by title
@@ -68,7 +68,7 @@ export default function CreateTaskForm({ onSubmit, onCancel, taskObject, isEdit 
           initialValues[projectDesc.id] = taskDesc.text || ''
         }
       })
-      
+
       setDescriptionValues(initialValues)
     }
   }, [isEdit, taskObject, projectConfig])
@@ -102,7 +102,7 @@ export default function CreateTaskForm({ onSubmit, onCancel, taskObject, isEdit 
         const projectDesc = projectConfig?.issueDescriptions?.find(
           projDesc => projDesc.name === originalDesc.title
         )
-        
+
         if (projectDesc && descriptionValues[projectDesc.id] && descriptionValues[projectDesc.id].trim()) {
           // Keep original ID but update text
           return {
@@ -148,8 +148,20 @@ export default function CreateTaskForm({ onSubmit, onCancel, taskObject, isEdit 
       }
       onSubmit(editData)
     } else {
-      // For creating, use the original format including assignedId
-      onSubmit({ ...formData, descriptions, assignedId: userSelected.id })
+      // Para crear, omitir estimatedTime si está vacío, nulo o NaN
+      const { estimatedTime, ...restFormData } = formData
+      // Solo incluir estimatedTime si es un número válido
+      const shouldIncludeEstimatedTime =
+        typeof estimatedTime === 'number' &&
+        !isNaN(estimatedTime) &&
+        estimatedTime !== 0
+      const dataToSend = {
+        ...restFormData,
+        descriptions,
+        assignedId: userSelected.id,
+        ...(shouldIncludeEstimatedTime ? { estimatedTime } : { estimatedTime: 0 })
+      } as TaskProps
+      onSubmit(dataToSend)
     }
   }
 
@@ -227,84 +239,84 @@ export default function CreateTaskForm({ onSubmit, onCancel, taskObject, isEdit 
                   Asignar a
                   <span className='text-red-500 ml-1'>*</span>
                 </label>
-              <div className="relative">
-                <button 
-                  onClick={() => setIsUserOpen(!isUserOpen)}
-                  type='button'
-                  className='w-full text-left bg-white border border-gray-200 rounded-lg px-4 py-3 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200'
-                >
-                  <div className='flex items-center justify-between'>
-                    <div className='flex items-center gap-3'>
-                      <div className='w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden'>
-                        {userSelected ? (
-                          <img 
-                            src={getUserAvatar(userSelected, 32)}
-                            alt='Usuario seleccionado'
-                            className="w-full h-full object-cover rounded-full"
-                          />
-                        ) : (
-                          <span className='text-sm font-medium text-gray-600'>
-                            ?
-                          </span>
-                        )}
-                      </div>
-                      <div>
-                        <span className='text-sm font-medium text-gray-900'>
-                          {userSelected?.firstName} {userSelected?.lastName}
-                        </span>
-                        <p className="text-xs text-gray-500">
-                          {userSelected?.email || 'Sin email'}
-                        </p>
-                      </div>
-                    </div>
-                    <svg className={`text-gray-400 w-5 h-5 transition-transform duration-200 ${isUserOpen ? "rotate-180" : ""}`}
-                      xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-                    </svg>
-                  </div>
-                </button>
-                
-                {isUserOpen && (
-                  <div className='absolute z-[9999] top-full mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-xl max-h-40 overflow-y-auto'>
-                    {allProjectUsers.map((obj, i) => (
-                      <button
-                        key={i} 
-                        type="button"
-                        onClick={() => { 
-                          setUserSelected(obj)
-                          setIsUserOpen(false) 
-                        }}
-                        className='w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors first:rounded-t-lg last:rounded-b-lg'
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className={`w-2 h-2 rounded-full ${obj.id === userSelected?.id ? 'bg-blue-600' : 'bg-transparent'}`} />
-                          <div className='w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden'>
-                            <img 
-                              src={getUserAvatar(obj, 32)}
-                              alt={obj.id}
+                <div className="relative">
+                  <button
+                    onClick={() => setIsUserOpen(!isUserOpen)}
+                    type='button'
+                    className='w-full text-left bg-white border border-gray-200 rounded-lg px-4 py-3 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200'
+                  >
+                    <div className='flex items-center justify-between'>
+                      <div className='flex items-center gap-3'>
+                        <div className='w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden'>
+                          {userSelected ? (
+                            <img
+                              src={getUserAvatar(userSelected, 32)}
+                              alt='Usuario seleccionado'
                               className="w-full h-full object-cover rounded-full"
                             />
-                          </div>
-                          <div className="flex-1">
-                            <span className='text-sm font-medium text-gray-900 block'>
-                              {obj.firstName} {obj.lastName}
+                          ) : (
+                            <span className='text-sm font-medium text-gray-600'>
+                              ?
                             </span>
-                            <span className="text-xs text-gray-500">
-                              {obj.email || 'Sin email'}
-                            </span>
-                          </div>
-                          {obj.id === userSelected?.id && (
-                            <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
                           )}
                         </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
+                        <div>
+                          <span className='text-sm font-medium text-gray-900'>
+                            {userSelected?.firstName} {userSelected?.lastName}
+                          </span>
+                          <p className="text-xs text-gray-500">
+                            {userSelected?.email || 'Sin email'}
+                          </p>
+                        </div>
+                      </div>
+                      <svg className={`text-gray-400 w-5 h-5 transition-transform duration-200 ${isUserOpen ? "rotate-180" : ""}`}
+                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                      </svg>
+                    </div>
+                  </button>
+
+                  {isUserOpen && (
+                    <div className='absolute z-[9999] top-full mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-xl max-h-40 overflow-y-auto'>
+                      {allProjectUsers.map((obj, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => {
+                            setUserSelected(obj)
+                            setIsUserOpen(false)
+                          }}
+                          className='w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors first:rounded-t-lg last:rounded-b-lg'
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={`w-2 h-2 rounded-full ${obj.id === userSelected?.id ? 'bg-blue-600' : 'bg-transparent'}`} />
+                            <div className='w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden'>
+                              <img
+                                src={getUserAvatar(obj, 32)}
+                                alt={obj.id}
+                                className="w-full h-full object-cover rounded-full"
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <span className='text-sm font-medium text-gray-900 block'>
+                                {obj.firstName} {obj.lastName}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                {obj.email || 'Sin email'}
+                              </span>
+                            </div>
+                            {obj.id === userSelected?.id && (
+                              <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
             )}
 
             {/* Título de la Tarea */}
@@ -517,7 +529,6 @@ export default function CreateTaskForm({ onSubmit, onCancel, taskObject, isEdit 
               <div className='space-y-2 -translate-y-1'>
                 <label htmlFor="estimatedTime" className="text-gray-900 text-sm font-semibold">
                   Tiempo Estimado (horas)
-                  <span className='text-red-500 ml-1'>*</span>
                 </label>
                 <div className='border-gray-200 flex items-center rounded-lg border px-4 py-2.5 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-all duration-200'>
                   <input
@@ -528,7 +539,6 @@ export default function CreateTaskForm({ onSubmit, onCancel, taskObject, isEdit 
                     name="estimatedTime"
                     id="estimatedTime"
                     type="number"
-                    required
                     min={0}
                   />
                 </div>
