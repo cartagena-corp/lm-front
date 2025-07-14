@@ -19,6 +19,14 @@ import {
     DownloadIcon
 } from "@/assets/Icon"
 
+type UserPagination = {
+  content: UserProps[]
+  totalPages: number
+  totalElements: number
+  size: number
+  number: number
+}
+
 interface RoleProps {
     name: string
     permissions: Array<{ name: string }>
@@ -538,6 +546,14 @@ function EditUserForm({ user, availableRoles, onSubmit, onCancel }: EditUserForm
     )
 }
 
+// Utilidad para normalizar el campo role
+function normalizeUsersRole(users: UserProps[]): UserProps[] {
+  return users.map(user => ({
+    ...user,
+    role: typeof user.role === 'string' ? { name: user.role, permissions: [] } : user.role
+  }))
+}
+
 export default function UserConfig() {
     const {
         listUsers,
@@ -571,6 +587,8 @@ export default function UserConfig() {
     const [searchQuery, setSearchQuery] = useState('')
     const [isLoadingMore, setIsLoadingMore] = useState(false)
     const usersListRef = useRef<HTMLDivElement>(null)
+    // Estado local para lista acumulada de usuarios
+    const [displayedUsers, setDisplayedUsers] = useState<UserProps[]>([])
 
     // Estados para modales de usuarios
     const [showCreateUserModal, setShowCreateUserModal] = useState(false)
@@ -590,7 +608,7 @@ export default function UserConfig() {
     const [showDeletePermissionModal, setShowDeletePermissionModal] = useState(false)
     const [selectedPermission, setSelectedPermission] = useState<PermissionProps | null>(null)
 
-    // Cargar datos iniciales
+    // Cargar datos iniciales y reiniciar lista acumulada
     useEffect(() => {
         loadData()
     }, [])
@@ -624,22 +642,34 @@ export default function UserConfig() {
         }
     }, [isLoadingMore, usersPagination])
 
+    // Debug: log displayedUsers cada vez que cambie
+    useEffect(() => {
+      console.log('displayedUsers', displayedUsers);
+    }, [displayedUsers]);
+
+    // Cargar datos iniciales y reiniciar lista acumulada
     const loadData = async () => {
         const token = await getValidAccessToken()
         if (token) {
             await getListUsers(token, '', 0, 10)
+            const { listUsers } = useAuthStore.getState()
+            setDisplayedUsers(normalizeUsersRole(listUsers || []))
             await listRoles(token)
             await listPermissions(token)
         }
     }
 
+    // Buscar usuarios y reiniciar lista acumulada
     const handleSearch = async () => {
         const token = await getValidAccessToken()
         if (token) {
             await getListUsers(token, searchQuery, 0, 10)
+            const { listUsers } = useAuthStore.getState()
+            setDisplayedUsers(normalizeUsersRole(listUsers || []))
         }
     }
 
+    // Cargar más usuarios y agregarlos a la lista acumulada
     const loadMoreUsersData = async () => {
         if (isLoadingMore || !usersPagination) return
 
@@ -647,6 +677,8 @@ export default function UserConfig() {
         const token = await getValidAccessToken()
         if (token) {
             await loadMoreUsers(token, searchQuery)
+            const { listUsers } = useAuthStore.getState()
+            setDisplayedUsers(normalizeUsersRole(listUsers || []))
         }
         setIsLoadingMore(false)
     }
@@ -822,12 +854,23 @@ export default function UserConfig() {
                                     <h2 className="text-lg font-semibold text-gray-900">
                                         Gestión de Usuarios
                                     </h2>
-                                    <p className="text-sm text-gray-600">
-                                        {usersPagination 
-                                            ? `Mostrando ${listUsers.length} de ${usersPagination.totalElements} usuarios` 
-                                            : `Total: ${listUsers.length} usuarios registrados`
-                                        }
-                                    </p>
+                                    {/* Indicador de mostrando X de Y y barra de porcentaje */}
+                                    {usersPagination && (
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm text-gray-600">
+                                                Mostrando {displayedUsers.length} de {usersPagination.totalElements} usuarios
+                                            </span>
+                                            <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                                <div
+                                                    className="h-full bg-blue-500 transition-all duration-300"
+                                                    style={{ width: `${Math.min(100, (displayedUsers.length / usersPagination.totalElements) * 100)}%` }}
+                                                />
+                                            </div>
+                                            <span className="text-xs text-gray-500">
+                                                {Math.round((displayedUsers.length / usersPagination.totalElements) * 100)}%
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
@@ -865,12 +908,12 @@ export default function UserConfig() {
                         ref={usersListRef}
                         className="bg-white rounded-xl shadow-sm border border-gray-100 max-h-96 overflow-y-auto"
                     >
-                        {isLoading ? (
+                        {isLoading && displayedUsers.length === 0 ? (
                             <div className="p-8 text-center">
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
                                 <p className="text-gray-600">Cargando usuarios...</p>
                             </div>
-                        ) : listUsers.length === 0 ? (
+                        ) : displayedUsers.length === 0 ? (
                             <div className="p-8 text-center">
                                 <div className="p-4 bg-gray-50 text-gray-400 rounded-lg w-fit mx-auto mb-4">
                                     <UsersIcon size={32} />
@@ -881,7 +924,7 @@ export default function UserConfig() {
                         ) : (
                             <div>
                                 <div className="divide-y divide-gray-100">
-                                    {listUsers.map((user) => (
+                                    {displayedUsers.map((user) => (
                                         <div key={user.id} className="p-6 hover:bg-gray-50 transition-colors">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-4">
@@ -911,16 +954,6 @@ export default function UserConfig() {
                                                     >
                                                         <EditIcon size={16} />
                                                     </button>
-                                                    {/* <button
-                                           onClick={() => {
-                                              setSelectedUser(user)
-                                              setShowDeleteUserModal(true)
-                                           }}
-                                           className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                           title="Eliminar usuario"
-                                        >
-                                           <DeleteIcon size={16} />
-                                        </button> */}
                                                 </div>
                                             </div>
                                         </div>
