@@ -35,6 +35,7 @@ export interface TaskProps {
       firstName: string,
       lastName: string,
       picture: string
+      email: string
    } | string
    reporterId?: {
       id: string,

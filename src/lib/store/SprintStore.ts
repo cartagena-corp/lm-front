@@ -235,7 +235,14 @@ export const useSprintStore = create<SprintState>((set, get) => ({
          set({ isLoadingMore: true, error: null })
          const params = new URLSearchParams()
          params.append('projectId', projectId)
-         params.append('sprintId', sprintId)
+         
+         // Para el backlog (sprintId === 'null'), buscar issues con sprintId null
+         if (sprintId === 'null') {
+            params.append('sprintId', 'null')  // Enviar 'null' para obtener issues sin sprint
+         } else {
+            params.append('sprintId', sprintId)
+         }
+         
          params.append('page', String(page))
          
          const response = await fetch(`${ISSUE_ROUTES.GET_ISSUES_BY_PROJECT}?${params.toString()}`, {
@@ -249,6 +256,7 @@ export const useSprintStore = create<SprintState>((set, get) => ({
          
          set(state => {
             // Encontrar el sprint correspondiente
+            // Para el backlog, buscar el sprint con id 'null'
             const sprintIndex = state.sprints.findIndex(sprint => sprint.id === sprintId)
             if (sprintIndex === -1) return { isLoadingMore: false } // Sprint no encontrado
             

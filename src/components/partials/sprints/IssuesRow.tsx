@@ -42,7 +42,7 @@ interface DraggableIssueRowProps {
 function DraggableIssueRow({ task, selectedIds, toggleSelect, onViewDetails, onEdit, onReassign, onDelete, onHistory, getStatusStyle, getPriorityStyle, getTypeStyle, openItemId, setOpenItemId, wrapperRef }: DraggableIssueRowProps) {
    const id = task.id as string
    const isChecked = selectedIds.includes(id)
-   
+
    // Estado para manejar clicks y drag - MISMA LÓGICA QUE SprintKanbanCard
    const startPosition = useRef<{ x: number; y: number } | null>(null)
    const lastClickTime = useRef<number>(0)
@@ -67,7 +67,7 @@ function DraggableIssueRow({ task, selectedIds, toggleSelect, onViewDetails, onE
       startPosition.current = { x: event.clientX, y: event.clientY }
       isPointerDown.current = true
       hasMoved.current = false
-      
+
       // Detectar doble click
       if (currentTime - lastClickTime.current < 300) {
          // Es un doble click
@@ -76,32 +76,32 @@ function DraggableIssueRow({ task, selectedIds, toggleSelect, onViewDetails, onE
          onViewDetails()
          return
       }
-      
+
       lastClickTime.current = currentTime
-      
+
       // Siempre llamar al listener original, el sensor se encarga de la distancia
       if (listeners?.onPointerDown) {
          listeners.onPointerDown(event)
       }
    }, [onViewDetails, listeners])
-   
+
    const handlePointerMove = useCallback((event: React.PointerEvent) => {
       if (startPosition.current && isPointerDown.current) {
          const deltaX = Math.abs(event.clientX - startPosition.current.x)
          const deltaY = Math.abs(event.clientY - startPosition.current.y)
-         
+
          // Si se mueve más de 3 píxeles, marcar como movimiento
          if (deltaX > 3 || deltaY > 3) {
             hasMoved.current = true
          }
       }
-      
+
       // Llamar al listener original del drag
       if (listeners?.onPointerMove) {
          listeners.onPointerMove(event)
       }
    }, [listeners])
-   
+
    const handlePointerUp = useCallback((event: React.PointerEvent) => {
       // Si fue un click simple (sin movimiento) y no fue doble click
       if (isPointerDown.current && !hasMoved.current) {
@@ -114,17 +114,17 @@ function DraggableIssueRow({ task, selectedIds, toggleSelect, onViewDetails, onE
             }
          }, 350) // Esperar un poco más de 300ms para asegurar que no es doble click
       }
-      
+
       startPosition.current = null
       isPointerDown.current = false
       hasMoved.current = false
-      
+
       // Llamar al listener original del drag
       if (listeners?.onPointerUp) {
          listeners.onPointerUp(event)
       }
    }, [onViewDetails, listeners])
-   
+
    // Crear listeners personalizados
    const customListeners = {
       ...listeners,
@@ -224,15 +224,19 @@ function DraggableIssueRow({ task, selectedIds, toggleSelect, onViewDetails, onE
                         className="w-full h-full object-cover rounded-full"
                      />
                   ) : (
-                     <span className="text-xs font-medium text-gray-600">
-                        N/A
-                     </span>
+                     <span className="text-xs text-gray-500">N/A</span>
                   )}
+
                </div>
                <span className="text-xs text-gray-700 line-clamp-1">
                   {typeof task.assignedId === 'object' && task.assignedId
-                     ? `${task.assignedId.firstName} ${task.assignedId.lastName}`
-                     : 'Sin asignar'}
+                     ? (
+                        task.assignedId.firstName || task.assignedId.lastName
+                           ? `${task.assignedId.firstName ?? ''} ${task.assignedId.lastName ?? ''}`.trim()
+                           : (task.assignedId.email || 'Sin asignar')
+                     )
+                     : 'Sin asignar'
+                  }
                </span>
             </button>
          </div>
@@ -330,10 +334,11 @@ export default function IssuesRow({ spr, setIsOpen, isOverlay = false }: { spr: 
 
    const { getValidAccessToken } = useAuthStore()
    const { deleteIssue, updateIssue, assignIssue } = useIssueStore()
-   const { updateSprint, deleteSprint, activeSprint } = useSprintStore()
+   const { updateSprint, deleteSprint, activeSprint, getIssuesBySprint, loadMoreIssuesBySprint } = useSprintStore()
 
    const wrapperRef = useRef<HTMLDivElement>(null)
    const wrapperSprintRef = useRef<HTMLDivElement>(null)
+   const scrollContainerRef = useRef<HTMLDivElement>(null)
 
    const [isTaskDetailsModalOpen, setIsTaskDetailsModalOpen] = useState(false)
    const [isTaskUpdateModalOpen, setIsTaskUpdateModalOpen] = useState(false)
@@ -346,10 +351,100 @@ export default function IssuesRow({ spr, setIsOpen, isOverlay = false }: { spr: 
    const [sprintSelected, setSprintSelected] = useState<SprintProps>()
    const [openItemId, setOpenItemId] = useState<string | null>(null)
    const [taskActive, setTaskActive] = useState<TaskProps>()
+   const [isLoadingMore, setIsLoadingMore] = useState(false)
+   const [hasMore, setHasMore] = useState(true)
    const { projectConfig, sprintStatuses } = useConfigStore()
 
    const sprintTaskIds = spr.tasks?.content.map(t => t.id as string) || []
    const allSelected = sprintTaskIds.length > 0 && sprintTaskIds.every(id => selectedIds.includes(id))
+
+   // Función para cargar más tareas del sprint actual
+   const handleLoadMore = useCallback(async () => {
+      if (isLoadingMore || !hasMore || !spr.tasks) return
+
+      const currentPage = spr.tasks.number || 0
+      const totalPages = spr.tasks.totalPages || 0
+
+      // Si ya estamos en la última página, no cargar más
+      if (currentPage >= totalPages - 1) {
+         setHasMore(false)
+         return
+      }
+
+      setIsLoadingMore(true)
+
+      try {
+         const token = await getValidAccessToken()
+         if (!token) return
+
+         // Usar el ID del sprint actual (puede ser 'null' para backlog)
+         const sprintId = spr.id as string
+         const projectId = spr.projectId as string
+
+         await loadMoreIssuesBySprint(token, sprintId, projectId, currentPage + 1)
+
+         // Verificar si hay más páginas después de cargar
+         const updatedSprint = useSprintStore.getState().sprints.find(s => {
+            // Para el backlog, buscar el sprint con id 'null'
+            if (sprintId === 'null') {
+               return s.id === 'null'
+            }
+            return s.id === sprintId
+         })
+
+         if (updatedSprint?.tasks) {
+            const newCurrentPage = updatedSprint.tasks.number || 0
+            const newTotalPages = updatedSprint.tasks.totalPages || 0
+            setHasMore(newCurrentPage < newTotalPages - 1)
+         }
+      } catch (error) {
+         console.error('Error al cargar más tareas:', error)
+      } finally {
+         setIsLoadingMore(false)
+      }
+   }, [isLoadingMore, hasMore, spr, getValidAccessToken, loadMoreIssuesBySprint])
+
+   // Función para manejar el scroll
+   const handleScroll = useCallback(() => {
+      const container = scrollContainerRef.current
+      if (!container || isLoadingMore || !hasMore) return
+
+      const { scrollTop, scrollHeight, clientHeight } = container
+      const scrolledPercentage = (scrollTop + clientHeight) / scrollHeight
+
+      // Cargar más cuando se llegue al 80% del scroll
+      if (scrolledPercentage >= 0.8) {
+         handleLoadMore()
+      }
+   }, [isLoadingMore, hasMore, handleLoadMore])
+
+   // Agregar event listener para el scroll con throttling
+   useEffect(() => {
+      const container = scrollContainerRef.current
+      if (!container) return
+
+      let timeoutId: NodeJS.Timeout
+      const throttledScroll = () => {
+         clearTimeout(timeoutId)
+         timeoutId = setTimeout(handleScroll, 150)
+      }
+
+      container.addEventListener('scroll', throttledScroll)
+
+      return () => {
+         container.removeEventListener('scroll', throttledScroll)
+         clearTimeout(timeoutId)
+      }
+   }, [handleScroll])
+
+   // Resetear estados cuando cambia el sprint
+   useEffect(() => {
+      if (spr.tasks) {
+         const currentPage = spr.tasks.number || 0
+         const totalPages = spr.tasks.totalPages || 0
+         setHasMore(currentPage < totalPages - 1)
+      }
+   }, [spr.tasks])
 
    const formatDate = (fecha: string | null, includeTime = false): string => {
       if (!fecha) return 'No definida'
@@ -597,13 +692,13 @@ export default function IssuesRow({ spr, setIsOpen, isOverlay = false }: { spr: 
                         })()}
 
                         {/* Badge de tareas */}
-                        {spr.tasks?.content && (
+                        {spr.tasks?.content && spr.tasks.content.length > 0 && (
                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 rounded-full text-xs font-medium text-blue-800 border border-blue-200">
                               <svg className="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                               </svg>
                               <span>
-                                 {spr.tasks.content.length} {spr.tasks.content.length === 1 ? 'tarea' : 'tareas'}
+                                 {spr.tasks.totalElements} {spr.tasks.totalElements === 1 ? 'tarea' : 'tareas'}
                               </span>
                            </div>
                         )}
@@ -643,44 +738,66 @@ export default function IssuesRow({ spr, setIsOpen, isOverlay = false }: { spr: 
                         <div className="col-span-5">Asignado a</div>
                         <div className="col-span-1 text-center">Acciones</div>
                      </div>
+                     <div className='space-y-2 max-h-[440px] overflow-y-auto overscroll-contain' ref={scrollContainerRef}>
+                        {/* Filas de tareas */}
+                        {spr.tasks.content.map((task, index) => {
+                           return (
+                              <DraggableIssueRow
+                                 key={task.id}
+                                 task={task}
+                                 selectedIds={selectedIds}
+                                 toggleSelect={toggleSelect}
+                                 onViewDetails={() => {
+                                    setIsTaskDetailsModalOpen(true)
+                                    setTaskActive(task)
+                                 }}
+                                 onEdit={() => {
+                                    setIsTaskUpdateModalOpen(true)
+                                    setTaskActive(task)
+                                 }}
+                                 onReassign={() => {
+                                    setIsReasignModalOpen(true)
+                                    setTaskActive(task)
+                                 }}
+                                 onDelete={() => {
+                                    setIsDeleteModalOpen(true)
+                                    setTaskActive(task)
+                                 }}
+                                 onHistory={() => {
+                                    setIsHistoryModalOpen(true)
+                                    setTaskActive(task)
+                                 }}
+                                 getStatusStyle={getStatusStyle}
+                                 getPriorityStyle={getPriorityStyle}
+                                 getTypeStyle={getTypeStyle}
+                                 openItemId={openItemId}
+                                 setOpenItemId={setOpenItemId}
+                                 wrapperRef={wrapperRef}
+                              />
+                           )
+                        })}
 
-                     {/* Filas de tareas */}
-                     {spr.tasks.content.map((task, index) => {
-                        return (
-                           <DraggableIssueRow
-                              key={task.id}
-                              task={task}
-                              selectedIds={selectedIds}
-                              toggleSelect={toggleSelect}
-                              onViewDetails={() => {
-                                 setIsTaskDetailsModalOpen(true)
-                                 setTaskActive(task)
-                              }}
-                              onEdit={() => {
-                                 setIsTaskUpdateModalOpen(true)
-                                 setTaskActive(task)
-                              }}
-                              onReassign={() => {
-                                 setIsReasignModalOpen(true)
-                                 setTaskActive(task)
-                              }}
-                              onDelete={() => {
-                                 setIsDeleteModalOpen(true)
-                                 setTaskActive(task)
-                              }}
-                              onHistory={() => {
-                                 setIsHistoryModalOpen(true)
-                                 setTaskActive(task)
-                              }}
-                              getStatusStyle={getStatusStyle}
-                              getPriorityStyle={getPriorityStyle}
-                              getTypeStyle={getTypeStyle}
-                              openItemId={openItemId}
-                              setOpenItemId={setOpenItemId}
-                              wrapperRef={wrapperRef}
-                           />
-                        )
-                     })}
+                        {/* Indicador de carga para páginas adicionales */}
+                        {isLoadingMore && (
+                           <div className="py-4">
+                              <div className="flex items-center justify-center gap-3 text-blue-600">
+                                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                                 <span className="text-sm">Cargando más tareas...</span>
+                              </div>
+                           </div>
+                        )}
+
+                        {/* Mensaje cuando no hay más elementos */}
+                        {!hasMore && spr.tasks.content.length > 0 && (
+                           <div className="text-center py-4 text-gray-500 text-sm mt-4">
+                              <div className="flex items-center justify-center gap-2">
+                                 <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                                 <span>No hay más tareas para mostrar</span>
+                                 <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                              </div>
+                           </div>
+                        )}
+                     </div>
                   </div>
                ) : (
                   <div className="text-center py-12">

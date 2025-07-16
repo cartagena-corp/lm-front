@@ -221,31 +221,8 @@ export default function SprintList() {
       )
    }
 
-   // Usar sprints optimistas si existen
-   // Construir backlog visual
-   const allSprints = optimisticSprints || sprints
-   // Sprints sin el backlog (id !== 'null')
-   const realSprints = allSprints.filter(s => s.id !== 'null')
-   // Obtener todas las issues de todos los sprints
-   const allIssues = allSprints.flatMap(s => s.tasks?.content || [])
-   // Issues de backlog: sprintId === null
-   const backlogIssues = allIssues.filter((t: any) => t.sprintId === null)
-   // Obtener projectId para backlogSprint
-   const projectIdForBacklog = realSprints.length > 0 ? realSprints[0].projectId : ''
-   // Sprint especial para backlog
-   const backlogSprint = {
-     id: 'null',
-     projectId: projectIdForBacklog,
-     title: 'Backlog',
-     active: false,
-     status: 0,
-     goal: '',
-     startDate: '',
-     endDate: '',
-     tasks: { content: backlogIssues }
-   }
-   // Lista final: backlog primero, luego los sprints reales
-   const sprintsToRender = [backlogSprint, ...realSprints]
+   // Usar sprints optimistas si existen, si no, los del store
+   const sprintsToRender = optimisticSprints || sprints
 
    return (
       <div className="space-y-6">
