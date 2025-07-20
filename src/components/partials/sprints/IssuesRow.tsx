@@ -11,7 +11,7 @@ import { useIssueStore } from '@/lib/store/IssueStore'
 import CreateTaskForm from '../issues/CreateTaskForm'
 import { useAuthStore } from '@/lib/store/AuthStore'
 import ReasignIssue from '../issues/ReasignIssue'
-import { CalendarIcon, CheckmarkIcon, EditIcon, DeleteIcon, PlusIcon, EyeIcon, ClockIcon, ForbiddenIcon } from '@/assets/Icon'
+import { CalendarIcon, CheckmarkIcon, EditIcon, DeleteIcon, PlusIcon, EyeIcon, ClockIcon, ForbiddenIcon, IAIcon, ChatIAIcon } from '@/assets/Icon'
 import Modal from '../../layout/Modal'
 import Image from 'next/image'
 import CreateSprintForm from './CreateSprintForm'
@@ -314,7 +314,7 @@ function DraggableIssueRow({ task, selectedIds, toggleSelect, onViewDetails, onE
    )
 }
 
-export default function IssuesRow({ spr, setIsOpen, isOverlay = false }: { spr: SprintProps, setIsOpen: Dispatch<SetStateAction<boolean>>, isOverlay?: boolean }) {
+export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOverlay = false }: { spr: SprintProps, setIsOpen: Dispatch<SetStateAction<boolean>>, setIsCreateWithIAOpen: Dispatch<SetStateAction<boolean>>, isOverlay?: boolean }) {
    const { selectedIds, setSelectedIds } = useMultiDragContext()
 
    if (isOverlay) {
@@ -636,13 +636,21 @@ export default function IssuesRow({ spr, setIsOpen, isOverlay = false }: { spr: 
                            </div>
                         </>
                      ) : (
-                        <button
-                           onClick={() => setIsOpen(true)}
-                           className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md"
-                        >
-                           <PlusIcon size={16} />
-                           <span>Nueva Tarea</span>
-                        </button>
+                        <>
+                           <button className="flex items-center gap-2 px-4 py-2 text-blue-700 bg-blue-50 border border-blue-300 rounded-lg hover:bg-blue-100 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                              onClick={() => setIsCreateWithIAOpen(true)}
+                           >
+                              <ChatIAIcon size={18} stroke={2} />
+                              <span>Crear tareas con IA</span>
+                           </button>
+                           <button
+                              onClick={() => setIsOpen(true)}
+                              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md"
+                           >
+                              <PlusIcon size={16} />
+                              <span>Nueva Tarea</span>
+                           </button>
+                        </>
                      )}
                   </div>
                </div>
