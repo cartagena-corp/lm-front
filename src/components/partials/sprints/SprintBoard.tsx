@@ -56,7 +56,7 @@ export default function SprintBoard() {
          const token = await getValidAccessToken()
          if (token) {
             try {
-               const issues = await getIssuesBySprint(token, activeSprintData.id as string, selectedBoard.id)
+               const issues = await getIssuesBySprint(token, activeSprintData.id as string, selectedBoard.id, 999)
                setActiveSprintWithIssues({
                   ...activeSprintData,
                   tasks: issues
