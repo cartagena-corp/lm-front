@@ -5,10 +5,11 @@ import { create } from 'zustand'
 import toast from 'react-hot-toast'
 
 // Función auxiliar para obtener issues por sprint sin dependencia circular
-const getIssuesBySprintId = async (token: string, sprintId: string, projectId: string): Promise<GlobalPagination> => {
+const getIssuesBySprintId = async (token: string, sprintId: string, projectId: string, size: number = 10): Promise<GlobalPagination> => {
    try {
       const params = new URLSearchParams()
       params.append('projectId', projectId)
+      params.append('size', size.toString())
       
       // Para el backlog (sprintId === 'null'), buscar issues con sprintId null
       // Para sprints específicos, buscar issues con ese sprintId específico
@@ -49,7 +50,7 @@ interface SprintState {
    error: string | null
    getSprints: (token: string, projectId: string) => Promise<void>
    getActiveSprint: (token: string, projectId: string) => Promise<void>
-   getIssuesBySprint: (token: string, sprintId: string, projectId: string) => Promise<GlobalPagination>
+   getIssuesBySprint: (token: string, sprintId: string, projectId: string, size?: number) => Promise<GlobalPagination>
    loadMoreIssuesBySprint: (token: string, sprintId: string, projectId: string, page: number) => Promise<void>
    createSprint: (token: string, sprintData: SprintProps) => Promise<void>
    updateSprint: (token: string, sprintData: SprintProps, projectId: string) => Promise<void>
@@ -64,8 +65,8 @@ export const useSprintStore = create<SprintState>((set, get) => ({
    isLoadingMore: false,
    error: null,
 
-   getIssuesBySprint: async (token, sprintId, projectId) => {
-      return await getIssuesBySprintId(token, sprintId, projectId)
+   getIssuesBySprint: async (token, sprintId, projectId, size = 10) => {
+      return await getIssuesBySprintId(token, sprintId, projectId, size)
    },
 
    getActiveSprint: async (token, projectId) => {
@@ -105,10 +106,13 @@ export const useSprintStore = create<SprintState>((set, get) => ({
 
          // Obtener sprint activo
          await get().getActiveSprint(token, projectId)
+         const activeSprint = get().activeSprint
 
          // Por cada sprint, obtener sus issues y agregar al objeto
          const enriched = await Promise.all(rawSprints.map(async sprint => {
-            const issues = await get().getIssuesBySprint(token, sprint.id!, projectId)
+            // Si es el sprint activo, obtener todas las issues
+            const size = (activeSprint && sprint.id === activeSprint.id) ? 999 : 10
+            const issues = await get().getIssuesBySprint(token, sprint.id!, projectId, size)
             return { ...sprint, tasks: issues }
          })) as SprintProps[]
 
