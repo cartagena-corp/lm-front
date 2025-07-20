@@ -13,6 +13,7 @@ import IssuesRow from './IssuesRow'
 import { useState } from 'react'
 import { sortSprints } from '@/lib/utils/sprint.utils'
 import { toast } from 'react-hot-toast'
+import CreateWithIA from '../issues/CreateWithIA'
 
 export default function SprintList() {
    const { createIssue, assignIssueToSprint, removeIssueFromSprint } = useIssueStore()
@@ -22,6 +23,7 @@ export default function SprintList() {
 
    const [isCreateSprintOpen, setIsCreateSprintOpen] = useState(false)
    const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
+   const [isCreateWithIAOpen, setIsCreateWithIAOpen] = useState(false)
 
    const [selectedIds, setSelectedIds] = useState<string[]>([])
    const [activeId, setActiveId] = useState<string | null>(null)
@@ -54,6 +56,36 @@ export default function SprintList() {
             status: newSprint.status
          })
       setIsCreateSprintOpen(false)
+   }
+
+   const handleCreateWithIA = async (detectedTasks: any) => {
+      const token = await getValidAccessToken()
+      if (!token) return;
+
+      const toastId = toast.loading('Creando tareas...');
+
+      try {
+         // Crear cada tarea detectada
+         for (const task of detectedTasks) {
+            await createIssue(token, {
+               ...task,
+               projectId: selectedBoard?.id,
+               sprintId: null, // Las tareas se crean en el backlog por defecto
+               descriptions: task.descriptionsDTO, // Mapear descriptionsDTO a descriptions
+               type: 1, // Tipo por defecto
+               priority: 1, // Prioridad por defecto
+               status: 1, // Estado por defecto
+               estimatedTime: 0 // Tiempo estimado por defecto
+            });
+         }
+
+         toast.success(`${detectedTasks.length} tareas creadas exitosamente`, { id: toastId });
+      } catch (error) {
+         console.error('Error al crear las tareas:', error);
+         toast.error('Error al crear las tareas', { id: toastId });
+      } finally {
+         setIsCreateWithIAOpen(false);
+      }
    }
 
    const handleDragStart = (event: DragStartEvent) => {
@@ -240,6 +272,7 @@ export default function SprintList() {
                      spr={spr}
                      isOverlay={false}
                      setIsOpen={setIsCreateTaskOpen}
+                     setIsCreateWithIAOpen={setIsCreateWithIAOpen}
                   />
                ))}
 
@@ -308,6 +341,20 @@ export default function SprintList() {
                onSubmit={handleCreateSprint}
                onCancel={() => setIsCreateSprintOpen(false)}
                isEdit={false}
+            />
+         </Modal>
+
+         <Modal
+            isOpen={isCreateWithIAOpen}
+            onClose={() => setIsCreateWithIAOpen(false)}
+            title=""
+            customWidth="sm:max-w-4xl h-[90dvh]"
+            showCloseButton={false}
+            closeOnClickOutside={false}
+         >
+            <CreateWithIA
+               onSubmit={handleCreateWithIA}
+               onCancel={() => setIsCreateWithIAOpen(false)}
             />
          </Modal>
       </div>
