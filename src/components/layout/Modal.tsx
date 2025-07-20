@@ -12,6 +12,7 @@ interface ModalProps {
   customWidth?: string
   showCloseButton?: boolean
   removePadding?: boolean
+  closeOnClickOutside?: boolean
 }
 
 export default function Modal({ 
@@ -21,11 +22,20 @@ export default function Modal({
   children, 
   customWidth = "sm:max-w-lg", 
   showCloseButton = true, 
-  removePadding = false 
+  removePadding = false,
+  closeOnClickOutside = true
 }: ModalProps) {
   return (
     <Transition.Root show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-40" onClose={onClose}>
+      <Dialog 
+        as="div" 
+        className="relative z-40" 
+        onClose={(value) => {
+          if (closeOnClickOutside) {
+            onClose();
+          }
+        }}
+      >
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"
