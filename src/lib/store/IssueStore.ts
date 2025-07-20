@@ -28,6 +28,16 @@ interface IssueFilters {
    size?: number
 }
 
+interface IssueFromIA {
+   title: string;
+   descriptionsDTO: {
+      title: string;
+      text: string;
+   }[];
+   projectId: string;
+   assignedId: string;
+}
+
 interface IssueState {
    issues: GlobalPagination
    selectedIssue: TaskProps | null
@@ -49,10 +59,13 @@ interface IssueState {
    // Audit actions
    getIssueHistory: (token: string, issueId: string, page?: number, size?: number) => Promise<AuditPagination>
 
+   detectIssuesFromText: (token: string, projectId: string, text: string) => Promise<any>
+
    // Utility actions
    setSelectedIssue: (issue: TaskProps | null) => void
    clearError: () => void
    setLoading: (loading: boolean) => void
+   createIssuesFromIA: (token: string, issues: IssueFromIA[]) => Promise<void>;
 }
 
 export const useIssueStore = create<IssueState>((set, get) => ({
@@ -406,6 +419,53 @@ export const useIssueStore = create<IssueState>((set, get) => ({
          return data
       } catch (error) {
          console.error('Error en getIssueHistory:', error)
+         throw error
+      }
+   },
+
+   // Detect Issues from Text
+   detectIssuesFromText: async (token: string, projectId: string, text: string) => {
+      try {
+         const response = await fetch(`${API_ROUTES.DETECT_ISSUES_FROM_TEXT}/${projectId}`, {
+            method: 'POST',
+            headers: {
+               'Content-Type': 'text/plain',
+               'Authorization': `Bearer ${token}`,
+            },
+            body: text
+         })
+
+         if (!response.ok) {
+            throw new Error(`Error ${response.status}: ${response.statusText}`)
+         }
+
+         const data = await response.json()
+         return data
+      } catch (error) {
+         console.error('Error en detectIssuesFromText:', error)
+         throw error
+      }
+   },
+   // Create Issues from IA
+   createIssuesFromIA: async (token: string, issues: IssueFromIA[]) => {
+      try {
+         const response = await fetch(API_ROUTES.CREATE_ISSUES_FROM_IA, {
+            method: 'POST',
+            headers: {
+               'Content-Type': 'application/json',
+               'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify(issues)
+         })
+
+         if (!response.ok) {
+            throw new Error(`Error ${response.status}: ${response.statusText}`)
+         }
+
+         const data = await response.json()
+         return data
+      } catch (error) {
+         console.error('Error en createIssuesFromIA:', error)
          throw error
       }
    },
