@@ -55,7 +55,7 @@ function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onView
     const { projectConfig } = useConfigStore()
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const menuRef = useRef<HTMLDivElement>(null)
-    
+
     // Estado para manejar clicks y drag
     const startPosition = useRef<{ x: number; y: number } | null>(null)
     const lastClickTime = useRef<number>(0)
@@ -86,14 +86,14 @@ function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onView
         document.addEventListener('pointerdown', handleClickOutside)
         return () => document.removeEventListener('pointerdown', handleClickOutside)
     }, [])
-    
+
     // Custom event handlers para detectar drag vs click
     const handlePointerDown = useCallback((event: React.PointerEvent) => {
         const currentTime = Date.now()
         startPosition.current = { x: event.clientX, y: event.clientY }
         isPointerDown.current = true
         hasMoved.current = false
-        
+
         // Detectar doble click
         if (currentTime - lastClickTime.current < 300) {
             // Es un doble click
@@ -102,32 +102,32 @@ function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onView
             onViewDetails(issue)
             return
         }
-        
+
         lastClickTime.current = currentTime
-        
+
         // Siempre llamar al listener original, el sensor se encarga de la distancia
         if (listeners?.onPointerDown) {
             listeners.onPointerDown(event)
         }
     }, [onViewDetails, issue, listeners])
-    
+
     const handlePointerMove = useCallback((event: React.PointerEvent) => {
         if (startPosition.current && isPointerDown.current) {
             const deltaX = Math.abs(event.clientX - startPosition.current.x)
             const deltaY = Math.abs(event.clientY - startPosition.current.y)
-            
+
             // Si se mueve más de 3 píxeles, marcar como movimiento
             if (deltaX > 3 || deltaY > 3) {
                 hasMoved.current = true
             }
         }
-        
+
         // Llamar al listener original del drag
         if (listeners?.onPointerMove) {
             listeners.onPointerMove(event)
         }
     }, [listeners])
-    
+
     const handlePointerUp = useCallback((event: React.PointerEvent) => {
         // Si fue un click simple (sin movimiento) y no fue doble click
         if (isPointerDown.current && !hasMoved.current) {
@@ -140,17 +140,17 @@ function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onView
                 }
             }, 350) // Esperar un poco más de 300ms para asegurar que no es doble click
         }
-        
+
         startPosition.current = null
         isPointerDown.current = false
         hasMoved.current = false
-        
+
         // Llamar al listener original del drag
         if (listeners?.onPointerUp) {
             listeners.onPointerUp(event)
         }
     }, [onViewDetails, issue, listeners])
-    
+
     // Crear listeners personalizados
     const customListeners = {
         ...listeners,
@@ -346,7 +346,9 @@ function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onView
                     </div>
                     <p className="group-hover:text-blue-600 transition-colors text-start">
                         {typeof issue.assignedId === 'object' && issue.assignedId
-                            ? `${issue.assignedId.firstName} ${issue.assignedId.lastName}`
+                            ? issue.assignedId.firstName === null && issue.assignedId.lastName === null
+                                ? issue.assignedId.email || 'Sin asignar'
+                                : `${issue.assignedId.firstName || ''} ${issue.assignedId.lastName || ''}`
                             : 'Sin asignar'}
                     </p>
                 </button>
@@ -481,7 +483,7 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
 
     // Estado optimista para los issues
     const [optimisticIssues, setOptimisticIssues] = useState<TaskProps[] | null>(null)
-    
+
     // Configuración de sensores personalizados para el drag
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -962,44 +964,78 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
                     onDragOver={handleDragOver}
                     collisionDetection={pointerWithin}
                 >
-                    <div className="flex gap-4 overflow-x-auto pb-4 min-h-[300px] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                        <SortableContext items={statuses.map(s => `status-column-${s.id}`)} strategy={horizontalListSortingStrategy}>
-                            {statuses.map((status) => (
-                                <StatusColumn
-                                    key={status.id}
-                                    status={status}
-                                    issues={issuesByStatus[status.id] || []}
-                                    sprintId={spr.id || 'unknown'}
-                                    activeId={activeId}
-                                    overId={overId}
-                                    onViewDetails={handleViewDetails}
-                                    onEdit={handleEdit}
-                                    onReassign={handleReassign}
-                                    onDelete={handleDelete}
-                                    onHistory={handleHistory}
-                                />
-                            ))}
-                        </SortableContext>
+                    <div className="flex flex-col">
+                        <div className="flex justify-between items-center gap-2 mb-4">
+                            <button
+                                type="button"
+                                aria-label="Desplazar a la izquierda"
+                                className="p-2 rounded-full bg-white border border-gray-200 shadow hover:bg-gray-100 transition disabled:opacity-50"
+                                onClick={() => {
+                                    const container = document.getElementById('kanban-scroll-container');
+                                    if (container) container.scrollBy({ left: -320, behavior: 'smooth' });
+                                }}
+                            >
+                                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                                </svg>
+                            </button>
+                            <button
+                                type="button"
+                                aria-label="Desplazar a la derecha"
+                                className="p-2 rounded-full bg-white border border-gray-200 shadow hover:bg-gray-100 transition disabled:opacity-50"
+                                onClick={() => {
+                                    const container = document.getElementById('kanban-scroll-container');
+                                    if (container) container.scrollBy({ left: 320, behavior: 'smooth' });
+                                }}
+                            >
+                                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                                </svg>
+                            </button>
+                        </div>
 
-                        {/* Columna para crear nuevo estado */}
-                        <div className="flex flex-col min-w-80 w-80 flex-shrink-0">
-                            <div className="flex items-center gap-2 mb-3">
-                                <div className="w-3 h-3 rounded-full bg-gray-300" />
-                                <h4 className="font-medium text-gray-500">Nuevo Estado</h4>
-                            </div>
+                        {/* Contenido principal */}
+                        <div className="overflow-x-auto" id="kanban-scroll-container">
+                            <div className="flex gap-4 min-h-[300px]">
+                                <SortableContext items={statuses.map(s => `status-column-${s.id}`)} strategy={horizontalListSortingStrategy}>
+                                    {statuses.map((status) => (
+                                        <StatusColumn
+                                            key={status.id}
+                                            status={status}
+                                            issues={issuesByStatus[status.id] || []}
+                                            sprintId={spr.id || 'unknown'}
+                                            activeId={activeId}
+                                            overId={overId}
+                                            onViewDetails={handleViewDetails}
+                                            onEdit={handleEdit}
+                                            onReassign={handleReassign}
+                                            onDelete={handleDelete}
+                                            onHistory={handleHistory}
+                                        />
+                                    ))}
+                                </SortableContext>
 
-                            <div className="min-h-[200px] bg-gray-50 rounded-lg flex items-center justify-center h-full">
-                                <button
-                                    onClick={() => setIsCreateStatusModalOpen(true)}
-                                    className="flex flex-col justify-center items-center gap-2 w-full h-full border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 group"
-                                >
-                                    <div className="text-gray-400 group-hover:text-blue-500">
-                                        <PlusIcon size={24} />
+                                {/* Columna para crear nuevo estado */}
+                                <div className="flex flex-col min-w-80 w-80 flex-shrink-0">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <div className="w-3 h-3 rounded-full bg-gray-300" />
+                                        <h4 className="font-medium text-gray-500">Nuevo Estado</h4>
                                     </div>
-                                    <span className="text-sm text-gray-500 group-hover:text-blue-600 font-medium">
-                                        Crear Estado
-                                    </span>
-                                </button>
+
+                                    <div className="min-h-[200px] bg-gray-50 rounded-lg flex items-center justify-center h-full">
+                                        <button
+                                            onClick={() => setIsCreateStatusModalOpen(true)}
+                                            className="flex flex-col justify-center items-center gap-2 w-full h-full border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 group"
+                                        >
+                                            <div className="text-gray-400 group-hover:text-blue-500">
+                                                <PlusIcon size={24} />
+                                            </div>
+                                            <span className="text-sm text-gray-500 group-hover:text-blue-600 font-medium">
+                                                Crear Estado
+                                            </span>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
