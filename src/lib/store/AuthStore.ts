@@ -47,7 +47,7 @@ interface AuthState {
    getListUsers: (token: string, search?: string, page?: number, size?: number) => Promise<void>
    loadMoreUsers: (token: string, search?: string) => Promise<void>
    setAccessToken: (token: string) => void
-   refreshToken: () => Promise<boolean>
+   refreshToken: () => Promise<string>
    logout: () => Promise<void>
    validateToken: (token: string) => Promise<boolean>
    getGoogleLoginUrl: () => string
@@ -145,32 +145,25 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
    error: null,
 
    // Obtener token válido (actualizado si es necesario)
-   getValidAccessToken: async () => {
+   getValidAccessToken: async (): Promise<string> => {
       set({ isLoading: true, error: null })
-
       try {
          let token = getCookie("NEXT_COOKIE_ACCESS_TOKEN") as string
          if (!token) {
             set({ isLoading: false, error: 'No hay token disponible' })
             return ''
          }
-
-         // Si el token ha vencido, lo refrescamos
          if (isTokenExpired(token)) {
-            const refreshed = await get().refreshToken()
-            if (refreshed) {
-               token = getCookie("NEXT_COOKIE_ACCESS_TOKEN") as string
-            } else {
+            token = await get().refreshToken()
+            if (!token) {
                set({ isLoading: false, error: 'No se pudo refrescar el token' })
                return ''
             }
          }
-
          set({ isLoading: false })
          return token
       } catch (error) {
-         const errorMessage = error instanceof Error ? error.message : 'Error al obtener token válido'
-         set({ error: errorMessage, isLoading: false })
+         set({ isLoading: false, error: 'Error al obtener el token' })
          return ''
       }
    },
@@ -198,7 +191,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
          if (size !== undefined) params.append('size', size.toString())
 
          const url = `${API_ROUTES.LIST_USERS}${params.toString() ? `?${params.toString()}` : ''}`
-         
+
          const response = await fetch(url, {
             method: 'GET',
             headers: {
@@ -212,10 +205,10 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
          }
 
          const data = await response.json()
-         
+
          // Si la respuesta es paginada (tiene content, totalElements, etc.)
          if (data.content && data.totalElements !== undefined) {
-            set({ 
+            set({
                listUsers: data.content,
                usersPagination: {
                   totalPages: data.totalPages,
@@ -223,14 +216,14 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
                   size: data.size,
                   number: data.number
                },
-               isLoading: false 
+               isLoading: false
             })
          } else {
             // Si la respuesta es un array simple (para compatibilidad)
-            set({ 
+            set({
                listUsers: Array.isArray(data) ? data : [],
                usersPagination: null,
-               isLoading: false 
+               isLoading: false
             })
          }
       } catch (error) {
@@ -243,7 +236,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
    // Cargar más usuarios (infinite scroll)
    loadMoreUsers: async (token: string, search?: string) => {
       const { usersPagination, listUsers } = get()
-      
+
       if (!usersPagination || usersPagination.number >= usersPagination.totalPages - 1) {
          return // No hay más páginas para cargar
       }
@@ -258,7 +251,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
          params.append('size', usersPagination.size.toString())
 
          const url = `${API_ROUTES.LIST_USERS}?${params.toString()}`
-         
+
          const response = await fetch(url, {
             method: 'GET',
             headers: {
@@ -272,9 +265,9 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
          }
 
          const data = await response.json()
-         
+
          if (data.content) {
-            set({ 
+            set({
                listUsers: [...listUsers, ...data.content],
                usersPagination: {
                   totalPages: data.totalPages,
@@ -282,7 +275,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
                   size: data.size,
                   number: data.number
                },
-               isLoading: false 
+               isLoading: false
             })
          }
       } catch (error) {
@@ -402,29 +395,24 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
    },
 
    // Refrescar el token
-   refreshToken: async () => {
+   refreshToken: async (): Promise<string> => {
       set({ isLoading: true, error: null })
-
       try {
          const response = await fetch(API_ROUTES.REFRESH_TOKEN, {
             method: 'POST',
             credentials: 'include'
          })
-
          if (!response.ok) {
-            throw new Error(`Error ${response.status}: ${response.statusText}`)
+            get().clearAuth()
+            return ''
          }
-
          const data = await response.json()
          get().setAccessToken(data.accessToken)
          set({ isLoading: false })
-         return true
+         return data.accessToken
       } catch (error) {
-         const errorMessage = error instanceof Error ? error.message : 'Error al refrescar el token'
-         set({ error: errorMessage, isLoading: false })
-         console.error('Error al refrescar el token:', error)
          get().clearAuth()
-         return false
+         return ''
       }
    },
 
