@@ -350,12 +350,34 @@ export default function CreateTaskForm({ onSubmit, onCancel, taskObject, isEdit 
                   <div className='space-y-4 max-h-52 overflow-y-auto'>
                     {projectConfig.issueDescriptions.map((description) => (
                       <div key={description.id} className='bg-white border border-gray-200 rounded-lg p-3'>
-                        <label className='text-sm font-medium text-gray-900 mb-2 block'>
-                          {description.name}
-                        </label>
+                        <div className='flex items-center justify-between'>
+                          <label className='text-sm font-medium text-gray-900 mb-2 block'>
+                            {description.name}
+                          </label>
+                          <div className='flex items-center gap-2 text-xs mb-2'>
+                            <div className={`w-2 h-2 rounded-full ${(descriptionValues[description.id]?.length || 0) > 5000
+                                ? 'bg-red-500'
+                                : (descriptionValues[description.id]?.length || 0) > 4500
+                                  ? 'bg-orange-500'
+                                  : 'bg-green-500'
+                              }`} />
+                            <span className={`font-medium ${(descriptionValues[description.id]?.length || 0) > 5000
+                                ? 'text-red-600'
+                                : (descriptionValues[description.id]?.length || 0) > 4500
+                                  ? 'text-orange-600'
+                                  : 'text-green-600'
+                              }`}>
+                              {descriptionValues[description.id]?.length || 0}/5000
+                            </span>
+                          </div>
+                        </div>
                         <AutoResizeTextarea
                           value={descriptionValues[description.id] || ''}
-                          onChange={(value) => handleDescriptionChange(description.id.toString(), value)}
+                          onChange={(value) => {
+                            if (value.length <= 5000) {
+                              handleDescriptionChange(description.id.toString(), value)
+                            }
+                          }}
                           placeholder={`Describe los detalles para: ${description.name}`}
                           required={true}
                           className="w-full border border-gray-200 rounded-md p-2 text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
