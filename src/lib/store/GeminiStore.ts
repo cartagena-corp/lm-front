@@ -16,6 +16,7 @@ interface GeminiState {
   setApiUrl: (url: string) => void
   updateConfig: (token: string) => Promise<void>
   getConfig: (token: string) => Promise<void>
+  chatWithGemini: (token: string, text: string) => Promise<any>
 }
 
 export const useGeminiStore = create<GeminiState>()(
@@ -41,7 +42,7 @@ export const useGeminiStore = create<GeminiState>()(
           }
 
           const data: GeminiConfig = await response.json()
-          set({ 
+          set({
             apiKey: data.key,
             apiUrl: data.url,
             id: data.id
@@ -71,7 +72,7 @@ export const useGeminiStore = create<GeminiState>()(
           }
 
           const data: GeminiConfig = await response.json()
-          set({ 
+          set({
             apiKey: data.key,
             apiUrl: data.url,
             id: data.id
@@ -80,7 +81,30 @@ export const useGeminiStore = create<GeminiState>()(
           console.error('Error:', error)
           throw error
         }
-      }
+      },
+      // Chat with AI
+      chatWithGemini: async (token: string, text: string) => {
+        try {
+          const response = await fetch(API_ROUTES.GEMINI_CHAT, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'text/plain',
+              'Authorization': `Bearer ${token}`,
+            },
+            body: text
+          })
+
+          if (!response.ok) {
+            throw new Error(`Error ${response.status}: ${response.statusText}`)
+          }
+
+          const data = await response.text()
+          return data
+        } catch (error) {
+          console.error('Error en chatWithGemini:', error)
+          throw error
+        }
+      },
     }),
     {
       name: 'gemini-storage',

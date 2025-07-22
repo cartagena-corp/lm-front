@@ -352,7 +352,7 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
                             <ChatIAIcon size={24} />
                         </div>
                         <div className="flex flex-col">
-                            <h3 className="text-gray-900 font-semibold text-lg">Chatea con IA</h3>
+                            <h3 className="text-gray-900 font-semibold text-lg">Crea tareas con IA</h3>
                             <p className="text-gray-500 text-sm">
                                 Chatea con IA para crear tareas de forma rápida y eficiente.
                             </p>

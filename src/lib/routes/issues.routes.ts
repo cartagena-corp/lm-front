@@ -11,4 +11,5 @@ export const API_ROUTES = {
     CREATE_ISSUES_FROM_IA: `${BACKEND_URL}/api/issues/batch`,
     DETECT_ISSUES_FROM_TEXT: `${INTEGRATION_URL}/api/gemini/detectIssuesFromText`,
     GEMINI_CONFIG: `${INTEGRATION_URL}/api/gemini-config`,
+    GEMINI_CHAT: `${INTEGRATION_URL}/api/gemini/chat`,
 }

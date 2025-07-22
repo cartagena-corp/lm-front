@@ -1,6 +1,6 @@
 'use client'
 
-import { BoardIcon, ConfigIcon, IAIcon, LogoutIcon, SidebarCollapseIcon, SidebarExpandIcon } from '../../assets/Icon'
+import { BoardIcon, ChatIAIcon, ConfigIcon, IAIcon, LogoutIcon, SidebarCollapseIcon, SidebarExpandIcon } from '../../assets/Icon'
 import { useAuthStore } from '@/lib/store/AuthStore'
 import { useSidebarStore } from '@/lib/store/SidebarStore'
 import { useGeminiStore } from '@/lib/store/GeminiStore'
@@ -10,6 +10,9 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { getUserAvatar } from '@/lib/utils/avatar.utils'
 import toast from 'react-hot-toast'
+import Modal from './Modal'
+import CreateWithIA from '../partials/issues/CreateWithIA'
+import ChatWithIA from '../partials/gemini/ChatWithIA'
 
 interface NavigationProps {
   icon: ({ size, stroke }: IconProps) => JSX.Element
@@ -27,6 +30,7 @@ export default function Sidebar() {
   const [isClient, setIsClient] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [isGeminiOpen, setIsGeminiOpen] = useState(false)
+  const [isGeminiChatOpen, setIsGeminiChatOpen] = useState(false)
   const [imageError, setImageError] = useState(false)
   const [showSaved, setShowSaved] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -48,7 +52,7 @@ export default function Sidebar() {
       // Si se está borrando (longitud menor que la actual)
       if (newValue.length < apiKey.length) {
         setApiKey('')
-      } 
+      }
       // Si se está agregando un nuevo caracter
       else if (newValue.length > apiKey.length) {
         setApiKey(newValue.slice(-1))
@@ -187,30 +191,28 @@ export default function Sidebar() {
 
               {hasGeminiAccess && (
                 <li key={'gemini'}>
-                  <button 
-                    onClick={() => setIsGeminiOpen(!isGeminiOpen)} 
-                    className={`group flex items-center text-sm font-medium rounded-lg transition-all duration-200 ${
-                      isCollapsed 
-                        ? 'justify-center p-3 w-10 h-10' 
-                        : 'gap-3 px-3 py-2.5 w-full'
-                    } ${
-                      isGeminiOpen
+                  <button
+                    onClick={() => setIsGeminiOpen(!isGeminiOpen)}
+                    className={`group flex items-center text-sm font-medium rounded-lg transition-all duration-200 ${isCollapsed
+                      ? 'justify-center p-3 w-10 h-10'
+                      : 'gap-3 px-3 py-2.5 w-full'
+                      } ${isGeminiOpen
                         ? 'bg-gray-800 text-white'
                         : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                    }`}
+                      }`}
                   >
                     <div className="flex-shrink-0">
                       <IAIcon size={20} stroke={2} />
                     </div>
 
                     {!isCollapsed && (
-                      <span className="truncate">Gemini</span>
+                      <span className="truncate">Configurar Gemini</span>
                     )}
                   </button>
 
                   {isGeminiOpen && !isCollapsed && (
                     <>
-                      <div 
+                      <div
                         className={`fixed inset-0 ${isCollapsed ? 'left-16' : 'left-64'} z-40`}
                         onClick={() => setIsGeminiOpen(false)}
                       />
@@ -276,6 +278,27 @@ export default function Sidebar() {
                   )}
                 </li>
               )}
+
+              <li key={'gemini-chat'}>
+                <button
+                  onClick={() => setIsGeminiChatOpen(!isGeminiChatOpen)}
+                  className={`group flex items-center text-sm font-medium rounded-lg transition-all duration-200 ${isCollapsed
+                    ? 'justify-center p-3 w-10 h-10'
+                    : 'gap-3 px-3 py-2.5 w-full'
+                    } ${isGeminiChatOpen
+                      ? 'bg-gray-800 text-white'
+                      : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                    }`}
+                >
+                  <div className="flex-shrink-0">
+                    <ChatIAIcon size={20} stroke={2} />
+                  </div>
+
+                  {!isCollapsed && (
+                    <span className="truncate">Chatea con IA</span>
+                  )}
+                </button>
+              </li>
             </ul>
           )}
         </section>
@@ -334,6 +357,17 @@ export default function Sidebar() {
           </section>
         )}
       </nav>
+
+      <Modal
+        isOpen={isGeminiChatOpen}
+        onClose={() => setIsGeminiChatOpen(false)}
+        title=""
+        customWidth="sm:max-w-4xl h-[90dvh]"
+        showCloseButton={false}
+        closeOnClickOutside={false}
+      >
+        <ChatWithIA onCancel={() => setIsGeminiChatOpen(false)} />
+      </Modal>
     </>
   )
 }
