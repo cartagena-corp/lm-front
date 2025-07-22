@@ -11,7 +11,6 @@ import { useEffect, useState } from 'react'
 import { getUserAvatar } from '@/lib/utils/avatar.utils'
 import toast from 'react-hot-toast'
 import Modal from './Modal'
-import CreateWithIA from '../partials/issues/CreateWithIA'
 import ChatWithIA from '../partials/gemini/ChatWithIA'
 
 interface NavigationProps {
@@ -41,6 +40,10 @@ export default function Sidebar() {
 
   const hasGeminiAccess = user?.role && typeof user.role !== 'string'
     ? user.role.permissions.some((permission: PermissionProps) => permission.name === 'GEMINI_CONFIG')
+    : false
+
+  const hasGeminiChatAccess = user?.role && typeof user.role !== 'string'
+    ? user.role.permissions.some((permission: PermissionProps) => permission.name === 'GEMINI_ACTIVE')
     : false
 
   const isKeyHidden = Boolean(apiKey && /^\*+$/.test(apiKey))
@@ -278,27 +281,28 @@ export default function Sidebar() {
                   )}
                 </li>
               )}
+              {hasGeminiChatAccess && (
+                <li key={'gemini-chat'}>
+                  <button
+                    onClick={() => setIsGeminiChatOpen(!isGeminiChatOpen)}
+                    className={`group flex items-center text-sm font-medium rounded-lg transition-all duration-200 ${isCollapsed
+                      ? 'justify-center p-3 w-10 h-10'
+                      : 'gap-3 px-3 py-2.5 w-full'
+                      } ${isGeminiChatOpen
+                        ? 'bg-gray-800 text-white'
+                        : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                      }`}
+                  >
+                    <div className="flex-shrink-0">
+                      <ChatIAIcon size={20} stroke={2} />
+                    </div>
 
-              <li key={'gemini-chat'}>
-                <button
-                  onClick={() => setIsGeminiChatOpen(!isGeminiChatOpen)}
-                  className={`group flex items-center text-sm font-medium rounded-lg transition-all duration-200 ${isCollapsed
-                    ? 'justify-center p-3 w-10 h-10'
-                    : 'gap-3 px-3 py-2.5 w-full'
-                    } ${isGeminiChatOpen
-                      ? 'bg-gray-800 text-white'
-                      : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                    }`}
-                >
-                  <div className="flex-shrink-0">
-                    <ChatIAIcon size={20} stroke={2} />
-                  </div>
-
-                  {!isCollapsed && (
-                    <span className="truncate">Chatea con IA</span>
-                  )}
-                </button>
-              </li>
+                    {!isCollapsed && (
+                      <span className="truncate">Chatea con IA</span>
+                    )}
+                  </button>
+                </li>
+              )}
             </ul>
           )}
         </section>
@@ -356,7 +360,7 @@ export default function Sidebar() {
             </button>
           </section>
         )}
-      </nav>
+      </nav >
 
       <Modal
         isOpen={isGeminiChatOpen}

@@ -69,7 +69,7 @@ function renderFormattedText(text: string) {
 
 export default function ChatWithIA({ onCancel }: { onCancel: () => void }) {
     const [messages, setMessages] = useState([
-        { text: "¡Hola! Soy tu asistente de IA. Puedes preguntarme cualquier cosa y te responderé aquí.", isUser: false }
+        { text: "¡Hola! Soy tu asistente de IA. Puedes preguntarme cualquier cosa y te responderé aquí.", isUser: false, role: "assistant" }
     ]);
     const [inputText, setInputText] = useState("");
     const [isProcessing, setIsProcessing] = useState(false);
@@ -81,20 +81,30 @@ export default function ChatWithIA({ onCancel }: { onCancel: () => void }) {
         if (!inputText.trim() || isProcessing) return;
         setIsProcessing(true);
 
-        // Agregar mensaje del usuario
-        setMessages(prev => [...prev, { text: inputText, isUser: true }]);
+        // Agregar mensaje del usuario con role
+        setMessages(prev => [...prev, { text: inputText, isUser: true, role: "user" }]);
 
         try {
             const token = await getValidAccessToken();
             if (!token) throw new Error("No se pudo obtener el token de autenticación");
 
-            const response = await chatWithGemini(token, inputText);
-            // Si la respuesta es un string, úsala directamente, si es objeto busca el campo adecuado
+            // Mensaje informativo para la IA
+            const systemInstruction = {
+                role: "system",
+                content: "Este es el contexto del chat. Responde en base a lo que se te ha preguntado. Si te preguntan algo que ya se preguntó antes, no repitas la misma respuesta, vuelve a procesar la pregunta y utiliza el historial para dar una respuesta más completa si es posible."
+            };
+            // Simula historial conversacional para la IA
+            const formattedMessages = [
+                systemInstruction,
+                ...messages.map(msg => ({ role: msg.role, content: msg.text })),
+                { role: "user", content: inputText }
+            ];
+            const response = await chatWithGemini(token, formattedMessages);
             let iaText = typeof response === "string" ? response : response?.text || "Respuesta de IA no disponible.";
-            setMessages(prev => [...prev, { text: iaText, isUser: false }]);
+            setMessages(prev => [...prev, { text: iaText, isUser: false, role: "assistant" }]);
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "Hubo un error al procesar tu mensaje.");
-            setMessages(prev => [...prev, { text: "Lo siento, hubo un error al procesar tu mensaje.", isUser: false }]);
+            setMessages(prev => [...prev, { text: "Lo siento, hubo un error al procesar tu mensaje.", isUser: false, role: "assistant" }]);
         } finally {
             setIsProcessing(false);
             setInputText("");
