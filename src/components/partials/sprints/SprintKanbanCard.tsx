@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { useBoardStore } from '@/lib/store/BoardStore'
 import { useConfigStore } from '@/lib/store/ConfigStore'
 import { useIssueStore } from '@/lib/store/IssueStore'
 import { useSprintStore } from '@/lib/store/SprintStore'
@@ -461,6 +462,52 @@ function StatusColumn({ status, issues, sprintId, activeId, overId, onViewDetail
 }
 
 export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
+    // --- Filtro de participantes (multi-select) ---
+    const { filters, setFilter } = useSprintStore();
+    const sprintId = spr.id as string;
+    const filter = filters?.[sprintId] || { key: '', value: '' };
+    const [userSelected, setUserSelected] = useState<any[]>([]);
+    const [isUserOpen, setIsUserOpen] = useState(false);
+    const userRef = useRef<HTMLDivElement>(null);
+    const { projectParticipants } = useConfigStore();
+    const { selectedBoard } = useBoardStore();
+    const { listUsers } = useAuthStore();
+    const allProjectUsers = useMemo(() => {
+        const participants = [...(projectParticipants || [])];
+        if (selectedBoard?.createdBy && !participants.some(p => p.id === selectedBoard.createdBy?.id)) {
+            const creatorFromUserList = listUsers?.find(user => user.id === selectedBoard.createdBy?.id);
+            participants.push({
+                id: selectedBoard.createdBy.id,
+                firstName: selectedBoard.createdBy.firstName,
+                lastName: selectedBoard.createdBy.lastName,
+                email: creatorFromUserList?.email || '',
+                picture: selectedBoard.createdBy.picture
+            });
+        }
+        return participants;
+    }, [projectParticipants, selectedBoard?.createdBy, listUsers]);
+
+    // Sincronizar userSelected con el filtro del sprint al montar/cambiar filtro
+    useEffect(() => {
+        if (filter && filter.key === 'assignedIds') {
+            if (filter.value === '') setUserSelected([]);
+            else {
+                const ids = filter.value.split(',');
+                setUserSelected(allProjectUsers.filter(u => ids.includes(u.id)));
+            }
+        }
+    }, [filter, allProjectUsers]);
+
+    // Cerrar dropdown al hacer click fuera
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (userRef.current && !(userRef.current as HTMLElement).contains(event.target as Node)) {
+                setIsUserOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
     const { projectConfig, addIssueStatus, editIssueStatus, setProjectConfig } = useConfigStore()
     const { updateIssue, deleteIssue, assignIssue } = useIssueStore()
     const { updateSprint, deleteSprint } = useSprintStore()
@@ -494,7 +541,19 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
     )
 
     // Usar issues optimistas si existen, sino usar los del sprint
-    const issues = optimisticIssues !== null ? optimisticIssues : (spr.tasks?.content || [])
+    let issues = optimisticIssues !== null ? optimisticIssues : (spr.tasks?.content || [])
+
+    // Filtrar issues por participantes seleccionados (assignedIds)
+    if (filter && filter.key === 'assignedIds' && filter.value) {
+        const assignedIds = filter.value.split(',');
+        issues = issues.filter(issue => {
+            // Soporta tanto assignedId string como objeto
+            if (!issue.assignedId) return false;
+            if (typeof issue.assignedId === 'string') return assignedIds.includes(issue.assignedId);
+            if (typeof issue.assignedId === 'object' && issue.assignedId.id) return assignedIds.includes(issue.assignedId.id);
+            return false;
+        });
+    }
 
     // Ordenar los estados por orderIndex, y luego por id si no tienen orderIndex
     const statuses = [...(projectConfig?.issueStatuses || [])].sort((a, b) => {
@@ -869,74 +928,227 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
         return 'Sin fechas'
     }
 
+
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             {/* Sprint Header */}
             <div className="px-6 py-4 border-b border-gray-100">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2">
-                            <CalendarIcon size={20} />
-                            <h3 className="text-lg font-semibold text-gray-900">{spr.title}</h3>
+                <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2">
+                                <CalendarIcon size={20} />
+                                <h3 className="text-lg font-semibold text-gray-900">{spr.title}</h3>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${spr.status === 1
+                                    ? 'bg-green-100 text-green-800'
+                                    : spr.status === 2
+                                        ? 'bg-blue-100 text-blue-800'
+                                        : 'bg-gray-100 text-gray-800'
+                                    }`}>
+                                    {spr.status === 1 ? 'Activo' : spr.status === 2 ? 'Completado' : 'Planificado'}
+                                </span>
+                                <span className="text-sm text-gray-500">
+                                    {issues.length} {issues.length === 1 ? 'tarea' : 'tareas'}
+                                </span>
+                            </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${spr.status === 1
-                                ? 'bg-green-100 text-green-800'
-                                : spr.status === 2
-                                    ? 'bg-blue-100 text-blue-800'
-                                    : 'bg-gray-100 text-gray-800'
-                                }`}>
-                                {spr.status === 1 ? 'Activo' : spr.status === 2 ? 'Completado' : 'Planificado'}
-                            </span>
-                            <span className="text-sm text-gray-500">
-                                {issues.length} {issues.length === 1 ? 'tarea' : 'tareas'}
-                            </span>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                        {spr.id === 'null' ? (
-                            // Backlog - solo mostrar botón crear tarea
-                            <button
-                                onClick={handleCreateTask}
-                                className="flex items-center gap-2 px-4 py-2 text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium"
-                            >
-                                <PlusIcon size={18} stroke={2.5} />
-                                Crear Tarea
-                            </button>
-                        ) : (
-                            // Sprint normal - mostrar menú de opciones
-                            <div className="relative group">
-                                <button className="p-2 hover:bg-gray-100 rounded-md transition-colors duration-200">
-                                    <MenuIcon size={16} />
+                            {spr.id === 'null' ? (
+                                // Backlog - solo mostrar botón crear tarea
+                                <button
+                                    onClick={handleCreateTask}
+                                    className="flex items-center gap-2 px-4 py-2 text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium"
+                                >
+                                    <PlusIcon size={18} stroke={2.5} />
+                                    Crear Tarea
                                 </button>
-                                <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-                                    <div className="py-1">
-                                        <button
-                                            onClick={handleEditSprint}
-                                            className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                                        >
-                                            <EditIcon size={14} />
-                                            Editar Sprint
-                                        </button>
-                                        <button
-                                            onClick={handleDeleteSprintModal}
-                                            className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                                        >
-                                            <DeleteIcon size={14} />
-                                            Eliminar Sprint
-                                        </button>
+                            ) : (
+                                // Sprint normal - mostrar menú de opciones
+                                <div className="relative group">
+                                    <button className="p-2 hover:bg-gray-100 rounded-md transition-colors duration-200">
+                                        <MenuIcon size={16} />
+                                    </button>
+                                    <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                                        <div className="py-1">
+                                            <button
+                                                onClick={handleEditSprint}
+                                                className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                            >
+                                                <EditIcon size={14} />
+                                                Editar Sprint
+                                            </button>
+                                            <button
+                                                onClick={handleDeleteSprintModal}
+                                                className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                            >
+                                                <DeleteIcon size={14} />
+                                                Eliminar Sprint
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
+                        </div>
+                    </div>
+                    {/* Filtro de participantes */}
+                    <div className="flex items-center gap-2 mt-2">
+                        <span className="text-xs text-gray-500">Asignado a:</span>
+                        <div className="relative" ref={userRef} style={{ minWidth: 180 }}>
+                            <button
+                                type="button"
+                                className="bg-black/5 hover:bg-black/10 rounded-full pr-2 flex items-center gap-2 w-full group"
+                                onClick={() => setIsUserOpen(!isUserOpen)}
+                            >
+                                {/* Avatar/Count */}
+                                <div
+                                    className={`w-5 h-5 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden relative group ${userSelected.length > 0 ? 'cursor-pointer' : ''}`}
+                                >
+                                    {userSelected.length > 0 && (
+                                        <div
+                                            className="absolute inset-0 flex items-center justify-center bg-black/60 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-150 z-10"
+                                            style={{ fontSize: 14 }}
+                                            title="Limpiar selección"
+                                            onClick={e => {
+                                                e.stopPropagation();
+                                                setUserSelected([])
+                                                setFilter(sprintId, { key: 'assignedIds', value: '' })
+                                            }}
+                                        >
+                                            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </div>
+                                    )}
+                                    <span className={`${userSelected.length > 0 ? 'opacity-100 group-hover:opacity-0 transition-opacity' : ''} flex items-center justify-center w-full h-full`}>
+                                        {userSelected.length === 1 ? (
+                                            userSelected[0].picture ? (
+                                                <img
+                                                    src={getUserAvatar(userSelected[0], 28)}
+                                                    alt="avatar"
+                                                    className="w-full h-full object-cover rounded-full"
+                                                />
+                                            ) : (
+                                                <span className="text-xs font-medium text-gray-600">
+                                                    {userSelected[0].firstName || userSelected[0].lastName ?
+                                                        ((userSelected[0].firstName?.[0] || '') + (userSelected[0].lastName?.[0] || '')).toUpperCase()
+                                                        : (userSelected[0].email[0].toUpperCase() || 'Sin asignar')}
+                                                </span>
+                                            )
+                                        ) : userSelected.length > 1 ? (
+                                            <span className="text-xs font-semibold text-gray-700">{userSelected.length}</span>
+                                        ) : (
+                                            <span className="text-xs font-medium text-gray-500">?</span>
+                                        )}
+                                    </span>
+                                </div>
+                                {/* Name/Count */}
+                                <span
+                                    className="text-xs font-medium text-gray-900 truncate block mr-auto"
+                                    title={userSelected.length === 1
+                                        ? (userSelected[0].firstName || userSelected[0].lastName
+                                            ? `${userSelected[0].firstName ?? ''} ${userSelected[0].lastName ?? ''}`.trim()
+                                            : (userSelected[0].email || 'Sin asignar'))
+                                        : userSelected.length > 1
+                                            ? `${userSelected.length} seleccionados`
+                                            : 'Todos'}
+                                >
+                                    {userSelected.length === 1 ? (
+                                        userSelected[0].firstName || userSelected[0].lastName ?
+                                            `${`${userSelected[0].firstName ?? ''} ${userSelected[0].lastName ?? ''}`.trim()}`.slice(0, 20) +
+                                            (`${userSelected[0].firstName ?? ''} ${userSelected[0].lastName ?? ''}`.trim().length > 20 ? '…' : '')
+                                            : (userSelected[0].email?.slice(0, 20) || 'Sin asignar') + (userSelected[0].email && userSelected[0].email.length > 20 ? '…' : '')
+                                    ) : userSelected.length > 1 ? (
+                                        `${userSelected.length} seleccionados`
+                                    ) : (
+                                        'Todos'
+                                    )}
+                                </span>
+                                <svg className={`text-gray-400 w-4 h-4 transition-transform duration-200 ${isUserOpen ? "rotate-180" : ""}`}
+                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                                </svg>
+                            </button>
+                            {isUserOpen && (
+                                <div className="absolute z-[9999] top-full left-0 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-xl max-h-48 overflow-y-auto overscroll-none min-w-md">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setUserSelected([])
+                                            setFilter(sprintId, { key: 'assignedIds', value: '' })
+                                            setIsUserOpen(false)
+                                        }}
+                                        className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors first:rounded-t-lg ${userSelected.length === 0 ? 'bg-blue-50' : ''}`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                                                <span className="text-xs font-medium text-gray-500">?</span>
+                                            </div>
+                                            <span className="text-sm font-medium text-gray-900">Todos</span>
+                                        </div>
+                                    </button>
+                                    {allProjectUsers.map((obj, i) => {
+                                        const isSelected = userSelected.some(u => u.id === obj.id)
+                                        return (
+                                            <button
+                                                key={i}
+                                                type="button"
+                                                onClick={e => {
+                                                    e.stopPropagation()
+                                                    let newSelected;
+                                                    if (isSelected) {
+                                                        newSelected = userSelected.filter(u => u.id !== obj.id)
+                                                    } else {
+                                                        newSelected = [...userSelected, obj]
+                                                    }
+                                                    setUserSelected(newSelected)
+                                                    setFilter(sprintId, { key: 'assignedIds', value: newSelected.length > 0 ? newSelected.map(u => u.id).join(',') : '' })
+                                                }}
+                                                className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${isSelected ? 'bg-blue-50' : ''}`}
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`w-2 h-2 rounded-full ${isSelected ? 'bg-blue-600' : 'bg-transparent'}`} />
+                                                    <div className='w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden'>
+                                                        {obj.picture ? (
+                                                            <img
+                                                                src={getUserAvatar(obj, 28)}
+                                                                alt={obj.id}
+                                                                className="w-full h-full object-cover rounded-full"
+                                                            />
+                                                        ) : (
+                                                            <span className="text-sm font-medium text-gray-600">
+                                                                {obj.firstName || obj.lastName ?
+                                                                    ((obj.firstName?.[0] || '') + (obj.lastName?.[0] || '')).toUpperCase()
+                                                                    : (obj.email?.[0] || '?').toUpperCase()}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <span className='text-sm font-medium text-gray-900 block'>
+                                                            {obj.firstName || obj.lastName ? `${obj.firstName ?? ''} ${obj.lastName ?? ''}`.trim() : (obj.email || 'Sin email')}
+                                                        </span>
+                                                        <span className="text-xs text-gray-500">
+                                                            {obj.email || 'Sin email'}
+                                                        </span>
+                                                    </div>
+                                                    {isSelected && (
+                                                        <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                        </svg>
+                                                    )}
+                                                </div>
+                                            </button>
+                                        )
+                                    })}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
-
                 {spr.goal && (
                     <p className="text-sm text-gray-600 mt-2">{spr.goal}</p>
                 )}
-
                 <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
                     <div className="flex items-center gap-1">
                         <ClockIcon size={14} />

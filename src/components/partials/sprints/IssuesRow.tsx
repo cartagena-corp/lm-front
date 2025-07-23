@@ -1,9 +1,10 @@
 import { useMultiDragContext } from '@/components/ui/dnd-kit/MultiDragContext'
-import { Dispatch, SetStateAction, useEffect, useRef, useState, useCallback } from 'react'
+import { Dispatch, SetStateAction, useEffect, useRef, useState, useCallback, useMemo } from 'react'
+import { useBoardStore } from '@/lib/store/BoardStore'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { Droppable } from '@/components/ui/dnd-kit/Droppable'
-import { SprintProps, TaskProps } from '@/lib/types/types'
+import { SprintProps, TaskProps, UserProps } from '@/lib/types/types'
 import { useConfigStore } from '@/lib/store/ConfigStore'
 import DeleteIssueForm from '../issues/DeleteIssueForm'
 import TaskDetailsForm from '../issues/TaskDetailsForm'
@@ -334,7 +335,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
 
    const { getValidAccessToken } = useAuthStore()
    const { deleteIssue, updateIssue, assignIssue } = useIssueStore()
-   const { updateSprint, deleteSprint, activeSprint, getIssuesBySprint, loadMoreIssuesBySprint } = useSprintStore()
+   const { updateSprint, deleteSprint, activeSprint, getIssuesBySprint, loadMoreIssuesBySprint, clearIssuesFromSprint } = useSprintStore()
 
    const wrapperRef = useRef<HTMLDivElement>(null)
    const wrapperSprintRef = useRef<HTMLDivElement>(null)
@@ -353,6 +354,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
    const [taskActive, setTaskActive] = useState<TaskProps>()
    const [isLoadingMore, setIsLoadingMore] = useState(false)
    const [hasMore, setHasMore] = useState(true)
+   const [isFiltering, setIsFiltering] = useState(false)
    const { projectConfig, sprintStatuses } = useConfigStore()
 
    const sprintTaskIds = spr.tasks?.content.map(t => t.id as string) || []
@@ -381,7 +383,9 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
          const sprintId = spr.id as string
          const projectId = spr.projectId as string
 
-         await loadMoreIssuesBySprint(token, sprintId, projectId, currentPage + 1)
+         console.log('Filter in handleLoadMore:', filterRef.current)
+
+         await loadMoreIssuesBySprint(token, sprintId, projectId, currentPage + 1, filterRef.current)
 
          // Verificar si hay más páginas después de cargar
          const updatedSprint = useSprintStore.getState().sprints.find(s => {
@@ -536,6 +540,99 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
       if (token) await deleteIssue(token, taskActive?.id as string, taskActive?.projectId as string)
       setIsDeleteModalOpen(false)
    }
+
+   // --- Asignado a (multi-select) ---
+   const { projectParticipants } = useConfigStore()
+   const { selectedBoard } = useBoardStore()
+   const { listUsers } = useAuthStore()
+
+   // Combine project participants with the project creator (avoid duplicates)
+   const allProjectUsers = useMemo(() => {
+      const participants = [...(projectParticipants || [])]
+      if (selectedBoard?.createdBy && !participants.some(p => p.id === selectedBoard.createdBy?.id)) {
+         const creatorFromUserList = listUsers?.find(user => user.id === selectedBoard.createdBy?.id)
+         participants.push({
+            id: selectedBoard.createdBy.id,
+            firstName: selectedBoard.createdBy.firstName,
+            lastName: selectedBoard.createdBy.lastName,
+            email: creatorFromUserList?.email || '',
+            picture: selectedBoard.createdBy.picture
+         })
+      }
+      return participants
+   }, [projectParticipants, selectedBoard?.createdBy, listUsers])
+
+   // Multi-select state (filtro por sprint)
+   const { filters, setFilter } = useSprintStore() // filters: { [sprintId]: { key, value } }
+   const sprintId = spr.id as string
+   const filter = filters?.[sprintId] || { key: '', value: '' }
+   const [userSelected, setUserSelected] = useState<any[]>([])
+   const [isUserOpen, setIsUserOpen] = useState(false)
+   const userRef = useRef<HTMLDivElement>(null)
+   const filterRef = useRef(filter)
+
+   // Sincronizar userSelected con el filtro del sprint al montar/cambiar filtro
+   useEffect(() => {
+      if (filter && filter.key === 'assignedIds') {
+         if (filter.value === '') {
+            setUserSelected([])
+         } else {
+            // Buscar los usuarios seleccionados a partir de los IDs en el filtro
+            const ids = filter.value.split(',').filter(Boolean)
+            const selectedUsers = allProjectUsers.filter(u => ids.includes(u.id))
+            setUserSelected(selectedUsers)
+         }
+      }
+   }, [filter, allProjectUsers])
+
+   useEffect(() => {
+      filterRef.current = filter
+      const getNewIssues = async () => {
+         if (filter.key === 'assignedIds') {
+            setIsFiltering(true)
+            await clearIssuesFromSprint(sprintId)
+            const token = await getValidAccessToken()
+            let newTasks
+            if (filter.value !== "") {
+               newTasks = await getIssuesBySprint(token, sprintId, spr.projectId as string, 10, filter)
+            } else {
+               newTasks = await getIssuesBySprint(token, sprintId, spr.projectId as string, 10)
+            }
+            if (newTasks) {
+               useSprintStore.setState(state => {
+                  const sprintIndex = state.sprints.findIndex(s => s.id === sprintId)
+                  if (sprintIndex === -1) return state
+                  const updatedSprint = {
+                     ...state.sprints[sprintIndex],
+                     tasks: {
+                        ...newTasks,
+                        content: Array.isArray(newTasks.content) ? (newTasks.content as TaskProps[]).filter(t => t && t.id) : []
+                     }
+                  }
+                  const updatedSprints = [...state.sprints]
+                  updatedSprints[sprintIndex] = updatedSprint
+                  return { sprints: updatedSprints }
+               })
+            }
+            setIsFiltering(false)
+         }
+      }
+      getNewIssues()
+   }, [filter, sprintId, spr.projectId])
+
+   // Effect to close dropdown on outside click
+   useEffect(() => {
+      const handleClickOutside: (event: MouseEvent) => void = (event: MouseEvent) => {
+         if (userRef.current && !(userRef.current as HTMLElement).contains(event.target as Node)) {
+            setIsUserOpen(false)
+         }
+      }
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => {
+         document.removeEventListener('mousedown', handleClickOutside)
+      }
+   }, [])
+
 
    return (
       <>
@@ -731,7 +828,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                   <div className="space-y-3">
                      {/* Cabecera del grid */}
                      <div className="grid grid-cols-18 gap-4 p-3 bg-gray-50 rounded-lg border border-gray-200 text-xs font-medium text-gray-600">
-                        <div className="col-span-1 flex justify-center">
+                        <div className="col-span-1 flex items-center justify-center">
                            <input
                               type="checkbox"
                               checked={allSelected}
@@ -739,12 +836,170 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                               className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
                            />
                         </div>
-                        <div className="col-span-1">Tipo</div>
-                        <div className="col-span-5">Tarea</div>
-                        <div className="col-span-2">Estado</div>
-                        <div className="col-span-2">Prioridad</div>
-                        <div className="col-span-5">Asignado a</div>
-                        <div className="col-span-1 text-center">Acciones</div>
+                        <div className="col-span-1 flex items-center">Tipo</div>
+                        <div className="col-span-5 flex items-center">Tarea</div>
+                        <div className="col-span-2 flex items-center">Estado</div>
+                        <div className="col-span-2 flex items-center">Prioridad</div>
+                        <div className="col-span-5 flex items-center gap-2 relative w-full" style={{ zIndex: 20 }}>
+                           <p className='whitespace-nowrap'>Asignado a</p>
+                           <div className="w-full" ref={userRef}>
+                              <button
+                                 type="button"
+                                 className="bg-black/5 hover:bg-black/10 transition-colors rounded-full pr-2 flex items-center gap-2 w-full group"
+                                 onClick={() => setIsUserOpen(!isUserOpen)}
+                              >
+                                 {/* Avatar/Count */}
+                                 <div
+                                    className={`w-5 h-5 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden relative group ${userSelected.length > 0 ? 'cursor-pointer' : ''}`}
+                                    onMouseEnter={e => {
+                                       if (userSelected.length > 0) e.currentTarget.classList.add('hovering-x')
+                                    }}
+                                    onMouseLeave={e => {
+                                       e.currentTarget.classList.remove('hovering-x')
+                                    }}
+                                 >
+                                    {userSelected.length > 0 && (
+                                       <div
+                                          className="absolute inset-0 flex items-center justify-center bg-black/60 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-150 z-10"
+                                          style={{ fontSize: 14 }}
+                                          title="Limpiar selección"
+                                          onClick={e => {
+                                             e.stopPropagation();
+                                             setUserSelected([])
+                                             setFilter(sprintId, { key: 'assignedIds', value: '' })
+                                          }}
+                                       >
+                                          <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                          </svg>
+                                       </div>
+                                    )}
+                                    <span className={`${userSelected.length > 0 ? 'opacity-100 group-hover:opacity-0 transition-opacity' : ''} flex items-center justify-center w-full h-full`}>
+                                       {userSelected.length === 1 ? (
+                                          userSelected[0].picture ? (
+                                             <img
+                                                src={getUserAvatar(userSelected[0], 28)}
+                                                alt="avatar"
+                                                className="w-full h-full object-cover rounded-full"
+                                             />
+                                          ) : (
+                                             <span className="text-xs font-medium text-gray-600">
+                                                {userSelected[0].firstName || userSelected[0].lastName ?
+                                                   ((userSelected[0].firstName?.[0] || '') + (userSelected[0].lastName?.[0] || '')).toUpperCase()
+                                                   : (userSelected[0].email[0].toUpperCase() || 'Sin asignar')}
+                                             </span>
+                                          )
+                                       ) : userSelected.length > 1 ? (
+                                          <span className="text-xs font-semibold text-gray-700">{userSelected.length}</span>
+                                       ) : (
+                                          <span className="text-xs font-medium text-gray-500">?</span>
+                                       )}
+                                    </span>
+                                 </div>
+                                 {/* Name/Count */}
+                                 <span
+                                    className="text-xs font-medium text-gray-900 truncate block mr-auto"
+                                    title={userSelected.length === 1
+                                       ? (userSelected[0].firstName || userSelected[0].lastName
+                                          ? `${userSelected[0].firstName ?? ''} ${userSelected[0].lastName ?? ''}`.trim()
+                                          : (userSelected[0].email || 'Sin asignar'))
+                                       : userSelected.length > 1
+                                          ? `${userSelected.length} seleccionados`
+                                          : 'Todos'}
+                                 >
+                                    {userSelected.length === 1 ? (
+                                       userSelected[0].firstName || userSelected[0].lastName ?
+                                          `${`${userSelected[0].firstName ?? ''} ${userSelected[0].lastName ?? ''}`.trim()}`.slice(0, 20) +
+                                          (`${userSelected[0].firstName ?? ''} ${userSelected[0].lastName ?? ''}`.trim().length > 20 ? '…' : '')
+                                          : (userSelected[0].email?.slice(0, 20) || 'Sin asignar') + (userSelected[0].email && userSelected[0].email.length > 20 ? '…' : '')
+                                    ) : userSelected.length > 1 ? (
+                                       `${userSelected.length} seleccionados`
+                                    ) : (
+                                       'Todos'
+                                    )}
+                                 </span>
+                                 <svg className={`text-gray-400 w-4 h-4 transition-transform duration-200 ${isUserOpen ? "rotate-180" : ""}`}
+                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                                 </svg>
+                              </button>
+
+                              {isUserOpen && (
+                                 <div className="absolute z-[9999] top-full left-0 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-xl max-h-48 overflow-y-auto overscroll-none min-w-md">
+                                    <button
+                                       type="button"
+                                       onClick={() => {
+                                          setUserSelected([])
+                                          setFilter(sprintId, { key: 'assignedIds', value: '' })
+                                          setIsUserOpen(false)
+                                       }}
+                                       className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors first:rounded-t-lg ${userSelected.length === 0 ? 'bg-blue-50' : ''}`}
+                                    >
+                                       <div className="flex items-center gap-3">
+                                          <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                                             <span className="text-xs font-medium text-gray-500">?</span>
+                                          </div>
+                                          <span className="text-sm font-medium text-gray-900">Todos</span>
+                                       </div>
+                                    </button>
+                                    {allProjectUsers.map((obj, i) => {
+                                       const isSelected = userSelected.some(u => u.id === obj.id)
+                                       return (
+                                          <button
+                                             key={i}
+                                             type="button"
+                                             onClick={e => {
+                                                e.stopPropagation()
+                                                let newSelected;
+                                                if (isSelected) {
+                                                   newSelected = userSelected.filter(u => u.id !== obj.id)
+                                                } else {
+                                                   newSelected = [...userSelected, obj]
+                                                }
+                                                setUserSelected(newSelected)
+                                                setFilter(sprintId, { key: 'assignedIds', value: newSelected.length > 0 ? newSelected.map(u => u.id).join(',') : '' })
+                                             }}
+                                             className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${isSelected ? 'bg-blue-50' : ''}`}
+                                          >
+                                             <div className="flex items-center gap-3">
+                                                <div className={`w-2 h-2 rounded-full ${isSelected ? 'bg-blue-600' : 'bg-transparent'}`} />
+                                                <div className='w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden'>
+                                                   {obj.picture ? (
+                                                      <img
+                                                         src={getUserAvatar(obj, 28)}
+                                                         alt={obj.id}
+                                                         className="w-full h-full object-cover rounded-full"
+                                                      />
+                                                   ) : (
+                                                      <span className="text-sm font-medium text-gray-600">
+                                                         {obj.firstName || obj.lastName ?
+                                                            ((obj.firstName?.[0] || '') + (obj.lastName?.[0] || '')).toUpperCase()
+                                                            : (obj.email?.[0] || '?').toUpperCase()}
+                                                      </span>
+                                                   )}
+                                                </div>
+                                                <div className="flex-1">
+                                                   <span className='text-sm font-medium text-gray-900 block'>
+                                                      {obj.firstName || obj.lastName ? `${obj.firstName ?? ''} ${obj.lastName ?? ''}`.trim() : (obj.email || 'Sin email')}
+                                                   </span>
+                                                   <span className="text-xs text-gray-500">
+                                                      {obj.email || 'Sin email'}
+                                                   </span>
+                                                </div>
+                                                {isSelected && (
+                                                   <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                   </svg>
+                                                )}
+                                             </div>
+                                          </button>
+                                       )
+                                    })}
+                                 </div>
+                              )}
+                           </div>
+                        </div>
+                        <div className="col-span-1 flex items-center">Acciones</div>
                      </div>
                      <div className='space-y-2 max-h-[440px] overflow-y-auto overscroll-contain' ref={scrollContainerRef}>
                         {/* Filas de tareas */}
@@ -808,15 +1063,232 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                      </div>
                   </div>
                ) : (
-                  <div className="text-center py-12">
-                     <div className="mx-auto w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center mb-4">
-                        <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
+                  isFiltering ? (
+                     <div className="text-center py-12">
+                        <div className="mx-auto w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center mb-4 animate-spin-slow">
+                           <svg className="w-8 h-8 text-blue-500 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                           </svg>
+                        </div>
+                        <h3 className="text-lg font-medium text-blue-700 mb-2">Aplicando Filtros…</h3>
+                        <p className="text-blue-500 text-sm">Por favor espera mientras se filtran las tareas</p>
                      </div>
-                     <h3 className="text-lg font-medium text-gray-900 mb-2">No hay tareas disponibles</h3>
-                     <p className="text-gray-500 text-sm">Agrega algunas tareas para comenzar a trabajar en este sprint</p>
-                  </div>
+                  ) : (
+                     (filter && filter.key === 'assignedIds' && filter.value && userSelected.length > 0) ? (
+                        <div className="text-center py-12 flex flex-col items-center justify-center">
+                           <div className="flex items-center justify-center gap-2 mb-4">
+                              {userSelected.length === 1 ? (
+                                 <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden">
+                                    {userSelected[0].picture ? (
+                                       <img
+                                          src={getUserAvatar(userSelected[0], 64)}
+                                          alt={userSelected[0].id}
+                                          className="w-full h-full object-cover rounded-full"
+                                       />
+                                    ) : (
+                                       <span className="text-3xl font-medium text-gray-600">
+                                          {userSelected[0].firstName || userSelected[0].lastName ?
+                                             ((userSelected[0].firstName?.[0] || '') + (userSelected[0].lastName?.[0] || '')).toUpperCase()
+                                             : (userSelected[0].email?.[0] || '?').toUpperCase()}
+                                       </span>
+                                    )}
+                                 </div>
+                              ) : (
+                                 userSelected.slice(0, 3).map((user, idx) => (
+                                    <div key={user.id} className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden border-2 border-white -ml-2 first:ml-0">
+                                       {user.picture ? (
+                                          <img
+                                             src={getUserAvatar(user, 48)}
+                                             alt={user.id}
+                                             className="w-full h-full object-cover rounded-full"
+                                          />
+                                       ) : (
+                                          <span className="text-xl font-medium text-gray-600">
+                                             {user.firstName || user.lastName ?
+                                                ((user.firstName?.[0] || '') + (user.lastName?.[0] || '')).toUpperCase()
+                                                : (user.email?.[0] || '?').toUpperCase()}
+                                          </span>
+                                       )}
+                                    </div>
+                                 ))
+                              )}
+                              {userSelected.length > 3 && (
+                                 <span className="ml-2 text-gray-500 text-lg font-semibold">+{userSelected.length - 3}</span>
+                              )}
+                           </div>
+                           <h3 className="text-lg font-medium text-gray-900 mb-2">
+                              {userSelected.length === 1
+                                 ? `No hay tareas asignadas a ${userSelected[0].firstName || userSelected[0].lastName ? `${userSelected[0].firstName ?? ''} ${userSelected[0].lastName ?? ''}`.trim() : (userSelected[0].email || 'Sin asignar')}`
+                                 : `No hay tareas asignadas a los usuarios seleccionados`}
+                           </h3>
+                           <p className="text-gray-500 text-sm">Selecciona otro usuario o elimina el filtro para ver más tareas</p>
+                           {/* Mostrar el filtro aquí cuando no hay resultados */}
+                           <div className="mt-6 flex justify-center">
+                              <div className="w-full max-w-xs">
+                                 {/* Copia el botón y dropdown del filtro aquí */}
+                                 <div className="relative" ref={userRef}>
+                                    <button
+                                       type="button"
+                                       className="bg-black/5 hover:bg-black/10 rounded-full pr-2 flex items-center gap-2 w-full group"
+                                       onClick={() => setIsUserOpen(!isUserOpen)}
+                                    >
+                                       <div
+                                          className={`w-5 h-5 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden relative group ${userSelected.length > 0 ? 'cursor-pointer' : ''}`}
+                                       >
+                                          {userSelected.length > 0 && (
+                                             <div
+                                                className="absolute inset-0 flex items-center justify-center bg-black/60 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-150 z-10"
+                                                style={{ fontSize: 14 }}
+                                                title="Limpiar selección"
+                                                onClick={e => {
+                                                   e.stopPropagation();
+                                                   setUserSelected([])
+                                                   setFilter(sprintId, { key: 'assignedIds', value: '' })
+                                                }}
+                                             >
+                                                <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                             </div>
+                                          )}
+                                          <span className={`${userSelected.length > 0 ? 'opacity-100 group-hover:opacity-0 transition-opacity' : ''} flex items-center justify-center w-full h-full`}>
+                                             {userSelected.length === 1 ? (
+                                                userSelected[0].picture ? (
+                                                   <img
+                                                      src={getUserAvatar(userSelected[0], 28)}
+                                                      alt="avatar"
+                                                      className="w-full h-full object-cover rounded-full"
+                                                   />
+                                                ) : (
+                                                   <span className="text-xs font-medium text-gray-600">
+                                                      {userSelected[0].firstName || userSelected[0].lastName ?
+                                                         ((userSelected[0].firstName?.[0] || '') + (userSelected[0].lastName?.[0] || '')).toUpperCase()
+                                                         : (userSelected[0].email?.[0] || '?').toUpperCase()}
+                                                   </span>
+                                                )
+                                             ) : userSelected.length > 1 ? (
+                                                <span className="text-xs font-semibold text-gray-700">{userSelected.length}</span>
+                                             ) : (
+                                                <span className="text-xs font-medium text-gray-500">?</span>
+                                             )}
+                                          </span>
+                                       </div>
+                                       <span
+                                          className="text-xs font-medium text-gray-900 truncate block mr-auto"
+                                          title={userSelected.length === 1
+                                             ? (userSelected[0].firstName || userSelected[0].lastName
+                                                ? `${userSelected[0].firstName ?? ''} ${userSelected[0].lastName ?? ''}`.trim()
+                                                : (userSelected[0].email || 'Sin asignar'))
+                                             : userSelected.length > 1
+                                                ? `${userSelected.length} seleccionados`
+                                                : 'Todos'}
+                                       >
+                                          {userSelected.length === 1 ? (
+                                             userSelected[0].firstName || userSelected[0].lastName ?
+                                                `${`${userSelected[0].firstName ?? ''} ${userSelected[0].lastName ?? ''}`.trim()}`.slice(0, 20) +
+                                                (`${userSelected[0].firstName ?? ''} ${userSelected[0].lastName ?? ''}`.trim().length > 20 ? '…' : '')
+                                                : (userSelected[0].email?.slice(0, 20) || 'Sin asignar') + (userSelected[0].email && userSelected[0].email.length > 20 ? '…' : '')
+                                          ) : userSelected.length > 1 ? (
+                                             `${userSelected.length} seleccionados`
+                                          ) : (
+                                             'Todos'
+                                          )}
+                                       </span>
+                                       <svg className={`text-gray-400 w-4 h-4 transition-transform duration-200 ${isUserOpen ? "rotate-180" : ""}`}
+                                          xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                          <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                                       </svg>
+                                    </button>
+                                    {isUserOpen && (
+                                       <div className="absolute z-[9999] top-full left-0 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-xl max-h-48 overflow-y-auto overscroll-none min-w-md">
+                                          <button
+                                             type="button"
+                                             onClick={() => {
+                                                setUserSelected([])
+                                                setFilter(sprintId, { key: 'assignedIds', value: '' })
+                                                setIsUserOpen(false)
+                                             }}
+                                             className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors first:rounded-t-lg ${userSelected.length === 0 ? 'bg-blue-50' : ''}`}
+                                          >
+                                             <div className="flex items-center gap-3">
+                                                <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                                                   <span className="text-xs font-medium text-gray-500">?</span>
+                                                </div>
+                                                <span className="text-sm font-medium text-gray-900">Todos</span>
+                                             </div>
+                                          </button>
+                                          {allProjectUsers.map((obj, i) => {
+                                             const isSelected = userSelected.some(u => u.id === obj.id)
+                                             return (
+                                                <button
+                                                   key={i}
+                                                   type="button"
+                                                   onClick={e => {
+                                                      e.stopPropagation()
+                                                      let newSelected;
+                                                      if (isSelected) {
+                                                         newSelected = userSelected.filter(u => u.id !== obj.id)
+                                                      } else {
+                                                         newSelected = [...userSelected, obj]
+                                                      }
+                                                      setUserSelected(newSelected)
+                                                      setFilter(sprintId, { key: 'assignedIds', value: newSelected.length > 0 ? newSelected.map(u => u.id).join(',') : '' })
+                                                   }}
+                                                   className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${isSelected ? 'bg-blue-50' : ''}`}
+                                                >
+                                                   <div className="flex items-center gap-3">
+                                                      <div className={`w-2 h-2 rounded-full ${isSelected ? 'bg-blue-600' : 'bg-transparent'}`} />
+                                                      <div className='w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden'>
+                                                         {obj.picture ? (
+                                                            <img
+                                                               src={getUserAvatar(obj, 28)}
+                                                               alt={obj.id}
+                                                               className="w-full h-full object-cover rounded-full"
+                                                            />
+                                                         ) : (
+                                                            <span className="text-sm font-medium text-gray-600">
+                                                               {obj.firstName || obj.lastName ?
+                                                                  ((obj.firstName?.[0] || '') + (obj.lastName?.[0] || '')).toUpperCase()
+                                                                  : (obj.email?.[0] || '?').toUpperCase()}
+                                                            </span>
+                                                         )}
+                                                      </div>
+                                                      <div className="flex-1">
+                                                         <span className='text-sm font-medium text-gray-900 block'>
+                                                            {obj.firstName || obj.lastName ? `${obj.firstName ?? ''} ${obj.lastName ?? ''}`.trim() : (obj.email || 'Sin email')}
+                                                         </span>
+                                                         <span className="text-xs text-gray-500">
+                                                            {obj.email || 'Sin email'}
+                                                         </span>
+                                                      </div>
+                                                      {isSelected && (
+                                                         <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                         </svg>
+                                                      )}
+                                                   </div>
+                                                </button>
+                                             )
+                                          })}
+                                       </div>
+                                    )}
+                                 </div>
+                              </div>
+                           </div>
+                        </div>
+                     ) : (
+                        <div className="text-center py-12">
+                           <div className="mx-auto w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center mb-4">
+                              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                           </div>
+                           <h3 className="text-lg font-medium text-gray-900 mb-2">No hay tareas disponibles</h3>
+                           <p className="text-gray-500 text-sm">Agrega algunas tareas para comenzar a trabajar en este sprint</p>
+                        </div>
+                     )
+                  )
                )}
             </div>
          </Droppable>

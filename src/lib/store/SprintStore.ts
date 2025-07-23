@@ -5,12 +5,13 @@ import { create } from 'zustand'
 import toast from 'react-hot-toast'
 
 // Función auxiliar para obtener issues por sprint sin dependencia circular
-const getIssuesBySprintId = async (token: string, sprintId: string, projectId: string, size: number = 10): Promise<GlobalPagination> => {
+const getIssuesBySprintId = async (token: string, sprintId: string, projectId: string, size: number = 10, filter: { key: string; value: string }): Promise<GlobalPagination> => {
    try {
       const params = new URLSearchParams()
       params.append('projectId', projectId)
       params.append('size', size.toString())
-      
+      params.append(filter.key, filter.value)
+
       // Para el backlog (sprintId === 'null'), buscar issues con sprintId null
       // Para sprints específicos, buscar issues con ese sprintId específico
       if (sprintId === 'null') {
@@ -20,14 +21,14 @@ const getIssuesBySprintId = async (token: string, sprintId: string, projectId: s
          // Para sprints: buscar issues con el sprintId específico
          params.append('sprintId', sprintId)
       }
-      
+
       const response = await fetch(`${ISSUE_ROUTES.GET_ISSUES_BY_PROJECT}?${params.toString()}`, {
          method: 'GET',
          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
       })
-      
+
       if (!response.ok) throw new Error(response.statusText)
-      
+
       const data: GlobalPagination = await response.json()
       return data
    } catch (error) {
@@ -48,14 +49,17 @@ interface SprintState {
    isLoading: boolean
    isLoadingMore: boolean
    error: string | null
+   filters: { [sprintId: string]: { key: string; value: string } }
+   setFilter: (sprintId: string, filter: { key: string; value: string }) => void
    getSprints: (token: string, projectId: string) => Promise<void>
    getActiveSprint: (token: string, projectId: string) => Promise<void>
-   getIssuesBySprint: (token: string, sprintId: string, projectId: string, size?: number) => Promise<GlobalPagination>
-   loadMoreIssuesBySprint: (token: string, sprintId: string, projectId: string, page: number) => Promise<void>
+   getIssuesBySprint: (token: string, sprintId: string, projectId: string, size?: number, filter?: { key: string; value: string }) => Promise<GlobalPagination>
+   loadMoreIssuesBySprint: (token: string, sprintId: string, projectId: string, page: number, filter?: { key: string; value: string }) => Promise<void>
    createSprint: (token: string, sprintData: SprintProps) => Promise<void>
    updateSprint: (token: string, sprintData: SprintProps, projectId: string) => Promise<void>
    deleteSprint: (token: string, sprintId: string, projectId: string) => Promise<void>
    removeIssueFromSprint: (token: string, taskIds: string[], projectId: string) => Promise<void>
+   clearIssuesFromSprint: (sprintId: string) => Promise<void>
 }
 
 export const useSprintStore = create<SprintState>((set, get) => ({
@@ -64,20 +68,22 @@ export const useSprintStore = create<SprintState>((set, get) => ({
    isLoading: false,
    isLoadingMore: false,
    error: null,
+   filters: {},
+   setFilter: (sprintId, filter) => set(state => ({ filters: { ...state.filters, [sprintId]: filter } })),
 
-   getIssuesBySprint: async (token, sprintId, projectId, size = 10) => {
-      return await getIssuesBySprintId(token, sprintId, projectId, size)
+   getIssuesBySprint: async (token, sprintId, projectId, size = 10, filter = { key: '', value: '' }) => {
+      return await getIssuesBySprintId(token, sprintId, projectId, size, filter)
    },
 
    getActiveSprint: async (token, projectId) => {
       try {
          set({ error: null })
-         
+
          const response = await fetch(`${API_ROUTES.ACTIVE_SPRINT}/${projectId}`, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
          })
-         
+
          if (response.ok) {
             const activeSprint: SprintProps = await response.json()
             set({ activeSprint })
@@ -176,10 +182,10 @@ export const useSprintStore = create<SprintState>((set, get) => ({
          })
 
          if (!response.ok) throw new Error(response.statusText)
-         
+
          // Refresh sprints after update
          await get().getSprints(token, projectId)
-         
+
          // Show appropriate message based on whether sprint was activated
          if (sprintData.active) {
             toast.success('Sprint activado exitosamente')
@@ -197,12 +203,12 @@ export const useSprintStore = create<SprintState>((set, get) => ({
       try {
          set({ isLoading: true, error: null })
          const response = await fetch(`${API_ROUTES.CRUD_SPRINTS}/${sprintId}`, {
-            method: 'DELETE', 
+            method: 'DELETE',
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
          })
 
          if (!response.ok) throw new Error(response.statusText)
-         
+
          // Refresh sprints after deletion
          await get().getSprints(token, projectId)
          toast.success('Sprint eliminado exitosamente')
@@ -223,7 +229,7 @@ export const useSprintStore = create<SprintState>((set, get) => ({
          })
 
          if (!response.ok) throw new Error(response.statusText)
-         
+
          // Refresh sprints after removing issues
          await get().getSprints(token, projectId)
          toast.success('Issues removidos del sprint exitosamente')
@@ -234,39 +240,42 @@ export const useSprintStore = create<SprintState>((set, get) => ({
       }
    },
 
-   loadMoreIssuesBySprint: async (token, sprintId, projectId, page) => {
+   loadMoreIssuesBySprint: async (token, sprintId, projectId, page, filter) => {
       try {
          set({ isLoadingMore: true, error: null })
          const params = new URLSearchParams()
          params.append('projectId', projectId)
-         
+         params.append('size', '10')
+         if (filter) params.append(filter.key, filter.value)
+
+
          // Para el backlog (sprintId === 'null'), buscar issues con sprintId null
          if (sprintId === 'null') {
             params.append('sprintId', 'null')  // Enviar 'null' para obtener issues sin sprint
          } else {
             params.append('sprintId', sprintId)
          }
-         
+
          params.append('page', String(page))
-         
+
          const response = await fetch(`${ISSUE_ROUTES.GET_ISSUES_BY_PROJECT}?${params.toString()}`, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
          })
-         
+
          if (!response.ok) throw new Error(response.statusText)
-         
+
          const data: GlobalPagination = await response.json()
-         
+
          set(state => {
             // Encontrar el sprint correspondiente
             // Para el backlog, buscar el sprint con id 'null'
             const sprintIndex = state.sprints.findIndex(sprint => sprint.id === sprintId)
             if (sprintIndex === -1) return { isLoadingMore: false } // Sprint no encontrado
-            
+
             const existingTasks = state.sprints[sprintIndex].tasks?.content as TaskProps[] || []
             const newTasks = data.content as TaskProps[]
-            
+
             // Agregar las nuevas tareas al sprint encontrado
             const updatedSprint: SprintProps = {
                ...state.sprints[sprintIndex],
@@ -278,11 +287,11 @@ export const useSprintStore = create<SprintState>((set, get) => ({
                   number: data.number,
                },
             }
-            
+
             // Reemplazar el sprint antiguo con el sprint actualizado
             const updatedSprints = [...state.sprints]
             updatedSprints[sprintIndex] = updatedSprint
-            
+
             return { sprints: updatedSprints, isLoadingMore: false }
          })
       } catch (error) {
@@ -290,6 +299,25 @@ export const useSprintStore = create<SprintState>((set, get) => ({
          set({ error: 'Error al cargar más issues del sprint', isLoadingMore: false })
          toast.error('Error al cargar más issues del sprint')
       }
+   },
+
+   clearIssuesFromSprint: async (sprintId: string) => {
+      set(state => {
+         const sprintIndex = state.sprints.findIndex(sprint => sprint.id === sprintId)
+         if (sprintIndex === -1) return state // Sprint no encontrado
+
+         // Limpiar las tareas del sprint
+         const updatedSprint: SprintProps = {
+            ...state.sprints[sprintIndex],
+            tasks: { content: [], totalPages: 0, totalElements: 0, size: 0, number: 0 },
+         }
+
+         // Reemplazar el sprint antiguo con el sprint actualizado
+         const updatedSprints = [...state.sprints]
+         updatedSprints[sprintIndex] = updatedSprint
+
+         return { sprints: updatedSprints }
+      })
    },
 }))
 
