@@ -67,8 +67,18 @@ function renderFormattedText(text: string) {
     return elements;
 }
 
+interface Message {
+    text: string;
+    isUser: boolean;
+    role: string;
+    files?: File[];
+    hasDocumentContext?: boolean;
+    documentContent?: string;
+}
+
 export default function ChatWithIA({ onCancel }: { onCancel: () => void }) {
-    const [messages, setMessages] = useState([
+    const [files, setFiles] = useState<File[]>([])
+    const [messages, setMessages] = useState<Message[]>([
         { text: "¡Hola! Soy tu asistente de IA. Puedes preguntarme cualquier cosa y te responderé aquí.", isUser: false, role: "assistant" }
     ]);
     const [inputText, setInputText] = useState("");
@@ -76,38 +86,88 @@ export default function ChatWithIA({ onCancel }: { onCancel: () => void }) {
 
     const { chatWithGemini } = useGeminiStore();
     const { getValidAccessToken } = useAuthStore();
+    const [documentContext, setDocumentContext] = useState<string>("");
+
+    const removeFile = (indexToRemove: number) => {
+        setFiles(prev => prev.filter((_, index) => index !== indexToRemove));
+    }
 
     const handleSubmit = async () => {
-        if (!inputText.trim() || isProcessing) return;
+        if ((!inputText.trim() && files.length === 0) || isProcessing) return;
         setIsProcessing(true);
 
-        // Agregar mensaje del usuario con role
-        setMessages(prev => [...prev, { text: inputText, isUser: true, role: "user" }]);
+        // Determinar el mensaje del usuario
+        let userMessage = inputText.trim();
+        const hasFiles = files.length > 0;
+
+        // Si solo hay archivos sin mensaje, usar instrucción por defecto
+        if (hasFiles && !userMessage) {
+            userMessage = "De acuerdo a estos archivos, necesito que hagas un resumen detallado de todo el contenido de cada documento";
+        }
+
+        // Agregar mensaje del usuario con archivos
+        const newUserMessage: Message = {
+            text: userMessage,
+            isUser: true,
+            role: "user",
+            files: hasFiles ? [...files] : undefined
+        };
+        setMessages(prev => [...prev, newUserMessage]);
 
         try {
             const token = await getValidAccessToken();
             if (!token) throw new Error("No se pudo obtener el token de autenticación");
 
-            // Mensaje informativo para la IA
-            const systemInstruction = {
+            let finalMessage = userMessage;
+            let filesContent = "";
+
+            // Construir el contexto del sistema
+            let systemInstruction = {
                 role: "system",
-                content: "Este es el contexto del chat. Responde en base a lo que se te ha preguntado. Si te preguntan algo que ya se preguntó antes, no repitas la misma respuesta, vuelve a procesar la pregunta y utiliza el historial para dar una respuesta más completa si es posible."
+                content: "Responde únicamente al último mensaje del rol USER basándote en todo el historial de chat (rol ASSISTANT, USER y SYSTEM). Si una pregunta se repite, es crucial que no repitas tu respuesta anterior; en su lugar, enriquécela utilizando el contexto previo para ofrecer una solución más completa, sintetizando información o aportando una nueva perspectiva."
             };
+
+            // Si hay contexto de documento previo, agregarlo al sistema
+            if (documentContext) {
+                systemInstruction.content += ` Cuando el usuario haga preguntas, responde usando la información del documento si es relevante. A continuación el contenido del documento: ${documentContext}`;
+            }
+
             // Simula historial conversacional para la IA
             const formattedMessages = [
                 systemInstruction,
-                ...messages.map(msg => ({ role: msg.role, content: msg.text })),
-                { role: "user", content: inputText }
+                ...messages.map(msg => ({
+                    role: msg.role,
+                    content: msg.text
+                })),
+                { role: "user", content: finalMessage }
             ];
-            const response = await chatWithGemini(token, formattedMessages);
+
+            const response = await chatWithGemini(token, formattedMessages, hasFiles ? files : undefined);
             let iaText = typeof response === "string" ? response : response?.text || "Respuesta de IA no disponible.";
-            setMessages(prev => [...prev, { text: iaText, isUser: false, role: "assistant" }]);
+
+            // Crear el mensaje de respuesta de la IA
+            const iaMessage: Message = {
+                text: iaText,
+                isUser: false,
+                role: "assistant",
+                hasDocumentContext: hasFiles,
+                documentContent: hasFiles ? filesContent : undefined
+            };
+
+            setMessages(prev => [...prev, iaMessage]);
+
+            // Si se procesaron archivos, guardar el contexto para futuras preguntas
+            if (hasFiles) {
+                setDocumentContext(iaText);
+            }
+
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "Hubo un error al procesar tu mensaje.");
-            setMessages(prev => [...prev, { text: "Lo siento, hubo un error al procesar tu mensaje.", isUser: false, role: "assistant" }]);
+            setMessages(prev => [...prev, { text: "Lo siento, hubo un error al procesar tu mensaje. Intenta de nuevo o recarga la página para empezar un nuevo chat.", isUser: false, role: "assistant" }]);
         } finally {
             setIsProcessing(false);
             setInputText("");
+            setFiles([]); // Limpiar archivos después de enviar
         }
     };
 
@@ -145,24 +205,37 @@ export default function ChatWithIA({ onCancel }: { onCancel: () => void }) {
                         key={index}
                         className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
                     >
-                        <div
-                            className={`max-w-[80%] text-sm p-3 rounded-2xl ${message.isUser
-                                ? 'bg-blue-600 text-white rounded-br-none whitespace-pre-wrap'
-                                : 'bg-black/5 text-black rounded-bl-none'
-                                }`}
-                        >
-                            {message.isUser
-                                ? message.text
-                                : renderFormattedText(message.text)
-                            }
-                            {/* Loader animado de tres puntos verticales */}
-                            {isProcessing && index === messages.length - 1 && !message.isUser && (
-                                <div className="flex items-center h-5 ml-2">
-                                    <span className="inline-block w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                                    <span className="inline-block w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '200ms' }}></span>
-                                    <span className="inline-block w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '400ms' }}></span>
+                        <div className="max-w-[80%] flex flex-col gap-2">
+                            {/* Mostrar archivos adjuntos si los hay */}
+                            {message.files && message.files.length > 0 && (
+                                <div className="text-xs text-gray-500 flex flex-wrap gap-1">
+                                    {message.files.map((file, fileIndex) => (
+                                        <span key={fileIndex} className="bg-gray-100 px-2 py-1 rounded">
+                                            📎 {file.name}
+                                        </span>
+                                    ))}
                                 </div>
                             )}
+
+                            <div
+                                className={`text-sm p-3 rounded-2xl ${message.isUser
+                                    ? 'bg-blue-600 text-white rounded-br-none whitespace-pre-wrap'
+                                    : 'bg-black/5 text-black rounded-bl-none'
+                                    }`}
+                            >
+                                {message.isUser
+                                    ? message.text
+                                    : renderFormattedText(message.text)
+                                }
+                                {/* Loader animado de tres puntos verticales */}
+                                {isProcessing && index === messages.length - 1 && !message.isUser && (
+                                    <div className="flex items-center h-5 ml-2">
+                                        <span className="inline-block w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                                        <span className="inline-block w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '200ms' }}></span>
+                                        <span className="inline-block w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '400ms' }}></span>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 ))}
@@ -180,9 +253,27 @@ export default function ChatWithIA({ onCancel }: { onCancel: () => void }) {
                 )}
             </section>
 
-            {/* Footer con input igual a CreateWithIA */}
+            {/* Footer con input */}
             <div className="border-t border-gray-200 mt-auto">
                 <div className="flex flex-col items-stretch gap-2 p-6">
+                    {/* Mostrar archivos adjuntos */}
+                    {(files.length > 0 && !isProcessing) && (
+                        <div className="flex flex-wrap gap-2 p-2 bg-gray-50 rounded-md">
+                            {files.map((file, index) => (
+                                <div key={index} className="flex items-center gap-2 bg-white px-3 py-1 rounded-md text-xs shadow-sm">
+                                    <span>📎 {file.name}</span>
+                                    <button
+                                        onClick={() => removeFile(index)}
+                                        className="text-red-500 hover:text-red-700 font-bold"
+                                        disabled={isProcessing}
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
                     <AutoResizeTextarea
                         className="focus-within:ring-blue-500 focus-within:border-blue-500 focus-within:ring-2 transition-all max-h-28! w-full p-2.5 text-sm border resize-none focus:outline-none placeholder-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
                         value={inputText}
@@ -192,22 +283,38 @@ export default function ChatWithIA({ onCancel }: { onCancel: () => void }) {
                         disabled={isProcessing}
                     />
                     <div className="flex justify-between items-center">
-                        <button
-                            className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                            onClick={() => { }}
-                            type="button"
-                            title="Adjuntar archivos"
-                            disabled={isProcessing}
-                        >
-                            <AttachIcon size={16} stroke={2} />
-                            Adjuntar
-                        </button>
+                        <div className="relative">
+                            <input
+                                id="file-upload"
+                                type="file"
+                                accept=".pdf,.txt,.doc,.docx"
+                                multiple
+                                className="hidden"
+                                onChange={(e) => {
+                                    if (e.target.files) {
+                                        const selected = Array.from(e.target.files);
+                                        setFiles(prev => [...prev, ...selected]);
+                                        toast.success(`${selected.length} archivo(s) adjuntado(s).`);
+                                    }
+                                }}
+                                disabled={isProcessing}
+                            />
+                            <label
+                                htmlFor="file-upload"
+                                className={`${isProcessing ? 'opacity-50 cursor-not-allowed' : 'bg-white'} flex items-center gap-2 px-4 py-2
+                                 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 
+                                 focus:ring-offset-2 transition-all duration-200 text-sm font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed`}
+                            >
+                                <AttachIcon size={16} stroke={2} />
+                                Adjuntar
+                            </label>
+                        </div>
 
                         <button
                             className="flex items-center gap-2 px-4 py-2 text-blue-700 bg-blue-50 border border-blue-300 rounded-md hover:bg-blue-100 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                             onClick={handleSubmit}
                             type="button"
-                            disabled={!inputText.trim() || isProcessing}
+                            disabled={(!inputText.trim() && files.length === 0) || isProcessing}
                         >
                             {isProcessing ? (
                                 <>

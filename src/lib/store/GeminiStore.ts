@@ -16,7 +16,7 @@ interface GeminiState {
   setApiUrl: (url: string) => void
   updateConfig: (token: string) => Promise<void>
   getConfig: (token: string) => Promise<void>
-  chatWithGemini: (token: string, messages: { role: string, content: string }[]) => Promise<any>
+  chatWithGemini: (token: string, messages: { role: string, content: string }[], files?: File[]) => Promise<any>
 }
 
 export const useGeminiStore = create<GeminiState>()(
@@ -83,15 +83,23 @@ export const useGeminiStore = create<GeminiState>()(
         }
       },
       // Chat with AI
-      chatWithGemini: async (token: string, messages: { role: string, content: string }[]) => {
+      chatWithGemini: async (token: string, messages: { role: string, content: string }[], files?: File[]) => {
         try {
+          const formData = new FormData();
+          formData.append('texto', JSON.stringify(messages));
+          if (files && files.length > 0) {
+            files.forEach((file, idx) => {
+              formData.append('archivos', file, file.name);
+            });
+          }
+
           const response = await fetch(API_ROUTES.GEMINI_CHAT, {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json',
               'Authorization': `Bearer ${token}`,
+              // No incluir 'Content-Type', fetch lo gestiona con FormData
             },
-            body: JSON.stringify({ messages }),
+            body: formData,
           });
 
           if (!response.ok) {
