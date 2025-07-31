@@ -109,7 +109,7 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
                         <span className="text-sm text-gray-500">Asignado a:</span>
                         <span className="text-sm font-medium text-gray-900">
                            {typeof task.assignedId === 'object'
-                              ? `${task.assignedId.firstName} ${task.assignedId.lastName}`
+                              ? `${task.assignedId.firstName ?? "Sin"} ${task.assignedId.lastName ?? "asignar"}`
                               : task.assignedId || 'No asignado'}
                         </span>
                      </div>
