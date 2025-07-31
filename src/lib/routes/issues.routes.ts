@@ -10,6 +10,9 @@ export const API_ROUTES = {
     ASIGN_USER: `${BACKEND_URL}/api/issues/assignUser`,
     CREATE_ISSUES_FROM_IA: `${BACKEND_URL}/api/issues/batch`,
     DETECT_ISSUES_FROM_TEXT: `${INTEGRATION_URL}/api/gemini/detectIssuesFromText`,
+    DETECT_ISSUES_FROM_DOCX: `${INTEGRATION_URL}/api/gemini/detectIssuesFromDocx`,
+    GET_COLUMNS_FROM_EXCEL: `${INTEGRATION_URL}/api/import/columns`,
+    IMPORT_ISSUES: `${INTEGRATION_URL}/api/import`,
     GEMINI_CONFIG: `${INTEGRATION_URL}/api/gemini-config`,
     GEMINI_CHAT: `${INTEGRATION_URL}/api/gemini/chat`,
 }
