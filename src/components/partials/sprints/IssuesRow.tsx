@@ -12,7 +12,7 @@ import { useIssueStore } from '@/lib/store/IssueStore'
 import CreateTaskForm from '../issues/CreateTaskForm'
 import { useAuthStore } from '@/lib/store/AuthStore'
 import ReasignIssue from '../issues/ReasignIssue'
-import { CalendarIcon, CheckmarkIcon, EditIcon, DeleteIcon, PlusIcon, EyeIcon, ClockIcon, ForbiddenIcon, IAIcon, ChatIAIcon } from '@/assets/Icon'
+import { CalendarIcon, CheckmarkIcon, EditIcon, DeleteIcon, PlusIcon, EyeIcon, ClockIcon, ForbiddenIcon, IAIcon, ChatIAIcon, ImportIcon } from '@/assets/Icon'
 import Modal from '../../layout/Modal'
 import Image from 'next/image'
 import CreateSprintForm from './CreateSprintForm'
@@ -21,6 +21,7 @@ import DeleteSprintForm from './DeleteSprintForm'
 import IssueConfig from '../config/issues/IssueConfig'
 import AuditHistory from '../audit/AuditHistory'
 import { getUserAvatar } from '@/lib/utils/avatar.utils'
+import ImportIssuesModal from '../issues/ImportIssuesModal'
 
 // Component DraggableIssueRow - Implementación igual a SprintKanbanCard
 interface DraggableIssueRowProps {
@@ -348,6 +349,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
    const [isUpdateSprintOpen, setIsUpdateSprintOpen] = useState(false)
    const [isDeleteSprintOpen, setIsDeleteSprintOpen] = useState(false)
    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
    const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false)
    const [sprintSelected, setSprintSelected] = useState<SprintProps>()
    const [openItemId, setOpenItemId] = useState<string | null>(null)
@@ -734,6 +736,13 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                         </>
                      ) : (
                         <>
+                           <button
+                              onClick={() => setIsImportModalOpen(true)}
+                              className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                           >
+                              <ImportIcon size={16} stroke={2} />
+                              <span>Importar Tareas</span>
+                           </button>
                            <button className="flex items-center gap-2 px-4 py-2 text-blue-700 bg-blue-50 border border-blue-300 rounded-lg hover:bg-blue-100 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                               onClick={() => setIsCreateWithIAOpen(true)}
                            >
@@ -744,7 +753,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                               onClick={() => setIsOpen(true)}
                               className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md"
                            >
-                              <PlusIcon size={16} />
+                              <PlusIcon size={16} stroke={2} />
                               <span>Nueva Tarea</span>
                            </button>
                         </>
@@ -1295,6 +1304,9 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
 
          {/* Modales */}
          <>
+            <Modal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} title="" customWidth="sm:max-w-6xl" showCloseButton={false}>
+               <ImportIssuesModal onCancel={() => setIsImportModalOpen(false)} />
+            </Modal>
             <Modal isOpen={isUpdateSprintOpen} onClose={() => setIsUpdateSprintOpen(false)} title="" customWidth="sm:max-w-2xl" showCloseButton={false}>
                <CreateSprintForm
                   onSubmit={handleUpdateSprint}
