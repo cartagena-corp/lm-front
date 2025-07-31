@@ -180,6 +180,7 @@ export default function Comment({ comment }: Props) {
                                                 alt={file.fileName}
                                                 fill
                                                 className="object-cover hover:scale-105 transition-transform"
+                                                unoptimized
                                              />
                                           </div>
                                        </Link>

@@ -11,7 +11,7 @@ const nextConfig = {
         pathname: '/uploads/**' // opcional, patrones de ruta
       },
       {
-        protocol: 'http',
+        protocol: 'https',
         // hostname: 'localhost',  // solo dominio
         hostname: 'https://lm-comments.cartagenacorporation.com',  // solo dominio
         port: '8084',           // puerto separado
