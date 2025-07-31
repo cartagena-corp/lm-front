@@ -60,6 +60,8 @@ interface IssueState {
    getIssueHistory: (token: string, issueId: string, page?: number, size?: number) => Promise<AuditPagination>
 
    detectIssuesFromText: (token: string, projectId: string, text: string) => Promise<any>
+   getColumnsFromExcel: (token: string, file: File) => Promise<any>
+   importIssuesFromExcel: (token: string, file: File, projectId: string, mapping: Record<string, string>) => Promise<any>
 
    // Utility actions
    setSelectedIssue: (issue: TaskProps | null) => void
@@ -466,6 +468,58 @@ export const useIssueStore = create<IssueState>((set, get) => ({
          return data
       } catch (error) {
          console.error('Error en createIssuesFromIA:', error)
+         throw error
+      }
+   },
+   // Get Columns from Excel
+   getColumnsFromExcel: async (token: string, file: File) => {
+      try {
+         const formData = new FormData()
+         formData.append('file', file)
+
+         const response = await fetch(API_ROUTES.GET_COLUMNS_FROM_EXCEL, {
+            method: 'POST',
+            headers: {
+               'Authorization': `Bearer ${token}`,
+            },
+            body: formData
+         })
+
+         if (!response.ok) {
+            throw new Error(`Error ${response.status}: ${response.statusText}`)
+         }
+
+         const data = await response.json()
+         return data
+      } catch (error) {
+         console.error('Error en getColumnsFromExcel:', error)
+         throw error
+      }
+   },
+   // Import Issues from Excel
+   importIssuesFromExcel: async (token: string, file: File, projectId: string, mapping: Record<string, string>) => {
+      try {
+         const formData = new FormData()
+         formData.append('file', file)
+         formData.append('projectId', projectId)
+         formData.append('mapping', JSON.stringify(mapping))
+
+         const response = await fetch(API_ROUTES.IMPORT_ISSUES, {
+            method: 'POST',
+            headers: {
+               'Authorization': `Bearer ${token}`,
+            },
+            body: formData
+         })
+
+         if (!response.ok) {
+            throw new Error(`Error ${response.status}: ${response.statusText}`)
+         }
+
+         const data = await response.text()
+         return data
+      } catch (error) {
+         console.error('Error en importIssuesFromExcel:', error)
          throw error
       }
    },
