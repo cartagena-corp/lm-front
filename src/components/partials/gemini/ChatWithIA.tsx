@@ -9,30 +9,30 @@ import { toast } from "react-hot-toast"
 // Formatea el texto plano de la IA a JSX enriquecido
 function renderFormattedText(text: string) {
     // Divide en líneas
-    const lines = text.split(/\r?\n/);
-    const elements: JSX.Element[] = [];
-    let listItems: string[] = [];
-    let isList = false;
+    const lines = text.split(/\r?\n/)
+    const elements: JSX.Element[] = []
+    let listItems: string[] = []
+    let isList = false
 
-    const boldRegex = /\*\*(.*?)\*\*/g;
-    const tabRegex = /^([\t]+)/;
+    const boldRegex = /\*\*(.*?)\*\*/g
+    const tabRegex = /^([\t]+)/
 
     function formatLine(line: string) {
         // Sangría visual por tabs
-        const tabMatch = line.match(tabRegex);
-        const indent = tabMatch ? tabMatch[1].length : 0;
-        let content = line.replace(tabRegex, "");
+        const tabMatch = line.match(tabRegex)
+        const indent = tabMatch ? tabMatch[1].length : 0
+        let content = line.replace(tabRegex, "")
         // Negrita
-        content = content.replace(boldRegex, (_, p1) => `<strong>${p1}</strong>`);
+        content = content.replace(boldRegex, (_, p1) => `<strong>${p1}</strong>`)
         // Render como HTML seguro
-        return <span style={{ marginLeft: indent * 20 }} dangerouslySetInnerHTML={{ __html: content }} />;
+        return <span style={{ marginLeft: indent * 20 }} dangerouslySetInnerHTML={{ __html: content }} />
     }
 
     lines.forEach((line, idx) => {
         if (/^([*\-])\s+/.test(line)) {
             // Es lista
-            isList = true;
-            listItems.push(line.replace(/^([*\-])\s+/, ""));
+            isList = true
+            listItems.push(line.replace(/^([*\-])\s+/, ""))
         } else {
             if (isList && listItems.length) {
                 // Renderiza lista
@@ -42,18 +42,18 @@ function renderFormattedText(text: string) {
                             <li key={i}>{formatLine(item)}</li>
                         ))}
                     </ul>
-                );
-                listItems = [];
-                isList = false;
+                )
+                listItems = []
+                isList = false
             }
             // Renderiza línea normal
             if (line.trim() !== "") {
-                elements.push(<div key={idx}>{formatLine(line)}</div>);
+                elements.push(<div key={idx}>{formatLine(line)}</div>)
             } else {
-                elements.push(<br key={`br-${idx}`} />);
+                elements.push(<br key={`br-${idx}`} />)
             }
         }
-    });
+    })
     // Si termina con lista
     if (isList && listItems.length) {
         elements.push(
@@ -62,47 +62,48 @@ function renderFormattedText(text: string) {
                     <li key={i}>{formatLine(item)}</li>
                 ))}
             </ul>
-        );
+        )
     }
-    return elements;
+    return elements
 }
 
 interface Message {
-    text: string;
-    isUser: boolean;
-    role: string;
-    files?: File[];
-    hasDocumentContext?: boolean;
-    documentContent?: string;
+    text: string
+    isUser: boolean
+    role: string
+    files?: File[]
+    hasDocumentContext?: boolean
+    documentContent?: string
 }
 
 export default function ChatWithIA({ onCancel }: { onCancel: () => void }) {
+    const [isDragActive, setIsDragActive] = useState(false)
     const [files, setFiles] = useState<File[]>([])
     const [messages, setMessages] = useState<Message[]>([
         { text: "¡Hola! Soy tu asistente de IA. Puedes preguntarme cualquier cosa y te responderé aquí.", isUser: false, role: "assistant" }
-    ]);
-    const [inputText, setInputText] = useState("");
-    const [isProcessing, setIsProcessing] = useState(false);
+    ])
+    const [inputText, setInputText] = useState("")
+    const [isProcessing, setIsProcessing] = useState(false)
 
-    const { chatWithGemini } = useGeminiStore();
-    const { getValidAccessToken } = useAuthStore();
-    const [documentContext, setDocumentContext] = useState<string>("");
+    const { chatWithGemini } = useGeminiStore()
+    const { getValidAccessToken } = useAuthStore()
+    const [documentContext, setDocumentContext] = useState<string>("")
 
     const removeFile = (indexToRemove: number) => {
-        setFiles(prev => prev.filter((_, index) => index !== indexToRemove));
+        setFiles(prev => prev.filter((_, index) => index !== indexToRemove))
     }
 
     const handleSubmit = async () => {
-        if ((!inputText.trim() && files.length === 0) || isProcessing) return;
-        setIsProcessing(true);
+        if ((!inputText.trim() && files.length === 0) || isProcessing) return
+        setIsProcessing(true)
 
         // Determinar el mensaje del usuario
-        let userMessage = inputText.trim();
-        const hasFiles = files.length > 0;
+        let userMessage = inputText.trim()
+        const hasFiles = files.length > 0
 
         // Si solo hay archivos sin mensaje, usar instrucción por defecto
         if (hasFiles && !userMessage) {
-            userMessage = "De acuerdo a estos archivos, necesito que hagas un resumen detallado de todo el contenido de cada documento";
+            userMessage = "De acuerdo a estos archivos, necesito que hagas un resumen detallado de todo el contenido de cada documento"
         }
 
         // Agregar mensaje del usuario con archivos
@@ -111,25 +112,25 @@ export default function ChatWithIA({ onCancel }: { onCancel: () => void }) {
             isUser: true,
             role: "user",
             files: hasFiles ? [...files] : undefined
-        };
-        setMessages(prev => [...prev, newUserMessage]);
+        }
+        setMessages(prev => [...prev, newUserMessage])
 
         try {
-            const token = await getValidAccessToken();
-            if (!token) throw new Error("No se pudo obtener el token de autenticación");
+            const token = await getValidAccessToken()
+            if (!token) throw new Error("No se pudo obtener el token de autenticación")
 
-            let finalMessage = userMessage;
-            let filesContent = "";
+            let finalMessage = userMessage
+            let filesContent = ""
 
             // Construir el contexto del sistema
             let systemInstruction = {
                 role: "system",
-                content: "Responde únicamente al último mensaje del rol USER basándote en todo el historial de chat (rol ASSISTANT, USER y SYSTEM). Si una pregunta se repite, es crucial que no repitas tu respuesta anterior; en su lugar, enriquécela utilizando el contexto previo para ofrecer una solución más completa, sintetizando información o aportando una nueva perspectiva."
-            };
+                content: "Responde únicamente al último mensaje del rol USER basándote en todo el historial de chat (rol ASSISTANT, USER y SYSTEM). Si una pregunta se repite, es crucial que no repitas tu respuesta anterior en su lugar, enriquécela utilizando el contexto previo para ofrecer una solución más completa, sintetizando información o aportando una nueva perspectiva."
+            }
 
             // Si hay contexto de documento previo, agregarlo al sistema
             if (documentContext) {
-                systemInstruction.content += ` Cuando el usuario haga preguntas, responde usando la información del documento si es relevante. A continuación el contenido del documento: ${documentContext}`;
+                systemInstruction.content += ` Cuando el usuario haga preguntas, responde usando la información del documento si es relevante. A continuación el contenido del documento: ${documentContext}`
             }
 
             // Simula historial conversacional para la IA
@@ -140,10 +141,10 @@ export default function ChatWithIA({ onCancel }: { onCancel: () => void }) {
                     content: msg.text
                 })),
                 { role: "user", content: finalMessage }
-            ];
+            ]
 
-            const response = await chatWithGemini(token, formattedMessages, hasFiles ? files : undefined);
-            let iaText = typeof response === "string" ? response : response?.text || "Respuesta de IA no disponible.";
+            const response = await chatWithGemini(token, formattedMessages, hasFiles ? files : undefined)
+            let iaText = typeof response === "string" ? response : response?.text || "Respuesta de IA no disponible."
 
             // Crear el mensaje de respuesta de la IA
             const iaMessage: Message = {
@@ -152,27 +153,71 @@ export default function ChatWithIA({ onCancel }: { onCancel: () => void }) {
                 role: "assistant",
                 hasDocumentContext: hasFiles,
                 documentContent: hasFiles ? filesContent : undefined
-            };
+            }
 
-            setMessages(prev => [...prev, iaMessage]);
+            setMessages(prev => [...prev, iaMessage])
 
             // Si se procesaron archivos, guardar el contexto para futuras preguntas
             if (hasFiles) {
-                setDocumentContext(iaText);
+                setDocumentContext(iaText)
             }
 
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : "Hubo un error al procesar tu mensaje.");
-            setMessages(prev => [...prev, { text: "Lo siento, hubo un error al procesar tu mensaje. Intenta de nuevo o recarga la página para empezar un nuevo chat.", isUser: false, role: "assistant" }]);
+            toast.error(error instanceof Error ? error.message : "Hubo un error al procesar tu mensaje.")
+            setMessages(prev => [...prev, { text: "Lo siento, hubo un error al procesar tu mensaje. Intenta de nuevo o recarga la página para empezar un nuevo chat.", isUser: false, role: "assistant" }])
         } finally {
-            setIsProcessing(false);
-            setInputText("");
-            setFiles([]); // Limpiar archivos después de enviar
+            setIsProcessing(false)
+            setInputText("")
+            setFiles([]) // Limpiar archivos después de enviar
         }
-    };
+    }
+
+    // Maneja el drop de archivos
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setIsDragActive(false)
+
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            const droppedFiles = Array.from(e.dataTransfer.files)
+            setFiles(prev => [...prev, ...droppedFiles])
+            toast.success(`${droppedFiles.length} archivo(s) adjuntado(s).`)
+        }
+    }
+
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault()
+        e.stopPropagation()
+    }
+
+    const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setIsDragActive(true)
+    }
+
+    const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setIsDragActive(false)
+    }
 
     return (
-        <div className="bg-white border-gray-100 rounded-xl shadow-sm border h-full flex flex-col">
+        <div className={`bg-white border-dashed rounded-xl shadow-sm h-full flex flex-col relative border-2
+            ${isDragActive ? "border-blue-600" : "border-transparent"}`}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+            onDragEnter={handleDragEnter}
+            onDragLeave={handleDragLeave}
+        >
+            {isDragActive && (
+                <div className="absolute inset-0 bg-blue-50/90 flex flex-col items-center justify-center z-50 pointer-events-none">
+                    <span className="mb-4 text-blue-500">
+                        <AttachIcon size={48} stroke={2} />
+                    </span>
+                    <span className="text-lg font-semibold text-blue-700">Suelta aquí para adjuntar archivos</span>
+                </div>
+            )}
             {/* Header */}
             <div className="border-b border-gray-100 p-6">
                 <div className="flex items-center justify-between">
@@ -292,9 +337,9 @@ export default function ChatWithIA({ onCancel }: { onCancel: () => void }) {
                                 className="hidden"
                                 onChange={(e) => {
                                     if (e.target.files) {
-                                        const selected = Array.from(e.target.files);
-                                        setFiles(prev => [...prev, ...selected]);
-                                        toast.success(`${selected.length} archivo(s) adjuntado(s).`);
+                                        const selected = Array.from(e.target.files)
+                                        setFiles(prev => [...prev, ...selected])
+                                        toast.success(`${selected.length} archivo(s) adjuntado(s).`)
                                     }
                                 }}
                                 disabled={isProcessing}
@@ -332,5 +377,5 @@ export default function ChatWithIA({ onCancel }: { onCancel: () => void }) {
                 </div>
             </div>
         </div>
-    );
+    )
 }

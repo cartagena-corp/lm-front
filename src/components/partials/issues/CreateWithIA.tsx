@@ -8,25 +8,26 @@ import { useBoardStore } from "@/lib/store/BoardStore"
 import { UserProps } from "@/lib/types/types"
 import { getUserAvatar } from "@/lib/utils/avatar.utils"
 import Modal from "@/components/layout/Modal"
+import toast from "react-hot-toast"
 
 interface Message {
-    text: string;
-    isUser: boolean;
-    isTaskList?: boolean;
-    preserveFormat?: boolean;
+    text: string
+    isUser: boolean
+    isTaskList?: boolean
+    preserveFormat?: boolean
 }
 
 interface Description {
-    title: string;
-    text: string;
+    title: string
+    text: string
 }
 
 interface DetectedTask {
-    title: string;
-    descriptionsDTO: Description[];
-    projectId: string;
-    assignedId: string;
-    suggestedAssignee?: string; // Para guardar el nombre sugerido por la IA
+    title: string
+    descriptionsDTO: Description[]
+    projectId: string
+    assignedId: string
+    suggestedAssignee?: string // Para guardar el nombre sugerido por la IA
 }
 
 interface FormProps {
@@ -44,64 +45,65 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
     // Estados
     const [messages, setMessages] = useState<Message[]>([
         { text: "¡Hola! Soy tu asistente de IA. Puedes enviarme cualquier texto y te ayudaré a convertirlo en tareas.", isUser: false }
-    ]);
+    ])
 
     // Combinar participantes con el creador del proyecto
     const allParticipants = useMemo(() => {
-        const participants = [...projectParticipants];
+        const participants = [...projectParticipants]
 
         // Agregar el creador si no está ya en la lista
         if (selectedBoard?.createdBy && !participants.some(p => p.id === selectedBoard.createdBy?.id)) {
             // Buscar el creador en la lista completa de usuarios para obtener su email
-            const creatorFromUserList = listUsers.find(user => user.id === selectedBoard.createdBy?.id);
+            const creatorFromUserList = listUsers.find(user => user.id === selectedBoard.createdBy?.id)
 
             if (creatorFromUserList) {
                 participants.push({
                     ...selectedBoard.createdBy,
                     email: creatorFromUserList.email,
                     role: 'ADMIN'
-                });
+                })
             }
         }
 
-        return participants;
-    }, [projectParticipants, selectedBoard?.createdBy, listUsers]);
+        return participants
+    }, [projectParticipants, selectedBoard?.createdBy, listUsers])
 
     // Cargar participantes del proyecto al inicio
     useEffect(() => {
         const loadParticipants = async () => {
-            const token = await getValidAccessToken();
+            const token = await getValidAccessToken()
             if (token) {
-                await getProjectParticipants(token, params.id as string);
+                await getProjectParticipants(token, params.id as string)
             }
-        };
-        loadParticipants();
-    }, []);
+        }
+        loadParticipants()
+    }, [])
 
-    const [inputText, setInputText] = useState("");
-    const [isProcessing, setIsProcessing] = useState(false);
-    const [showTaskList, setShowTaskList] = useState(false);
+    const [inputText, setInputText] = useState("")
+    const [isProcessing, setIsProcessing] = useState(false)
+    const [showTaskList, setShowTaskList] = useState(false)
     const [detectedTasks, setDetectedTasks] = useState<DetectedTask[]>([])
-    const [editingTask, setEditingTask] = useState<number | null>(null);
+    const [editingTask, setEditingTask] = useState<number | null>(null)
+    const [isDragActive, setIsDragActive] = useState(false)
 
     // Agregar estados para el selector de usuarios
-    const [userSelections, setUserSelections] = useState<{ [key: number]: UserProps | null }>({});
-    const [openSelectors, setOpenSelectors] = useState<{ [key: number]: boolean }>({});
-    const userRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
+    const [userSelections, setUserSelections] = useState<{ [key: number]: UserProps | null }>({})
+    const [openSelectors, setOpenSelectors] = useState<{ [key: number]: boolean }>({})
+    const userRefs = useRef<{ [key: number]: HTMLDivElement | null }>({})
 
     // Inicializar userSelections cuando se detectan las tareas
     useEffect(() => {
-        const initialSelections: { [key: number]: UserProps | null } = {};
+        const initialSelections: { [key: number]: UserProps | null } = {}
         detectedTasks.forEach((task, index) => {
             // Si ya existe una selección, la mantenemos
             if (userSelections[index]) {
-                initialSelections[index] = userSelections[index];
+                initialSelections[index] = userSelections[index]
             } else {
-                initialSelections[index] = null;
+                initialSelections[index] = null
             }
-        });
-        setUserSelections(initialSelections);
-    }, [detectedTasks]);
+        })
+        setUserSelections(initialSelections)
+    }, [detectedTasks])
 
     // Effect para manejar clics fuera de los selectores
     useEffect(() => {
@@ -111,94 +113,94 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
                     setOpenSelectors(prev => ({
                         ...prev,
                         [index]: false
-                    }));
+                    }))
                 }
-            });
-        };
+            })
+        }
 
-        document.addEventListener('mousedown', handleClickOutside);
+        document.addEventListener('mousedown', handleClickOutside)
         return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, []);
+            document.removeEventListener('mousedown', handleClickOutside)
+        }
+    }, [])
 
     // Función para actualizar el usuario seleccionado
     const handleUserSelect = (taskIndex: number, user: UserProps) => {
         setDetectedTasks(prev => {
-            const newTasks = [...prev];
+            const newTasks = [...prev]
             newTasks[taskIndex] = {
                 ...newTasks[taskIndex],
                 assignedId: user.id
-            };
-            return newTasks;
-        });
+            }
+            return newTasks
+        })
 
         setUserSelections(prev => ({
             ...prev,
             [taskIndex]: user
-        }));
+        }))
 
         setOpenSelectors(prev => ({
             ...prev,
             [taskIndex]: false
-        }));
-    };
+        }))
+    }
 
     // Función para alternar el selector
     const toggleUserSelector = (index: number) => {
         setOpenSelectors(prev => ({
             ...prev,
             [index]: !prev[index]
-        }));
-    };
+        }))
+    }
 
     // Función auxiliar para obtener el nombre de visualización del usuario
     const getUserDisplayName = (user: UserProps | null) => {
-        if (!user) return 'Seleccionar usuario';
+        if (!user) return 'Seleccionar usuario'
         if (user.firstName || user.lastName) {
-            return `${user.firstName || ''} ${user.lastName || ''}`.trim();
+            return `${user.firstName || ''} ${user.lastName || ''}`.trim()
         }
-        return user.email;
-    };
+        return user.email
+    }
 
     // Función auxiliar para obtener la inicial del usuario
     const getUserInitial = (user: UserProps) => {
-        if (user.firstName) return user.firstName[0].toUpperCase();
-        if (user.lastName) return user.lastName[0].toUpperCase();
-        if (user.email) return user.email[0].toUpperCase();
-        return '?';
-    };
+        if (user.firstName) return user.firstName[0].toUpperCase()
+        if (user.lastName) return user.lastName[0].toUpperCase()
+        if (user.email) return user.email[0].toUpperCase()
+        return '?'
+    }
 
     // Función para verificar si un usuario está seleccionado
     const isUserSelected = (user: UserProps, taskIndex: number) => {
         // Verificar tanto en userSelections como en detectedTasks
-        const selectedUser = userSelections[taskIndex];
-        const taskAssignedId = detectedTasks[taskIndex]?.assignedId;
+        const selectedUser = userSelections[taskIndex]
+        const taskAssignedId = detectedTasks[taskIndex]?.assignedId
 
-        if (!user || !user.id) return false;
+        if (!user || !user.id) return false
 
-        return user.id === selectedUser?.id || user.id === taskAssignedId;
-    };
+        return user.id === selectedUser?.id || user.id === taskAssignedId
+    }
 
     const fileInputRef = useRef<HTMLInputElement | null>(null)
 
     const handleAttachClick = () => {
         if (fileInputRef.current) {
-            fileInputRef.current.value = "";
-            fileInputRef.current.click();
+            fileInputRef.current.value = ""
+            fileInputRef.current.click()
         }
     }
 
     // Maneja el archivo seleccionado y procesa igual que handleSubmit
     const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file || isProcessing) return;
-        setIsProcessing(true);
-        setShowTaskList(false);
+        const file = e.target.files?.[0]
+        if (!file || isProcessing) return
+        setIsProcessing(true)
+        setShowTaskList(false)
 
         try {
-            const token = await getValidAccessToken();
-            if (!token) throw new Error("No se pudo obtener el token de autenticación");
+            const token = await getValidAccessToken()
+            if (!token) throw new Error("No se pudo obtener el token de autenticación")
 
             setMessages(prev => [
                 ...prev,
@@ -211,26 +213,26 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
                     text: "",
                     isUser: false
                 }
-            ]);
+            ])
 
-            const result = await detectIssuesFromFile(token, file, params.id as string);
+            const result = await detectIssuesFromFile(token, file, params.id as string)
 
             interface APITask {
-                assignedId: string;
-                [key: string]: any;
+                assignedId: string
+                [key: string]: any
             }
 
             const tasksWithEmptyAssignment = result.map((task: APITask) => ({
                 ...task,
                 assignedId: "",
                 suggestedAssignee: task.assignedId
-            }));
+            }))
 
-            setDetectedTasks(tasksWithEmptyAssignment);
+            setDetectedTasks(tasksWithEmptyAssignment)
 
             const taskSummary = tasksWithEmptyAssignment.map((task: DetectedTask) =>
                 `• ${task.title} (Sugerido: ${task.suggestedAssignee})`
-            ).join('\n');
+            ).join('\n')
 
             setMessages(prev => [
                 ...prev.slice(0, -1),
@@ -247,65 +249,65 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
                     text: "Selecciona un usuario para cada tarea antes de crearlas.",
                     isUser: false
                 }
-            ]);
+            ])
 
-            setShowTaskList(true);
-            setInputText("");
+            setShowTaskList(true)
+            setInputText("")
         } catch (error) {
             setMessages(prev => [...prev, {
                 text: error instanceof Error ? error.message : "Lo siento, hubo un error al procesar el archivo. Por favor, intenta de nuevo.",
                 isUser: false
-            }]);
-            setDetectedTasks([]);
+            }])
+            setDetectedTasks([])
         } finally {
-            setIsProcessing(false);
+            setIsProcessing(false)
         }
-    };
+    }
 
     // Función para obtener el usuario seleccionado actual
     const getCurrentSelection = (taskIndex: number) => {
-        return userSelections[taskIndex] || null;
-    };
+        return userSelections[taskIndex] || null
+    }
 
     const handleSubmit = async () => {
-        if (!inputText.trim() || isProcessing) return;
-        setIsProcessing(true);
-        setShowTaskList(false);
+        if (!inputText.trim() || isProcessing) return
+        setIsProcessing(true)
+        setShowTaskList(false)
 
         try {
-            const token = await getValidAccessToken();
-            if (!token) throw new Error("No se pudo obtener el token de autenticación");
+            const token = await getValidAccessToken()
+            if (!token) throw new Error("No se pudo obtener el token de autenticación")
 
             // Agregar mensaje del usuario preservando el formato exacto
             setMessages(prev => [...prev, {
                 text: inputText,
                 isUser: true,
                 preserveFormat: true
-            }]);
+            }])
 
             setMessages(prev => [...prev, {
                 text: "",
                 isUser: false
-            }]);
+            }])
 
-            const result = await detectIssuesFromText(token, params.id as string, inputText);
+            const result = await detectIssuesFromText(token, params.id as string, inputText)
 
             interface APITask {
-                assignedId: string;
-                [key: string]: any;
+                assignedId: string
+                [key: string]: any
             }
 
             const tasksWithEmptyAssignment = result.map((task: APITask) => ({
                 ...task,
                 assignedId: "",
                 suggestedAssignee: task.assignedId
-            }));
+            }))
 
-            setDetectedTasks(tasksWithEmptyAssignment);
+            setDetectedTasks(tasksWithEmptyAssignment)
 
             const taskSummary = tasksWithEmptyAssignment.map((task: DetectedTask) =>
                 `• ${task.title} (Sugerido: ${task.suggestedAssignee})`
-            ).join('\n');
+            ).join('\n')
 
             setMessages(prev => [
                 ...prev.slice(0, -1),
@@ -322,23 +324,23 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
                     text: "Selecciona un usuario para cada tarea antes de crearlas.",
                     isUser: false
                 }
-            ]);
+            ])
 
-            setShowTaskList(true);
-            setInputText("");
+            setShowTaskList(true)
+            setInputText("")
         } catch (error) {
             setMessages(prev => [...prev, {
                 text: error instanceof Error ? error.message : "Lo siento, hubo un error al procesar tu texto. Por favor, intenta de nuevo.",
                 isUser: false
-            }]);
-            setDetectedTasks([]);
+            }])
+            setDetectedTasks([])
         } finally {
-            setIsProcessing(false);
+            setIsProcessing(false)
         }
-    };
+    }
 
     const handleEditTask = (index: number) => {
-        setEditingTask(index);
+        setEditingTask(index)
     }
 
     // Función para actualizar una tarea
@@ -346,24 +348,24 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
         setDetectedTasks(prev => {
             const newTasks = prev.map((task, i) =>
                 i === index ? { ...task, [field]: value } : task
-            );
-            return newTasks;
-        });
-    };
+            )
+            return newTasks
+        })
+    }
 
     // Efecto para monitorear cambios en detectedTasks
     useEffect(() => {
-    }, [detectedTasks]);
+    }, [detectedTasks])
 
     // Efecto para monitorear cambios en userSelections
     useEffect(() => {
-    }, [userSelections]);
+    }, [userSelections])
 
     const handleSaveTasks = async () => {
         if (detectedTasks.length > 0) {
             try {
-                const token = await getValidAccessToken();
-                if (!token) throw new Error("No se pudo obtener el token de autenticación");
+                const token = await getValidAccessToken()
+                if (!token) throw new Error("No se pudo obtener el token de autenticación")
 
                 // Formatear las tareas según la interfaz IssueFromIA
                 const formattedTasks = detectedTasks.map(task => ({
@@ -371,63 +373,173 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
                     descriptionsDTO: task.descriptionsDTO,
                     projectId: params.id as string,
                     assignedId: task.assignedId
-                }));
+                }))
 
-                await createIssuesFromIA(token, formattedTasks);
-                onSubmit(detectedTasks);
+                await createIssuesFromIA(token, formattedTasks)
+                onSubmit(detectedTasks)
             } catch (error) {
                 setMessages(prev => [...prev, {
                     text: error instanceof Error ? error.message : "Hubo un error al crear las tareas. Por favor, intenta de nuevo.",
                     isUser: false
-                }]);
+                }])
             }
         }
     }
 
     // Función para verificar si una tarea tiene un usuario asignado válido
     const isValidAssignment = (assignedId: string) => {
-        return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(assignedId);
-    };
+        return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(assignedId)
+    }
 
     // Función para verificar si todas las tareas tienen usuarios asignados válidos
     const areAllTasksAssigned = () => {
-        return detectedTasks.every(task => isValidAssignment(task.assignedId));
-    };
+        return detectedTasks.every(task => isValidAssignment(task.assignedId))
+    }
 
-    const [deleteTaskIndex, setDeleteTaskIndex] = useState<number | null>(null);
+    const [deleteTaskIndex, setDeleteTaskIndex] = useState<number | null>(null)
 
     // Función para eliminar una tarea detectada
     const handleDeleteTask = (index: number) => {
         setDetectedTasks(prev => {
-            const newTasks = prev.filter((_, i) => i !== index);
+            const newTasks = prev.filter((_, i) => i !== index)
             // Si no quedan tareas, ocultar la lista y mostrar el textarea
             if (newTasks.length === 0) {
-                setShowTaskList(false);
+                setShowTaskList(false)
             }
-            return newTasks;
-        });
+            return newTasks
+        })
 
         setUserSelections(prev => {
-            const newSelections = { ...prev };
-            delete newSelections[index];
+            const newSelections = { ...prev }
+            delete newSelections[index]
             // Reindexar las selecciones restantes
             Object.keys(newSelections).forEach(key => {
-                const numKey = parseInt(key);
+                const numKey = parseInt(key)
                 if (numKey > index) {
-                    newSelections[numKey - 1] = newSelections[numKey];
-                    delete newSelections[numKey];
+                    newSelections[numKey - 1] = newSelections[numKey]
+                    delete newSelections[numKey]
                 }
-            });
-            return newSelections;
-        });
+            })
+            return newSelections
+        })
 
-        setDeleteTaskIndex(null);
-    };
+        setDeleteTaskIndex(null)
+    }
 
+    // Maneja el drop de archivos
+    const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setIsDragActive(false)
 
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            const droppedFiles = Array.from(e.dataTransfer.files)
+            // Procesa cada archivo como si fuera handleFileChange
+            for (const file of droppedFiles) {
+                if (!file || isProcessing) continue
+                setIsProcessing(true)
+                setShowTaskList(false)
+                try {
+                    const token = await getValidAccessToken()
+                    if (!token) throw new Error("No se pudo obtener el token de autenticación")
+
+                    setMessages(prev => [
+                        ...prev,
+                        {
+                            text: `Archivo adjuntado: ${file.name}`,
+                            isUser: true,
+                            preserveFormat: true
+                        },
+                        {
+                            text: "",
+                            isUser: false
+                        }
+                    ])
+
+                    const result = await detectIssuesFromFile(token, file, params.id as string)
+
+                    interface APITask {
+                        assignedId: string
+                        [key: string]: any
+                    }
+
+                    const tasksWithEmptyAssignment = result.map((task: APITask) => ({
+                        ...task,
+                        assignedId: "",
+                        suggestedAssignee: task.assignedId
+                    }))
+
+                    setDetectedTasks(tasksWithEmptyAssignment)
+
+                    const taskSummary = tasksWithEmptyAssignment.map((task: DetectedTask) =>
+                        `• ${task.title} (Sugerido: ${task.suggestedAssignee})`
+                    ).join('\n')
+
+                    setMessages(prev => [
+                        ...prev.slice(0, -1),
+                        {
+                            text: `He detectado ${result.length} tareas del archivo. Debes asignar cada tarea a un usuario del proyecto:`,
+                            isUser: false
+                        },
+                        {
+                            text: taskSummary,
+                            isUser: false,
+                            isTaskList: true
+                        },
+                        {
+                            text: "Selecciona un usuario para cada tarea antes de crearlas.",
+                            isUser: false
+                        }
+                    ])
+
+                    setShowTaskList(true)
+                    setInputText("")
+                } catch (error) {
+                    setMessages(prev => [...prev, {
+                        text: error instanceof Error ? error.message : "Lo siento, hubo un error al procesar el archivo. Por favor, intenta de nuevo.",
+                        isUser: false
+                    }])
+                    setDetectedTasks([])
+                } finally {
+                    setIsProcessing(false)
+                }
+            }
+        }
+    }
+
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault()
+        e.stopPropagation()
+    }
+
+    const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setIsDragActive(true)
+    }
+
+    const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setIsDragActive(false)
+    }
 
     return (
-        <div className="bg-white border-gray-100 rounded-xl shadow-sm border h-full flex flex-col">
+        <div className={`bg-white border-dashed rounded-xl shadow-sm h-full flex flex-col relative border-2
+            ${isDragActive ? "border-blue-600" : "border-transparent"}`}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+            onDragEnter={handleDragEnter}
+            onDragLeave={handleDragLeave}
+        >
+            {isDragActive && (
+                <div className="absolute inset-0 bg-blue-50/90 flex flex-col items-center justify-center z-50 pointer-events-none">
+                    <span className="mb-4 text-blue-500">
+                        <AttachIcon size={48} stroke={2} />
+                    </span>
+                    <span className="text-lg font-semibold text-blue-700">Suelta aquí para adjuntar archivos</span>
+                </div>
+            )}
             {/* Header */}
             <div className="border-b border-gray-100 p-6">
                 <div className="flex items-center justify-between">
@@ -520,9 +632,9 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
                                                                     type="text"
                                                                     value={desc.title}
                                                                     onChange={(e) => {
-                                                                        const newDescriptions = [...task.descriptionsDTO];
-                                                                        newDescriptions[descIndex].title = e.target.value;
-                                                                        handleUpdateTask(index, 'descriptionsDTO', newDescriptions);
+                                                                        const newDescriptions = [...task.descriptionsDTO]
+                                                                        newDescriptions[descIndex].title = e.target.value
+                                                                        handleUpdateTask(index, 'descriptionsDTO', newDescriptions)
                                                                     }}
                                                                     className="bg-white border-black/15 text-sm w-full p-2 rounded-md border"
                                                                 />
@@ -532,9 +644,9 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
                                                                 <textarea
                                                                     value={desc.text}
                                                                     onChange={(e) => {
-                                                                        const newDescriptions = [...task.descriptionsDTO];
-                                                                        newDescriptions[descIndex].text = e.target.value;
-                                                                        handleUpdateTask(index, 'descriptionsDTO', newDescriptions);
+                                                                        const newDescriptions = [...task.descriptionsDTO]
+                                                                        newDescriptions[descIndex].text = e.target.value
+                                                                        handleUpdateTask(index, 'descriptionsDTO', newDescriptions)
                                                                     }}
                                                                     className="bg-white border-black/15 text-sm w-full p-2 rounded-md border"
                                                                     rows={3}
@@ -555,7 +667,7 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
                                                         )}
                                                     </label>
                                                     <div className="relative" ref={(el) => {
-                                                        if (el) userRefs.current[index] = el;
+                                                        if (el) userRefs.current[index] = el
                                                     }}>
                                                         <button
                                                             onClick={() => toggleUserSelector(index)}
@@ -708,7 +820,7 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
 
                                                 <div className="mt-3 flex items-center gap-2">
                                                     {/* Botón para abrir el selector de usuario */}
-                                                    <div className="relative" ref={el => { if (el) userRefs.current[index] = el; }}>
+                                                    <div className="relative" ref={el => { if (el) userRefs.current[index] = el }}>
                                                         <button
                                                             type="button"
                                                             className={`px-2 py-1 text-xs font-medium rounded-full flex items-center gap-2 border transition-all duration-200
