@@ -1,6 +1,6 @@
 import { AttachIcon, IAIcon, SendIcon, XIcon, EditIcon, DeleteIcon, ChatIAIcon } from "@/assets/Icon"
 import AutoResizeTextarea from "@/components/ui/AutoResizeTextarea"
-import { FormEvent, useState, useEffect, useRef, useMemo } from "react"
+import { FormEvent, useState, useEffect, useRef, useMemo, ChangeEvent } from "react"
 import { useIssueStore } from "@/lib/store/IssueStore"
 import { useParams } from "next/navigation"
 import { useAuthStore } from "@/lib/store/AuthStore"
@@ -36,7 +36,7 @@ interface FormProps {
 
 export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
     const params = useParams()
-    const { detectIssuesFromText, createIssuesFromIA } = useIssueStore()
+    const { detectIssuesFromText, createIssuesFromIA, detectIssuesFromFile } = useIssueStore()
     const { getValidAccessToken } = useAuthStore()
     const { projectParticipants, getProjectParticipants, selectedBoard } = useBoardStore()
     const { listUsers } = useAuthStore()
@@ -49,12 +49,12 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
     // Combinar participantes con el creador del proyecto
     const allParticipants = useMemo(() => {
         const participants = [...projectParticipants];
-        
+
         // Agregar el creador si no está ya en la lista
         if (selectedBoard?.createdBy && !participants.some(p => p.id === selectedBoard.createdBy?.id)) {
             // Buscar el creador en la lista completa de usuarios para obtener su email
             const creatorFromUserList = listUsers.find(user => user.id === selectedBoard.createdBy?.id);
-            
+
             if (creatorFromUserList) {
                 participants.push({
                     ...selectedBoard.createdBy,
@@ -63,7 +63,7 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
                 });
             }
         }
-        
+
         return participants;
     }, [projectParticipants, selectedBoard?.createdBy, listUsers]);
 
@@ -180,6 +180,88 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
         return user.id === selectedUser?.id || user.id === taskAssignedId;
     };
 
+    const fileInputRef = useRef<HTMLInputElement | null>(null)
+
+    const handleAttachClick = () => {
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+            fileInputRef.current.click();
+        }
+    }
+
+    // Maneja el archivo seleccionado y procesa igual que handleSubmit
+    const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || isProcessing) return;
+        setIsProcessing(true);
+        setShowTaskList(false);
+
+        try {
+            const token = await getValidAccessToken();
+            if (!token) throw new Error("No se pudo obtener el token de autenticación");
+
+            setMessages(prev => [
+                ...prev,
+                {
+                    text: `Archivo adjuntado: ${file.name}`,
+                    isUser: true,
+                    preserveFormat: true
+                },
+                {
+                    text: "",
+                    isUser: false
+                }
+            ]);
+
+            const result = await detectIssuesFromFile(token, file, params.id as string);
+
+            interface APITask {
+                assignedId: string;
+                [key: string]: any;
+            }
+
+            const tasksWithEmptyAssignment = result.map((task: APITask) => ({
+                ...task,
+                assignedId: "",
+                suggestedAssignee: task.assignedId
+            }));
+
+            setDetectedTasks(tasksWithEmptyAssignment);
+
+            const taskSummary = tasksWithEmptyAssignment.map((task: DetectedTask) =>
+                `• ${task.title} (Sugerido: ${task.suggestedAssignee})`
+            ).join('\n');
+
+            setMessages(prev => [
+                ...prev.slice(0, -1),
+                {
+                    text: `He detectado ${result.length} tareas del archivo. Debes asignar cada tarea a un usuario del proyecto:`,
+                    isUser: false
+                },
+                {
+                    text: taskSummary,
+                    isUser: false,
+                    isTaskList: true
+                },
+                {
+                    text: "Selecciona un usuario para cada tarea antes de crearlas.",
+                    isUser: false
+                }
+            ]);
+
+            setShowTaskList(true);
+            setInputText("");
+        } catch (error) {
+            setMessages(prev => [...prev, {
+                text: error instanceof Error ? error.message : "Lo siento, hubo un error al procesar el archivo. Por favor, intenta de nuevo.",
+                isUser: false
+            }]);
+            setDetectedTasks([]);
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
     // Función para obtener el usuario seleccionado actual
     const getCurrentSelection = (taskIndex: number) => {
         return userSelections[taskIndex] || null;
@@ -195,7 +277,7 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
             if (!token) throw new Error("No se pudo obtener el token de autenticación");
 
             // Agregar mensaje del usuario preservando el formato exacto
-            setMessages(prev => [...prev, { 
+            setMessages(prev => [...prev, {
                 text: inputText,
                 isUser: true,
                 preserveFormat: true
@@ -324,7 +406,7 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
             }
             return newTasks;
         });
-        
+
         setUserSelections(prev => {
             const newSelections = { ...prev };
             delete newSelections[index];
@@ -338,9 +420,11 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
             });
             return newSelections;
         });
-        
+
         setDeleteTaskIndex(null);
     };
+
+
 
     return (
         <div className="bg-white border-gray-100 rounded-xl shadow-sm border h-full flex flex-col">
@@ -380,7 +464,7 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
                             className={`max-w-[80%] text-sm p-3 rounded-2xl ${message.isUser
                                 ? 'bg-blue-600 text-white rounded-br-none whitespace-pre-wrap'
                                 : 'bg-black/5 text-black flex items-center rounded-bl-none'
-                            } ${message.isTaskList ? 'font-mono whitespace-pre-wrap' : ''}`}
+                                } ${message.isTaskList ? 'font-mono whitespace-pre-wrap' : ''}`}
                         >
                             {message.text}
                             {/* Loader para el último mensaje de la IA cuando está procesando */}
@@ -411,7 +495,7 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
                                         ? 'border-blue-200 ring-1 ring-blue-200'
                                         : isValidAssignment(task.assignedId)
                                             ? 'border-gray-200'
-                                            : 'border-red-200'
+                                            : 'border-orange-200'
                                         }  transition-all duration-200`}
                                 >
                                     {editingTask === index ? (
@@ -566,7 +650,7 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
                                                         )}
                                                     </div>
                                                     {!task.assignedId && (
-                                                        <p className="text-xs text-red-500 mt-1">
+                                                        <p className="text-xs text-orange-500 mt-1">
                                                             * Debes asignar esta tarea a un usuario del proyecto
                                                         </p>
                                                     )}
@@ -592,7 +676,7 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
                                         <div className="group">
                                             <div className="p-4 flex flex-col gap-2">
                                                 <div className="flex items-start justify-between">
-                                                    <h5 className={`font-semibold flex-1 ${!isValidAssignment(task.assignedId) ? 'text-red-600' : ''}`}>
+                                                    <h5 className={`font-semibold flex-1 ${!isValidAssignment(task.assignedId) ? 'text-orange-600' : ''}`}>
                                                         {task.title}
                                                     </h5>
                                                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
@@ -623,17 +707,94 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
                                                 </div>
 
                                                 <div className="mt-3 flex items-center gap-2">
-                                                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${isValidAssignment(task.assignedId)
-                                                        ? 'bg-blue-50 text-blue-700'
-                                                        : 'bg-red-50 text-red-600'
-                                                        }`}>
-                                                        {isValidAssignment(task.assignedId)
-                                                            ? `Asignado a: ${getCurrentSelection(index)?.email || task.assignedId}`
-                                                            : 'Sin asignar'
-                                                        }
-                                                    </span>
+                                                    {/* Botón para abrir el selector de usuario */}
+                                                    <div className="relative" ref={el => { if (el) userRefs.current[index] = el; }}>
+                                                        <button
+                                                            type="button"
+                                                            className={`px-2 py-1 text-xs font-medium rounded-full flex items-center gap-2 border transition-all duration-200
+                                                                ${isValidAssignment(task.assignedId)
+                                                                    ? 'bg-blue-50 text-blue-700 border-blue-100 hover:border-blue-300'
+                                                                    : 'bg-orange-50 text-orange-600 border-orange-100 hover:border-orange-300'
+                                                                }`}
+                                                            onClick={() => toggleUserSelector(index)}
+                                                        >
+                                                            {isValidAssignment(task.assignedId)
+                                                                ? (
+                                                                    <>
+                                                                        <span className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                                                                            {getCurrentSelection(index)?.picture ? (
+                                                                                <img
+                                                                                    src={getUserAvatar(getCurrentSelection(index)!, 32)}
+                                                                                    alt={getUserDisplayName(getCurrentSelection(index))}
+                                                                                    className="w-full h-full object-cover rounded-full"
+                                                                                />
+                                                                            ) : (
+                                                                                <span className="text-xs font-medium text-gray-600">
+                                                                                    {getUserInitial(getCurrentSelection(index)!)}
+                                                                                </span>
+                                                                            )}
+                                                                        </span>
+                                                                        <span>
+                                                                            {getUserDisplayName(getCurrentSelection(index)) || task.assignedId}
+                                                                        </span>
+                                                                    </>
+                                                                )
+                                                                : (
+                                                                    <>
+                                                                        <span className="text-xs">Sin asignar</span>
+                                                                    </>
+                                                                )
+                                                            }
+                                                            <svg className={`w-4 h-4 ml-1 ${isValidAssignment(task.assignedId) ? 'text-blue-400' : 'text-orange-400'} transition-transform duration-200 ${openSelectors[index] ? "rotate-180" : ""}`}
+                                                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                                                            </svg>
+                                                        </button>
+                                                        {/* Dropdown de usuarios */}
+                                                        {openSelectors[index] && (
+                                                            <div className="absolute z-[9999] top-full mt-2 w-[500px] bg-white border border-gray-200 rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                                                                {allParticipants.map((user, i) => (
+                                                                    <button
+                                                                        key={i}
+                                                                        type="button"
+                                                                        onClick={() => handleUserSelect(index, user)}
+                                                                        className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors first:rounded-t-lg last:rounded-b-lg flex items-center gap-3
+                                                                         ${isUserSelected(user, index) ? 'bg-blue-50' : ''}`}
+                                                                    >
+                                                                        <div className={`w-2 h-2 rounded-full ${isUserSelected(user, index) ? 'bg-blue-600' : 'bg-transparent'}`} />
+                                                                        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                                                                            {user.picture ? (
+                                                                                <img
+                                                                                    src={getUserAvatar(user, 32)}
+                                                                                    alt={getUserDisplayName(user)}
+                                                                                    className="w-full h-full object-cover rounded-full"
+                                                                                />
+                                                                            ) : (
+                                                                                <span className="text-sm font-medium text-gray-600">
+                                                                                    {getUserInitial(user)}
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                        <div className="flex-1">
+                                                                            <span className="text-sm font-medium text-gray-900 block">
+                                                                                {getUserDisplayName(user)}
+                                                                            </span>
+                                                                            <span className="text-xs text-gray-500">
+                                                                                {user.email}
+                                                                            </span>
+                                                                        </div>
+                                                                        {isUserSelected(user, index) && (
+                                                                            <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                                            </svg>
+                                                                        )}
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                     {!isValidAssignment(task.assignedId) && (
-                                                        <span className="text-xs text-red-500 font-medium">
+                                                        <span className="text-xs text-orange-500 font-medium">
                                                             * Requiere asignación
                                                         </span>
                                                     )}
@@ -661,7 +822,7 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
                             onClick={handleSaveTasks}
                             disabled={isProcessing || !areAllTasksAssigned()}
                             className={`w-full px-4 py-2.5 text-sm font-medium text-white rounded-md transition-all duration-200 flex items-center justify-center gap-2 ${!areAllTasksAssigned()
-                                ? 'bg-red-500 hover:bg-red-600 disabled:bg-red-300'
+                                ? 'bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300'
                                 : 'bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300'
                                 } disabled:cursor-not-allowed`}
                         >
@@ -680,7 +841,7 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
                             )}
                         </button>
                         {!areAllTasksAssigned() && (
-                            <p className="text-xs text-red-500 mt-2 text-center">
+                            <p className="text-xs text-orange-500 mt-2 text-center">
                                 Debes asignar un usuario a cada tarea antes de continuar
                             </p>
                         )}
@@ -699,7 +860,7 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
                         <div className="flex justify-between items-center">
                             <button
                                 className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                                onClick={() => { }}
+                                onClick={handleAttachClick}
                                 type="button"
                                 title="Adjuntar archivos"
                                 disabled={isProcessing}
@@ -707,6 +868,15 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
                                 <AttachIcon size={16} stroke={2} />
                                 Adjuntar
                             </button>
+
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept=".doc,.docx"
+                                className="hidden"
+                                onChange={handleFileChange}
+                                disabled={isProcessing}
+                            />
 
                             <button
                                 className="flex items-center gap-2 px-4 py-2 text-blue-700 bg-blue-50 border border-blue-300 rounded-md hover:bg-blue-100 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"

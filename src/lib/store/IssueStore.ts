@@ -60,6 +60,7 @@ interface IssueState {
    getIssueHistory: (token: string, issueId: string, page?: number, size?: number) => Promise<AuditPagination>
 
    detectIssuesFromText: (token: string, projectId: string, text: string) => Promise<any>
+   detectIssuesFromFile: (token: string, file: File, projectId: string) => Promise<any>
    getColumnsFromExcel: (token: string, file: File) => Promise<any>
    importIssuesFromExcel: (token: string, file: File, projectId: string, mapping: Record<string, string>) => Promise<any>
 
@@ -448,6 +449,33 @@ export const useIssueStore = create<IssueState>((set, get) => ({
          throw error
       }
    },
+   // Detect Issues from File
+   detectIssuesFromFile: async (token: string, file: File, projectId: string) => {
+      try {
+         const formData = new FormData()
+         formData.append('file', file)
+         formData.append('projectId', projectId)
+
+         const response = await fetch(API_ROUTES.DETECT_ISSUES_FROM_DOCX, {
+            method: 'POST',
+            headers: {
+               'Authorization': `Bearer ${token}`,
+            },
+            body: formData
+         })
+
+         if (!response.ok) {
+            throw new Error(`Error ${response.status}: ${response.statusText}`)
+         }
+
+         const data = await response.json()
+         return data
+      } catch (error) {
+         console.error('Error en createIssuesFromFileWithIA:', error)
+         throw error
+      }
+   },
+   
    // Create Issues from IA
    createIssuesFromIA: async (token: string, issues: IssueFromIA[]) => {
       try {
