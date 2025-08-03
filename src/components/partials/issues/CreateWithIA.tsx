@@ -15,6 +15,7 @@ interface Message {
     isUser: boolean
     isTaskList?: boolean
     preserveFormat?: boolean
+    attachedFile?: string
 }
 
 interface Description {
@@ -37,7 +38,7 @@ interface FormProps {
 
 export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
     const params = useParams()
-    const { detectIssuesFromText, createIssuesFromIA, detectIssuesFromFile } = useIssueStore()
+    const { detectIssues, createIssuesFromIA } = useIssueStore()
     const { getValidAccessToken } = useAuthStore()
     const { projectParticipants, getProjectParticipants, selectedBoard } = useBoardStore()
     const { listUsers } = useAuthStore()
@@ -85,6 +86,8 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
     const [detectedTasks, setDetectedTasks] = useState<DetectedTask[]>([])
     const [editingTask, setEditingTask] = useState<number | null>(null)
     const [isDragActive, setIsDragActive] = useState(false)
+    const [attachedFile, setAttachedFile] = useState<File | null>(null)  // Cambiado a un solo archivo
+    const [dragCounter, setDragCounter] = useState(0)  // Contador para manejar drag events anidados
 
     // Agregar estados para el selector de usuarios
     const [userSelections, setUserSelections] = useState<{ [key: number]: UserProps | null }>({})
@@ -184,6 +187,18 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
 
     const fileInputRef = useRef<HTMLInputElement | null>(null)
 
+    // Función unificada para detectar issues usando el endpoint unificado
+    const detectIssuesUnified = async (token: string, projectId: string, text?: string, file?: File) => {
+        try {
+            // Usar la función detectIssues del store que ya maneja el endpoint unificado
+            const result = await detectIssues(token, projectId, text, file)
+            return result
+        } catch (error) {
+            console.error('Error en detectIssuesUnified:', error)
+            throw error
+        }
+    }
+
     const handleAttachClick = () => {
         if (fileInputRef.current) {
             fileInputRef.current.value = ""
@@ -191,77 +206,14 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
         }
     }
 
-    // Maneja el archivo seleccionado y procesa igual que handleSubmit
+    // Maneja el archivo seleccionado - solo lo adjunta, no lo procesa inmediatamente y reemplaza el anterior
     const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
-        if (!file || isProcessing) return
-        setIsProcessing(true)
-        setShowTaskList(false)
+        if (!file) return
 
-        try {
-            const token = await getValidAccessToken()
-            if (!token) throw new Error("No se pudo obtener el token de autenticación")
-
-            setMessages(prev => [
-                ...prev,
-                {
-                    text: `Archivo adjuntado: ${file.name}`,
-                    isUser: true,
-                    preserveFormat: true
-                },
-                {
-                    text: "",
-                    isUser: false
-                }
-            ])
-
-            const result = await detectIssuesFromFile(token, file, params.id as string)
-
-            interface APITask {
-                assignedId: string
-                [key: string]: any
-            }
-
-            const tasksWithEmptyAssignment = result.map((task: APITask) => ({
-                ...task,
-                assignedId: "",
-                suggestedAssignee: task.assignedId
-            }))
-
-            setDetectedTasks(tasksWithEmptyAssignment)
-
-            const taskSummary = tasksWithEmptyAssignment.map((task: DetectedTask) =>
-                `• ${task.title} (Sugerido: ${task.suggestedAssignee})`
-            ).join('\n')
-
-            setMessages(prev => [
-                ...prev.slice(0, -1),
-                {
-                    text: `He detectado ${result.length} tareas del archivo. Debes asignar cada tarea a un usuario del proyecto:`,
-                    isUser: false
-                },
-                {
-                    text: taskSummary,
-                    isUser: false,
-                    isTaskList: true
-                },
-                {
-                    text: "Selecciona un usuario para cada tarea antes de crearlas.",
-                    isUser: false
-                }
-            ])
-
-            setShowTaskList(true)
-            setInputText("")
-        } catch (error) {
-            setMessages(prev => [...prev, {
-                text: error instanceof Error ? error.message : "Lo siento, hubo un error al procesar el archivo. Por favor, intenta de nuevo.",
-                isUser: false
-            }])
-            setDetectedTasks([])
-        } finally {
-            setIsProcessing(false)
-        }
+        // Reemplazar el archivo anterior con el nuevo
+        setAttachedFile(file)
+        // No mostrar mensaje en el chat al adjuntar archivo
     }
 
     // Función para obtener el usuario seleccionado actual
@@ -270,19 +222,37 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
     }
 
     const handleSubmit = async () => {
-        if (!inputText.trim() || isProcessing) return
+        // Si no hay texto ni archivo adjuntado, no hacer nada
+        if (!inputText.trim() && !attachedFile) return
+        if (isProcessing) return
+
         setIsProcessing(true)
         setShowTaskList(false)
+
+        // Guardar referencia al archivo antes de limpiarlo
+        const fileToSend = attachedFile
+        
+        // Limpiar el archivo adjuntado inmediatamente al enviar
+        setAttachedFile(null)
 
         try {
             const token = await getValidAccessToken()
             if (!token) throw new Error("No se pudo obtener el token de autenticación")
 
-            // Agregar mensaje del usuario preservando el formato exacto
+            // Determinar el texto a enviar
+            let textToSend = inputText.trim()
+            
+            // Si hay archivo adjuntado pero no hay texto, usar mensaje por defecto
+            if (fileToSend && !textToSend) {
+                textToSend = "Del siguiente archivo, necesito que obtengas todas las tareas posibles"
+            }
+
+            // Agregar mensaje del usuario con archivo adjunto si existe
             setMessages(prev => [...prev, {
-                text: inputText,
+                text: textToSend,
                 isUser: true,
-                preserveFormat: true
+                preserveFormat: true,
+                attachedFile: fileToSend ? fileToSend.name : undefined
             }])
 
             setMessages(prev => [...prev, {
@@ -290,14 +260,18 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
                 isUser: false
             }])
 
-            const result = await detectIssuesFromText(token, params.id as string, inputText)
+            // Usar la función unificada
+            const result = await detectIssuesUnified(token, params.id as string, textToSend, fileToSend || undefined)
+
+            // Extraer las tareas de la propiedad 'issues' del resultado
+            const issuesFromAPI = result.issues || []
 
             interface APITask {
                 assignedId: string
                 [key: string]: any
             }
 
-            const tasksWithEmptyAssignment = result.map((task: APITask) => ({
+            const tasksWithEmptyAssignment = issuesFromAPI.map((task: APITask) => ({
                 ...task,
                 assignedId: "",
                 suggestedAssignee: task.assignedId
@@ -311,8 +285,13 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
 
             setMessages(prev => [
                 ...prev.slice(0, -1),
+                // Mostrar la respuesta de la IA si existe
+                ...(result.response ? [{
+                    text: result.response,
+                    isUser: false
+                }] : []),
                 {
-                    text: `He detectado ${result.length} tareas. Debes asignar cada tarea a un usuario del proyecto:`,
+                    text: `He detectado ${issuesFromAPI.length} tareas. Debes asignar cada tarea a un usuario del proyecto:`,
                     isUser: false
                 },
                 {
@@ -330,7 +309,7 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
             setInputText("")
         } catch (error) {
             setMessages(prev => [...prev, {
-                text: error instanceof Error ? error.message : "Lo siento, hubo un error al procesar tu texto. Por favor, intenta de nuevo.",
+                text: error instanceof Error ? error.message : "Lo siento, hubo un error al procesar tu solicitud. Por favor, intenta de nuevo.",
                 isUser: false
             }])
             setDetectedTasks([])
@@ -398,6 +377,11 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
 
     const [deleteTaskIndex, setDeleteTaskIndex] = useState<number | null>(null)
 
+    // Función para eliminar el archivo adjuntado
+    const handleRemoveAttachedFile = () => {
+        setAttachedFile(null)
+    }
+
     // Función para eliminar una tarea detectada
     const handleDeleteTask = (index: number) => {
         setDetectedTasks(prev => {
@@ -426,84 +410,19 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
         setDeleteTaskIndex(null)
     }
 
-    // Maneja el drop de archivos
+    // Maneja el drop de archivos - solo adjunta el primer archivo y reemplaza el anterior
     const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault()
         e.stopPropagation()
         setIsDragActive(false)
+        setDragCounter(0)
 
         if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            const droppedFiles = Array.from(e.dataTransfer.files)
-            // Procesa cada archivo como si fuera handleFileChange
-            for (const file of droppedFiles) {
-                if (!file || isProcessing) continue
-                setIsProcessing(true)
-                setShowTaskList(false)
-                try {
-                    const token = await getValidAccessToken()
-                    if (!token) throw new Error("No se pudo obtener el token de autenticación")
-
-                    setMessages(prev => [
-                        ...prev,
-                        {
-                            text: `Archivo adjuntado: ${file.name}`,
-                            isUser: true,
-                            preserveFormat: true
-                        },
-                        {
-                            text: "",
-                            isUser: false
-                        }
-                    ])
-
-                    const result = await detectIssuesFromFile(token, file, params.id as string)
-
-                    interface APITask {
-                        assignedId: string
-                        [key: string]: any
-                    }
-
-                    const tasksWithEmptyAssignment = result.map((task: APITask) => ({
-                        ...task,
-                        assignedId: "",
-                        suggestedAssignee: task.assignedId
-                    }))
-
-                    setDetectedTasks(tasksWithEmptyAssignment)
-
-                    const taskSummary = tasksWithEmptyAssignment.map((task: DetectedTask) =>
-                        `• ${task.title} (Sugerido: ${task.suggestedAssignee})`
-                    ).join('\n')
-
-                    setMessages(prev => [
-                        ...prev.slice(0, -1),
-                        {
-                            text: `He detectado ${result.length} tareas del archivo. Debes asignar cada tarea a un usuario del proyecto:`,
-                            isUser: false
-                        },
-                        {
-                            text: taskSummary,
-                            isUser: false,
-                            isTaskList: true
-                        },
-                        {
-                            text: "Selecciona un usuario para cada tarea antes de crearlas.",
-                            isUser: false
-                        }
-                    ])
-
-                    setShowTaskList(true)
-                    setInputText("")
-                } catch (error) {
-                    setMessages(prev => [...prev, {
-                        text: error instanceof Error ? error.message : "Lo siento, hubo un error al procesar el archivo. Por favor, intenta de nuevo.",
-                        isUser: false
-                    }])
-                    setDetectedTasks([])
-                } finally {
-                    setIsProcessing(false)
-                }
-            }
+            const firstFile = e.dataTransfer.files[0]
+            
+            // Reemplazar el archivo anterior con el nuevo (solo el primero)
+            setAttachedFile(firstFile)
+            // No mostrar mensaje en el chat al adjuntar archivo
         }
     }
 
@@ -515,13 +434,22 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
     const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault()
         e.stopPropagation()
-        setIsDragActive(true)
+        setDragCounter(prev => prev + 1)
+        if (!isDragActive) {
+            setIsDragActive(true)
+        }
     }
 
     const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault()
         e.stopPropagation()
-        setIsDragActive(false)
+        setDragCounter(prev => {
+            const newCounter = prev - 1
+            if (newCounter === 0) {
+                setIsDragActive(false)
+            }
+            return newCounter
+        })
     }
 
     return (
@@ -572,21 +500,31 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
                         key={index}
                         className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
                     >
-                        <div
-                            className={`max-w-[80%] text-sm p-3 rounded-2xl ${message.isUser
-                                ? 'bg-blue-600 text-white rounded-br-none whitespace-pre-wrap'
-                                : 'bg-black/5 text-black flex items-center rounded-bl-none'
-                                } ${message.isTaskList ? 'font-mono whitespace-pre-wrap' : ''}`}
-                        >
-                            {message.text}
-                            {/* Loader para el último mensaje de la IA cuando está procesando */}
-                            {isProcessing && index === messages.length - 1 && !message.isUser && (
-                                <div className="flex items-center gap-1 scale-50">
-                                    <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '000ms' }}></div>
-                                    <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                                    <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '600ms' }}></div>
+                        <div className={`max-w-[80%] ${message.isUser ? 'flex flex-col items-end' : ''}`}>
+                            {/* Badge del archivo adjunto - solo para mensajes del usuario */}
+                            {message.isUser && message.attachedFile && (
+                                <div className="mb-1 px-2 py-1 bg-blue-500 text-white text-xs rounded-md flex items-center gap-1">
+                                    <AttachIcon size={12} stroke={2} />
+                                    <span className="truncate max-w-[200px]">{message.attachedFile}</span>
                                 </div>
                             )}
+                            
+                            <div
+                                className={`text-sm p-3 rounded-2xl ${message.isUser
+                                    ? 'bg-blue-600 text-white rounded-br-none whitespace-pre-wrap'
+                                    : 'bg-black/5 text-black flex items-center rounded-bl-none'
+                                    } ${message.isTaskList ? 'font-mono whitespace-pre-wrap' : ''}`}
+                            >
+                                {message.text}
+                                {/* Loader para el último mensaje de la IA cuando está procesando */}
+                                {isProcessing && index === messages.length - 1 && !message.isUser && (
+                                    <div className="flex items-center gap-1 scale-50">
+                                        <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '000ms' }}></div>
+                                        <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                                        <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '600ms' }}></div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 ))}
@@ -960,11 +898,40 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
                     </div>
                 ) : (
                     <div className="flex flex-col items-stretch gap-2 p-6">
+                        {/* Mostrar archivo adjuntado */}
+                        {attachedFile && (
+                            <div className="mb-3">
+                                <div className="text-xs text-gray-500 mb-2">Archivo adjuntado:</div>
+                                <div className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-md">
+                                    <div className="flex items-center gap-2">
+                                        <div className="text-gray-400">
+                                            <AttachIcon size={14} />
+                                        </div>
+                                        <span className="text-sm text-gray-700 truncate">{attachedFile.name}</span>
+                                        <span className="text-xs text-gray-400">
+                                            ({(attachedFile.size / 1024).toFixed(1)} KB)
+                                        </span>
+                                    </div>
+                                    <button
+                                        onClick={handleRemoveAttachedFile}
+                                        className="text-gray-400 hover:text-red-500 transition-colors p-1"
+                                        title="Eliminar archivo"
+                                        type="button"
+                                    >
+                                        <XIcon size={14} />
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
                         <AutoResizeTextarea
                             className="focus-within:ring-blue-500 focus-within:border-blue-500 focus-within:ring-2 transition-all max-h-28! w-full p-2.5 text-sm border resize-none focus:outline-none placeholder-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
                             value={inputText}
                             onChange={setInputText}
-                            placeholder="Puedes pegar transcripciones de reuniones u otros textos para convertirlos automáticamente en tareas."
+                            placeholder={attachedFile 
+                                ? "Escribe tu mensaje o deja vacío para usar el texto por defecto..."
+                                : "Puedes pegar transcripciones de reuniones u otros textos para convertirlos automáticamente en tareas."
+                            }
                             onPaste={() => { }}
                             disabled={isProcessing}
                         />
@@ -994,7 +961,7 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
                                 className="flex items-center gap-2 px-4 py-2 text-blue-700 bg-blue-50 border border-blue-300 rounded-md hover:bg-blue-100 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                                 onClick={handleSubmit}
                                 type="button"
-                                disabled={!inputText.trim() || isProcessing}
+                                disabled={(!inputText.trim() && !attachedFile) || isProcessing}
                             >
                                 {isProcessing ? (
                                     <>

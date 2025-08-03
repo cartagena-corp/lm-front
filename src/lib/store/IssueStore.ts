@@ -59,8 +59,8 @@ interface IssueState {
    // Audit actions
    getIssueHistory: (token: string, issueId: string, page?: number, size?: number) => Promise<AuditPagination>
 
-   detectIssuesFromText: (token: string, projectId: string, text: string) => Promise<any>
-   detectIssuesFromFile: (token: string, file: File, projectId: string) => Promise<any>
+   detectIssues: (token: string, projectId: string, text?: string, file?: File) => Promise<any>
+
    getColumnsFromExcel: (token: string, file: File) => Promise<any>
    importIssuesFromExcel: (token: string, file: File, projectId: string, mapping: Record<string, string>) => Promise<any>
 
@@ -425,57 +425,30 @@ export const useIssueStore = create<IssueState>((set, get) => ({
          throw error
       }
    },
-
-   // Detect Issues from Text
-   detectIssuesFromText: async (token: string, projectId: string, text: string) => {
-      try {
-         const response = await fetch(`${API_ROUTES.DETECT_ISSUES_FROM_TEXT}/${projectId}`, {
-            method: 'POST',
-            headers: {
-               'Content-Type': 'text/plain',
-               'Authorization': `Bearer ${token}`,
-            },
-            body: text
-         })
-
-         if (!response.ok) {
-            throw new Error(`Error ${response.status}: ${response.statusText}`)
-         }
-
-         const data = await response.json()
-         return data
-      } catch (error) {
-         console.error('Error en detectIssuesFromText:', error)
-         throw error
-      }
-   },
-   // Detect Issues from File
-   detectIssuesFromFile: async (token: string, file: File, projectId: string) => {
+   // Detect Issues from Text or File
+   detectIssues: async (token: string, projectId: string, text?: string, file?: File) => {
       try {
          const formData = new FormData()
-         formData.append('file', file)
+         if (file) formData.append('file', file)
+         if (text) formData.append('texto', text)
          formData.append('projectId', projectId)
 
-         const response = await fetch(API_ROUTES.DETECT_ISSUES_FROM_DOCX, {
+         const response = await fetch(API_ROUTES.DETECT_ISSUES, {
             method: 'POST',
-            headers: {
-               'Authorization': `Bearer ${token}`,
-            },
+            headers: { 'Authorization': `Bearer ${token}` },
             body: formData
          })
 
-         if (!response.ok) {
-            throw new Error(`Error ${response.status}: ${response.statusText}`)
-         }
+         if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`)
 
          const data = await response.json()
          return data
       } catch (error) {
-         console.error('Error en createIssuesFromFileWithIA:', error)
+         console.error('Error en detectIssues:', error)
          throw error
       }
    },
-   
+
    // Create Issues from IA
    createIssuesFromIA: async (token: string, issues: IssueFromIA[]) => {
       try {
