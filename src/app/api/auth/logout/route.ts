@@ -1,7 +1,7 @@
 import { API_ROUTES } from '@routes/oauth.route'
+import { logger } from '@/lib/types/Logger'
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { logger } from '@/lib/types/Logger'
 
 export async function POST() {
     try {
