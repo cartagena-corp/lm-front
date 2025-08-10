@@ -13,7 +13,7 @@ export default function BoardCard({ board, index }: BoardCardProps) {
     return (
         <motion.div className="bg-button-secondary-background rounded-md border-l-4 shadow-sm group"
             // style={{ borderColor: status?.color ?? "#000000" }}
-            whileHover={{ y: -4, boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)", transition: { type: "spring", stiffness: 300, damping: 15 } }}
+            whileHover={{ y: -4, boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)", transition: { type: "spring", stiffness: 300, damping: 20 } }}
             animate={isAnimated ? { opacity: 1, y: 0 } : { opacity: 1, y: 0, transition: { delay: index * 0.25 } }} onAnimationComplete={() => setIsAnimated(true)}
             transition={{ type: "spring", stiffness: 120, damping: 20 }} initial={{ opacity: 0, y: 20 }}
         >
