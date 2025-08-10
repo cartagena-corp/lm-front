@@ -6,8 +6,10 @@ export interface AuthStoreProps {
     exp: number
     iat: number
 
-    getProfileByToken: ({ token }) => UserProfile | null
-    logout: () => Promise<void>
+    setUser: (userProfile: UserProfile) => void
+    setLoading: (loading: boolean) => void
+    setToken: (token: string) => void
+    clearAuth: () => void
 }
 
 export interface JwtPayload {
@@ -27,6 +29,7 @@ export interface UserProfile {
     firstName: string
     lastName: string
     avatar: string
+    token?: string
     email: string
     role: string
     id: string
