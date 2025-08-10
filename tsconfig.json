@@ -41,6 +41,9 @@
             "@routes/*": [
                 "./src/lib/core/routes/*"
             ],
+            "@factories/*": [
+                "./src/lib/core/factories/*"
+            ],
             /*
              *  Shared path
              */
