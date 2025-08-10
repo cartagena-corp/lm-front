@@ -1,33 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { API_ROUTES } from '@routes/oauth.route'
+import { logger } from '@/lib/types/Logger'
+import { jwtDecode } from 'jwt-decode'
+import { cookies } from 'next/headers'
 
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     try {
         const token = searchParams.get('token')
-        if (!token) return NextResponse.redirect(new URL('/login?error=no_token', request.url))
+        if (!token) {
+            logger.warn('No se proporcionó el token en el callback de inicio de sesión.')
+            return NextResponse.redirect(new URL('/login?error=no_token', request.url))
+        }
 
-        // Se valida el token mandando una petición a la API que me devuelve un true si el token es válido
-        const res = await fetch(API_ROUTES.VALIDATE_TOKEN, { method: "GET", headers: { Authorization: `Bearer ${token}` } })
-        if (!res.ok) {
-            console.error("Token inválido o expirado")
+        try {
+            const decodedToken = jwtDecode(token)
+            if (decodedToken.exp && decodedToken.exp * 1000 < Date.now()) throw new Error('Token expirado')
+
+        } catch (decodeError) {
+            logger.error("Token inválido o expirado. Redirigiendo a login.")
             return NextResponse.redirect(new URL('/login?error=invalid_token', request.url))
         }
 
-        // Crear la respuesta de redirección
-        const redirectUrl = new URL('/tableros', request.url)
-        const response = NextResponse.redirect(redirectUrl)
-        response.cookies.set('accessToken', token, {
+        const res = await fetch(API_ROUTES.VALIDATE_TOKEN, { method: "GET", headers: { Authorization: `Bearer ${token}` } })
+
+        if (!res.ok) {
+            logger.error("Token inválido o expirado. Redirigiendo a login.")
+            return NextResponse.redirect(new URL('/login?error=invalid_token', request.url))
+        }
+
+        const cookieStore = await cookies()
+        cookieStore.set('accessToken', token, {
             secure: process.env.NODE_ENV === 'production',
-            maxAge: 60 * 60 * 24 * 1,
+            sameSite: 'strict',
             httpOnly: false,
-            sameSite: 'lax'
+            maxAge: 15 * 60 // 15 minutos
         })
 
-        return response
+        logger.info('Usuario autenticado exitosamente a través del callback de inicio de sesión.')
+
+        const cleanUrl = new URL('/tableros', request.url)
+        return NextResponse.redirect(cleanUrl)
     } catch (error) {
-        console.error("Error al recibir el token: ", error)
-        const redirectUrl = new URL('/login', request.url)
-        return NextResponse.redirect(redirectUrl)
+        logger.error("Error al procesar el callback:", error)
+        return NextResponse.redirect(new URL('/login?error=callback_error', request.url))
     }
 }
