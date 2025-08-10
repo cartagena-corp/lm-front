@@ -1,8 +1,7 @@
 "use client"
 
-import type { AuthStoreProps, UserProfile, JwtPayload } from "@/lib/types/auth"
-import { logoutAction } from "@services/oauth.service"
-import { jwtDecode } from "jwt-decode"
+import type { AuthStoreProps, UserProfile } from "@/lib/types/auth"
+import { persist } from "zustand/middleware"
 import { create } from "zustand"
 
 const initialState = {
@@ -14,38 +13,36 @@ const initialState = {
     iat: 0
 }
 
-export const useAuthStore = create<AuthStoreProps>((set) => ({
-    ...initialState,
+export const useAuthStore = create<AuthStoreProps>()(
+    persist((set, get) => ({
+        ...initialState,
 
-    getProfileByToken: ({ token }) => {
-        const userFromToken = jwtDecode(token) as JwtPayload | null
-        if (userFromToken) {
-            const { exp, iat } = userFromToken
-            const userProfile = {
-                permissions: userFromToken.permissions,
-                firstName: userFromToken.family_name,
-                lastName: userFromToken.given_name,
-                avatar: userFromToken.picture,
-                email: userFromToken.email,
-                role: userFromToken.role,
-                id: userFromToken.sub,
-            } as UserProfile
-
+        setUser: (userProfile: UserProfile) => {
             set({
                 isAuthenticated: true,
                 user: userProfile,
                 isLoading: false,
-                token: token,
-                exp: exp,
-                iat: iat
             })
+        },
 
-            return userProfile
-        } else return null
-    },
+        setToken: (token: string) => {
+            set({ token: token })
+        },
 
-    logout: async () => {
-        await logoutAction()
-        set({ ...initialState })
-    },
-}))
+        clearAuth: () => {
+            set({ ...initialState })
+        },
+
+        setLoading: (loading: boolean) => {
+            set({ isLoading: loading })
+        },
+    }),
+        {
+            name: 'auth-storage',
+            partialize: (state) => ({
+                isAuthenticated: state.isAuthenticated,
+                user: state.user
+            }),
+        }
+    )
+)
