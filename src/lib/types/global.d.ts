@@ -27,3 +27,15 @@ export interface GlobalUserProps {
 export interface GlobalUserFilters {
     search?: string
 }
+
+export interface ApiResponse<T> {
+    message?: string
+    success: boolean
+    data?: T
+}
+
+export interface RefreshTokenResponse {
+    accessToken?: string
+    message?: string
+    success: boolean
+}
