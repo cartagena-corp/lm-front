@@ -13,7 +13,6 @@ const SORT_OPTIONS = [
 ]
 
 export default function BoardFilters() {
-    // const { boardStatus } = useGlobalStore()
     const searchParams = useSearchParams()
     const pathname = usePathname()
     const router = useRouter()
