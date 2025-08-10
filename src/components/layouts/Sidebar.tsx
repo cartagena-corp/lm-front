@@ -42,7 +42,8 @@ export default function Sidebar() {
     }
 
     const handleLogoutClick = async () => {
-        handleLogout(clearAuth)
+        clearAuth()
+        handleLogout()
         router.push('/login')
     }
 
