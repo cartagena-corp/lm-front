@@ -16,8 +16,8 @@ export interface BoardFiltersProps {
 }
 
 export interface BoardCardProps {
+    board: PBoardProps
     index: number
-    board: Board
 }
 
 export interface DateBadgeProps {
