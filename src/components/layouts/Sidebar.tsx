@@ -2,6 +2,7 @@ import { BoardIcon, ConfigIcon, IAChatIcon, IAConfigIcon, LaMurallaIcon, LogoutI
 import { usePathname, useRouter } from "next/navigation"
 import { useSidebarStore } from "@stores/SidebarStore"
 import { useAuthStore } from "@stores/AuthStore"
+import { handleLogout } from "@/lib/apiClient"
 import SidebarTooltip from "./SidebarTooltip"
 import { useState, MouseEvent } from "react"
 import { motion } from "motion/react"
@@ -12,7 +13,7 @@ import avatar from "@public/img/avatar.png"
 
 export default function Sidebar() {
     const { isCollapsed, toggleSidebar } = useSidebarStore()
-    const { logout, user } = useAuthStore()
+    const { user, clearAuth } = useAuthStore()
 
     const [hovered, setHovered] = useState<{ key: string, position: { top: number, left: number } } | null>(null)
     const [activeSidebarButton, setActiveSidebarButton] = useState<string | null>(null)
@@ -41,7 +42,7 @@ export default function Sidebar() {
     }
 
     const handleLogoutClick = async () => {
-        await logout()
+        handleLogout(clearAuth)
         router.push('/login')
     }
 
