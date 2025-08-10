@@ -1,18 +1,15 @@
 "use client"
 
-import { useAuthStore } from "@stores/AuthStore"
 import { logger } from "./types/Logger"
 
 export function getTokenFromCookies(): string | null {
     if (typeof document === 'undefined') return null
-
     const cookies = document.cookie.split(';')
     const accessTokenCookie = cookies.find(cookie => cookie.trim().startsWith('accessToken='))
     return accessTokenCookie ? accessTokenCookie.split('=')[1] : null
 }
 
-export async function apiClient<T>(url: string, options: RequestInit = {}): Promise<T> {
-    const { token, setToken, clearAuth } = useAuthStore()
+export async function apiClient<T>(url: string, options: RequestInit = {}, token?: string): Promise<T> {
     const accessToken = token || getTokenFromCookies()
     const headers = new Headers(options.headers)
 
@@ -29,22 +26,21 @@ export async function apiClient<T>(url: string, options: RequestInit = {}): Prom
                 const refreshData = await refreshResponse.json()
 
                 if (refreshData.success && refreshData.accessToken) {
-                    setToken(refreshData.accessToken)
                     headers.set('Authorization', `Bearer ${refreshData.accessToken}`)
                     response = await fetch(url, { ...options, headers })
 
                     logger.info('El token ha sido refrescado exitosamente', { url })
                 } else {
-                    await handleLogout(clearAuth)
+                    await handleLogout()
                     throw new Error("Ha fallado el refresco del token. Cerrando sesión.")
                 }
             } else {
-                await handleLogout(clearAuth)
+                await handleLogout()
                 throw new Error("La sesión ha expirado. Por favor, inicia sesión de nuevo.")
             }
         } catch (error) {
             logger.error('Error en el medio del token refresh', error, { url })
-            await handleLogout(clearAuth)
+            await handleLogout()
             if (error instanceof Error && error.message === "La sesión ha expirado.") throw error
             throw new Error("Error de autenticación. Por favor, inicia sesión de nuevo.")
         }
@@ -53,9 +49,7 @@ export async function apiClient<T>(url: string, options: RequestInit = {}): Prom
     if (!response.ok && response.status !== 204) {
         const errorData = await response.json().catch(() => ({ message: 'Error en la petición a la API' }))
         logger.error('Error en la petición a la API', new Error(errorData.message), {
-            url,
-            status: response.status,
-            method: options.method || 'GET'
+            url, status: response.status, method: options.method || 'GET'
         })
 
         throw new Error(errorData.message)
@@ -66,13 +60,13 @@ export async function apiClient<T>(url: string, options: RequestInit = {}): Prom
 }
 
 
-export async function handleLogout(clearAuth: () => void) {
+export async function handleLogout() {
     try {
         await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' })
         logger.info('Se cerró la sesión correctamente')
     } catch (error) {
         logger.error('Error durante el logout', error)
     } finally {
-        clearAuth()
+        if (typeof window !== 'undefined') window.location.href = '/login'
     }
 }
