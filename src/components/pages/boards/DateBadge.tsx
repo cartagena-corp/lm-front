@@ -17,13 +17,13 @@ const styles = {
     createdAt: {
         bg: "bg-purple-50",
         text: "text-purple-600",
-        label: "Fecha creación",
+        label: "Fecha Creación",
         Icon: ClockIcon
     },
     updatedAt: {
         bg: "bg-orange-50",
         text: "text-orange-600",
-        label: "Última actualización",
+        label: "Última Actualización",
         Icon: ClockIcon
     },
 }
