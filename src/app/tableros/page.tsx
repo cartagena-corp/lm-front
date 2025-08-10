@@ -1,22 +1,21 @@
 "use client"
 
-import type { ListComponentType, PaginatedResponse, PBoardProps } from "@/lib/types/pagination"
-import PaginationFactory from "@/lib/core/factories/PaginationFactory"
 import BoardFilters from "@/components/pages/boards/BoardFilters"
-import { getAllBoards } from "@/lib/core/services/board.service"
-import { useBoardStore } from "@/lib/shared/stores/BoardStore"
+import type { ListComponentType } from "@/lib/types/pagination"
+import PaginationFactory from "@factories/PaginationFactory"
+import { getAllBoards } from "@services/board.service"
 import { BoardFiltersProps } from "@/lib/types/board"
+import { useBoardStore } from "@stores/BoardStore"
 import { useSearchParams } from "next/navigation"
 import { BoardIcon } from "@public/icon/Icon"
-import { useEffect, useState } from "react"
 import { logger } from "@/lib/types/Logger"
 import { motion } from "motion/react"
+import { useEffect } from "react"
 
 export default function BoardPage() {
-    const searchParams = useSearchParams()
-    const [listType, setListType] = useState<ListComponentType>('boards')
-
     const { boards, isLoading, error, setBoards, setLoading, setError, clearError } = useBoardStore()
+    const listType: ListComponentType = 'boards'
+    const searchParams = useSearchParams()
 
     const buildFiltersFromUrl = (): BoardFiltersProps => {
         return {
@@ -65,20 +64,13 @@ export default function BoardPage() {
             <BoardFilters />
 
             {/* Loading state */}
-            {isLoading &&
-                <div className="flex justify-center items-center py-8">
-                    <p className="text-primary-border">Cargando tableros...</p>
-                </div>
-            }
+            {(isLoading) && <span className="text-primary-border flex justify-center items-center py-8">Cargando tableros...</span>}
 
             {/* Error state */}
             {(error) &&
                 <section className="bg-red-50 border-red-200 border rounded-md p-4">
                     <p className="text-red-700">{error}</p>
-                    <button
-                        onClick={loadData}
-                        className="mt-2 text-red-600 hover:text-red-800 underline"
-                    >
+                    <button onClick={loadData} className="mt-2 text-red-600 hover:text-red-800 underline" >
                         Intentar nuevamente
                     </button>
                 </section>
