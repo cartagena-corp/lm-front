@@ -1,34 +1,33 @@
 "use client"
 
+import { useSessionInitialization } from "@hooks/useSessionInitialization"
 import { usePathname, useRouter } from "next/navigation"
 import { useAuthStore } from "@stores/AuthStore"
 import { ReactNode, useEffect } from "react"
 import Sidebar from "./Sidebar"
 
-const excludedRoutes = ["/login", "/login/callback"]
+const EXCLUDED_ROUTES = ["/login", "/login/callback"] as const
 
 export default function ConditionalLayout({ children }: { children: ReactNode }) {
-    const { getProfileByToken, isAuthenticated, isLoading } = useAuthStore()
+    const { isAuthenticated, isLoading } = useAuthStore()
+    const { isInitialized } = useSessionInitialization()
+
     const pathname = usePathname()
     const router = useRouter()
 
-    useEffect(() => {
-        if (!isAuthenticated && !isLoading) {
-            const accessToken = getCookie('accessToken')
-
-            if (accessToken) getProfileByToken({ token: accessToken })
-        }
-    }, [getProfileByToken, isAuthenticated, isLoading])
-
-    const shouldExcludeLayout = excludedRoutes.some((route) => pathname.startsWith(route))
+    const shouldExcludeLayout = EXCLUDED_ROUTES.some(route => pathname.startsWith(route))
 
     useEffect(() => {
-        if (!isLoading && !isAuthenticated && !shouldExcludeLayout) router.push('/login')
-    }, [isLoading, isAuthenticated, shouldExcludeLayout, router])
+        const shouldRedirect = !isLoading && !isAuthenticated && !shouldExcludeLayout && isInitialized
+        if (shouldRedirect) router.push('/login')
+    }, [isLoading, isAuthenticated, shouldExcludeLayout, isInitialized, router])
+
 
     if (shouldExcludeLayout) return <>{children}</>
-    if (isLoading) return <div className="h-screen w-full flex items-center justify-center">Cargando...</div>
-    if (isAuthenticated) return (
+    if (isLoading || !isInitialized) return <div className="h-screen w-full flex items-center justify-center">Cargando...</div>
+    if (!isAuthenticated) return null
+
+    return (
         <main className="bg-background min-h-screen flex">
             <Sidebar />
             <aside className="flex-1 flex flex-col p-6">
@@ -36,14 +35,4 @@ export default function ConditionalLayout({ children }: { children: ReactNode })
             </aside>
         </main>
     )
-
-    // return <div className="h-screen bg-black text-white">Esto aparece porque no hay nada</div>
-    return null
-}
-
-const getCookie = (name: string): string | null => {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
-    return null;
 }
