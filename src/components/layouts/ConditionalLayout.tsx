@@ -5,26 +5,29 @@ import { usePathname, useRouter } from "next/navigation"
 import { useAuthStore } from "@stores/AuthStore"
 import { ReactNode, useEffect } from "react"
 import Sidebar from "./Sidebar"
+import { useConfigInitialization } from "@/lib/shared/hooks/useConfigInitialization"
 
 const EXCLUDED_ROUTES = ["/login", "/login/callback"] as const
 
 export default function ConditionalLayout({ children }: { children: ReactNode }) {
-    const { isAuthenticated, isLoading } = useAuthStore()
-    const { isInitialized } = useSessionInitialization()
+    const { isAuthenticated, isLoading: isAuthLoading } = useAuthStore()
+    const { isInitialized: isConfigInitialized } = useConfigInitialization()
+    const { isInitialized: isSessionInitialized } = useSessionInitialization()
+
 
     const pathname = usePathname()
     const router = useRouter()
 
     const shouldExcludeLayout = EXCLUDED_ROUTES.some(route => pathname.startsWith(route))
+    const isFullyInitialized = isSessionInitialized && isConfigInitialized
 
     useEffect(() => {
-        const shouldRedirect = !isLoading && !isAuthenticated && !shouldExcludeLayout && isInitialized
+        const shouldRedirect = !isAuthLoading && !isAuthenticated && !shouldExcludeLayout && isFullyInitialized
         if (shouldRedirect) router.push('/login')
-    }, [isLoading, isAuthenticated, shouldExcludeLayout, isInitialized, router])
-
+    }, [isAuthLoading, isAuthenticated, shouldExcludeLayout, isFullyInitialized, router])
 
     if (shouldExcludeLayout) return <>{children}</>
-    if (isLoading || !isInitialized) return <div className="h-screen w-full flex items-center justify-center">Cargando...</div>
+    if (isAuthLoading || !isFullyInitialized) return <div className="h-screen w-full flex items-center justify-center">Cargando...</div>
     if (!isAuthenticated) return null
 
     return (
