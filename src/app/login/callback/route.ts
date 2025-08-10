@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
             httpOnly: false,
-            maxAge: 15 * 60 // 15 minutos
+            maxAge: 1 * 24 * 60 * 60 // 1 día
         })
 
         logger.info('Usuario autenticado exitosamente a través del callback de inicio de sesión.')
