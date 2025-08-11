@@ -22,7 +22,8 @@ export default function Dropdown({ options, selectedValue, onSelect, placeholder
         onSelect(value)
     }
 
-    const displayLabel = normalizedOptions.find(opt => opt.value === selectedValue)?.name || placeholder
+    const selectedOption = normalizedOptions.find(opt => opt.value === selectedValue)
+    const displayLabel = selectedOption?.name || placeholder
 
     return (
         <div ref={dropdownRef} className={`text-button-secondary-text relative text-sm w-48 ${className}`}>
@@ -30,7 +31,10 @@ export default function Dropdown({ options, selectedValue, onSelect, placeholder
                 cursor-pointer flex items-center justify-between rounded-md border text-left w-full px-4 py-2`}
                 onClick={() => setIsOpen(!isOpen)} aria-haspopup="true" aria-expanded={isOpen}
             >
-                <span className="truncate">{displayLabel}</span>
+                <span className="truncate flex items-center">
+                    {selectedOption?.hasColor && <span className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: selectedOption.hexColor }} />}
+                    {displayLabel}
+                </span>
                 <ChevronDownIcon className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} size={16} />
             </button>
 
