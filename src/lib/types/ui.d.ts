@@ -1,5 +1,5 @@
 import type { InputHTMLAttributes, ReactNode, ElementType } from "react"
-import type { StatusProps } from "@/lib/types/global"
+import type { StatusProps } from "@/lib/types/config"
 
 
 export interface ButtonProps {
