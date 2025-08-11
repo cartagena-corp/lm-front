@@ -5,8 +5,8 @@ import { BoardStoreProps } from "@/lib/types/board"
 import { create } from "zustand"
 
 const initialState = {
-    boards: null,
     isLoading: false,
+    boards: null,
     error: null
 }
 
