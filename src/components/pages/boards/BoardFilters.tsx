@@ -1,6 +1,8 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { useCallback, useEffect, useRef, useState } from "react"
 import { SearchIcon, UpDownIcon, XIcon } from "@public/icon/Icon"
+import { useCallback, useEffect, useRef, useState } from "react"
+import GroupDropdown from "@/components/ui/GroupDropdown"
+import { useConfigStore } from "@stores/ConfigStore"
 import Dropdown from "@/components/ui/Dropdown"
 import Button from "@/components/ui/Button"
 import Input from "@/components/ui/Input"
@@ -13,6 +15,8 @@ const SORT_OPTIONS = [
 ]
 
 export default function BoardFilters() {
+    const { boardStates } = useConfigStore()
+
     const searchParams = useSearchParams()
     const pathname = usePathname()
     const router = useRouter()
@@ -41,6 +45,13 @@ export default function BoardFilters() {
         updateQuery(key, null)
     }
 
+    const handleClearAllFilters = () => {
+        if (debounceTimeout.current) clearTimeout(debounceTimeout.current)
+        setInputValue('')
+        const params = new URLSearchParams()
+        router.replace(`${pathname}?${params.toString()}`)
+    }
+
     useEffect(() => { setInputValue(searchParams.get('name') || '') }, [searchParams])
 
     const currentDirection = searchParams.get('direction') || 'desc'
@@ -49,45 +60,64 @@ export default function BoardFilters() {
 
     const appliedFilters = Array.from(searchParams.entries()).filter(([key]) => ['name', 'status', 'sortBy'].includes(key))
 
-    // const getFilterDisplayValue = useCallback((key: string, value: string) => {
-    //     switch (key) {
-    //         case 'name':
-    //             return (
-    //                 <span className="flex items-center gap-1">
-    //                     <b>Búsqueda:</b>
-    //                     <p>{value}</p>
-    //                 </span>
-    //             )
-    //         case 'status':
-    //             const statusName = boardStatus.find(s => String(s.id) === value)?.name
-    //             return (
-    //                 <span className="flex items-center gap-1">
-    //                     <b>Estado:</b>
-    //                     <p>{statusName || value}</p>
-    //                 </span>
-    //             )
-    //         case 'sortBy':
-    //             const sortName = SORT_OPTIONS.find(s => s.value === value)?.name
-    //             return (
-    //                 <span className="flex items-center gap-1">
-    //                     <b>Ordenar por:</b>
-    //                     <p>{sortName || value}</p>
-    //                 </span>
-    //             )
-    //         default: return <span>{value}</span>
-    //     }
-    // }, [boardStatus])
+    const getFilterDisplayValue = useCallback((key: string, value: string) => {
+        switch (key) {
+            case 'name':
+                return (
+                    <span className="flex items-center gap-1">
+                        <b>Búsqueda:</b>
+                        <p>{value}</p>
+                    </span>
+                )
+            case 'status':
+                const statusName = boardStates.find(s => String(s.id) === value)?.name
+                return (
+                    <span className="flex items-center gap-1">
+                        <b>Estado:</b>
+                        <p>{statusName || value}</p>
+                    </span>
+                )
+            case 'sortBy':
+                const sortName = SORT_OPTIONS.find(s => s.value === value)?.name
+                return (
+                    <span className="flex items-center gap-1">
+                        <b>Ordenar por:</b>
+                        <p>{sortName || value}</p>
+                    </span>
+                )
+            default: return <span>{value}</span>
+        }
+    }, [boardStates])
 
     return (
         <section className="flex flex-col gap-4">
             <article className="flex flex-wrap items-center gap-2">
                 <div className="relative flex-grow"><Input placeholder="Buscar por nombre..." icon={SearchIcon} type="search" onChange={handleSearchChange} value={inputValue} /></div>
-                {/* <Dropdown className="max-md:w-full" placeholder="Cualquier Estado" onSelect={(value) => updateQuery('status', value)} selectedValue={currentStatus} options={boardStatus} /> */}
-                <Dropdown className="max-md:w-full" placeholder="Ordenar por" onSelect={(value) => updateQuery('sortBy', value)} selectedValue={currentSortBy} options={SORT_OPTIONS} />
-                <Button variant="secondary" className="flex items-center gap-2 max-lg:w-full" onClick={() => updateQuery('direction', currentDirection === 'asc' ? 'desc' : 'asc')}>
-                    <UpDownIcon size={16} />
-                    <span className="capitalize">{currentDirection === 'asc' ? 'Ascendente' : 'Descendente'}</span>
-                </Button>
+                <GroupDropdown label="Filtros" className="max-md:w-full">
+                    <span className="flex flex-col gap-1">
+                        <label className="text-button-secondary-text/50 font-medium text-xs">Estado</label>
+                        <Dropdown className="w-full" placeholder="Cualquier Estado" onSelect={(value) => updateQuery('status', value)} selectedValue={currentStatus} options={boardStates} />
+                    </span>
+                    <span className="flex flex-col gap-1">
+                        <label className="text-button-secondary-text/50 font-medium text-xs">Ordenar por</label>
+                        <Dropdown className="w-full" placeholder="Ordenar por" onSelect={(value) => updateQuery('sortBy', value)} selectedValue={currentSortBy} options={SORT_OPTIONS} />
+                    </span>
+                    <span className="flex flex-col gap-1">
+                        <label className="text-button-secondary-text/50 font-medium text-xs">Dirección</label>
+                        <Button variant="secondary" className="flex items-center w-full gap-2" onClick={() => updateQuery('direction', currentDirection === 'asc' ? 'desc' : 'asc')}>
+                            <UpDownIcon size={16} />
+                            <span className="capitalize">{currentDirection === 'asc' ? 'Ascendente' : 'Descendente'}</span>
+                        </Button>
+                    </span>
+                    {appliedFilters.length > 0 &&
+                        <div className="border-button-secondary-border border-t pt-3">
+                            <Button variant="error" className="flex items-center gap-2 w-full justify-center" onClick={handleClearAllFilters}>
+                                <XIcon size={16} />
+                                Limpiar todos los filtros
+                            </Button>
+                        </div>
+                    }
+                </GroupDropdown>
             </article>
 
             {appliedFilters.length > 0 &&
@@ -95,7 +125,7 @@ export default function BoardFilters() {
                     {appliedFilters.map(([key, value]) =>
                         <Badge key={key} hexColor="#fb2c36">
                             <button onClick={() => handleRemoveFilter(key)} className="flex items-center gap-1 cursor-pointer"><XIcon size={12} strokeWidth={3} /></button>
-                            {/* {getFilterDisplayValue(key, value)} */}
+                            {getFilterDisplayValue(key, value)}
                         </Badge>
                     )}
                 </article>
