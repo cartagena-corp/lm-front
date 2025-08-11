@@ -18,9 +18,10 @@ export async function initializeSessionAction(): Promise<UserProfile | null> {
 
         logger.info('Sesión inicializada', { userId: decoded.sub || '', email: decoded.email || '' })
         return {
+            organization_id: decoded.organization_id || '',
             permissions: decoded.permissions || [],
-            firstName: decoded.family_name || '',
-            lastName: decoded.given_name || '',
+            firstName: decoded.given_name || '',
+            lastName: decoded.family_name || '',
             avatar: decoded.picture || '',
             email: decoded.email || '',
             role: decoded.role || '',
@@ -28,26 +29,6 @@ export async function initializeSessionAction(): Promise<UserProfile | null> {
         }
     } catch (error) {
         logger.error('Error al inicializar la sesión', error)
-        return null
-    }
-}
-
-export async function getProfileByToken({ token }: { token: string }): Promise<UserProfile | null> {
-    try {
-        const decoded = jwtDecode<JwtPayload>(token)
-
-        logger.debug('Token decodificado correctamente', { userId: decoded.sub })
-        return {
-            permissions: decoded.permissions || [],
-            firstName: decoded.family_name || '',
-            lastName: decoded.given_name || '',
-            avatar: decoded.picture || '',
-            email: decoded.email || '',
-            role: decoded.role || '',
-            id: decoded.sub,
-        }
-    } catch (error) {
-       logger.error('Error al decodificar el token', error)
         return null
     }
 }
