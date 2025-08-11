@@ -10,7 +10,7 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-    description: "Sistema de gestión de proyectos - La Muralla",
+    description: "Sistema de gestión de tableros - La Muralla",
     title: "La Muralla - Refactor",
 }
 
