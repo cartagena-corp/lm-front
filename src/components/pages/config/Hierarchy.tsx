@@ -1,4 +1,4 @@
-import { StatusProps } from "@/lib/types/global"
+import { StatusProps } from "@/lib/types/config"
 import { ChevronRightIcon } from "@public/icon/Icon"
 import { motion } from "motion/react"
 import { updateBoardState } from "@/lib/core/services/config.service"
@@ -22,7 +22,7 @@ export default function Hierarchy({ states }: { states: StatusProps[] }) {
     return (
         <article className="flex items-center flex-wrap gap-2">
             {sortedStates.map((state, index) =>
-                <motion.span className="flex items-center gap-2" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.2 }} key={state.id} layout>
+                <span key={state.id} className="flex items-center gap-2">
                     <DraggableItem className="border-button-secondary-border rounded-md shadow-sm border" index={index} id={state.id}
                         isDragged={state.id === dragState.draggedItem?.id} isDraggedOver={dragState.dragOverIndex === index} isUpdating={dragState.isUpdating}
                         onDrop={e => handlers.handleDrop(e as any, index)} onDragLeave={handlers.handleDragLeave} onDragEnd={handlers.handleDragEnd}
@@ -34,7 +34,7 @@ export default function Hierarchy({ states }: { states: StatusProps[] }) {
                         </hgroup>
                     </DraggableItem>
                     {(index < sortedStates.length - 1) && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} > <ChevronRightIcon /> </motion.div>}
-                </motion.span>
+                </span>
             )}
             {(dragState.isUpdating) && <LoadingIndicator message="Actualizando orden..." />}
         </article>
