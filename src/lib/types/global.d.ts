@@ -1,11 +1,11 @@
 export interface GlobalState {
-    initializeGlobalData: (data: { boardStatus: BoardStatusProps[] }) => void
-    boardStatus: BoardStatusProps[]
+    initializeGlobalData: (data: { boardStatus: StatusProps[] }) => void
+    boardStatus: StatusProps[]
     isInitialized: boolean
 }
 
 export interface StoreInitializerProps {
-    boardStatus: BoardStatusProps[]
+    boardStatus: StatusProps[]
 }
 
 export interface GlobalUserProps {
@@ -35,7 +35,7 @@ export interface RefreshTokenResponse {
 
 // -----------------------------------------------------------------------
 
-export interface BoardStatusProps {
+export interface StatusProps {
     orderIndex: null | number
     color: string
     name: string
@@ -43,11 +43,11 @@ export interface BoardStatusProps {
 }
 
 export interface ConfigStoreProps {
-    boardStates: BoardStatusProps[]
+    boardStates: StatusProps[]
     error: string | null
     isLoading: boolean
 
-    setBoardStates: (boardStates: BoardStatusProps[]) => void
+    setBoardStates: (boardStates: StatusProps[]) => void
     setError: (error: string | null) => void
     setLoading: (loading: boolean) => void
     clearBoardStates: () => void

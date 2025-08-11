@@ -1,9 +1,9 @@
 import type { InputHTMLAttributes, ReactNode, ElementType } from "react"
-import type { BoardStatusProps } from "@/lib/types/global"
+import type { StatusProps } from "@/lib/types/global"
 
 
 export interface ButtonProps {
-    variant?: "primary" | "secondary" | "none"
+    variant?: "primary" | "secondary" | "none" | "error"
     onClick?: () => void
     children: ReactNode
     className?: string
@@ -19,7 +19,7 @@ export interface DropdownOption {
 export interface DropdownProps {
     onSelect: (value: string) => void
     selectedValue: string | null
-    options: BoardStatusProps[] | DropdownOption[]
+    options: StatusProps[] | DropdownOption[]
     placeholder: string
     className?: string
 }

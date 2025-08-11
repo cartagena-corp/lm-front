@@ -13,6 +13,7 @@ export interface AuthStoreProps {
 }
 
 export interface JwtPayload {
+    organization_id: string
     permissions: string[]
     family_name: string
     given_name: string
@@ -25,6 +26,7 @@ export interface JwtPayload {
 }
 
 export interface UserProfile {
+    organization_id: string
     permissions: string[]
     firstName: string
     lastName: string
