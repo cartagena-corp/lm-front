@@ -1,6 +1,6 @@
 "use client"
 
-import { BoardStatusProps, ConfigStoreProps } from "@/lib/types/global"
+import { StatusProps, ConfigStoreProps } from "@/lib/types/global"
 import { create } from "zustand"
 
 const initialState = {
@@ -12,7 +12,7 @@ const initialState = {
 export const useConfigStore = create<ConfigStoreProps>()((set) => ({
     ...initialState,
 
-    setBoardStates: (boardStates: BoardStatusProps[]) => {
+    setBoardStates: (boardStates: StatusProps[]) => {
         set({
             isLoading: false,
             error: null,
