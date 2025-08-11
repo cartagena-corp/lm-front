@@ -1,8 +1,13 @@
+import { useConfigInitialization } from "@hooks/useConfigInitialization"
 import { AddBoardIcon, BoardStateIcon } from "@public/icon/Icon"
+import { useConfigStore } from "@stores/ConfigStore"
 import Button from "@/components/ui/Button"
 import StateCard from "./StateCard"
+import Hierarchy from "./Hierarchy"
 
 export default function BoardStates() {
+    const { boardStates } = useConfigStore()
+    useConfigInitialization()
 
     return (
         <main className="bg-button-secondary-background rounded-md shadow-md flex flex-col">
@@ -25,8 +30,15 @@ export default function BoardStates() {
 
             <hr className="border-button-secondary-border/25" />
 
-            <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 p-6">
-                {/* {boardStatus.map(state => <StateCard key={state.id} state={state} />)} */}
+            <section className="flex flex-col items-start rounded-lg gap-2 p-6">
+                <h6 className="text-primary font-semibold text-sm">Orden Jerárquico</h6>
+                <Hierarchy states={boardStates} />
+                {boardStates.filter(state => state.orderIndex !== null).length === 0 && <p className="text-gray-500 text-sm italic">No hay estados configurados con orden</p>}
+            </section>
+
+            <section className="flex flex-col gap-2 p-6 pt-0">
+                <h6 className="text-primary font-semibold text-sm mb-2">Gestionar Estados</h6>
+                {boardStates.map((state, id) => <StateCard key={state.id} state={state} order={id} />)}
             </section>
         </main>
     )
