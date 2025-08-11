@@ -1,14 +1,15 @@
-import { GlobalUserProps } from "@/lib/types/global"
 import avatar from "@public/img/avatar.png"
 import Button from "@/components/ui/Button"
 import { EditIcon } from "@public/icon/Icon"
 import { motion } from "motion/react"
 import Image from "next/image"
+import { ListUsersProps } from "@/lib/types/config"
 
-export default function UserCard({ user }: { user: GlobalUserProps }) {
+export default function UserCard({ user, index }: { user: ListUsersProps, index: number }): JSX.Element {
     return (
         <motion.article className="border-button-secondary-border hover:bg-button-secondary-hover transition-colors group
-            flex justify-between items-center rounded-md border gap-4 p-4">
+            flex justify-between items-center rounded-md border gap-4 p-4"
+            initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.2, delay: 0.25 * index }}>
             <aside className="flex items-center gap-4">
                 <picture className="bg-button-secondary-border overflow-hidden rounded-full flex justify-center items-center relative flex-shrink-0 w-10 h-10">
                     <Image className={user.picture ? "object-cover object-center" : "object-contain object-center p-2"}

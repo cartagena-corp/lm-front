@@ -1,5 +1,6 @@
-import { PaginatedResponse, PaginationFactoryProps, PBoardProps } from "@/lib/types/pagination"
+import { PaginatedResponse, PaginationFactoryProps, PBoardProps, PUserProps } from "@/lib/types/pagination"
 import BoardList from "@/components/pages/boards/BoardList"
+import UserList from "@/components/pages/config/UserList"
 import { logger } from "@/lib/types/Logger"
 
 /**
@@ -13,11 +14,9 @@ import { logger } from "@/lib/types/Logger"
 
 
 export default function PaginationFactory({ type, data }: PaginationFactoryProps): JSX.Element | null {
-    // Hacemos un 'cast' para asegurar que el prop 'data' tenga el tipo correcto
     switch (type) {
         case 'users':
-            // return <UserList data={data as PaginatedResponse<IUser>} />
-            return <></>
+            return <UserList data={data as PaginatedResponse<PUserProps>} />
 
         case 'boards':
             return <BoardList data={data as PaginatedResponse<PBoardProps>} />

@@ -7,12 +7,13 @@ import { ConfigIcon } from "@public/icon/Icon"
 import { motion } from "motion/react"
 import Tab from "@/components/ui/Tab"
 
+const tabsData = [
+    { label: "📋 Estados de Tablero", content: <BoardStates /> },
+    { label: "👤 Usuarios del Sistema", content: <UserSystem /> },
+    { label: "🔒 Roles y Permisos", content: <RoleSystem /> },
+]
+
 export default function Config() {
-    const tabsData = [
-        { label: "📋 Estados de Tablero", content: <BoardStates /> },
-        { label: "👤 Usuarios del Sistema", content: <UserSystem /> },
-        { label: "🔒 Roles y Permisos", content: <RoleSystem /> },
-    ]
     return (
         <motion.main className="flex flex-col gap-4" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
             <section className="flex justify-between items-center gap-4">

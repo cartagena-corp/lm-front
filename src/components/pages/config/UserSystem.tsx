@@ -1,12 +1,22 @@
 import { AddUserIcon, SearchIcon, UsersIcon } from "@public/icon/Icon"
+import PaginationFactory from "@factories/PaginationFactory"
+import { ListUsersFiltersProps } from "@/lib/types/config"
+import { ListComponentType } from "@/lib/types/pagination"
+import { getListUsers } from "@services/config.service"
+import { useConfigStore } from "@stores/ConfigStore"
+import { useEffect, useRef, useState } from "react"
+import { logger } from "@/lib/types/Logger"
 import Button from "@/components/ui/Button"
 import Input from "@/components/ui/Input"
-import { useRef, useState } from "react"
 
 export default function UserSystem() {
+    const { listUsers, isLoading, error, setListUsers, setLoading, setError, clearError } = useConfigStore()
+
     const debounceTimeout = useRef<NodeJS.Timeout | null>(null)
     const [debouncedSearch, setDebouncedSearch] = useState("")
     const [searchTerm, setSearchTerm] = useState("")
+
+    const listType: ListComponentType = 'users'
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newSearch = e.target.value
@@ -15,6 +25,34 @@ export default function UserSystem() {
         if (debounceTimeout.current) clearTimeout(debounceTimeout.current)
         debounceTimeout.current = setTimeout(() => { setDebouncedSearch(newSearch) }, 800)
     }
+
+    const buildFiltersFromUrl = (): ListUsersFiltersProps => {
+        return {
+            search: debouncedSearch || undefined,
+            size: 10,
+            page: 0,
+        }
+    }
+
+    const loadData = async () => {
+        try {
+            setLoading(true)
+            clearError()
+
+            const filters = buildFiltersFromUrl()
+            const response = await getListUsers(filters)
+
+            if (response) setListUsers(response)
+            else setError('No se pudieron cargar el listado de usuarios')
+        } catch (error) {
+            logger.error('Error loading boards:', error)
+            setError('Error al cargar el listado de usuarios')
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    useEffect(() => { loadData() }, [debouncedSearch, listType])
 
     return (
         <main className="bg-button-secondary-background rounded-md shadow-md flex flex-col">
@@ -39,7 +77,9 @@ export default function UserSystem() {
 
             <section className="flex flex-col gap-2 p-6">
                 <Input placeholder="Buscar por nombre o correo..." onChange={handleSearchChange} icon={SearchIcon} value={searchTerm} type="search" />
-                {/* {items.map((user, id) => <UserCard key={user.id} user={user} />)} */}
+
+                {/* Data state */}
+                {(!isLoading && !error && listUsers) && <PaginationFactory type={listType} data={listUsers} />}
             </section>
         </main>
     )
