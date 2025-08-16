@@ -19,10 +19,13 @@ export default function RoleCard({ role, order }: { role: RoleProps, order: numb
                     </span>
                 </hgroup>
 
-                <div className="flex flex-wrap gap-1 mt-2">
-                    {role.permissions.slice(0, 5).map(permission => <span key={permission.name} className="bg-secondary text-button-secondary-text rounded-full text-xs px-2 py-1">{permission.name}</span>)}
-                    {role.permissions.length > 5 && <span className="bg-button-primary-background text-primary-border rounded-full text-xs px-2 py-1">+{role.permissions.length - 5} más</span>}
-                </div>
+                {
+                    role.permissions.length > 0 &&
+                    <div className="flex flex-wrap gap-1 mt-2">
+                        {role.permissions.slice(0, 5).map(permission => <span key={permission.name} className="bg-secondary text-button-secondary-text rounded-full text-xs px-2 py-1">{permission.name}</span>)}
+                        {role.permissions.length > 5 && <span className="bg-button-primary-background text-primary-border rounded-full text-xs px-2 py-1">+{role.permissions.length - 5} más</span>}
+                    </div>
+                }
             </aside>
             <aside className="text-orange-600 flex justify-end items-center group-hover:opacity-100 opacity-0 transition-opacity gap-2.5">
                 <Button variant="none" className="p-0!"><EditIcon size={20} /></Button>
