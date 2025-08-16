@@ -3,15 +3,18 @@ import { PaginatedResponse, PUserProps } from "./pagination"
 export interface ConfigStoreProps {
     listUsers: PaginatedResponse<ListUsersProps> | null
     boardStates: StatusProps[]
+    listRoles: RoleProps[]
     error: string | null
     isLoading: boolean
 
     setListUsers: (listUsers: PaginatedResponse<ListUsersProps>) => void
     setBoardStates: (boardStates: StatusProps[]) => void
+    setListRoles: (listRoles: RoleProps[]) => void
     setError: (error: string | null) => void
     setLoading: (loading: boolean) => void
     clearBoardStates: () => void
     clearListUsers: () => void
+    clearListRoles: () => void
     clearError: () => void
 }
 
@@ -24,6 +27,12 @@ export interface ListUsersProps {
     id: string
 }
 
+export interface RoleProps {
+    name: string
+    permissions: {
+        name: string
+    }[]
+}
 
 export interface StatusProps {
     orderIndex: null | number

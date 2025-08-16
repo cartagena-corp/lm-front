@@ -1,6 +1,6 @@
 "use client"
 
-import { StatusProps, ConfigStoreProps, ListUsersProps } from "@/lib/types/config"
+import { StatusProps, ConfigStoreProps, ListUsersProps, RoleProps } from "@/lib/types/config"
 import { PaginatedResponse } from "@/lib/types/pagination"
 import { create } from "zustand"
 
@@ -8,7 +8,7 @@ const initialState = {
     isLoading: false,
     boardStates: [],
     listUsers: null,
-    listRoles: null,
+    listRoles: [],
     error: null
 }
 
@@ -28,6 +28,13 @@ export const useConfigStore = create<ConfigStoreProps>()((set) => ({
             isLoading: false,
             error: null,
             boardStates,
+        })
+    },
+    setListRoles: (listRoles: RoleProps[]) => {
+        set({
+            isLoading: false,
+            error: null,
+            listRoles,
         })
     },
 
@@ -54,6 +61,14 @@ export const useConfigStore = create<ConfigStoreProps>()((set) => ({
         set({
             isLoading: false,
             boardStates: [],
+            error: null,
+        })
+    },
+
+    clearListRoles: () => {
+        set({
+            isLoading: false,
+            listRoles: [],
             error: null,
         })
     },

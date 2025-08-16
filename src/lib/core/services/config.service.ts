@@ -1,5 +1,6 @@
-import { ListUsersFiltersProps, ListUsersProps, StatusProps, updateBoardStateParams } from "@/lib/types/config"
+import { ListUsersFiltersProps, ListUsersProps, RoleProps, StatusProps, updateBoardStateParams } from "@/lib/types/config"
 import { API_ROUTES as AUTH_ROUTES } from "../routes/oauth.route"
+import { API_ROUTES as USER_ROUTES } from "../routes/user.route"
 import { PaginatedResponse } from "@/lib/types/pagination"
 import { API_ROUTES } from "@routes/config.route"
 import { apiClient } from "@/lib/apiClient"
@@ -38,6 +39,17 @@ export async function getListUsers(filters: ListUsersFiltersProps): Promise<Pagi
         return response
     } catch (error) {
         logger.error('Error en el servicio getListUsers:', error)
+        return null
+    }
+}
+
+export async function getAllRoles(): Promise<RoleProps[] | null> {
+    try {
+        const response = await apiClient<RoleProps[]>(USER_ROUTES.CRUD_ROLES, { method: "GET", headers: { 'Content-Type': 'application/json' } })
+        logger.info('Respuesta del servicio getAllRoles:', { response })
+        return response
+    } catch (error) {
+        logger.error('Error en el servicio getAllRoles:', error)
         return null
     }
 }
