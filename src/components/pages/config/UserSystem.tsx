@@ -61,10 +61,10 @@ export default function UserSystem() {
                     <span className="bg-purple-100 text-purple-600 flex justify-center items-center rounded-md aspect-square p-2">
                         <UsersIcon />
                     </span>
-                    <span className="flex flex-col gap-1">
+                    <hgroup className="flex flex-col gap-1">
                         <h5 className="font-semibold text-xl">Usuarios del Sistema</h5>
                         <p className="text-primary-border text-sm">Aquí puedes gestionar los usuarios del sistema.</p>
-                    </span>
+                    </hgroup>
                 </aside>
 
                 <Button variant="primary" className="flex items-center gap-2">

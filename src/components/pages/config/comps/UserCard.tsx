@@ -21,17 +21,15 @@ export default function UserCard({ user, index }: { user: ListUsersProps, index:
                     </h6>
                     <p className="text-primary-border line-clamp-1 text-xs">{user.email || "Sin correo registrado"}</p>
                 </section>
-            </aside>
-
-            <aside className="flex items-center gap-4">
                 <span className="bg-purple-100 text-purple-600 border lowercase first-letter:uppercase rounded-full font-medium text-xs w-fit py-1 px-4">
                     {user.role || "SIN ROL"}
                 </span>
-                <Button variant="primary" className="flex gap-2 items-center">
-                    <EditIcon size={20} />
-                    Editar usuario
-                </Button>
             </aside>
+
+            <Button variant="primary" className="transition-opacity group-hover:opacity-100 opacity-0 items-center flex gap-2">
+                <EditIcon size={20} />
+                Editar usuario
+            </Button>
         </motion.article>
     )
 }
