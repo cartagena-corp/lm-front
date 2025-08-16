@@ -8,6 +8,7 @@ const initialState = {
     isLoading: false,
     boardStates: [],
     listUsers: null,
+    listRoles: null,
     error: null
 }
 

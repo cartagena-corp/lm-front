@@ -1,4 +1,4 @@
-import { DeleteIcon, DragIcon, EditIcon } from "@public/icon/Icon"
+import { DeleteIcon, EditIcon } from "@public/icon/Icon"
 import { StatusProps } from "@/lib/types/config"
 import Button from "@/components/ui/Button"
 import { motion } from "motion/react"

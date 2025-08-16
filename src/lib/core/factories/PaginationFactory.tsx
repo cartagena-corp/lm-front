@@ -1,6 +1,6 @@
 import { PaginatedResponse, PaginationFactoryProps, PBoardProps, PUserProps } from "@/lib/types/pagination"
 import BoardList from "@/components/pages/boards/BoardList"
-import UserList from "@/components/pages/config/UserList"
+import UserList from "@/components/pages/config/comps/UserList"
 import { logger } from "@/lib/types/Logger"
 
 /**

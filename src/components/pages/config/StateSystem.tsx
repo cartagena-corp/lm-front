@@ -2,8 +2,8 @@ import { useConfigInitialization } from "@hooks/useConfigInitialization"
 import { AddBoardIcon, BoardStateIcon } from "@public/icon/Icon"
 import { useConfigStore } from "@stores/ConfigStore"
 import Button from "@/components/ui/Button"
-import StateCard from "./StateCard"
-import Hierarchy from "./Hierarchy"
+import StateCard from "./comps/StateCard"
+import Hierarchy from "./comps/Hierarchy"
 
 export default function BoardStates() {
     const { boardStates } = useConfigStore()
