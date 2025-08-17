@@ -1,19 +1,19 @@
 "use client"
 
+import { useConfigInitialization } from "@/lib/shared/hooks/useConfigInitialization"
 import { useSessionInitialization } from "@hooks/useSessionInitialization"
 import { usePathname, useRouter } from "next/navigation"
 import { useAuthStore } from "@stores/AuthStore"
 import { ReactNode, useEffect } from "react"
 import Sidebar from "./Sidebar"
-import { useConfigInitialization } from "@/lib/shared/hooks/useConfigInitialization"
+import Modal from "./Modal"
 
 const EXCLUDED_ROUTES = ["/login", "/login/callback"] as const
 
 export default function ConditionalLayout({ children }: { children: ReactNode }) {
-    const { isAuthenticated, isLoading: isAuthLoading } = useAuthStore()
-    const { isInitialized: isConfigInitialized } = useConfigInitialization()
     const { isInitialized: isSessionInitialized } = useSessionInitialization()
-
+    const { isInitialized: isConfigInitialized } = useConfigInitialization()
+    const { isAuthenticated, isLoading: isAuthLoading } = useAuthStore()
 
     const pathname = usePathname()
     const router = useRouter()
@@ -36,6 +36,7 @@ export default function ConditionalLayout({ children }: { children: ReactNode })
             <aside className="flex-1 flex flex-col p-6">
                 {children}
             </aside>
+            <Modal />
         </main>
     )
 }
