@@ -2,9 +2,9 @@ import { useConfigStore } from "@/lib/shared/stores/ConfigStore"
 import { getAllRoles } from "@/lib/core/services/config.service"
 import { AddRoleIcon, LockShieldIcon } from "@public/icon/Icon"
 import { logger } from "@/lib/types/Logger"
-import { useEffect } from "react"
 import Button from "@/components/ui/Button"
 import RoleCard from "./comps/RoleCard"
+import { useEffect } from "react"
 
 export default function RoleSystem() {
     const { listRoles, setListRoles, isLoading, setLoading, error, setError, clearError } = useConfigStore()
