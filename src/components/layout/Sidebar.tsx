@@ -29,6 +29,7 @@ export default function Sidebar() {
 
   const hasGeminiChatAccess = user?.role && typeof user.role !== 'string' ? user.role.permissions.some((permission: PermissionProps) => permission.name === 'GEMINI_ACTIVE') : false
   const hasGeminiConfigAccess = user?.role && typeof user.role !== 'string' ? user.role.permissions.some((permission: PermissionProps) => permission.name === 'GEMINI_CONFIG') : false
+  const hasOrganizationControl = user?.role && typeof user.role !== 'string' ? user.role.permissions.some((permission: PermissionProps) => permission.name === 'ORGANIZATION_CONTROL') : false
 
   useEffect(() => {
     setIsClient(true)
@@ -60,7 +61,7 @@ export default function Sidebar() {
 
   const navigation: NavigationProps[] = [
     { name: 'Tableros', href: '/tableros', icon: BoardIcon, isAvailable: true },
-    { name: 'Organizaciones', href: '/factory', icon: FactoryIcon, isAvailable: user?.role && typeof user.role !== 'string' && user.role.permissions.some((permission: PermissionProps) => permission.name === 'ORGANIZATION_CONTROL') || false },
+    { name: 'Organizaciones', href: '/factory', icon: FactoryIcon, isAvailable: hasOrganizationControl },
     { name: 'Configuración', href: '/config', icon: ConfigIcon, isAvailable: true },
     { name: 'Configurar Gemini', href: '/gemini', icon: IAIcon, isAvailable: hasGeminiConfigAccess },
   ]
