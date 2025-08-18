@@ -13,6 +13,9 @@ interface IssueUpdated {
    type: number
    id?: string
    projectId?: string
+   startDate?: string // YYYY-MM-DD
+   endDate?: string   // YYYY-MM-DD
+   realDate?: string  // YYYY-MM-DD
 }
 
 interface IssueFilters {
@@ -193,9 +196,15 @@ export const useIssueStore = create<IssueState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
+         // Solo enviar fechas si existen y están en formato YYYY-MM-DD
+         const payload = {
+            ...issueData,
+            ...(issueData.startDate ? { startDate: issueData.startDate } : {}),
+            ...(issueData.endDate ? { endDate: issueData.endDate } : {})
+         }
          const response = await fetch(API_ROUTES.CRUD_ISSUES, {
             method: 'POST', headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-            body: JSON.stringify(issueData)
+            body: JSON.stringify(payload)
          })
 
          if (!response.ok) { throw new Error(`Error ${response.status}: ${response.statusText}`) }
@@ -225,6 +234,7 @@ export const useIssueStore = create<IssueState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
+         // Solo enviar fechas si existen y están en formato YYYY-MM-DD
          const requestBody = {
             title: issueUpdated.title,
             descriptions: issueUpdated.descriptions,
@@ -232,8 +242,10 @@ export const useIssueStore = create<IssueState>((set, get) => ({
             priority: issueUpdated.priority,
             status: issueUpdated.status,
             type: issueUpdated.type,
+            ...(issueUpdated.startDate ? { startDate: issueUpdated.startDate } : {}),
+            ...(issueUpdated.endDate ? { endDate: issueUpdated.endDate } : {}),
+            ...(issueUpdated.realDate ? { realDate: issueUpdated.realDate } : {})
          }
-
          const response = await fetch(`${API_ROUTES.CRUD_ISSUES}/${issueUpdated.id}`, {
             method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
             body: JSON.stringify(requestBody)

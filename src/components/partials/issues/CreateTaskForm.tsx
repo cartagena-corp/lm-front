@@ -88,6 +88,9 @@ export default function CreateTaskForm({ onSubmit, onCancel, taskObject, isEdit 
     projectId: isEdit ? taskObject?.projectId || selectedBoard?.id as string : selectedBoard?.id as string,
     assignedId: isEdit ? taskObject?.assignedId || "" : "",
     estimatedTime: isEdit ? taskObject?.estimatedTime || 0 : 0,
+    startDate: isEdit ? taskObject?.startDate || '' : '',
+    endDate: isEdit ? taskObject?.endDate || '' : '',
+    realDate: isEdit ? taskObject?.realDate || '' : '',
   })
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -388,6 +391,60 @@ export default function CreateTaskForm({ onSubmit, onCancel, taskObject, isEdit 
                 </div>
               </div>
             )}
+
+            {/* Fechas de la tarea */}
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+              {/* Fecha de inicio */}
+              <div className='space-y-2'>
+                <label htmlFor="startDate" className="text-gray-900 text-sm font-semibold">
+                  Fecha de inicio
+                </label>
+                <div className='border-gray-200 flex items-center rounded-lg border px-4 py-2.5 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-all duration-200'>
+                  <input
+                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                    className="outline-none text-sm w-full bg-transparent placeholder-gray-400"
+                    value={formData.startDate || ''}
+                    name="startDate"
+                    type="date"
+                    id="startDate"
+                  />
+                </div>
+              </div>
+              {/* Fecha de fin */}
+              <div className='space-y-2'>
+                <label htmlFor="endDate" className="text-gray-900 text-sm font-semibold">
+                  Fecha de fin
+                </label>
+                <div className='border-gray-200 flex items-center rounded-lg border px-4 py-2.5 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-all duration-200'>
+                  <input
+                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                    className="outline-none text-sm w-full bg-transparent placeholder-gray-400"
+                    value={formData.endDate || ''}
+                    name="endDate"
+                    type="date"
+                    id="endDate"
+                  />
+                </div>
+              </div>
+              {/* Fecha real de finalización (solo en edición) */}
+              {isEdit && (
+                <div className='space-y-2 col-span-2'>
+                  <label htmlFor="realDate" className="text-gray-900 text-sm font-semibold">
+                    Fecha real de finalización
+                  </label>
+                  <div className='border-gray-200 flex items-center rounded-lg border px-4 py-2.5 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-all duration-200'>
+                    <input
+                      onChange={(e) => setFormData({ ...formData, realDate: e.target.value })}
+                      className="outline-none text-sm w-full bg-transparent placeholder-gray-400"
+                      value={formData.realDate || ''}
+                      name="realDate"
+                      type="date"
+                      id="realDate"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Estado y Prioridad - Misma línea */}
             <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>

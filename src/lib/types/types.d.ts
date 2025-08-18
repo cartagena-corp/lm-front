@@ -30,6 +30,8 @@ export interface TaskProps {
    projectId: string
    priority: number                                   /* DEFAULT: "Baja" | "Media" | "Alta" */
    status: number
+   startDate?: string // YYYY-MM-DD
+   endDate?: string   // YYYY-MM-DD
    assignedId: {
       id: string,
       firstName: string,
@@ -48,6 +50,7 @@ export interface TaskProps {
    type: number
    estimatedTime: number
    sprintId?: string
+   realDate?: string // YYYY-MM-DD, opcional para detalles y edición
 }
 
 //* Comments

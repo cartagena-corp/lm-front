@@ -609,7 +609,10 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
         priority: number,
         status: number,
         title: string,
-        type: number
+        type: number,
+        startDate?: string,
+        endDate?: string,
+        realDate?: string
     }) => {
         const token = await getValidAccessToken()
         if (token) await updateIssue(token, formData)

@@ -134,55 +134,33 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
                      <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
                         <span className="text-sm text-gray-500">Creación:</span>
                         <span className="text-sm font-medium text-gray-900">
-                           {(() => {
-                              const dateStr = task.createdAt
-                              if (!dateStr) return 'No especificado'
-
-                              let date
-                              if (dateStr.includes('T')) {
-                                 date = new Date(dateStr)
-                              } else {
-                                 const [year, month, day] = dateStr.split('-').map(num => parseInt(num, 10))
-                                 date = new Date(year, month - 1, day)
-                              }
-
-                              return date.toLocaleDateString('es-ES', {
-                                 day: '2-digit',
-                                 month: 'long',
-                                 year: 'numeric',
-                                 hour: '2-digit',
-                                 minute: '2-digit',
-                                 hour12: true
-                              })
-                           })()}
+                           {formatDate(task.createdAt)}
                         </span>
                      </div>
                      <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
                         <span className="text-sm text-gray-500">Actualización:</span>
                         <span className="text-sm font-medium text-gray-900">
-                           {(() => {
-                              const dateStr = task.updatedAt
-                              if (!dateStr) return 'No especificado'
-
-                              let date
-                              if (dateStr.includes('T')) {
-                                 date = new Date(dateStr)
-                              } else {
-                                 const [year, month, day] = dateStr.split('-').map(num => parseInt(num, 10))
-                                 date = new Date(year, month - 1, day)
-                              }
-
-                              return date.toLocaleDateString('es-ES', {
-                                 day: '2-digit',
-                                 month: 'long',
-                                 year: 'numeric',
-                                 hour: '2-digit',
-                                 minute: '2-digit',
-                                 hour12: true
-                              })
-                           })()}
+                           {formatDate(task.updatedAt)}
                         </span>
                      </div>
+                     {task.startDate && (
+                       <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                         <span className="text-sm text-gray-500">Fecha de inicio:</span>
+                         <span className="text-sm font-medium text-gray-900">{formatDate(task.startDate, false, true)}</span>
+                       </div>
+                     )}
+                     {task.endDate && (
+                       <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                         <span className="text-sm text-gray-500">Fecha de fin:</span>
+                         <span className="text-sm font-medium text-gray-900">{formatDate(task.endDate, false, true)}</span>
+                       </div>
+                     )}
+                     {task.realDate && (
+                       <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                         <span className="text-sm text-gray-500">Fecha real de finalización:</span>
+                         <span className="text-sm font-medium text-gray-900">{formatDate(task.realDate, false, true)}</span>
+                       </div>
+                     )}
                   </div>
                </div>
 
@@ -209,4 +187,31 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
          </div>
       </div>
    )
+
+// Formatea fechas a formato legible
+function formatDate(dateStr?: string, includeTime = false, onlyDate = false): string {
+   if (!dateStr) return 'No especificado';
+   let date: Date;
+   if (dateStr.includes('T')) {
+      date = new Date(dateStr);
+   } else {
+      const [year, month, day] = dateStr.split('-').map(num => parseInt(num, 10));
+      date = new Date(year, month - 1, day);
+   }
+   if (onlyDate) {
+      return date.toLocaleDateString('es-ES', {
+         day: '2-digit',
+         month: 'long',
+         year: 'numeric',
+      });
+   }
+   return date.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+      hour: includeTime ? '2-digit' : undefined,
+      minute: includeTime ? '2-digit' : undefined,
+      hour12: includeTime ? true : undefined
+   });
+}
 }
