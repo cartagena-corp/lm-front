@@ -96,7 +96,7 @@ export default function TableroDetalle() {
 
   return (
     <>
-      <div className="max-w-7xl mx-auto space-y-8">
+      <div className=" mx-auto space-y-8">
         {/* Header */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <div className="flex items-center justify-between">

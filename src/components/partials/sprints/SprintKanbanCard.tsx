@@ -1295,7 +1295,7 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
                 isOpen={isTaskDetailsModalOpen}
                 onClose={() => setIsTaskDetailsModalOpen(false)}
                 title=""
-                customWidth="sm:max-w-7xl"
+                customWidth="sm:"
                 showCloseButton={false}
             >
                 {selectedIssue && (
