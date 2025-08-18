@@ -19,10 +19,10 @@ const ACCEPTED_EXTENSIONS = [".xls", ".xlsx", ".csv"]
 const ISSUE_FIELDS = [
     { key: "title", label: "Título", multi: false },
     { key: "descriptions", label: "Descripciones", multi: true },
-    { key: "assignee", label: "Persona Asignada", multi: false },
-    { key: "estimatedTime", label: "Tiempo Estimado", multi: false },
-    { key: "createdAt", label: "Fecha de Creación", multi: false },
-    { key: "updatedAt", label: "Fecha de Última Actualización", multi: false },
+    { key: "assignedId", label: "Persona Asignada", multi: false },
+    // { key: "estimatedTime", label: "Tiempo Estimado", multi: false },
+    // { key: "createdAt", label: "Fecha de Creación", multi: false },
+    // { key: "updatedAt", label: "Fecha de Última Actualización", multi: false },
 ]
 
 export default function ImportIssuesModal({ onCancel }: FormProps) {
