@@ -313,3 +313,22 @@ export const ImportIcon = ({ size = 24, stroke = 1.5 }: IconProps) => {
       </svg>
    )
 }
+
+export const FactoryIcon = ({ size = 24, stroke = 2 }: IconProps) => {
+   return (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill={"none"} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+         <path d="M12 16h.01" strokeWidth={stroke} />
+         <path d="M16 16h.01" strokeWidth={stroke} />
+         <path d="M3 19a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.5a.5.5 0 0 0-.769-.422l-4.462 2.844A.5.5 0 0 1 15 10.5v-2a.5.5 0 0 0-.769-.422L9.77 10.922A.5.5 0 0 1 9 10.5V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2z" strokeWidth={stroke} />
+         <path d="M8 16h.01" strokeWidth={stroke} />
+      </svg>
+   )
+}
+
+
+export const KeyIcon = ({ size = 24, stroke = 1.5 }: IconProps) => (
+   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill={"none"} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={stroke}>
+      <path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z" />
+      <circle cx="16.5" cy="7.5" r=".5" fill="currentColor" />
+   </svg>
+)

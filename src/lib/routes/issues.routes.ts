@@ -14,4 +14,6 @@ export const API_ROUTES = {
     IMPORT_ISSUES: `${INTEGRATION_URL}/api/import`,
     GEMINI_CONFIG: `${INTEGRATION_URL}/api/gemini-config`,
     GEMINI_CHAT: `${INTEGRATION_URL}/api/gemini/chat`,
+    GEMINI_HISTORY: `${INTEGRATION_URL}/api/gemini-usage/logs`,
+    GEMINI_HISTORY_FILTERS: `${INTEGRATION_URL}/api/gemini-usage/filters`,
 }
