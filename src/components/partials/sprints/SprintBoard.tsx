@@ -56,7 +56,7 @@ export default function SprintBoard() {
          const token = await getValidAccessToken()
          if (token) {
             try {
-               const issues = await getIssuesBySprint(token, activeSprintData.id as string, selectedBoard.id, 999)
+               const issues = await getIssuesBySprint(token, activeSprintData.id as string, selectedBoard.id, { assignedIds: "", type: null, status: null, priority: null }, 999)
                setActiveSprintWithIssues({
                   ...activeSprintData,
                   tasks: issues
@@ -147,7 +147,7 @@ export default function SprintBoard() {
                   <span className="text-sm text-gray-500">• Cargando...</span>
                </div>
             </div>
-            
+
             {/* Estado de carga */}
             <div className="p-12 flex items-center justify-center">
                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -168,7 +168,7 @@ export default function SprintBoard() {
                   <span className="text-sm text-gray-500">• {!activeSprintData ? 'Sin sprint activo' : 'Cargando issues...'}</span>
                </div>
             </div>
-            
+
             {/* Estado vacío */}
             <div className="p-12 text-center">
                <div className="mx-auto w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center mb-4">
@@ -178,7 +178,7 @@ export default function SprintBoard() {
                   {!activeSprintData ? 'No hay sprint activo' : 'Cargando datos del sprint...'}
                </h3>
                <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                  {!activeSprintData 
+                  {!activeSprintData
                      ? 'Para usar la vista de tablero, necesitas activar un sprint desde la vista de lista.'
                      : 'Obteniendo las tareas del sprint activo...'
                   }
@@ -333,6 +333,6 @@ export default function SprintBoard() {
                </div>
             </div>
          </Modal>
-         </div>
+      </div>
    )
 }
