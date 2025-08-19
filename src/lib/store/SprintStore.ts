@@ -5,12 +5,15 @@ import { create } from 'zustand'
 import toast from 'react-hot-toast'
 
 // Función auxiliar para obtener issues por sprint sin dependencia circular
-const getIssuesBySprintId = async (token: string, sprintId: string, projectId: string, size: number = 10, filter: { key: string; value: string }): Promise<GlobalPagination> => {
+const getIssuesBySprintId = async (token: string, sprintId: string, projectId: string, size = 10, filter?: { assignedIds: string, type: number | null, status: number | null, priority: number | null }): Promise<GlobalPagination> => {
    try {
       const params = new URLSearchParams()
       params.append('projectId', projectId)
       params.append('size', size.toString())
-      params.append(filter.key, filter.value)
+      if (filter?.assignedIds) params.append('assignedIds', filter.assignedIds)
+      if (filter?.type) params.append('type', filter.type.toString())
+      if (filter?.status) params.append('status', filter.status.toString())
+      if (filter?.priority) params.append('priority', filter.priority.toString())
 
       // Para el backlog (sprintId === 'null'), buscar issues con sprintId null
       // Para sprints específicos, buscar issues con ese sprintId específico
@@ -53,7 +56,7 @@ interface SprintState {
    setFilter: (sprintId: string, filter: { key: string; value: string }) => void
    getSprints: (token: string, projectId: string) => Promise<void>
    getActiveSprint: (token: string, projectId: string) => Promise<void>
-   getIssuesBySprint: (token: string, sprintId: string, projectId: string, size?: number, filter?: { key: string; value: string }) => Promise<GlobalPagination>
+   getIssuesBySprint: (token: string, sprintId: string, projectId: string, filter?: { assignedIds: string, type: number | null, status: number | null, priority: number | null }, size?: number) => Promise<GlobalPagination>
    loadMoreIssuesBySprint: (token: string, sprintId: string, projectId: string, page: number, filter?: { key: string; value: string }) => Promise<void>
    createSprint: (token: string, sprintData: SprintProps) => Promise<void>
    updateSprint: (token: string, sprintData: SprintProps, projectId: string) => Promise<void>
@@ -71,7 +74,7 @@ export const useSprintStore = create<SprintState>((set, get) => ({
    filters: {},
    setFilter: (sprintId, filter) => set(state => ({ filters: { ...state.filters, [sprintId]: filter } })),
 
-   getIssuesBySprint: async (token, sprintId, projectId, size = 10, filter = { key: '', value: '' }) => {
+   getIssuesBySprint: async (token, sprintId, projectId, filter, size) => {
       return await getIssuesBySprintId(token, sprintId, projectId, size, filter)
    },
 
@@ -118,7 +121,7 @@ export const useSprintStore = create<SprintState>((set, get) => ({
          const enriched = await Promise.all(rawSprints.map(async sprint => {
             // Si es el sprint activo, obtener todas las issues
             const size = (activeSprint && sprint.id === activeSprint.id) ? 999 : 10
-            const issues = await get().getIssuesBySprint(token, sprint.id!, projectId, size)
+            const issues = await get().getIssuesBySprint(token, sprint.id!, projectId, { assignedIds: '', type: null, status: null, priority: null }, size)
             return { ...sprint, tasks: issues }
          })) as SprintProps[]
 

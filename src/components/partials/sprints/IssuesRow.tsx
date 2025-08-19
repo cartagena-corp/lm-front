@@ -12,7 +12,7 @@ import { useIssueStore } from '@/lib/store/IssueStore'
 import CreateTaskForm from '../issues/CreateTaskForm'
 import { useAuthStore } from '@/lib/store/AuthStore'
 import ReasignIssue from '../issues/ReasignIssue'
-import { CalendarIcon, CheckmarkIcon, EditIcon, DeleteIcon, PlusIcon, EyeIcon, ClockIcon, ForbiddenIcon, IAIcon, ChatIAIcon, ImportIcon } from '@/assets/Icon'
+import { CalendarIcon, CheckmarkIcon, EditIcon, DeleteIcon, PlusIcon, EyeIcon, ClockIcon, ForbiddenIcon, IAIcon, ChatIAIcon, ImportIcon, FilterIcon, XIcon } from '@/assets/Icon'
 import Modal from '../../layout/Modal'
 import Image from 'next/image'
 import CreateSprintForm from './CreateSprintForm'
@@ -445,7 +445,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
 
    // Resetear estados cuando cambia el sprint
    useEffect(() => {
-      if (spr.tasks) {
+      if (spr.tasks && spr.tasks.content.length > 0) {
          const currentPage = spr.tasks.number || 0
          const totalPages = spr.tasks.totalPages || 0
          setHasMore(currentPage < totalPages - 1)
@@ -568,17 +568,36 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
    const { filters, setFilter } = useSprintStore() // filters: { [sprintId]: { key, value } }
    const sprintId = spr.id as string
    const filter = filters?.[sprintId] || { key: '', value: '' }
+
    const [userSelected, setUserSelected] = useState<any[]>([])
    const [isUserOpen, setIsUserOpen] = useState(false)
    const userRef = useRef<HTMLDivElement>(null)
+
+   interface FilterOption {
+      color: string
+      name: string
+      id: number
+   }
+
+   const [typeSelected, setTypeSelected] = useState<FilterOption | null>(null)
+   const [isTypeOpen, setIsTypeOpen] = useState(false)
+   const typeRef = useRef<HTMLDivElement>(null)
+
+   const [statusSelected, setStatusSelected] = useState<FilterOption | null>(null)
+   const [isStatusOpen, setIsStatusOpen] = useState(false)
+   const statusRef = useRef<HTMLDivElement>(null)
+
+   const [prioritySelected, setPrioritySelected] = useState<FilterOption | null>(null)
+   const [isPriorityOpen, setIsPriorityOpen] = useState(false)
+   const priorityRef = useRef<HTMLDivElement>(null)
+
    const filterRef = useRef(filter)
 
    // Sincronizar userSelected con el filtro del sprint al montar/cambiar filtro
    useEffect(() => {
       if (filter && filter.key === 'assignedIds') {
-         if (filter.value === '') {
-            setUserSelected([])
-         } else {
+         if (filter.value === '') setUserSelected([])
+         else {
             // Buscar los usuarios seleccionados a partir de los IDs en el filtro
             const ids = filter.value.split(',').filter(Boolean)
             const selectedUsers = allProjectUsers.filter(u => ids.includes(u.id))
@@ -590,51 +609,52 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
    useEffect(() => {
       filterRef.current = filter
       const getNewIssues = async () => {
-         if (filter.key === 'assignedIds') {
-            setIsFiltering(true)
-            await clearIssuesFromSprint(sprintId)
-            const token = await getValidAccessToken()
-            let newTasks
-            if (filter.value !== "") {
-               newTasks = await getIssuesBySprint(token, sprintId, spr.projectId as string, 10, filter)
-            } else {
-               newTasks = await getIssuesBySprint(token, sprintId, spr.projectId as string, 10)
-            }
-            if (newTasks) {
-               useSprintStore.setState(state => {
-                  const sprintIndex = state.sprints.findIndex(s => s.id === sprintId)
-                  if (sprintIndex === -1) return state
-                  const updatedSprint = {
-                     ...state.sprints[sprintIndex],
-                     tasks: {
-                        ...newTasks,
-                        content: Array.isArray(newTasks.content) ? (newTasks.content as TaskProps[]).filter(t => t && t.id) : []
-                     }
-                  }
-                  const updatedSprints = [...state.sprints]
-                  updatedSprints[sprintIndex] = updatedSprint
-                  return { sprints: updatedSprints }
-               })
-            }
-            setIsFiltering(false)
+         setIsFiltering(true)
+         await clearIssuesFromSprint(sprintId)
+         const token = await getValidAccessToken()
+         let newTasks
+         const filters = {
+            type: typeSelected?.id ?? null,
+            status: statusSelected?.id ?? null,
+            priority: prioritySelected?.id ?? null,
+            assignedIds: userSelected.map(u => u.id).join(','),
          }
+         newTasks = await getIssuesBySprint(token, sprintId, spr.projectId as string, filters, 10)
+
+         if (newTasks) {
+            useSprintStore.setState(state => {
+               const sprintIndex = state.sprints.findIndex(s => s.id === sprintId)
+               if (sprintIndex === -1) return state
+               const updatedSprint = {
+                  ...state.sprints[sprintIndex],
+                  tasks: {
+                     ...newTasks,
+                     content: Array.isArray(newTasks.content) ? (newTasks.content as TaskProps[]).filter(t => t && t.id) : []
+                  }
+               }
+               const updatedSprints = [...state.sprints]
+               updatedSprints[sprintIndex] = updatedSprint
+               return { sprints: updatedSprints }
+            })
+         }
+         setIsFiltering(false)
       }
       getNewIssues()
-   }, [filter, sprintId, spr.projectId])
+   }, [userSelected, typeSelected, statusSelected, prioritySelected])
 
    // Effect to close dropdown on outside click
    useEffect(() => {
       const handleClickOutside: (event: MouseEvent) => void = (event: MouseEvent) => {
-         if (userRef.current && !(userRef.current as HTMLElement).contains(event.target as Node)) {
-            setIsUserOpen(false)
-         }
+         if (userRef.current && !(userRef.current as HTMLElement).contains(event.target as Node)) setIsUserOpen(false)
+         if (typeRef.current && !(typeRef.current as HTMLElement).contains(event.target as Node)) setIsTypeOpen(false)
+         if (statusRef.current && !(statusRef.current as HTMLElement).contains(event.target as Node)) setIsStatusOpen(false)
+         if (priorityRef.current && !(priorityRef.current as HTMLElement).contains(event.target as Node)) setIsPriorityOpen(false)
       }
       document.addEventListener('mousedown', handleClickOutside)
       return () => {
          document.removeEventListener('mousedown', handleClickOutside)
       }
    }, [])
-
 
    return (
       <>
@@ -850,10 +870,96 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                               className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
                            />
                         </div>
-                        <div className="col-span-1 flex items-center">Tipo</div>
-                        <div className="col-span-5 flex items-center">Tarea</div>
-                        <div className="col-span-2 flex items-center">Estado</div>
-                        <div className="col-span-2 flex items-center">Prioridad</div>
+                        <div className="col-span-1 flex items-center gap-1 relative w-full" style={{ zIndex: 20 }}>
+                           <div className="relative" ref={typeRef}>
+                              <button onClick={() => setIsTypeOpen(!isTypeOpen)} className="flex items-center transition-colors rounded-full gap-1 py-0.5 px-2"
+                                 style={{ backgroundColor: typeSelected ? typeSelected.color + '25' : 'transparent', color: typeSelected ? typeSelected.color : 'inherit' }}>
+                                 {typeSelected ? <span onClick={() => setTypeSelected(null)}><XIcon size={14} stroke={2} /></span> : <FilterIcon size={14} stroke={2} />}
+                                 {typeSelected ? typeSelected.name : 'Tipo'}
+                              </button>
+                              {isTypeOpen &&
+                                 <div className="bg-white border-gray-200 absolute top-full -left-full mt-2 w-48 border rounded-lg shadow-xl z-50">
+                                    <button key={"none"} className={`w-full text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 
+                                       ${!typeSelected ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50'}`}
+                                       onClick={() => setTypeSelected(null)}>
+                                       <span style={{ backgroundColor: "#0000001f" }} className='p-1 rounded-full' />
+                                       Todos los tipos
+                                    </button>
+                                    {
+                                       projectConfig?.issueTypes?.map(type =>
+                                          <button key={type.id} className={`w-full text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 
+                                             ${typeSelected?.id === type.id ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50'}`}
+                                             onClick={() => setTypeSelected(type)}>
+                                             <span style={{ backgroundColor: type.color }} className='p-1 rounded-full' />
+                                             {type.name}
+                                          </button>
+                                       )
+                                    }
+                                 </div>
+                              }
+                           </div>
+                        </div>
+                        <div className="col-span-5 flex items-center gap-2 relative w-full" style={{ zIndex: 20 }}>
+                           <p className='whitespace-nowrap'>Tarea</p>
+                        </div>
+                        <div className="col-span-2 flex items-center gap-2 relative w-full" style={{ zIndex: 20 }}>
+                           <div className="relative" ref={statusRef}>
+                              <button onClick={() => setIsStatusOpen(!isTypeOpen)} className="flex items-center transition-colors rounded-full gap-1 py-0.5 px-2"
+                                 style={{ backgroundColor: statusSelected ? statusSelected.color + '25' : 'transparent', color: statusSelected ? statusSelected.color : 'inherit' }}>
+                                 {statusSelected ? <span onClick={() => setStatusSelected(null)}><XIcon size={14} stroke={2} /></span> : <FilterIcon size={14} stroke={2} />}
+                                 {statusSelected ? statusSelected.name : 'Estado'}
+                              </button>
+                              {isStatusOpen &&
+                                 <div className="bg-white border-gray-200 absolute top-full -left-full mt-2 w-48 border rounded-lg shadow-xl z-50">
+                                    <button key={"none"} className={`w-full text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 
+                                       ${!statusSelected ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50'}`}
+                                       onClick={() => setStatusSelected(null)}>
+                                       <span style={{ backgroundColor: "#0000001f" }} className='p-1 rounded-full' />
+                                       Todos los estados
+                                    </button>
+                                    {
+                                       projectConfig?.issueStatuses?.map(status =>
+                                          <button key={status.id} className={`w-full text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 
+                                             ${statusSelected?.id === status.id ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50'}`}
+                                             onClick={() => setStatusSelected(status)}>
+                                             <span style={{ backgroundColor: status.color }} className='p-1 rounded-full' />
+                                             {status.name}
+                                          </button>
+                                       )
+                                    }
+                                 </div>
+                              }
+                           </div>
+                        </div>
+                        <div className="col-span-2 flex items-center gap-2 relative w-full" style={{ zIndex: 20 }}>
+                           <div className="relative" ref={priorityRef}>
+                              <button onClick={() => setIsPriorityOpen(!isPriorityOpen)} className="flex items-center transition-colors rounded-full gap-1 py-0.5 px-2"
+                                 style={{ backgroundColor: prioritySelected ? prioritySelected.color + '25' : 'transparent', color: prioritySelected ? prioritySelected.color : 'inherit' }}>
+                                 {prioritySelected ? <span onClick={() => setPrioritySelected(null)}><XIcon size={14} stroke={2} /></span> : <FilterIcon size={14} stroke={2} />}
+                                 {prioritySelected ? prioritySelected.name : 'Prioridad'}
+                              </button>
+                              {isPriorityOpen &&
+                                 <div className="bg-white border-gray-200 absolute top-full -left-full mt-2 w-48 border rounded-lg shadow-xl z-50">
+                                    <button key={"none"} className={`w-full text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 
+                                       ${!prioritySelected ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50'}`}
+                                       onClick={() => setPrioritySelected(null)}>
+                                       <span style={{ backgroundColor: "#0000001f" }} className='p-1 rounded-full' />
+                                       Todas las prioridades
+                                    </button>
+                                    {
+                                       projectConfig?.issuePriorities?.map(prio =>
+                                          <button key={prio.id} className={`w-full text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 
+                                             ${prioritySelected?.id === prio.id ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50'}`}
+                                             onClick={() => setPrioritySelected(prio)}>
+                                             <span style={{ backgroundColor: prio.color }} className='p-1 rounded-full' />
+                                             {prio.name}
+                                          </button>
+                                       )
+                                    }
+                                 </div>
+                              }
+                           </div>
+                        </div>
                         <div className="col-span-5 flex items-center gap-2 relative w-full" style={{ zIndex: 20 }}>
                            <p className='whitespace-nowrap'>Asignado a</p>
                            <div className="w-full" ref={userRef}>
@@ -1068,9 +1174,9 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                         {!hasMore && spr.tasks.content.length > 0 && (
                            <div className="text-center py-4 text-gray-500 text-sm mt-4">
                               <div className="flex items-center justify-center gap-2">
-                                 <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                                 <div className="w-2 h-2 bg-gray-300 rounded-full" />
                                  <span>No hay más tareas para mostrar</span>
-                                 <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                                 <div className="w-2 h-2 bg-gray-300 rounded-full" />
                               </div>
                            </div>
                         )}
@@ -1138,10 +1244,10 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                            </h3>
                            <p className="text-gray-500 text-sm">Selecciona otro usuario o elimina el filtro para ver más tareas</p>
                            {/* Mostrar el filtro aquí cuando no hay resultados */}
-                           <div className="mt-6 flex justify-center">
-                              <div className="w-full max-w-xs">
+                           <div className="mt-6 flex justify-center items-center">
+                              <div className="flex items-center gap-2 max-w-xs">
                                  {/* Copia el botón y dropdown del filtro aquí */}
-                                 <div className="relative" ref={userRef}>
+                                 <div className="relative w-full" ref={userRef}>
                                     <button
                                        type="button"
                                        className="bg-black/5 hover:bg-black/10 rounded-full pr-2 flex items-center gap-2 w-full group"
@@ -1288,11 +1394,29 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                                        </div>
                                     )}
                                  </div>
+                                 {
+                                    (userSelected.length !== 0 || typeSelected || statusSelected || prioritySelected) &&
+                                    <div className="flex justify-center w-full gap-2">
+                                       o
+                                       <button className="flex items-center gap-2 py-0.5 px-2 text-red-700 rounded-full hover:bg-red-100 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                                          onClick={() => {
+                                             setUserSelected([])
+                                             setTypeSelected(null)
+                                             setStatusSelected(null)
+                                             setPrioritySelected(null)
+                                             setFilter(sprintId, { key: '', value: '' })
+                                          }}
+                                       >
+                                          <DeleteIcon size={16} />
+                                          Borrar Filtros
+                                       </button>
+                                    </div>
+                                 }
                               </div>
                            </div>
                         </div>
                      ) : (
-                        <div className="text-center py-12">
+                        <div className="text-center py-12 w-full">
                            <div className="mx-auto w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center mb-4">
                               <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -1300,6 +1424,23 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                            </div>
                            <h3 className="text-lg font-medium text-gray-900 mb-2">No hay tareas disponibles</h3>
                            <p className="text-gray-500 text-sm">Agrega algunas tareas para comenzar a trabajar en este sprint</p>
+                           {
+                              (userSelected.length !== 0 || typeSelected || statusSelected || prioritySelected) &&
+                              <div className="flex justify-center mt-6">
+                                 <button className="flex items-center gap-2 px-4 py-2 text-red-700 bg-red-50 border border-red-300 rounded-lg hover:bg-red-100 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                                    onClick={() => {
+                                       setUserSelected([])
+                                       setTypeSelected(null)
+                                       setStatusSelected(null)
+                                       setPrioritySelected(null)
+                                       setFilter(sprintId, { key: '', value: '' })
+                                    }}
+                                 >
+                                    <DeleteIcon size={18} />
+                                    Borrar Filtros
+                                 </button>
+                              </div>
+                           }
                         </div>
                      )
                   )
