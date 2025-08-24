@@ -61,157 +61,151 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
          {/* Form Content */}
          <div className="p-6">
             <form onSubmit={handleSubmit} className="space-y-6 mt-2">
-         <div className="flex justify-between items-stretch gap-4">
-            {/* Main Content */}
-            <div className="flex flex-col justify-between w-8/12 space-y-4">
-               {/* Description Section */}
-               <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                     <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                     Descripción
-                  </h3>
-                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-2 h-40 overflow-y-auto">
-                     {task.descriptions.length > 0 ? (
-                        <div className="space-y-2">
-                           {task.descriptions.map(desc => (
-                              <div key={desc.id} className="bg-white rounded-lg p-4 border border-gray-100 space-y-1">
-                                 <h4 className="font-semibold text-gray-900 text-sm">{desc.title}</h4>
-                                 <p className="text-xs text-gray-600 leading-relaxed">{desc.text}</p>
+               <div className="flex justify-between items-stretch gap-4">
+                  {/* Main Content */}
+                  <div className="flex flex-col justify-between w-8/12 space-y-4">
+                     {/* Description Section */}
+                     <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                           <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                           Descripción
+                        </h3>
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-2 h-40 overflow-y-auto">
+                           {task.descriptions.length > 0 ? (
+                              <div className="space-y-2">
+                                 {task.descriptions.map(desc => (
+                                    <div key={desc.id} className="bg-white rounded-lg p-4 border border-gray-100 space-y-1">
+                                       <h4 className="font-semibold text-gray-900 text-sm">{desc.title}</h4>
+                                       <p className="text-xs text-gray-600 leading-relaxed">{desc.text}</p>
+                                    </div>
+                                 ))}
                               </div>
-                           ))}
+                           ) : (
+                              <div className="flex items-center justify-center h-full text-gray-500">
+                                 <p className="text-sm">No hay descripción disponible</p>
+                              </div>
+                           )}
                         </div>
-                     ) : (
-                        <div className="flex items-center justify-center h-full text-gray-500">
-                           <p className="text-sm">No hay descripción disponible</p>
+                     </div>
+
+                     {/* Comments Section */}
+                     <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+                        <ShowComments arrayComments={comments} task={task} />
+                     </div>
+                  </div>
+
+                  {/* Sidebar */}
+                  <div className="w-1/2 space-y-4">
+                     {/* People Section */}
+                     <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                        <div className="flex items-center gap-2 mb-2">
+                           <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+                              <UsersIcon size={18} />
+                           </div>
+                           <h3 className="font-semibold text-gray-900">Personas</h3>
                         </div>
-                     )}
-                  </div>
-               </div>
+                        <div className="space-y-1">
+                           <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                              <span className="text-sm text-gray-500">Asignado a:</span>
+                              <span className="text-sm font-medium text-gray-900">
+                                 {typeof task.assignedId === 'object'
+                                    ? `${task.assignedId.firstName ?? "Sin"} ${task.assignedId.lastName ?? "asignar"}`
+                                    : task.assignedId || 'No asignado'}
+                              </span>
+                           </div>
+                           <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                              <span className="text-sm text-gray-500">Informador:</span>
+                              <span className="text-sm font-medium text-gray-900">
+                                 {task.reporterId ? `${task.reporterId.firstName} ${task.reporterId.lastName}` : 'No especificado'}
+                              </span>
+                           </div>
+                        </div>
+                     </div>
 
-               {/* Comments Section */}
-               <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
-                  <ShowComments arrayComments={comments} task={task} />
-               </div>
-            </div>
+                     {/* Dates Section */}
+                     <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                        <div className="flex items-center gap-2 mb-2">
+                           <div className="p-2 bg-green-100 rounded-lg text-green-600">
+                              <CalendarIcon size={18} />
+                           </div>
+                           <h3 className="font-semibold text-gray-900">Fechas</h3>
+                        </div>
+                        <div className="space-y-1">
+                           <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                              <span className="text-sm text-gray-500">Creación:</span>
+                              <span className="text-sm font-medium text-gray-900">
+                                 {formatDate(task.createdAt)}
+                              </span>
+                           </div>
+                           <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                              <span className="text-sm text-gray-500">Actualización:</span>
+                              <span className="text-sm font-medium text-gray-900">
+                                 {formatDate(task.updatedAt)}
+                              </span>
+                           </div>
+                           <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                              <span className="text-sm text-gray-500">Fecha de inicio:</span>
+                              <span className="text-sm font-medium text-gray-900">{formatDate(task.startDate, false, true)}</span>
+                           </div>
+                           <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                              <span className="text-sm text-gray-500">Fecha de fin:</span>
+                              <span className="text-sm font-medium text-gray-900">{formatDate(task.endDate, false, true)}</span>
+                           </div>
+                           <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                              <span className="text-sm text-gray-500">Fecha real de finalización:</span>
+                              <span className="text-sm font-medium text-gray-900">{formatDate(task.realDate, false, true)}</span>
+                           </div>
+                        </div>
+                     </div>
 
-            {/* Sidebar */}
-            <div className="w-1/2 space-y-4">
-               {/* People Section */}
-               <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-                  <div className="flex items-center gap-2 mb-2">
-                     <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
-                        <UsersIcon size={18} />
-                     </div>
-                     <h3 className="font-semibold text-gray-900">Personas</h3>
-                  </div>
-                  <div className="space-y-1">
-                     <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
-                        <span className="text-sm text-gray-500">Asignado a:</span>
-                        <span className="text-sm font-medium text-gray-900">
-                           {typeof task.assignedId === 'object'
-                              ? `${task.assignedId.firstName ?? "Sin"} ${task.assignedId.lastName ?? "asignar"}`
-                              : task.assignedId || 'No asignado'}
-                        </span>
-                     </div>
-                     <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
-                        <span className="text-sm text-gray-500">Informador:</span>
-                        <span className="text-sm font-medium text-gray-900">
-                           {task.reporterId ? `${task.reporterId.firstName} ${task.reporterId.lastName}` : 'No especificado'}
-                        </span>
+                     {/* Time Section */}
+                     <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                        <div className="flex items-center gap-2 mb-2">
+                           <div className="p-2 bg-purple-100 rounded-lg text-purple-600">
+                              <ClockIcon size={18} />
+                           </div>
+                           <h3 className="font-semibold text-gray-900">Tiempo</h3>
+                        </div>
+                        <div className="space-y-1">
+                           <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                              <span className="text-sm text-gray-500">Estimado:</span>
+                              <span className="text-sm font-medium text-gray-900">
+                                 {task.estimatedTime ? `${task.estimatedTime} horas` : 'No especificado'}
+                              </span>
+                           </div>
+                        </div>
                      </div>
                   </div>
                </div>
-
-               {/* Dates Section */}
-               <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-                  <div className="flex items-center gap-2 mb-2">
-                     <div className="p-2 bg-green-100 rounded-lg text-green-600">
-                        <CalendarIcon size={18} />
-                     </div>
-                     <h3 className="font-semibold text-gray-900">Fechas</h3>
-                  </div>
-                  <div className="space-y-1">
-                     <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
-                        <span className="text-sm text-gray-500">Creación:</span>
-                        <span className="text-sm font-medium text-gray-900">
-                           {formatDate(task.createdAt)}
-                        </span>
-                     </div>
-                     <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
-                        <span className="text-sm text-gray-500">Actualización:</span>
-                        <span className="text-sm font-medium text-gray-900">
-                           {formatDate(task.updatedAt)}
-                        </span>
-                     </div>
-                     {task.startDate && (
-                       <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
-                         <span className="text-sm text-gray-500">Fecha de inicio:</span>
-                         <span className="text-sm font-medium text-gray-900">{formatDate(task.startDate, false, true)}</span>
-                       </div>
-                     )}
-                     {task.endDate && (
-                       <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
-                         <span className="text-sm text-gray-500">Fecha de fin:</span>
-                         <span className="text-sm font-medium text-gray-900">{formatDate(task.endDate, false, true)}</span>
-                       </div>
-                     )}
-                     {task.realDate && (
-                       <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
-                         <span className="text-sm text-gray-500">Fecha real de finalización:</span>
-                         <span className="text-sm font-medium text-gray-900">{formatDate(task.realDate, false, true)}</span>
-                       </div>
-                     )}
-                  </div>
-               </div>
-
-               {/* Time Section */}
-               <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-                  <div className="flex items-center gap-2 mb-2">
-                     <div className="p-2 bg-purple-100 rounded-lg text-purple-600">
-                        <ClockIcon size={18} />
-                     </div>
-                     <h3 className="font-semibold text-gray-900">Tiempo</h3>
-                  </div>
-                  <div className="space-y-1">
-                     <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
-                        <span className="text-sm text-gray-500">Estimado:</span>
-                        <span className="text-sm font-medium text-gray-900">
-                           {task.estimatedTime ? `${task.estimatedTime} horas` : 'No especificado'}
-                        </span>
-                     </div>
-                  </div>
-               </div>
-            </div>
-         </div>
-         </form>
+            </form>
          </div>
       </div>
    )
 
-// Formatea fechas a formato legible
-function formatDate(dateStr?: string, includeTime = false, onlyDate = false): string {
-   if (!dateStr) return 'No especificado';
-   let date: Date;
-   if (dateStr.includes('T')) {
-      date = new Date(dateStr);
-   } else {
-      const [year, month, day] = dateStr.split('-').map(num => parseInt(num, 10));
-      date = new Date(year, month - 1, day);
-   }
-   if (onlyDate) {
+   // Formatea fechas a formato legible
+   function formatDate(dateStr?: string, includeTime = false, onlyDate = false): string {
+      if (!dateStr) return 'No especificado';
+      let date: Date;
+      if (dateStr.includes('T')) {
+         date = new Date(dateStr);
+      } else {
+         const [year, month, day] = dateStr.split('-').map(num => parseInt(num, 10));
+         date = new Date(year, month - 1, day);
+      }
+      if (onlyDate) {
+         return date.toLocaleDateString('es-ES', {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric',
+         });
+      }
       return date.toLocaleDateString('es-ES', {
          day: '2-digit',
          month: 'long',
          year: 'numeric',
+         hour: includeTime ? '2-digit' : undefined,
+         minute: includeTime ? '2-digit' : undefined,
+         hour12: includeTime ? true : undefined
       });
    }
-   return date.toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
-      hour: includeTime ? '2-digit' : undefined,
-      minute: includeTime ? '2-digit' : undefined,
-      hour12: includeTime ? true : undefined
-   });
-}
 }
