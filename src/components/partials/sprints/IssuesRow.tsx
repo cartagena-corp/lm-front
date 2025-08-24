@@ -22,6 +22,7 @@ import IssueConfig from '../config/issues/IssueConfig'
 import AuditHistory from '../audit/AuditHistory'
 import { getUserAvatar } from '@/lib/utils/avatar.utils'
 import ImportIssuesModal from '../issues/ImportIssuesModal'
+import DeleteAllForm from '../issues/DeleteAllForm'
 
 // Component DraggableIssueRow - Implementación igual a SprintKanbanCard
 interface DraggableIssueRowProps {
@@ -335,7 +336,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
    }
 
    const { getValidAccessToken, user } = useAuthStore()
-   const { deleteIssue, updateIssue, assignIssue } = useIssueStore()
+   const { deleteAllIssues, deleteIssue, updateIssue, assignIssue } = useIssueStore()
    const { updateSprint, deleteSprint, activeSprint, getIssuesBySprint, loadMoreIssuesBySprint, clearIssuesFromSprint } = useSprintStore()
 
    const wrapperRef = useRef<HTMLDivElement>(null)
@@ -349,6 +350,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
    const [isUpdateSprintOpen, setIsUpdateSprintOpen] = useState(false)
    const [isDeleteSprintOpen, setIsDeleteSprintOpen] = useState(false)
    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+   const [isDeleteAllModalOpen, setIsDeleteAllModalOpen] = useState(false)
    const [isImportModalOpen, setIsImportModalOpen] = useState(false)
    const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false)
    const [sprintSelected, setSprintSelected] = useState<SprintProps>()
@@ -541,6 +543,13 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
       const token = await getValidAccessToken()
       if (token) await deleteIssue(token, taskActive?.id as string, taskActive?.projectId as string)
       setIsDeleteModalOpen(false)
+   }
+
+   const handleDeleteAll = async () => {
+      const token = await getValidAccessToken()
+      if (token) await deleteAllIssues(token, selectedIds, spr.projectId as string)
+      setIsDeleteAllModalOpen(false)
+      setSelectedIds([])
    }
 
    // --- Asignado a (multi-select) ---
@@ -861,8 +870,16 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                {spr.tasks?.content.length ? (
                   <div className="space-y-3">
                      {/* Cabecera del grid */}
-                     <div className="grid grid-cols-18 gap-4 p-3 bg-gray-50 rounded-lg border border-gray-200 text-xs font-medium text-gray-600">
-                        <div className="col-span-1 flex items-center justify-center">
+                     <div className="grid grid-cols-18 gap-4 p-3 pl-0 bg-gray-50 rounded-lg border border-gray-200 text-xs font-medium text-gray-600">
+                        <div className="col-span-1 flex items-center justify-center gap-1">
+                           <div className="w-6 h-6 flex items-center justify-center">
+                              {
+                                 selectedIds.length > 0 &&
+                                 <button onClick={() => setIsDeleteAllModalOpen(true)} className='hover:text-red-500 transition-colors cursor-pointer'>
+                                    <DeleteIcon size={16} stroke={2} />
+                                 </button>
+                              }
+                           </div>
                            <input
                               type="checkbox"
                               checked={allSelected}
@@ -1509,6 +1526,14 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                   title={`Historial de cambios: ${taskActive?.title}`}
                   currentIssue={taskActive}
                   onCancel={() => setIsHistoryModalOpen(false)}
+               />
+            </Modal>
+
+            <Modal isOpen={isDeleteAllModalOpen} onClose={() => setIsDeleteAllModalOpen(false)} title="">
+               <DeleteAllForm
+                  onSubmit={handleDeleteAll}
+                  onCancel={() => setIsDeleteAllModalOpen(false)}
+                  taskArray={selectedIds}
                />
             </Modal>
          </>

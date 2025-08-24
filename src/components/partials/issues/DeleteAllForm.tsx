@@ -1,0 +1,53 @@
+import { TaskProps } from "@/lib/types/types"
+
+interface DeleteAllFormProps {
+    onSubmit: (gonnaDelete: boolean) => void
+    onCancel: () => void
+    taskArray: string[]
+}
+
+export default function DeleteAllForm({ onSubmit, onCancel, taskArray }: DeleteAllFormProps) {
+    return (
+        <div className="space-y-6">
+            {/* Icono de advertencia */}
+            <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full">
+                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+            </div>
+
+            {/* Contenido del mensaje */}
+            <div className="text-center space-y-3">
+                <h3 className="text-lg font-semibold text-gray-900">
+                    ¿Eliminar tareas seleccionadas?
+                </h3>
+                <div className="text-sm text-gray-600 leading-relaxed">
+                    <p>
+                        Estás a punto de eliminar las tareas seleccionadas
+                    </p>
+                    <p className="mt-2">
+                        Esta acción no se puede deshacer y se perderán todos los datos asociados.
+                    </p>
+                </div>
+            </div>
+
+            {/* Botones */}
+            <div className="flex items-center gap-3 pt-2">
+                <button
+                    type="button"
+                    onClick={onCancel}
+                    className="bg-white hover:bg-gray-50 hover:border-gray-300 border-gray-200 border flex-1 duration-200 rounded-lg text-center text-sm py-2.5 px-4 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                >
+                    Cancelar
+                </button>
+                <button
+                    type="button"
+                    onClick={() => onSubmit(true)}
+                    className="bg-red-600 hover:bg-red-700 text-white border-transparent border hover:shadow-md flex-1 duration-200 rounded-lg text-center text-sm py-2.5 px-4 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                >
+                    Eliminar {taskArray.length} tareas
+                </button>
+            </div>
+        </div>
+    )
+}

@@ -54,6 +54,7 @@ interface IssueState {
    createIssue: (token: string, issueData: TaskProps) => Promise<void>
    updateIssue: (token: string, issueUpdated: IssueUpdated) => Promise<void>
    deleteIssue: (token: string, issueId: string, projectId: string) => Promise<void>
+   deleteAllIssues: (token: string, issueIds: string[], projectId: string) => Promise<void>
    assignIssueToSprint: (token: string, issueIds: string[], sprintId: string, projectId: string) => Promise<void>
    removeIssueFromSprint: (token: string, issueIds: string[], projectId: string) => Promise<void>
    assignIssue: (token: string, issueId: string, userId: string, projectId: string) => Promise<void>
@@ -291,6 +292,37 @@ export const useIssueStore = create<IssueState>((set, get) => ({
                ...state.issues,
                content: state.issues.content.filter((issue) => issue.id !== issueId) as TaskProps[],
                totalElements: state.issues.totalElements - 1
+            },
+            isLoading: false
+         }))
+
+         // Refresh data
+         await Promise.all([
+            get().getIssues(token, projectId, { sprintId: '' }),
+            refreshSprints(token, projectId)
+         ])
+      } catch (error) {
+         const errorMessage = error instanceof Error ? error.message : 'Error al eliminar la issue'
+         set({ error: errorMessage, isLoading: false })
+         console.error('Error en deleteIssue:', error)
+      }
+   },
+   // Delete All Issue
+   deleteAllIssues: async (token: string, issueIds: string[], projectId: string) => {
+      set({ isLoading: true, error: null })
+
+      try {
+         const response = await fetch(API_ROUTES.DELETE_ALL_ISSUES, {
+            method: 'DELETE', body: JSON.stringify(issueIds), headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+         })
+
+         if (!response.ok) { throw new Error(`Error ${response.status}: ${response.statusText}`) }
+
+         set((state) => ({
+            issues: {
+               ...state.issues,
+               content: state.issues.content.filter(issue => !issueIds.includes(issue.id as string)) as TaskProps[],
+               totalElements: state.issues.totalElements - issueIds.length
             },
             isLoading: false
          }))
