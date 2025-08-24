@@ -47,7 +47,7 @@ export default function FactoryPage() {
                 <section className="flex flex-col gap-4">
                     {
                         (organizations.length > 0) && organizations.map(org =>
-                            <div className="border-black/25 border rounded-md p-4">
+                            <div key={org.organizationId} className="border-black/25 border rounded-md p-4">
                                 {org.organizationName}
                             </div>
                         )

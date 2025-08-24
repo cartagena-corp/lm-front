@@ -188,13 +188,13 @@ function DraggableIssueRow({ task, selectedIds, toggleSelect, onViewDetails, onE
             </h6>
             <p className="text-xs text-gray-500 line-clamp-1">
                {
-                  (task.startDate && task.endDate && !task.realDate) ?
+                  ((task.startDate || task.endDate) && !task.realDate) ?
                      <>
-                        {formatDate(task.startDate as string)}
+                        {task.startDate ? formatDate(task.startDate as string) : "Sin fecha inicio"}
                         &nbsp;-&nbsp;
-                        {formatDate(task.endDate as string)}
+                        {task.endDate ? formatDate(task.endDate as string) : "Sin fecha fin"}
                      </> : (task.realDate) ? <>
-                       Tarea finalizada el {formatDate(task.realDate as string)}
+                        Tarea finalizada el {formatDate(task.realDate as string)}
                      </> : "Fechas NO definidas"
                }
             </p>
