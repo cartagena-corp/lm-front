@@ -11,6 +11,20 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata = {
   title: 'La Muralla - Gestión de Proyectos',
   description: 'Sistema de gestión de proyectos La Muralla',
+  icons: {
+    icon: [
+      {
+        media: '(prefers-color-scheme: light)',
+        url: '/favicon-dark.ico',
+        href: '/favicon-dark.ico',
+      },
+      {
+        media: '(prefers-color-scheme: dark)',
+        url: '/favicon-light.ico',
+        href: '/favicon-light.ico',
+      },
+    ],
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
