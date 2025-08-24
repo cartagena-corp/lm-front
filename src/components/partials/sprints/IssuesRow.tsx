@@ -136,6 +136,21 @@ function DraggableIssueRow({ task, selectedIds, toggleSelect, onViewDetails, onE
       onPointerUp: handlePointerUp
    }
 
+
+   const formatDate = (dateStr: string) => {
+      if (!dateStr) return ''
+
+      let date
+      const [year, month, day] = dateStr.split('-').map(num => parseInt(num, 10))
+      date = new Date(year, month - 1, day)
+
+      return date.toLocaleDateString('es-ES', {
+         day: '2-digit',
+         month: 'short',
+         year: 'numeric'
+      })
+   }
+
    return (
       <div
          ref={setNodeRef}
@@ -171,8 +186,17 @@ function DraggableIssueRow({ task, selectedIds, toggleSelect, onViewDetails, onE
             <h6 className="font-medium text-gray-900 text-sm line-clamp-1" title={task.title}>
                {task.title}
             </h6>
-            <p className="text-xs text-gray-500 line-clamp-1" title={task.descriptions[0]?.text}>
-               {task.descriptions[0]?.text || 'Sin descripción'}
+            <p className="text-xs text-gray-500 line-clamp-1">
+               {
+                  (task.startDate && task.endDate && !task.realDate) ?
+                     <>
+                        {formatDate(task.startDate as string)}
+                        &nbsp;-&nbsp;
+                        {formatDate(task.endDate as string)}
+                     </> : (task.realDate) ? <>
+                       Tarea finalizada el {formatDate(task.realDate as string)}
+                     </> : "Fechas NO definidas"
+               }
             </p>
          </div>
 
@@ -875,7 +899,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                            <div className="w-6 h-6 flex items-center justify-center">
                               {
                                  selectedIds.length > 0 &&
-                                 <button onClick={() => setIsDeleteAllModalOpen(true)} className='hover:text-red-500 transition-colors cursor-pointer'>
+                                 <button onClick={() => setIsDeleteAllModalOpen(true)} className='text-red-500 hover:text-red-700 transition-colors cursor-pointer'>
                                     <DeleteIcon size={16} stroke={2} />
                                  </button>
                               }
