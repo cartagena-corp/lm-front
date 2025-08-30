@@ -1,5 +1,6 @@
 import { GlobalPagination, ProjectProps, AuditPagination, UserProps } from '../types/types'
 import { API_ROUTES } from "@/lib/routes/boards.routes"
+import { API_ROUTES as ORG_API_ROUTES } from "@/lib/routes/organization.route"
 import { API_ROUTES as AUDIT_ROUTES } from "@/lib/routes/audit.routes"
 import { create } from 'zustand'
 import toast from 'react-hot-toast'
@@ -32,6 +33,7 @@ interface BoardState {
 
    // Actions
    getBoards: (token: string, filters?: BoardFilters) => Promise<void>
+   getBoardsByOrganization: (token: string, organizationId: string, filters?: BoardFilters) => Promise<void>
    createBoard: (token: string, boardData: CreateBoardData) => Promise<void>
    getBoard: (token: string, projectId: string) => Promise<void>
    updateBoard: (token: string, boardData: { name: string, description?: string, startDate?: string, endDate?: string, status: number }, projectId: string) => Promise<void>
@@ -111,6 +113,54 @@ export const useBoardStore = create<BoardState>((set, get) => ({
          set({ error: errorMessage, isLoading: false })
          toast.error(errorMessage)
          console.error('Error en getBoards:', error)
+      }
+   },
+
+   // New function to get boards by organization
+   getBoardsByOrganization: async (token: string, organizationId: string, filters?: BoardFilters) => {
+      set({ isLoading: true, error: null })
+      
+      try {
+         const params = new URLSearchParams()
+         if (filters) {
+            if (filters.name) params.append('name', filters.name)
+            if (filters.status !== undefined && filters.status !== 0) params.append('status', filters.status.toString())
+            if (filters.createdBy) params.append('createdBy', filters.createdBy)
+            if (filters.sortBy) params.append('sortBy', filters.sortBy)
+            if (filters.direction) params.append('direction', filters.direction)
+            params.append('page', (filters.page ?? 0).toString())
+            params.append('size', (filters.size ?? 10).toString())
+         }
+
+         const response = await fetch(`${ORG_API_ROUTES.GET_PROJECTS_BY_ORGANIZATION}/${organizationId}?${params.toString()}`, {
+            method: 'GET',
+            headers: {
+               'Content-Type': 'application/json',
+               'Authorization': `Bearer ${token}`,
+            },
+         })
+
+         if (!response.ok) {
+            throw new Error(`Error ${response.status}: ${response.statusText}`)
+         }
+
+         const data: GlobalPagination = await response.json()
+
+         set({
+            boards: {
+               content: data.content,
+               totalElements: data.totalElements,
+               totalPages: data.totalPages,
+               number: data.number,
+               size: data.size,
+            },
+            isLoading: false
+         })
+      } catch (error) {
+         const errorMessage = error instanceof Error ? error.message : 'Error al obtener los tableros de la organización'
+         set({ error: errorMessage, isLoading: false })
+         toast.error(errorMessage)
+         console.error('Error en getBoardsByOrganization:', error)
       }
    },
 

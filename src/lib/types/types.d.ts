@@ -240,7 +240,16 @@ export interface WebSocketNotificationResponse {
 
 //* GLOBAL GETTER PAGINATION
 export interface GlobalPagination {
-   content: [] | ProjectProps[] | TaskProps[] | SprintProps[] | CommentProps[]
+   content: [] | ProjectProps[] | TaskProps[] | SprintProps[] | CommentProps[] | UserProps[]
+   totalPages: number
+   totalElements: number
+   size: number
+   number: number
+}
+
+//* GLOBAL GETTER PAGINATION
+export interface UserPagination {
+   content: UserProps[]
    totalPages: number
    totalElements: number
    size: number

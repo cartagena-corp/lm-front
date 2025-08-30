@@ -18,4 +18,5 @@ export const API_ROUTES = {
     ADD_USER: `${BACKEND_URL}/api/oauth/add-user`,
     CRUD_ROLES: `${ROLE_URL}/api/roles`,
     CRUD_PERMISOS: `${ROLE_URL}/api/permissions`,
+    ADD_USER_WITH_ORGANIZATION: `${BACKEND_URL}/api/oauth/add-user-with-organization`,
 }

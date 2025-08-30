@@ -52,9 +52,11 @@ interface AuthState {
    validateToken: (token: string) => Promise<boolean>
    getGoogleLoginUrl: () => string
    addUser: (token: string, data: { email: string, role: string }) => Promise<void>
+   addUserWithOrganization: (token: string, data: { email: string, role: string, organizationId: string }) => Promise<void>
    editUser: (token: string, userId: string, data: { role: string }) => Promise<void>
    deleteUser: (token: string, userId: string) => Promise<void>
    importUsers: (token: string, file: File) => Promise<void>
+
 
    // Role actions
    listRoles: (token: string) => Promise<void>
@@ -309,6 +311,34 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
          const errorMessage = error instanceof Error ? error.message : 'Error al agregar usuario'
          set({ error: errorMessage, isLoading: false })
          console.error("Error en addUser:", error)
+      }
+   },
+
+   addUserWithOrganization: async (token: string, data: { email: string, role: string, organizationId: string }) => {
+      set({ isLoading: true, error: null })
+
+      try {
+         const response = await fetch(API_ROUTES.ADD_USER_WITH_ORGANIZATION, {
+            method: 'POST',
+            headers: {
+               "Content-Type": "application/json",
+               "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify(data)
+         })
+
+         if (!response.ok) {
+            throw new Error(`Error ${response.status}: ${response.statusText}`)
+         }
+
+         const newUser = await response.json()
+         set({ isLoading: false })
+         return newUser
+      } catch (error) {
+         const errorMessage = error instanceof Error ? error.message : 'Error al agregar usuario'
+         set({ error: errorMessage, isLoading: false })
+         console.error("Error en addUser:", error)
+         throw error
       }
    },
 
