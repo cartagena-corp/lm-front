@@ -1,29 +1,50 @@
 import { useState, useEffect, useRef } from "react"
 import { useAuthStore } from "@/lib/store/AuthStore"
+import { useOrganizationStore } from "@/lib/store/OrganizationStore"
 
 interface CreateUserFormProps {
-   onSubmit: (data: { email: string, role: string }) => void
+   onSubmit: (data: { email: string, role: string, organizationId: string }) => void
    onCancel: () => void
+   organizationId: string
 }
 
-export default function CreateUserForm({ onSubmit, onCancel }: CreateUserFormProps) {
-   const { roles } = useAuthStore()
-   
+export default function CreateUserForm({ onSubmit, onCancel, organizationId }: CreateUserFormProps) {
+   const { organizationRoles, getOrganizationRoles, getSpecificOrganization } = useOrganizationStore()
+   const { getValidAccessToken } = useAuthStore()
+   const [organization, setOrganization] = useState<{ organizationId: string; organizationName: string; createdAt: string } | null>(null)
    const [formData, setFormData] = useState({
       email: '',
-      role: roles.length > 0 ? roles[0].name : ''
+      organizationId: organizationId,
+      role: organizationRoles.length > 0 ? organizationRoles[0].name : ''
    })
    const [errors, setErrors] = useState<{ [key: string]: string }>({})
    const [isRoleSelectOpen, setIsRoleSelectOpen] = useState(false)
-   
+
    const roleSelectRef = useRef<HTMLDivElement>(null)
 
-   // Actualizar rol por defecto cuando se cargan los roles
+   // Fetch organization and roles
    useEffect(() => {
-      if (roles.length > 0 && !formData.role) {
-         setFormData(prev => ({ ...prev, role: roles[0].name }))
+      const fetchData = async () => {
+         const token = await getValidAccessToken()
+         if (!token) return
+
+         // Get organization details
+         const orgData = await getSpecificOrganization(token, organizationId)
+         if (orgData) {
+            setOrganization(orgData)
+            // Get roles for this organization
+            await getOrganizationRoles(token, organizationId)
+         }
       }
-   }, [roles, formData.role])
+      fetchData()
+   }, [organizationId, getValidAccessToken, getSpecificOrganization, getOrganizationRoles])
+
+   // Update default role when organizationRoles change
+   useEffect(() => {
+      if (organizationRoles.length > 0 && !formData.role) {
+         setFormData(prev => ({ ...prev, role: organizationRoles[0].name }))
+      }
+   }, [organizationRoles, formData.role])
 
    useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
@@ -80,11 +101,25 @@ export default function CreateUserForm({ onSubmit, onCancel }: CreateUserFormPro
                Agregar Usuario
             </h3>
             <p className="text-sm text-gray-500">
-               Invita a un nuevo usuario al sistema
+               Invita a un nuevo usuario a la organización: {organization?.organizationName || 'Cargando...'}
             </p>
          </div>
 
          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Organization Field - Display only */}
+            <div className="space-y-2">
+               <label htmlFor="organization" className="block text-sm font-medium text-gray-700">
+                  Organización
+               </label>
+               <input
+                  type="text"
+                  id="organization"
+                  value={organization?.organizationName || 'Cargando...'}
+                  readOnly
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm bg-gray-50 text-gray-500 focus:outline-none"
+               />
+            </div>
+
             {/* Email Input */}
             <div className="space-y-2">
                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
@@ -97,8 +132,8 @@ export default function CreateUserForm({ onSubmit, onCancel }: CreateUserFormPro
                      value={formData.email}
                      onChange={(e) => handleChange('email', e.target.value)}
                      className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 ${errors.email
-                           ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                           : 'border-gray-300 hover:border-gray-400'
+                        ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                        : 'border-gray-300 hover:border-gray-400'
                         }`}
                      placeholder="usuario@ejemplo.com"
                   />
@@ -113,42 +148,41 @@ export default function CreateUserForm({ onSubmit, onCancel }: CreateUserFormPro
                <label htmlFor="role" className="block text-sm font-medium text-gray-700">
                   Rol del usuario
                </label>
-               <button 
-                  onClick={() => setIsRoleSelectOpen(!isRoleSelectOpen)} 
+               <button
+                  onClick={() => setIsRoleSelectOpen(!isRoleSelectOpen)}
                   type="button"
-                  disabled={roles.length === 0}
-                  className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 flex items-center justify-between ${
-                     errors.role 
-                        ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
-                        : 'border-gray-300 hover:border-gray-400'
-                  } ${roles.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={organizationRoles.length === 0}
+                  className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 flex items-center justify-between ${errors.role
+                     ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                     : 'border-gray-300 hover:border-gray-400'
+                     } ${organizationRoles.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
                >
                   <span className="text-sm text-gray-700">
-                     {roles.length === 0 
+                     {organizationRoles.length === 0
                         ? 'Cargando roles...'
-                        : (roles.find(role => role.name === formData.role)?.name || 'Seleccionar rol')
+                        : (organizationRoles.find(role => role.name === formData.role)?.name || 'Seleccionar rol')
                      }
                   </span>
-                  <svg 
+                  <svg
                      className={`text-gray-400 w-4 h-4 transition-transform duration-200 ${isRoleSelectOpen ? "rotate-180" : ""}`}
-                     xmlns="http://www.w3.org/2000/svg" 
-                     fill="none" 
-                     viewBox="0 0 24 24" 
-                     strokeWidth={2} 
+                     xmlns="http://www.w3.org/2000/svg"
+                     fill="none"
+                     viewBox="0 0 24 24"
+                     strokeWidth={2}
                      stroke="currentColor"
                   >
                      <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                   </svg>
                </button>
-               
+
                {isRoleSelectOpen && (
-                  <div className="border-gray-200 bg-white shadow-lg absolute z-10 top-full mt-1 flex flex-col rounded-lg border text-sm w-full max-h-20 overflow-y-auto">
-                     {roles.map((role) => (
-                        <div 
-                           key={role.name} 
-                           onClick={() => { 
+                  <div className="border-gray-200 bg-white shadow-lg absolute z-10 top-full mt-1 flex flex-col rounded-lg border text-sm w-full max-h-40 overflow-y-auto">
+                     {organizationRoles.map((role) => (
+                        <div
+                           key={role.name}
+                           onClick={() => {
                               handleChange('role', role.name)
-                              setIsRoleSelectOpen(false) 
+                              setIsRoleSelectOpen(false)
                            }}
                            className="hover:bg-blue-50 duration-150 w-full text-start py-3 px-4 flex items-center justify-between cursor-pointer"
                         >
@@ -162,7 +196,7 @@ export default function CreateUserForm({ onSubmit, onCancel }: CreateUserFormPro
                      ))}
                   </div>
                )}
-               
+
                {errors.role && (
                   <p className="mt-1 text-sm text-red-600">{errors.role}</p>
                )}
@@ -179,14 +213,13 @@ export default function CreateUserForm({ onSubmit, onCancel }: CreateUserFormPro
                </button>
                <button
                   type="submit"
-                  disabled={roles.length === 0}
-                  className={`text-white border-transparent border hover:shadow-md flex-1 duration-200 rounded-lg text-center text-sm py-2.5 px-4 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                     roles.length === 0 
-                        ? 'bg-gray-400 cursor-not-allowed' 
-                        : 'bg-blue-600 hover:bg-blue-700'
-                  }`}
+                  disabled={organizationRoles.length === 0}
+                  className={`text-white border-transparent border hover:shadow-md flex-1 duration-200 rounded-lg text-center text-sm py-2.5 px-4 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${organizationRoles.length === 0
+                     ? 'bg-gray-400 cursor-not-allowed'
+                     : 'bg-blue-600 hover:bg-blue-700'
+                     }`}
                >
-                  {roles.length === 0 ? 'Cargando...' : 'Agregar Usuario'}
+                  {organizationRoles.length === 0 ? 'Cargando...' : 'Agregar Usuario'}
                </button>
             </div>
          </form>
