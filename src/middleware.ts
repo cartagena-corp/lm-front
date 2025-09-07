@@ -8,9 +8,9 @@ const authPages = ['/login', '/login/callback']
 const privatePages = ['/tableros', '/factory', '/config', '/gemini']
 
 export function middleware(request: NextRequest) {
-    const hasSession = (request.cookies.has('refreshToken') && request.cookies.has('NEXT_COOKIE_ACCESS_TOKEN'))
+    const hasSession = (request.cookies.has('NEXT_COOKIE_ACCESS_TOKEN'))
     const { pathname } = request.nextUrl
-    
+
     if (hasSession && authPages.includes(pathname)) { return NextResponse.redirect(new URL('/tableros', request.url)) }
     if (!hasSession && privatePages.some(p => pathname.startsWith(p))) { return NextResponse.redirect(new URL('/login', request.url)) }
     return NextResponse.next()
