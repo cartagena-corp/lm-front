@@ -256,6 +256,15 @@ export interface UserPagination {
    number: number
 }
 
+//* GLOBAL GETTER PAGINATION
+export interface BoardPagination {
+   content: ProjectProps[]
+   totalPages: number
+   totalElements: number
+   size: number
+   number: number
+}
+
 //* Audit History
 export interface AuditHistoryProps {
    id: string

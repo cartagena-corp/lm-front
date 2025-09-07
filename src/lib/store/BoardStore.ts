@@ -132,7 +132,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
             params.append('size', (filters.size ?? 10).toString())
          }
 
-         const response = await fetch(`${ORG_API_ROUTES.GET_PROJECTS_BY_ORGANIZATION}/${organizationId}?${params.toString()}`, {
+         const response = await fetch(`${ORG_API_ROUTES.GET_PROJECTS_BY_ORGANIZATION({ idOrg: organizationId })}?${params.toString()}`, {
             method: 'GET',
             headers: {
                'Content-Type': 'application/json',

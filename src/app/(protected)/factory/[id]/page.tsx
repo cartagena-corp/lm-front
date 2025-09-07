@@ -31,8 +31,10 @@ export default function Factory() {
     const { id } = useParams()
 
     const renderTabContent = () => {
+        if (!id) return null // Verificar que el ID existe
+        
         switch (activeTab) {
-            case 'boards': return <BoardsOrg organization={organization} />
+            case 'boards': return <BoardsOrg organization={organization} idOrg={id as string} />
             case 'users': return <UsersOrg organization={organization} />
             case 'config': return <ConfigOrg id={id as string} />
             default: return null
@@ -54,6 +56,8 @@ export default function Factory() {
     // Cargar datos iniciales
     useEffect(() => {
         const loadData = async () => {
+            if (!id) return // Verificar que el ID existe
+            
             const token = await getValidAccessToken()
             if (!token) return
 
@@ -69,7 +73,7 @@ export default function Factory() {
         }
 
         loadData()
-    }, [id])
+    }, [id]) // Agregar id como dependencia
 
     const handleEditSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -109,7 +113,7 @@ export default function Factory() {
                             <p className="text-gray-600 mt-1">Panel de configuración de la organización</p>
                         </div>
                     </div>
-                    
+
                     {/* Menú de opciones */}
                     <div className="relative" ref={menuRef}>
                         <button
@@ -120,7 +124,7 @@ export default function Factory() {
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z" />
                             </svg>
                         </button>
-                        
+
                         {showMenu && (
                             <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-100 z-10">
                                 <div className="py-1">

@@ -1,11 +1,12 @@
+import { GlobalPagination, UserPagination, UserProps, RoleProps, BoardPagination, ProjectProps } from '../types/types'
 import { API_ROUTES } from '../routes/organization.route'
-import { create } from "zustand"
-import { GlobalPagination, UserPagination, UserProps, RoleProps } from '../types/types'
 import toast from 'react-hot-toast'
+import { create } from 'zustand'
 
 interface OrganizationState {
     organizations: { organizationId: string; organizationName: string; createdAt: string }[]
     users: UserPagination
+    boards: BoardPagination
     organizationRoles: RoleProps[]
     isLoading: boolean
     error: string | null
@@ -19,11 +20,15 @@ interface OrganizationState {
     getOrganizationRoles: (token: string, organizationId: string) => Promise<void>
     loadMoreUsersByOrganization: (token: string, organizationId: string, search?: string, page?: number, size?: number) => Promise<void>
     changeUserOrganization: (token: string, userId: string, data: { organizationId: string, role: string }) => Promise<boolean>
+    getBoardsByOrganization: (token: string, organizationId: string, direction?: string, sortBy?: string, page?: number, size?: number, search?: string) => Promise<void>
+    loadMoreBoardsByOrganization: (token: string, organizationId: string, direction?: string, sortBy?: string, page?: number, size?: number, search?: string) => Promise<void>
+    changeBoardOrganization: (token: string, idBoard: string, idOrg: string) => Promise<boolean>
 }
 
 export const useOrganizationStore = create<OrganizationState>()((set, get) => ({
     organizations: [],
     users: { content: [], totalElements: 0, totalPages: 0, number: 0, size: 10 },
+    boards: { content: [], totalElements: 0, totalPages: 0, number: 0, size: 10 },
     organizationRoles: [],
     isLoading: false,
     error: null,
@@ -126,6 +131,71 @@ export const useOrganizationStore = create<OrganizationState>()((set, get) => ({
             set({ error: errorMessage, isLoading: false })
             toast.error(errorMessage)
             console.error('Error en getUsersByOrganization:', error)
+        }
+    },
+
+    getBoardsByOrganization: async (token: string, organizationId: string, direction?: string, sortBy?: string, page?: number, size?: number, search?: string) => {
+        set({ isLoading: true, error: null })
+        try {
+            const params = new URLSearchParams()
+            if (search) params.append('search', search)
+            if (sortBy) params.append('sortBy', sortBy)
+            if (direction) params.append('direction', direction)
+            if (page !== undefined) params.append('page', page.toString())
+            if (size !== undefined) params.append('size', size.toString())
+
+            const url = `${API_ROUTES.GET_PROJECTS_BY_ORGANIZATION({ idOrg: organizationId })}?${params.toString()}`
+            const response = await fetch(url, { method: 'GET', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` } })
+            if (!response.ok) { throw new Error(`Error ${response.status}: ${response.statusText}`) }
+            const data: GlobalPagination = await response.json()
+            set({
+                boards: {
+                    content: data.content as ProjectProps[],
+                    totalElements: data.totalElements,
+                    totalPages: data.totalPages,
+                    number: data.number,
+                    size: data.size,
+                },
+                isLoading: false
+            })
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Error al obtener tableros de la organización'
+            console.error('Error en getBoardsByOrganization:', error)
+            set({ error: errorMessage, isLoading: false })
+            toast.error(errorMessage)
+        }
+    },
+
+    loadMoreBoardsByOrganization: async (token: string, organizationId: string, direction?: string, sortBy?: string, page?: number, size?: number, search?: string) => {
+        set({ isLoading: true, error: null })
+        try {
+            const params = new URLSearchParams()
+            if (search) params.append('search', search)
+            if (sortBy) params.append('sortBy', sortBy)
+            if (direction) params.append('direction', direction)
+            if (page !== undefined) params.append('page', page.toString())
+            if (size !== undefined) params.append('size', size.toString())
+
+            const url = `${API_ROUTES.GET_PROJECTS_BY_ORGANIZATION({ idOrg: organizationId })}?${params.toString()}`
+            const response = await fetch(url, { method: 'GET', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` } })
+            if (!response.ok) { throw new Error(`Error ${response.status}: ${response.statusText}`) }
+            const data: GlobalPagination = await response.json()
+            set(state => ({
+                boards: {
+                    ...state.boards,
+                    content: [...state.boards.content, ...(data.content as ProjectProps[])],
+                    totalElements: data.totalElements,
+                    totalPages: data.totalPages,
+                    number: data.number,
+                    size: data.size,
+                },
+                isLoading: false
+            }))
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Error al obtener más tableros de la organización'
+            console.error('Error en loadMoreBoardsByOrganization:', error)
+            set({ error: errorMessage, isLoading: false })
+            toast.error(errorMessage)
         }
     },
 
@@ -283,5 +353,21 @@ export const useOrganizationStore = create<OrganizationState>()((set, get) => ({
             console.error('Error en changeUserOrganization:', error)
             return false
         }
-    }
+    },
+
+    changeBoardOrganization: async (token: string, idBoard: string, idOrg: string) => {
+        set({ isLoading: true, error: null })
+        try {
+            const response = await fetch(API_ROUTES.GET_BOARDS_BY_ORGANIZATION({ idBoard: idBoard, idOrg: idOrg }), { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` } })
+            if (!response.ok) { throw new Error(`Error ${response.status}: ${response.statusText}`) }
+            set({ isLoading: false })
+            return true
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Error al cambiar la organización del tablero'
+            console.error('Error en changeBoardOrganization:', error)
+            set({ error: errorMessage, isLoading: false })
+            toast.error(errorMessage)
+            return false
+        }
+    },
 }))

@@ -1,10 +1,9 @@
 "use client"
 
-import { useEffect, useState, useRef, useCallback } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useOrganizationStore } from "@/lib/store/OrganizationStore"
 import { useAuthStore } from "@/lib/store/AuthStore"
-import { useInfiniteScroll } from "@/lib/hooks/useInfiniteScroll"
-import { UserProps, GlobalPagination } from "@/lib/types/types"
+import { UserProps } from "@/lib/types/types"
 import { getUserAvatar } from "@/lib/utils/avatar.utils"
 import { getUserRoleName } from "@/lib/utils/user.utils"
 import CreateUserForm from "@/components/partials/config/users/CreateUserForm"
@@ -32,7 +31,7 @@ export default function UsersOrg({ organization }: UsersOrgProps) {
     const [page, setPage] = useState<number>(0)
     const [isLoading, setIsLoading] = useState<boolean>(true)
     const [showCreateUserModal, setShowCreateUserModal] = useState(false)
-    
+
     // Referencia para el contenedor con scroll
     const containerRef = useRef<HTMLDivElement>(null)
     // Almacenar todos los usuarios mostrados
@@ -64,7 +63,7 @@ export default function UsersOrg({ organization }: UsersOrgProps) {
     useEffect(() => {
         if (!users?.content) return
         const normalizedUsers = normalizeUsersRole(users.content)
-        
+
         if (users.number === 0) {
             setDisplayedUsers(normalizedUsers)
         } else {
@@ -180,7 +179,7 @@ export default function UsersOrg({ organization }: UsersOrgProps) {
             if (!token) return
 
             const success = await useOrganizationStore.getState().changeUserOrganization(token, selectedUser.id, data)
-            
+
             if (success) {
                 // Actualizar la lista de usuarios
                 await getUsersByOrganization(token, organization.organizationId, searchTerm, 0, 10)
