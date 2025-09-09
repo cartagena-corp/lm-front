@@ -74,7 +74,7 @@ export default function TableroDetalle() {
     }
   }, [isAuthenticated, setConfig, getValidAccessToken])
 
-  const getStatusName = (id: number) => {
+  const getStatus = (id: number) => {
     if (projectStatus) return projectStatus?.find(status => status.id === id)
   }
 
@@ -92,6 +92,16 @@ export default function TableroDetalle() {
       await updateBoard(token, updateData, selectedBoard?.id as string)
     }
     setIsUpdateModalOpen(false)
+  }
+
+  const getStatusName = (statusId: number) => {
+    const statusObj = projectStatus?.find(status => status.id === statusId)
+    return statusObj?.name || "Estado desconocido"
+  }
+
+  const getStatusColor = (statusId: number) => {
+    const statusObj = projectStatus?.find(status => status.id === statusId)
+    return statusObj?.color || "#6B7280"
   }
 
   return (
@@ -140,24 +150,19 @@ export default function TableroDetalle() {
                 {/* Project Header */}
                 <div className="p-6 border-b border-gray-100">
                   <div className='flex justify-between items-start gap-4'>
-                    <div className='flex items-center gap-4 flex-1'>
-                      <div>
-                        <h2 className='text-2xl font-bold text-gray-900 mb-2'>{selectedBoard?.name}</h2>
-                        {selectedBoard && (
-                          <div className='inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium border'
-                            style={{
-                              backgroundColor: `${getStatusName(Number(selectedBoard.status))?.color}15`,
-                              color: getStatusName(Number(selectedBoard.status))?.color,
-                              borderColor: `${getStatusName(Number(selectedBoard.status))?.color}30`
-                            }}>
-                            <div
-                              className="w-2 h-2 rounded-full"
-                              style={{ backgroundColor: getStatusName(Number(selectedBoard.status))?.color }}
-                            />
-                            {getStatusName(Number(selectedBoard.status))?.name}
-                          </div>
-                        )}
-                      </div>
+                    <div className='flex flex-col'>
+                      <h2 className='text-2xl font-bold text-gray-900 mb-2'>{selectedBoard?.name}</h2>
+                      {selectedBoard && (
+                        <div className="rounded-full text-xs font-medium px-3 py-1 whitespace-nowrap flex-shrink-0 w-fit"
+                          style={{
+                            backgroundColor: `${getStatusColor(Number(selectedBoard.status))}20`,
+                            color: getStatusColor(Number(selectedBoard.status)),
+                            border: `1px solid ${getStatusColor(Number(selectedBoard.status))}40`
+                          }}
+                        >
+                          {getStatusName(Number(selectedBoard.status)).charAt(0).toUpperCase() + getStatusName(Number(selectedBoard.status)).slice(1).toLowerCase()}
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex gap-2">

@@ -42,8 +42,8 @@ export default function CreateBoardForm({ onSubmit, onCancel, editData = null, i
     } else if (projectStatus && isEdit && editData) {
       // En modo edición, mantener el estado actual del proyecto
       const currentStatus = projectStatus.find(status => 
-        (typeof editData.status === 'object' && status.id === editData.status.id) ||
-        (typeof editData.status === 'number' && status.id === editData.status)
+        (typeof editData.status === 'object' && (editData.status !== null && status.id === editData.status.id)) ||
+        (typeof editData.status === 'number' && status.id === editData.status) || { id: 0, name: "", color: "" }
       )
       if (currentStatus) {
         setFormData(prev => ({
