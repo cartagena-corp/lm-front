@@ -7,6 +7,7 @@ import { useEffect, useState } from "react"
 import UserConfig from "@/components/partials/config/users/UserConfig"
 import NotificationConfig from "@/components/partials/config/notifications/NotificationConfig"
 import { ConfigIcon, BoardIcon, BellIcon } from "@/assets/Icon"
+import { PermissionProps, UserProps } from "@/lib/types/types"
 
 const listView = [
    {
@@ -43,6 +44,14 @@ export default function Config() {
       }
    }
 
+
+   const { user, normalizeUserRole } = useAuthStore()
+   const userRole = normalizeUserRole(user)
+
+   const hasPermissionConfig = userRole?.permissions.some((p: PermissionProps) => p.name === "CONFIG_READ") ?? false
+   const hasPermissionUser = userRole?.permissions.some((p: PermissionProps) => p.name === "USER_READ") ?? false
+   const hasPermissionNotifications = userRole?.permissions.some((p: PermissionProps) => p.name === "NOTIFICATION_CRUD") ?? false
+
    return (
       <>
          <div className="mx-auto space-y-8">
@@ -64,6 +73,9 @@ export default function Config() {
                <nav className="flex space-x-2">
                   {listView.map((tab) => {
                      const Icon = tab.icon
+                     if (tab.id === 1 && !hasPermissionConfig) return null
+                     if (tab.id === 2 && !hasPermissionUser) return null
+                     if (tab.id === 3 && !hasPermissionNotifications) return null
                      return (
                         <button
                            key={tab.id}

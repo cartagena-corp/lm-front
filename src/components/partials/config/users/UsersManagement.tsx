@@ -15,18 +15,19 @@ import { getUserAvatar } from '@/lib/utils/avatar.utils'
 import { getUserRoleName } from '@/lib/utils/user.utils'
 
 // Types
-import { UserProps } from '@/lib/types/types'
+import { PermissionProps, UserProps } from '@/lib/types/types'
 
 // Icons
-import { UsersIcon, PlusIcon, EditIcon, DownloadIcon, MenuIcon } from '@/assets/Icon'
+import { UsersIcon, PlusIcon, EditIcon, DownloadIcon, MenuIcon, DeleteIcon } from '@/assets/Icon'
 import EditUserForm from './EditUserForm'
+import toast from 'react-hot-toast'
 
 // Utilidad para normalizar el campo role
 function normalizeUsersRole(users: UserProps[]): UserProps[] {
-  return users.map(user => ({
-    ...user,
-    role: typeof user.role === 'string' ? { name: user.role, permissions: [] } : user.role
-  }))
+    return users.map(user => ({
+        ...user,
+        role: typeof user.role === 'string' ? { name: user.role, permissions: [] } : user.role
+    }))
 }
 
 export default function UsersManagement() {
@@ -135,6 +136,7 @@ export default function UsersManagement() {
             await addUser(token, data)
             setShowCreateUserModal(false)
             loadData() // Recargar lista después de crear
+            toast.success('Usuario creado correctamente')
         }
     }
 
@@ -147,6 +149,7 @@ export default function UsersManagement() {
             setShowDeleteUserModal(false)
             setSelectedUser(null)
             loadData() // Recargar lista después de eliminar
+            toast.success('Usuario eliminado correctamente')
         }
     }
 
@@ -157,6 +160,7 @@ export default function UsersManagement() {
             setShowEditUserModal(false)
             setSelectedUser(null)
             loadData() // Recargar lista después de editar
+            toast.success('Usuario editado correctamente')
         }
     }
 
@@ -192,6 +196,13 @@ export default function UsersManagement() {
         )
     }
 
+    const { user, normalizeUserRole } = useAuthStore()
+    const userRole = normalizeUserRole(user)
+
+    const hasPermissionDeleteUser = userRole?.permissions.some((p: PermissionProps) => p.name === "USER_DELETE") ?? false
+    const hasPermissionUpdateUser = userRole?.permissions.some((p: PermissionProps) => p.name === "USER_UPDATE") ?? false
+    const hasPermissionCreateUser = userRole?.permissions.some((p: PermissionProps) => p.name === "USER_CREATE") ?? false
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -208,22 +219,25 @@ export default function UsersManagement() {
                             )}
                         </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => setShowImportUsersModal(true)}
-                            className="bg-white hover:bg-blue-50 text-blue-600 border border-blue-600 px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
-                        >
-                            <DownloadIcon size={16} />
-                            Importar
-                        </button>
-                        <button
-                            onClick={() => setShowCreateUserModal(true)}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
-                        >
-                            <PlusIcon size={16} />
-                            Agregar Usuario
-                        </button>
-                    </div>
+                    {
+                        hasPermissionCreateUser &&
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setShowImportUsersModal(true)}
+                                className="bg-white hover:bg-blue-50 text-blue-600 border border-blue-600 px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+                            >
+                                <DownloadIcon size={16} />
+                                Importar
+                            </button>
+                            <button
+                                onClick={() => setShowCreateUserModal(true)}
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+                            >
+                                <PlusIcon size={16} />
+                                Agregar Usuario
+                            </button>
+                        </div>
+                    }
                 </div>
 
                 {/* Search Bar */}
@@ -239,7 +253,7 @@ export default function UsersManagement() {
             </div>
 
             {/* Users List */}
-            <div 
+            <div
                 ref={usersListRef}
                 className="bg-white rounded-xl shadow-sm border border-gray-100 max-h-[calc(100vh-16rem)] overflow-y-auto"
             >
@@ -279,15 +293,30 @@ export default function UsersManagement() {
                                             </div>
                                         </div>
                                         <div>
-                                            <button
-                                                onClick={() => {
-                                                    setSelectedUser(user)
-                                                    setShowEditUserModal(true)
-                                                }}
-                                                className="text-gray-400 hover:text-blue-600 transition-colors opacity-0 group-hover:opacity-100 p-2 hover:bg-blue-100 rounded-lg"
-                                            >
-                                                <EditIcon size={16} />
-                                            </button>
+                                            {
+                                                hasPermissionUpdateUser &&
+                                                <button
+                                                    onClick={() => {
+                                                        setSelectedUser(user)
+                                                        setShowEditUserModal(true)
+                                                    }}
+                                                    className="text-gray-400 hover:text-blue-600 transition-colors opacity-0 group-hover:opacity-100 p-2 hover:bg-blue-100 rounded-lg"
+                                                >
+                                                    <EditIcon size={16} />
+                                                </button>
+                                            }
+                                            {
+                                                (hasPermissionDeleteUser) &&
+                                                <button
+                                                    onClick={() => {
+                                                        setSelectedUser(user)
+                                                        setShowDeleteUserModal(true)
+                                                    }}
+                                                    className="text-gray-400 hover:text-blue-600 transition-colors opacity-0 group-hover:opacity-100 p-2 hover:bg-blue-100 rounded-lg"
+                                                >
+                                                    <DeleteIcon size={16} />
+                                                </button>
+                                            }
                                         </div>
                                     </div>
                                 </div>
@@ -359,6 +388,6 @@ export default function UsersManagement() {
                     />
                 )}
             </Modal>
-        </div>
+        </div >
     )
 }

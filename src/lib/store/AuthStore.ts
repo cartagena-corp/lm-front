@@ -70,6 +70,8 @@ interface AuthState {
    createPermission: (token: string, data: CreatePermissionProps) => Promise<void>
    deletePermission: (token: string, permissionName: string) => Promise<void>
 
+   normalizeUserRole: (user: UserProps | null) => { name: string; permissions: Array<{ name: string }> } | null
+
    // Utility actions
    clearAuth: () => void
    clearError: () => void
@@ -737,5 +739,10 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
 
    setLoading: (loading: boolean) => {
       set({ isLoading: loading })
+   },
+
+   normalizeUserRole: (user: UserProps | null): { name: string; permissions: Array<{ name: string }> } | null => {
+      if (!user || !user.role) return null
+      return typeof user.role === 'string' ? { name: user.role, permissions: [] } : user.role
    },
 }))

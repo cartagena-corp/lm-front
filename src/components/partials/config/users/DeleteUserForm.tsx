@@ -48,7 +48,7 @@ export default function DeleteUserForm({ onSubmit, onCancel, user }: DeleteUserF
                   <h4 className="text-red-800 font-medium mb-2">⚠️ Acción irreversible</h4>
                   <p className="text-red-700 text-sm">
                      Esta acción no se puede deshacer. El usuario será desactivado permanentemente 
-                     del sistema y perderá acceso a todos los proyectos y tareas asignadas.
+                     del sistema y se perderán todos los datos relacionados.
                   </p>
                </div>
             </div>
@@ -66,7 +66,7 @@ export default function DeleteUserForm({ onSubmit, onCancel, user }: DeleteUserF
                   onClick={onSubmit}
                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                >
-                  Desactivar Usuario
+                  Eliminar Usuario
                </button>
             </div>
          </div>

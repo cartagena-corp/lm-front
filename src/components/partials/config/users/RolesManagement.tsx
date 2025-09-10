@@ -104,6 +104,12 @@ export default function RolesManagement() {
         )
     }
 
+    const { user, normalizeUserRole } = useAuthStore()
+    const userRole = normalizeUserRole(user)
+    const hasPermissionCreateRole = userRole?.permissions.some((p: PermissionProps) => p.name === "ROLE_CREATE") ?? false
+    const hasPermissionEditRole = userRole?.permissions.some((p: PermissionProps) => p.name === "ROLE_UPDATE") ?? false
+    const hasPermissionDeleteRole = userRole?.permissions.some((p: PermissionProps) => p.name === "ROLE_DELETE") ?? false
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -118,13 +124,16 @@ export default function RolesManagement() {
                             <p className="text-sm text-gray-500">Gestiona los roles del sistema</p>
                         </div>
                     </div>
-                    <button
-                        onClick={() => setShowCreateRoleModal(true)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
-                    >
-                        <PlusIcon size={16} />
-                        Crear Rol
-                    </button>
+                    {
+                        hasPermissionCreateRole &&
+                        <button
+                            onClick={() => setShowCreateRoleModal(true)}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+                        >
+                            <PlusIcon size={16} />
+                            Crear Rol
+                        </button>
+                    }
                 </div>
             </div>
 
@@ -175,24 +184,30 @@ export default function RolesManagement() {
                                             </div>
                                         </div>
                                         <div>
-                                            <button
-                                                onClick={() => {
-                                                    setSelectedRole(role)
-                                                    setShowEditRoleModal(true)
-                                                }}
-                                                className="text-gray-400 hover:text-purple-600 transition-colors opacity-0 group-hover:opacity-100 p-2 hover:bg-purple-100 rounded-lg"
-                                            >
-                                                <EditIcon size={16} />
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    setSelectedRole(role)
-                                                    setShowDeleteRoleModal(true)
-                                                }}
-                                                className="text-gray-400 hover:text-purple-600 transition-colors opacity-0 group-hover:opacity-100 p-2 hover:bg-purple-100 rounded-lg"
-                                            >
-                                                <DeleteIcon size={16} />
-                                            </button>
+                                            {
+                                                hasPermissionEditRole &&
+                                                <button
+                                                    onClick={() => {
+                                                        setSelectedRole(role)
+                                                        setShowEditRoleModal(true)
+                                                    }}
+                                                    className="text-gray-400 hover:text-purple-600 transition-colors opacity-0 group-hover:opacity-100 p-2 hover:bg-purple-100 rounded-lg"
+                                                >
+                                                    <EditIcon size={16} />
+                                                </button>
+                                            }
+                                            {
+                                                hasPermissionDeleteRole &&
+                                                <button
+                                                    onClick={() => {
+                                                        setSelectedRole(role)
+                                                        setShowDeleteRoleModal(true)
+                                                    }}
+                                                    className="text-gray-400 hover:text-purple-600 transition-colors opacity-0 group-hover:opacity-100 p-2 hover:bg-purple-100 rounded-lg"
+                                                >
+                                                    <DeleteIcon size={16} />
+                                                </button>
+                                            }
                                         </div>
                                     </div>
                                 </div>

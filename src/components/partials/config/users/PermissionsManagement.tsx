@@ -84,6 +84,11 @@ export default function PermissionsManagement() {
         )
     }
 
+    const { user, normalizeUserRole } = useAuthStore()
+    const userRole = normalizeUserRole(user)
+    const hasPermissionCreatePermission = userRole?.permissions.some((p: PermissionProps) => p.name === "PERMISSION_CREATE") ?? false
+    const hasPermissionDeletePermission = userRole?.permissions.some((p: PermissionProps) => p.name === "PERMISSION_DELETE") ?? false
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -98,13 +103,16 @@ export default function PermissionsManagement() {
                             <p className="text-sm text-gray-500">Gestiona los permisos del sistema</p>
                         </div>
                     </div>
-                    <button
-                        onClick={() => setShowCreatePermissionModal(true)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
-                    >
-                        <PlusIcon size={16} />
-                        Crear Permiso
-                    </button>
+                    {
+                        hasPermissionCreatePermission &&
+                        <button
+                            onClick={() => setShowCreatePermissionModal(true)}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+                        >
+                            <PlusIcon size={16} />
+                            Crear Permiso
+                        </button>
+                    }
                 </div>
             </div>
 
@@ -135,17 +143,20 @@ export default function PermissionsManagement() {
                                                 {permission.name}
                                             </h4>
                                         </div>
-                                        <div>
-                                            <button
-                                                onClick={() => {
-                                                    setSelectedPermission(permission)
-                                                    setShowDeletePermissionModal(true)
-                                                }}
-                                                className="text-red-400 hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100 p-2 hover:bg-red-100 rounded-lg"
-                                            >
-                                                <DeleteIcon size={16} />
-                                            </button>
-                                        </div>
+                                        {
+                                            hasPermissionDeletePermission &&
+                                            <div>
+                                                <button
+                                                    onClick={() => {
+                                                        setSelectedPermission(permission)
+                                                        setShowDeletePermissionModal(true)
+                                                    }}
+                                                    className="text-red-400 hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100 p-2 hover:bg-red-100 rounded-lg"
+                                                >
+                                                    <DeleteIcon size={16} />
+                                                </button>
+                                            </div>
+                                        }
                                     </div>
                                 </div>
                             </div>
