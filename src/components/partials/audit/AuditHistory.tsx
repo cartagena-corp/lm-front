@@ -481,7 +481,7 @@ export default function AuditHistory({ projectId, issueId, title, currentIssue, 
 
             {/* Estado vacío */}
             {allHistoryItems.length === 0 && !isLoading && (
-               <div className="text-center py-8">
+               <div className="flex flex-col items-center text-center py-8">
                   <div className="text-gray-300 mx-auto mb-4">
                      <ClockIcon size={48} />
                   </div>
