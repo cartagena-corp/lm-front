@@ -264,7 +264,7 @@ export default function LoginPage() {
   return (
     <main className='bg-gray-900 min-h-screen flex justify-center items-center p-4'>
       {/* Container principal con max-width y responsive */}
-      <div className='w-full max-w-4xl mx-auto flex flex-col lg:flex-row shadow-2xl rounded-lg overflow-hidden min-h-[600px] lg:min-h-[500px]'>
+      <div className='w-full max-w-4xl mx-auto flex flex-col lg:flex-row shadow-2xl rounded-lg overflow-hidden lg:min-h-[500px]'>
         {/* Sección izquierda - Información */}
         <section className='bg-blue-900 text-white flex flex-col justify-center items-center lg:rounded-l-md p-8 lg:p-14 lg:w-1/2'>
           <h5 className='font-bold text-2xl md:text-3xl lg:text-4xl mb-4'>La Muralla</h5>
