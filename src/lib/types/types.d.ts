@@ -274,6 +274,15 @@ export interface AuditHistoryProps {
    description: string
    timestamp: string
    projectId: string
+   userBasicDataDto: {
+      firstName: string
+      createdAt: string
+      lastName: string
+      picture: string
+      email: string
+      role: string
+      id: string
+   }
 }
 
 //* Audit History Pagination

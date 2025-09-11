@@ -1,14 +1,11 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { AuditHistoryProps, AuditPagination, UserProps, TaskProps } from '@/lib/types/types'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { AuditHistoryProps, AuditPagination, TaskProps } from '@/lib/types/types'
 import { useAuthStore } from '@/lib/store/AuthStore'
 import { useBoardStore } from '@/lib/store/BoardStore'
 import { useIssueStore } from '@/lib/store/IssueStore'
 import { ClockIcon, UsersIcon, AlertCircleIcon, XIcon } from '@/assets/Icon'
-import { API_ROUTES as OAUTH_ROUTES } from '@/lib/routes/oauth.routes'
-import { API_ROUTES as ISSUES_ROUTES } from '@/lib/routes/issues.routes'
-import Image from 'next/image'
 import { getUserAvatar } from '@/lib/utils/avatar.utils'
 
 interface AuditHistoryModalProps {
@@ -20,12 +17,11 @@ interface AuditHistoryModalProps {
 }
 
 interface EnrichedAuditItem extends AuditHistoryProps {
-   user?: UserProps
    issue?: TaskProps
 }
 
 export default function AuditHistory({ projectId, issueId, title, currentIssue, onCancel }: AuditHistoryModalProps) {
-   const { getValidAccessToken, getListUsers } = useAuthStore()
+   const { getValidAccessToken } = useAuthStore()
    const { getProjectHistory } = useBoardStore()
    const { getIssueHistory, getIssues } = useIssueStore()
    
@@ -36,22 +32,15 @@ export default function AuditHistory({ projectId, issueId, title, currentIssue, 
    const [currentPage, setCurrentPage] = useState(0)
    const [hasMore, setHasMore] = useState(true)
    const [allHistoryItems, setAllHistoryItems] = useState<EnrichedAuditItem[]>([])
-   const [users, setUsers] = useState<UserProps[]>([])
    const [issues, setIssues] = useState<TaskProps[]>([])
    const [dataLoaded, setDataLoaded] = useState(false)
    
    // Ref para el contenedor de scroll
    const scrollContainerRef = useRef<HTMLDivElement>(null)
 
-   // Función para cargar datos iniciales (usuarios e issues)
+   // Función para cargar datos iniciales (solo issues)
    const loadInitialData = async (token: string) => {
-      if (dataLoaded) return { loadedUsers: users, loadedIssues: issues }
-
-      // Cargar usuarios
-      await getListUsers(token)
-      const authStore = useAuthStore.getState()
-      const loadedUsers = authStore.listUsers || []
-      setUsers(loadedUsers)
+      if (dataLoaded) return { loadedIssues: issues }
 
       // Cargar issues del proyecto (solo si es historial de proyecto)
       let loadedIssues: TaskProps[] = []
@@ -65,7 +54,7 @@ export default function AuditHistory({ projectId, issueId, title, currentIssue, 
       }
 
       setDataLoaded(true)
-      return { loadedUsers, loadedIssues }
+      return { loadedIssues }
    }
 
    // Función para cargar una página específica del historial
@@ -87,7 +76,7 @@ export default function AuditHistory({ projectId, issueId, title, currentIssue, 
          }
 
          // Cargar datos iniciales solo en la primera carga
-         const { loadedUsers, loadedIssues } = await loadInitialData(token)
+         const { loadedIssues } = await loadInitialData(token)
 
          // Cargar historial
          let data: AuditPagination
@@ -100,11 +89,8 @@ export default function AuditHistory({ projectId, issueId, title, currentIssue, 
             return
          }
 
-         // Enriquecer los datos con información de usuarios e issues
+         // Enriquecer los datos con información de issues
          const enrichedItems: EnrichedAuditItem[] = data.content.map(item => {
-            // Buscar usuario en el array local de usuarios cargados
-            const user = loadedUsers.find(u => u.id === item.userId) || undefined
-
             // Buscar issue en el array local de issues cargadas (solo para historial de proyecto)
             // O usar el currentIssue si está disponible (para historial de issue específico)
             let issue: TaskProps | undefined = undefined
@@ -120,7 +106,6 @@ export default function AuditHistory({ projectId, issueId, title, currentIssue, 
 
             return {
                ...item,
-               user: user,
                issue: issue
             }
          })
@@ -244,8 +229,8 @@ export default function AuditHistory({ projectId, issueId, title, currentIssue, 
    }
 
    // Componente para mostrar información del usuario
-   const UserCard = ({ user }: { user?: UserProps }) => {
-      if (!user) {
+   const UserCard = ({ userBasicData }: { userBasicData?: AuditHistoryProps['userBasicDataDto'] }) => {
+      if (!userBasicData) {
          return (
             <div className="bg-gray-50 rounded-lg p-3 border border-gray-200 w-1/2">
                <div className="flex items-center gap-3">
@@ -265,16 +250,16 @@ export default function AuditHistory({ projectId, issueId, title, currentIssue, 
             <div className="flex items-center gap-3">
                <div className="w-10 h-10 rounded-full bg-blue-200 flex items-center justify-center overflow-hidden">
                   <img
-                     src={getUserAvatar(user, 40)}
-                     alt={`${user.firstName} ${user.lastName}`}
+                     src={getUserAvatar(userBasicData, 40)}
+                     alt={`${userBasicData.firstName} ${userBasicData.lastName}`}
                      className="w-full h-full object-cover rounded-full"
                   />
                </div>
                <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-blue-900 truncate">
-                     {user.firstName} {user.lastName}
+                     {userBasicData.firstName} {userBasicData.lastName}
                   </p>
-                  <p className="text-xs text-blue-600 truncate">{user.email}</p>
+                  <p className="text-xs text-blue-600 truncate">{userBasicData.email}</p>
                </div>
             </div>
          </div>
@@ -437,7 +422,7 @@ export default function AuditHistory({ projectId, issueId, title, currentIssue, 
 
                   {/* Cards de Usuario e Issue */}
                   <div className="flex items-center justify-between gap-2">
-                     <UserCard user={item.user} />
+                     <UserCard userBasicData={item.userBasicDataDto} />
                      
                      <div className="flex-shrink-0">
                         <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
