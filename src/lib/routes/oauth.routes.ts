@@ -1,7 +1,6 @@
 const BACKEND_URL = process.env.NEXT_PUBLIC_SERVICE_OAUTH
 const ROLE_URL = process.env.NEXT_PUBLIC_SERVICE_USERS
 
-
 export const API_ROUTES = {
     VALIDATE_TOKEN: `${BACKEND_URL}/api/oauth/validate/token`,
     GET_UUID_BY_TOKEN: `${BACKEND_URL}/api/oauth/token`,
@@ -19,4 +18,7 @@ export const API_ROUTES = {
     CRUD_ROLES: `${ROLE_URL}/api/roles`,
     CRUD_PERMISOS: `${ROLE_URL}/api/permissions`,
     ADD_USER_WITH_ORGANIZATION: `${BACKEND_URL}/api/oauth/add-user-with-organization`,
+    LOGIN_FORM: `${BACKEND_URL}/api/auth/login`,
+    GENERATE_OTP: `${BACKEND_URL}/api/otp/generate`,
+    VERIFY_OTP: `${BACKEND_URL}/api/auth/register`,
 }

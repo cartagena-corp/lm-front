@@ -3,6 +3,7 @@ import { UserProps } from '../types/types'
 import { jwtDecode } from 'jwt-decode'
 import { create } from 'zustand'
 import { API_ROUTES } from "@/lib/routes/oauth.routes"
+import { encryptOTP } from '@/lib/utils/crypto.utils'
 
 interface PermissionProps {
    name: string
@@ -41,6 +42,7 @@ interface AuthState {
    permissions: PermissionProps[]
    isLoading: boolean
    error: string | null
+   otpPhrase: string | null
 
    // Actions
    getValidAccessToken: () => Promise<string>
@@ -72,10 +74,15 @@ interface AuthState {
 
    normalizeUserRole: (user: UserProps | null) => { name: string; permissions: Array<{ name: string }> } | null
 
+   loginPassword: (email: string, password: string) => Promise<string | { message: string, isError: boolean }>
+   generateOtp: (registerRequestDTO: { email: string, firstName: string, lastName: string, password: string }) => Promise<{ message: string, isError: boolean }>
+   verifyOtp: (code: string, registerRequestDTO: { email: string, firstName: string, lastName: string, password: string }) => Promise<{ message: string, isError: boolean }>
+
    // Utility actions
    clearAuth: () => void
    clearError: () => void
    setLoading: (loading: boolean) => void
+   clearOtpPhrase: () => void
 }
 
 interface PayloadProps {
@@ -147,6 +154,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
    permissions: [],
    isLoading: false,
    error: null,
+   otpPhrase: null,
 
    // Obtener token válido (actualizado si es necesario)
    getValidAccessToken: async (): Promise<string> => {
@@ -510,7 +518,8 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
             roles: [],
             permissions: [],
             error: null,
-            isLoading: false
+            isLoading: false,
+            otpPhrase: null
          })
          if (typeof window !== 'undefined') {
             window.location.href = "/login"
@@ -741,8 +750,132 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       set({ isLoading: loading })
    },
 
+   clearOtpPhrase: () => {
+      set({ otpPhrase: null })
+   },
+
    normalizeUserRole: (user: UserProps | null): { name: string; permissions: Array<{ name: string }> } | null => {
       if (!user || !user.role) return null
       return typeof user.role === 'string' ? { name: user.role, permissions: [] } : user.role
    },
+
+   loginPassword: async (email: string, password: string): Promise<string | { message: string, isError: boolean }> => {
+      set({ isLoading: true, error: null })
+
+      try {
+         const response = await fetch(API_ROUTES.LOGIN_FORM, {
+            method: 'POST',
+            headers: { "Content-Type": "application/json" },
+            credentials: 'include',
+            body: JSON.stringify({ email, password })
+         })
+
+         const data = await response.json()
+
+         // Verificar si la respuesta fue exitosa
+         if (data.statusCode === 401) {
+            const errorMessage = data.message
+            set({ error: errorMessage, isLoading: false })
+            return { message: data.message, isError: true }
+         }
+
+         // Si todo está bien, establecer el token
+         get().setAccessToken(data.accessToken)
+         set({ isLoading: false })
+         return data.accessToken
+      } catch (error) {
+         const errorMessage = error instanceof Error ? error.message : 'Error al iniciar sesión'
+         set({ error: errorMessage, isLoading: false })
+         console.error("Error en loginPassword:", error)
+         return { message: errorMessage, isError: true }
+      }
+   },
+
+   generateOtp: async (registerRequestDTO: { email: string, firstName: string, lastName: string, password: string }): Promise<{ message: string, isError: boolean }> => {
+      set({ isLoading: true, error: null })
+
+      try {
+         const data = {
+            registerRequestDto: registerRequestDTO,
+            functionality: {
+               name: "REGISTER"
+            }
+         }
+
+         const response = await fetch(API_ROUTES.GENERATE_OTP, {
+            method: 'POST',
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+         })
+
+         const res = await response.json()
+
+         if (res.statusCode !== 200) {
+            set({ error: res.message, isLoading: false })
+            return { message: res.message, isError: true }
+         }
+
+         const phrase = response.headers.get('X-PHRASE')
+
+         if (phrase) set({ otpPhrase: phrase })
+         else console.warn('No se recibió el header X-PHRASE del servidor')
+
+         set({ isLoading: false })
+         return { message: "OTP Generado", isError: false }
+      } catch (error) {
+         const errorMessage = error instanceof Error ? error.message : 'Error al generar OTP'
+         set({ error: errorMessage, isLoading: false })
+         console.error("Error en generateOtp:", error)
+         return { message: errorMessage, isError: true }
+      }
+   },
+
+   verifyOtp: async (code: string, registerRequestDTO: { email: string, firstName: string, lastName: string, password: string }): Promise<{ message: string, isError: boolean }> => {
+      set({ isLoading: true, error: null })
+
+      try {
+         const { otpPhrase } = get()
+
+         if (!otpPhrase) {
+            set({ error: 'No se encontró la frase de encriptación. Por favor, solicita un nuevo código OTP.', isLoading: false })
+            return { message: "No se encontró la frase de encriptación. Por favor, solicita un nuevo código OTP.", isError: true }
+         }
+
+         const encryptedOTP = encryptOTP(code, otpPhrase)
+
+         const requestBody = {
+            registerRequestDto: registerRequestDTO,
+            code: encryptedOTP,
+            functionality: {
+               name: "REGISTER"
+            }
+         }
+
+         const response = await fetch(API_ROUTES.VERIFY_OTP, {
+            method: 'POST',
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(requestBody)
+         })
+
+         const data = await response.json()
+
+         if (data.statusCode === 429) {
+            set({ error: data.message, isLoading: false })
+            return { message: "INVALIDO", isError: true }
+         }
+
+         if (data.statusCode !== 200) {
+            set({ error: data.message, isLoading: false })
+            return { message: data.message, isError: true }
+         }
+
+         set({ isLoading: false, otpPhrase: null })
+         return { message: data.message, isError: false }
+      } catch (error) {
+         const errorMessage = error instanceof Error ? error.message : 'Error al verificar OTP'
+         set({ error: errorMessage, isLoading: false })
+         console.error("Error en verifyOtp:", error)
+         return { message: errorMessage, isError: true }
+      }
+   }
 }))
