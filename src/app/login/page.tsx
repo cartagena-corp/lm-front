@@ -125,7 +125,7 @@ export default function LoginPage() {
   }
 
   // Manejar envío del formulario de login (email/password)
-  const handleLoginSubmit = async (email, password) => {
+  const handleLoginSubmit = async (email: string, password: string) => {
     setIsLoading(true)
     setEmail(email)
 
@@ -135,14 +135,14 @@ export default function LoginPage() {
 
       router.push("/tableros")
     } catch (error) {
-      toast.error(error.message)
+      toast.error("Error al iniciar sesión: " + error)
     } finally {
       setIsLoading(false)
     }
   }
 
   // Manejar envío del formulario de registro
-  const handleRegisterSubmit = async (data) => {
+  const handleRegisterSubmit = async (data: { email: string, firstName: string, lastName: string, password: string }) => {
     setIsLoading(true)
     setEmail(data.email)
 
@@ -179,7 +179,7 @@ export default function LoginPage() {
     }
   }
 
-  const handleOtpSubmit = async (otp) => {
+  const handleOtpSubmit = async (otp: string) => {
     setIsLoading(true)
 
     try {

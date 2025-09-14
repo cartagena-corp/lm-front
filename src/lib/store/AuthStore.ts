@@ -74,7 +74,7 @@ interface AuthState {
 
    normalizeUserRole: (user: UserProps | null) => { name: string; permissions: Array<{ name: string }> } | null
 
-   loginPassword: (email: string, password: string) => Promise<string | { message: string, isError: boolean }>
+   loginPassword: (email: string, password: string) => Promise<{ message: string, isError: boolean }>
    generateOtp: (registerRequestDTO: { email: string, firstName: string, lastName: string, password: string }) => Promise<{ message: string, isError: boolean }>
    verifyOtp: (code: string, registerRequestDTO: { email: string, firstName: string, lastName: string, password: string }) => Promise<{ message: string, isError: boolean }>
 
@@ -759,7 +759,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       return typeof user.role === 'string' ? { name: user.role, permissions: [] } : user.role
    },
 
-   loginPassword: async (email: string, password: string): Promise<string | { message: string, isError: boolean }> => {
+   loginPassword: async (email: string, password: string): Promise<{ message: string, isError: boolean }> => {
       set({ isLoading: true, error: null })
 
       try {
