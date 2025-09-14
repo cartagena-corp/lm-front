@@ -226,6 +226,17 @@ export const EyeIcon = ({ size = 24, stroke = 1.5 }: IconProps) => {
    )
 }
 
+export const EyeOffIcon = ({ size = 24, stroke = 1.5 }: IconProps) => {
+   return (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill="none">
+         <path d="M6.873 17.129c-1.845-1.31-3.305-3.014-4.13-4.09-.15-.196-.225-.294-.225-.539 0-.245.075-.343.225-.539C3.487 10.731 7.1 6 12 6c1.856 0 3.605.394 5.12 1.085" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+         <path d="M17.128 6.872c1.845 1.31 3.305 3.014 4.129 4.09.15.196.226.294.226.539 0 .245-.076.343-.226.539C20.513 13.269 16.9 18 12 18c-1.856 0-3.605-.394-5.121-1.085" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+         <path d="M15 12a3 3 0 0 0-6 0" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+         <path d="m2 2 20 20" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+   )
+}
+
 export const ForbiddenIcon = ({ size = 24, stroke = 1.5 }: IconProps) => {
    return (
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill={"none"}>
