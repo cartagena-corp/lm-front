@@ -76,7 +76,7 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
                                  {task.descriptions.map(desc => (
                                     <div key={desc.id} className="bg-white rounded-lg p-4 border border-gray-100 space-y-1">
                                        <h4 className="font-semibold text-gray-900 text-sm">{desc.title}</h4>
-                                       <p className="text-xs text-gray-600 leading-relaxed">{desc.text}</p>
+                                       <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap">{desc.text}</p>
                                     </div>
                                  ))}
                               </div>

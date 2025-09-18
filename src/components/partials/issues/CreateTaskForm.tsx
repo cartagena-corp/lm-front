@@ -4,7 +4,6 @@ import React, { useRef, useState, useEffect } from 'react'
 import { TaskProps } from '@/lib/types/types'
 import { useConfigStore } from '@/lib/store/ConfigStore'
 import { useAuthStore } from '@/lib/store/AuthStore'
-import Image from 'next/image'
 import { PlusIcon, XIcon } from '@/assets/Icon'
 import { useBoardStore } from '@/lib/store/BoardStore'
 import AutoResizeTextarea from '@/components/ui/AutoResizeTextarea'
@@ -382,7 +381,7 @@ export default function CreateTaskForm({ onSubmit, onCancel, taskObject, isEdit 
                             }
                           }}
                           placeholder={`Describe los detalles para: ${description.name}`}
-                          required={true}
+                          required={false}
                           className="w-full border border-gray-200 rounded-md p-2 text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                         />
                       </div>
