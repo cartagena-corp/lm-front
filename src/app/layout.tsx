@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/next"
 import Notifications from '@/components/layout/Notifications'
 import Sidebar from '@/components/layout/Sidebar'
 import MainLayout from '@/components/layout/MainLayout'
@@ -48,6 +49,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
         <Notifications />
+        <Analytics />
       </body>
     </html>
   )
