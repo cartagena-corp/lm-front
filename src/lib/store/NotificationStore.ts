@@ -12,6 +12,15 @@ interface NotificationPreference {
    enabled: boolean
 }
 
+interface ServerNotificationPreference {
+   id: number
+   userId: string
+   type: {
+      name: string
+   }
+   enabled: boolean
+}
+
 interface NotificationType {
    id: string
    name: string
@@ -23,7 +32,7 @@ interface NotificationState {
    // State
    notifications: NotificationProps[]
    unreadCount: number
-   preferences: NotificationPreference[]
+   preferences: ServerNotificationPreference[]
    notificationTypes: NotificationType[]
    isLoading: boolean
    error: string | null
@@ -282,7 +291,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
             throw new Error(`Error al obtener preferencias: ${response.statusText}`)
          }
 
-         const preferences: NotificationPreference[] = await response.json()
+         const preferences: ServerNotificationPreference[] = await response.json()
          set({ preferences, isLoading: false })
       } catch (error) {
          const errorMessage = handleApiError(error, 'getPreferences')
@@ -296,8 +305,6 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 
    // Update notification preferences
    updatePreferences: async (token, preferences) => {
-      set({ isLoading: true, error: null })
-
       try {
          const response = await fetch(API_ROUTES.READ_EDIT_NOTIFICATIONS_PREFERENCES, {
             method: 'PUT',
@@ -312,17 +319,15 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
             throw new Error(`Error al actualizar preferencias: ${response.statusText}`)
          }
 
-         const updatedPreferences: NotificationPreference[] = await response.json()
-         set({ preferences: updatedPreferences, isLoading: false })
-
+         // El endpoint devuelve 204 No Content, solo mostramos el toast de éxito
          toast.success('Preferencias actualizadas exitosamente')
       } catch (error) {
          const errorMessage = handleApiError(error, 'updatePreferences')
          set({
-            error: errorMessage,
-            isLoading: false
+            error: errorMessage
          })
          toast.error('Error al actualizar las preferencias')
+         throw error // Re-throw para que el componente pueda manejar el error
       }
    },
 
