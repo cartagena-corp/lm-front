@@ -50,7 +50,6 @@ export default function FilterBoardsOrgForm({ onSubmit, onCancel, initialData }:
 
    const handleSubmit = (e: FormEvent) => {
       e.preventDefault()
-      console.log('FilterBoardsOrgForm - Datos enviados:', formData)
       onSubmit(formData)
    }
 
@@ -131,7 +130,6 @@ export default function FilterBoardsOrgForm({ onSubmit, onCancel, initialData }:
                            const newDirection = newIsAsc ? "asc" : "desc"
                            setIsAsc(newIsAsc)
                            setFormData({ ...formData, direction: newDirection })
-                           console.log('Cambiando dirección:', { newIsAsc, newDirection })
                         }} 
                         type='button' 
                         className={`border-gray-200 border p-3 rounded-lg hover:border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${isAsc ? 'bg-blue-50 border-blue-200' : 'bg-gray-50'}`}

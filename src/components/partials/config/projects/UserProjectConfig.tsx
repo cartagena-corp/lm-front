@@ -5,6 +5,8 @@ import { useAuthStore } from "@/lib/store/AuthStore"
 import { useConfigStore } from "@/lib/store/ConfigStore"
 import { getUserAvatar } from "@/lib/utils/avatar.utils"
 import { getUserRoleName } from "@/lib/utils/user.utils"
+import { UserProps } from "@/lib/types/types"
+import { API_ROUTES } from "@/lib/routes/oauth.routes"
 import AddUsersModal from "./AddUsersModal"
 import {
     UsersIcon,
@@ -19,7 +21,10 @@ interface UserProjectConfigProps {
 export default function UserProjectConfig({ projectId }: UserProjectConfigProps) {
     const {
         getValidAccessToken,
-        clearError: clearAuthError
+        clearError: clearAuthError,
+        addUser,
+        getListUsers,
+        listUsers
     } = useAuthStore()
 
     const {
@@ -33,6 +38,8 @@ export default function UserProjectConfig({ projectId }: UserProjectConfigProps)
 
     // Estados para modales
     const [showAddUsersModal, setShowAddUsersModal] = useState(false)
+    const [inviteLoading, setInviteLoading] = useState(false)
+    const [inviteLoadingMessage, setInviteLoadingMessage] = useState("Invitando...")
 
     const error = configError
 
@@ -48,6 +55,71 @@ export default function UserProjectConfig({ projectId }: UserProjectConfigProps)
         const token = await getValidAccessToken()
         if (token) {
             await removeParticipantsFromProject(token, projectId, [userId])
+        }
+    }
+
+    const handleInviteUser = async (data: { email: string; role: string }) => {
+        const token = await getValidAccessToken()
+        if (token) {
+            setInviteLoading(true)
+
+            try {
+                // Paso 1: Crear el usuario en el sistema
+                setInviteLoadingMessage("Creando usuario en La Muralla...")
+                await addUser(token, data)
+
+                // Paso 2: Buscar el usuario creado directamente con la API
+                setInviteLoadingMessage("Buscando usuario creado...")
+
+                const params = new URLSearchParams()
+                params.append('search', data.email)
+                params.append('page', '0')
+                params.append('size', '50')
+
+                const response = await fetch(`${API_ROUTES.LIST_USERS}?${params.toString()}`, {
+                    method: 'GET',
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                })
+
+                if (response.ok) {
+                    const searchResult = await response.json()
+
+                    let createdUser = null
+
+                    // Si la respuesta tiene el formato paginado
+                    if (searchResult.content && Array.isArray(searchResult.content)) {
+                        createdUser = searchResult.content.find((user: UserProps) =>
+                            user.email.toLowerCase() === data.email.toLowerCase()
+                        )
+                    }
+                    // Si la respuesta es un array directo
+                    else if (Array.isArray(searchResult)) {
+                        createdUser = searchResult.find((user: UserProps) =>
+                            user.email.toLowerCase() === data.email.toLowerCase()
+                        )
+                    }
+
+                    if (createdUser) {
+                        // Paso 3: Agregar el usuario al proyecto/tablero
+                        setInviteLoadingMessage("Agregando usuario al proyecto...")
+                        await addParticipantsToProject(token, projectId, [createdUser.id])
+                    }
+                } else {
+                    console.error('❌ Error en la búsqueda de usuario:', response.status, response.statusText)
+                }
+
+                setShowAddUsersModal(false)
+
+            } catch (error) {
+                console.error('Error al invitar usuario:', error)
+                // Mantener el modal abierto en caso de error para que el usuario pueda reintentar
+            } finally {
+                setInviteLoading(false)
+                setInviteLoadingMessage("Invitando...")
+            }
         }
     }
 
@@ -104,12 +176,12 @@ export default function UserProjectConfig({ projectId }: UserProjectConfigProps)
 
             {/* Participants List */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-                {configLoading ? (
+                {(configLoading && projectParticipants.length === 0) ? (
                     <div className="p-8 text-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
                         <p className="text-gray-600">Cargando participantes...</p>
                     </div>
-                ) : projectParticipants.length === 0 ? (
+                ) : (projectParticipants.length === 0 && !configLoading) ? (
                     <div className="p-8 text-center">
                         <div className="p-4 bg-gray-50 text-gray-400 rounded-lg w-fit mx-auto mb-4">
                             <UsersIcon size={32} />
@@ -130,8 +202,8 @@ export default function UserProjectConfig({ projectId }: UserProjectConfigProps)
                                         />
                                         <div>
                                             <h4 className="font-medium text-gray-900">
-                                                {user.firstName && user.lastName 
-                                                    ? `${user.firstName} ${user.lastName}` 
+                                                {user.firstName && user.lastName
+                                                    ? `${user.firstName} ${user.lastName}`
                                                     : user.email
                                                 }
                                             </h4>
@@ -162,8 +234,10 @@ export default function UserProjectConfig({ projectId }: UserProjectConfigProps)
                 isOpen={showAddUsersModal}
                 onClose={() => setShowAddUsersModal(false)}
                 onSubmit={handleAddUsers}
+                onInviteUser={handleInviteUser}
                 projectParticipants={projectParticipants}
-                isLoading={configLoading}
+                isLoading={configLoading || inviteLoading}
+                inviteLoadingMessage={inviteLoadingMessage}
             />
         </div>
     )

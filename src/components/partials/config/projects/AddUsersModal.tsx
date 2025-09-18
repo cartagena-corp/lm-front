@@ -6,26 +6,34 @@ import { UserProps } from "@/lib/types/types"
 import { getUserAvatar } from "@/lib/utils/avatar.utils"
 import { getUserRoleName } from "@/lib/utils/user.utils"
 import Modal from "@/components/layout/Modal"
+import InviteUserForm from "./InviteUserForm"
 import {
     UsersIcon,
     FilterIcon,
-    EditIcon
+    EditIcon,
+    PlusIcon,
+    XIcon,
+    CheckmarkIcon
 } from "@/assets/Icon"
 
 interface AddUsersModalProps {
     isOpen: boolean
     onClose: () => void
     onSubmit: (userIds: string[]) => void
+    onInviteUser?: (data: { email: string; role: string }) => void
     projectParticipants: UserProps[]
     isLoading?: boolean
+    inviteLoadingMessage?: string
 }
 
-export default function AddUsersModal({ 
-    isOpen, 
-    onClose, 
-    onSubmit, 
-    projectParticipants, 
-    isLoading = false 
+export default function AddUsersModal({
+    isOpen,
+    onClose,
+    onSubmit,
+    onInviteUser,
+    projectParticipants,
+    isLoading = false,
+    inviteLoadingMessage = "Invitando..."
 }: AddUsersModalProps) {
     const {
         listUsers,
@@ -33,14 +41,21 @@ export default function AddUsersModal({
         isLoading: authLoading,
         getValidAccessToken,
         getListUsers,
-        loadMoreUsers
+        loadMoreUsers,
+        user,
+        normalizeUserRole
     } = useAuthStore()
 
     // Estados locales
     const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set())
     const [searchQuery, setSearchQuery] = useState('')
     const [isLoadingMore, setIsLoadingMore] = useState(false)
+    const [showInviteForm, setShowInviteForm] = useState(false)
     const modalUsersListRef = useRef<HTMLDivElement>(null)
+
+    // Verificar permisos del usuario
+    const userRole = normalizeUserRole(user)
+    const hasUserCreatePermission = userRole?.permissions.some((p: any) => p.name === "USER_CREATE") ?? false
 
     // Efecto para búsqueda con debounce
     useEffect(() => {
@@ -85,6 +100,7 @@ export default function AddUsersModal({
         if (!isOpen) {
             setSelectedUsers(new Set())
             setSearchQuery('')
+            setShowInviteForm(false)
         }
     }, [isOpen])
 
@@ -124,11 +140,19 @@ export default function AddUsersModal({
     const handleClose = () => {
         setSelectedUsers(new Set())
         setSearchQuery('')
+        setShowInviteForm(false)
         onClose()
     }
 
+    const handleInviteUser = (data: { email: string; role: string }) => {
+        if (onInviteUser) {
+            onInviteUser(data)
+        }
+        setShowInviteForm(false)
+    }
+
     // Filtrar usuarios que ya están en el proyecto
-    const availableUsers = listUsers.filter(user => 
+    const availableUsers = listUsers.filter(user =>
         !projectParticipants.some(participant => participant.id === user.id)
     )
 
@@ -139,7 +163,16 @@ export default function AddUsersModal({
             title=""
             customWidth="sm:max-w-2xl"
         >
-            <div className="space-y-6">
+            {showInviteForm ? (
+                <InviteUserForm
+                    onSubmit={handleInviteUser}
+                    onCancel={() => setShowInviteForm(false)}
+                    isLoading={isLoading}
+                    initialEmail={searchQuery}
+                    loadingMessage={inviteLoadingMessage}
+                />
+            ) : (
+                <div className="space-y-6">
                 {/* Header */}
                 <div className="text-center space-y-2">
                     <h3 className="text-lg font-semibold text-gray-900">
@@ -165,17 +198,17 @@ export default function AddUsersModal({
                 </div>
 
                 {/* User List */}
-                <div 
+                <div
                     ref={modalUsersListRef}
                     className="max-h-96 overflow-y-auto border border-gray-200 rounded-lg"
                 >
                     <div className="p-4">
-                        {authLoading ? (
+                        {(authLoading && availableUsers.length === 0) ? (
                             <div className="text-center py-8">
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
                                 <p className="text-gray-600">Cargando usuarios...</p>
                             </div>
-                        ) : availableUsers.length === 0 ? (
+                        ) : (availableUsers.length === 0 && !authLoading) ? (
                             <div className="text-center py-8">
                                 <div className="p-4 bg-gray-50 text-gray-400 rounded-lg w-fit mx-auto mb-4">
                                     <UsersIcon size={32} />
@@ -183,12 +216,21 @@ export default function AddUsersModal({
                                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
                                     No hay usuarios disponibles
                                 </h3>
-                                <p className="text-gray-600">
-                                    {searchQuery 
-                                        ? 'No se encontraron usuarios que coincidan con la búsqueda' 
+                                <p className="text-gray-600 mb-4">
+                                    {searchQuery
+                                        ? 'No se encontraron usuarios que coincidan con la búsqueda'
                                         : 'Todos los usuarios ya están participando en el proyecto'
                                     }
                                 </p>
+                                {hasUserCreatePermission && searchQuery && (
+                                    <button
+                                        onClick={() => setShowInviteForm(true)}
+                                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2 mx-auto"
+                                    >
+                                        <PlusIcon size={16} />
+                                        Invitar "{searchQuery}" a La Muralla
+                                    </button>
+                                )}
                             </div>
                         ) : (
                             <div className="space-y-2">
@@ -196,11 +238,10 @@ export default function AddUsersModal({
                                     <div
                                         key={user.id}
                                         onClick={() => toggleUserSelection(user.id)}
-                                        className={`p-4 rounded-lg border cursor-pointer transition-all duration-200 ${
-                                            selectedUsers.has(user.id)
+                                        className={`p-4 rounded-lg border cursor-pointer transition-all duration-200 ${selectedUsers.has(user.id)
                                                 ? 'border-blue-500 bg-blue-50'
                                                 : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                                        }`}
+                                            }`}
                                     >
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-3">
@@ -211,8 +252,8 @@ export default function AddUsersModal({
                                                 />
                                                 <div>
                                                     <h4 className="font-medium text-gray-900">
-                                                        {user.firstName && user.lastName 
-                                                            ? `${user.firstName} ${user.lastName}` 
+                                                        {user.firstName && user.lastName
+                                                            ? `${user.firstName} ${user.lastName}`
                                                             : user.email
                                                         }
                                                     </h4>
@@ -224,7 +265,7 @@ export default function AddUsersModal({
                                             </div>
                                             {selectedUsers.has(user.id) && (
                                                 <div className="text-blue-600">
-                                                    <EditIcon size={20} />
+                                                    <CheckmarkIcon size={20} />
                                                 </div>
                                             )}
                                         </div>
@@ -282,7 +323,8 @@ export default function AddUsersModal({
                         </div>
                     </div>
                 </div>
-            </div>
+                </div>
+            )}
         </Modal>
     )
 }

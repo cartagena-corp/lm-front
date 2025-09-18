@@ -456,7 +456,6 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
                // Subscribe to notifications topic (matching backend configuration)
                client.subscribe(`/topic/notifications/${user.id}`, (message) => {
                   try {
-                     console.log('Nueva notificación recibida:', JSON.parse(message.body))
                      const wsResponse: WebSocketNotificationResponse = JSON.parse(message.body)
 
                      // Extract notification and unread count from websocket response

@@ -411,7 +411,6 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
          const sprintId = spr.id as string
          const projectId = spr.projectId as string
 
-         console.log('Filter in handleLoadMore:', filterRef.current)
 
          await loadMoreIssuesBySprint(token, sprintId, projectId, currentPage + 1, filterRef.current)
 
