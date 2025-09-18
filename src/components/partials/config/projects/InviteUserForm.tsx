@@ -70,7 +70,7 @@ export default function InviteUserForm({ onSubmit, onCancel, isLoading = false, 
                     Invitar Usuario a La Muralla
                 </h3>
                 <p className="text-sm text-gray-500">
-                    Este usuario no se encuentra en la plataforma. Invítalo ingresando su correo electrónico y asignándole un rol.
+                    Este usuario no se encuentra en la plataforma. <br /> Invítalo ingresando su correo electrónico y asignándole un rol.
                 </p>
             </div>
 
@@ -85,7 +85,6 @@ export default function InviteUserForm({ onSubmit, onCancel, isLoading = false, 
                         </p>
                         <p className="text-sm text-amber-700 mt-1">
                             Se creará una cuenta para este usuario y se agregará automáticamente al proyecto.
-                            El usuario recibirá una notificación para configurar su cuenta.
                         </p>
                     </div>
                 </div>
@@ -95,7 +94,7 @@ export default function InviteUserForm({ onSubmit, onCancel, isLoading = false, 
                 {/* Email Input */}
                 <div>
                     <label htmlFor="inviteEmail" className="block text-sm font-medium text-gray-700 mb-1">
-                        Correo Electrónico *
+                        Correo Electrónico <b className="text-red-500">*</b>
                     </label>
                     <input
                         type="email"
@@ -116,15 +115,15 @@ export default function InviteUserForm({ onSubmit, onCancel, isLoading = false, 
                     {errors.email && (
                         <p className="mt-1 text-sm text-red-600">{errors.email}</p>
                     )}
-                    <p className="mt-1 text-xs text-gray-500">
+                    {/* <p className="mt-1 text-xs text-gray-500">
                         Se enviará una invitación a este correo electrónico
-                    </p>
+                    </p> */}
                 </div>
 
                 {/* Role Select */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Rol del Usuario *
+                        Rol del Usuario <b className="text-red-500">*</b>
                     </label>
                     <div className="relative">
                         <button
