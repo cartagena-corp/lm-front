@@ -119,9 +119,7 @@ export default function GeminiKeyManager() {
                                 )}
                             </button>
                         </div>
-                        <p className="text-xs text-gray-500">
-                            Tu API Key se almacena de forma segura y solo es visible para ti
-                        </p>
+                        <p className="text-xs text-gray-600">Tu API Key se almacena de forma segura y solo es visible para ti</p>
                     </div>
 
                     {/* Models Configuration */}
