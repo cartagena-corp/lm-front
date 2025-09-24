@@ -63,23 +63,6 @@ export default function GeminiConfig() {
 
             {/* Content Area */}
             <div className="space-y-6">
-                {/* Current View Description */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                    <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-lg ${view.id === 1 ? 'bg-blue-50 text-blue-600' :
-                            view.id === 2 ? 'bg-green-50 text-green-600' :
-                                'bg-purple-50 text-purple-600'
-                            }`}>
-                            <view.icon size={20} />
-                        </div>
-                        <div>
-                            <h2 className="text-lg font-semibold text-gray-900">{view.name}</h2>
-                            <p className="text-sm text-gray-600">{view.description}</p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Dynamic Content */}
                 {view.id === 1 ? <GeminiKeyManager /> : <GeminiUseHistory />}
             </div>
         </div>
