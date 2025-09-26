@@ -186,18 +186,26 @@ function DraggableIssueRow({ task, selectedIds, toggleSelect, onViewDetails, onE
             <h6 className="font-medium text-gray-900 text-sm line-clamp-1" title={task.title}>
                {task.title}
             </h6>
-            <p className="text-xs text-gray-500 line-clamp-1">
-               {
-                  ((task.startDate || task.endDate) && !task.realDate) ?
-                     <>
-                        {task.startDate ? formatDate(task.startDate as string) : "Sin fecha inicio"}
-                        &nbsp;-&nbsp;
-                        {task.endDate ? formatDate(task.endDate as string) : "Sin fecha fin"}
-                     </> : (task.realDate) ? <>
-                        Tarea finalizada el {formatDate(task.realDate as string)}
-                     </> : "Fechas NO definidas"
-               }
-            </p>
+            {
+               (task.descriptions.length > 0) ?
+                  <p className="text-xs text-gray-500 line-clamp-1" title={task.descriptions[0].text}>
+                     {task.descriptions[0].text}
+                  </p>
+                  :
+                  <p className="text-xs text-gray-500 line-clamp-1">
+                     {
+                        ((task.startDate || task.endDate) && !task.realDate) ?
+                           <>
+                              {task.startDate ? formatDate(task.startDate as string) : "Sin fecha inicio"}
+                              &nbsp;-&nbsp;
+                              {task.endDate ? formatDate(task.endDate as string) : "Sin fecha fin"}
+                           </> : (task.realDate) ? <>
+                              Tarea finalizada el {formatDate(task.realDate as string)}
+                           </> : "Fechas NO definidas"
+                     }
+                  </p>
+            }
+
          </div>
 
          {/* Estado */}
@@ -1502,7 +1510,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                />
             </Modal>
 
-            <Modal isOpen={isTaskDetailsModalOpen} customWidth="sm:max-w-6xl" onClose={() => setIsTaskDetailsModalOpen(false)} title="" showCloseButton={false}>
+            <Modal isOpen={isTaskDetailsModalOpen} customWidth="w-full m-10! h-full!" closeOnClickOutside={false} onClose={() => setIsTaskDetailsModalOpen(false)} title="" showCloseButton={false}>
                <TaskDetailsForm
                   task={taskActive as TaskProps}
                   onSubmit={() => setIsTaskDetailsModalOpen(false)}

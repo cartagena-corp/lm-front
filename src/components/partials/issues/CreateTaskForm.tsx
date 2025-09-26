@@ -345,10 +345,7 @@ export default function CreateTaskForm({ onSubmit, onCancel, taskObject, isEdit 
             {projectConfig?.issueDescriptions && projectConfig.issueDescriptions.length > 0 && (
               <div className=''>
                 <div className='bg-gray-50 border border-gray-200 rounded-lg p-4'>
-                  <h6 className='text-sm font-semibold text-gray-900'>Descripciones Disponibles</h6>
-                  <p className="text-xs text-gray-500 mb-3">
-                    Completa las descripciones que apliquen para esta tarea
-                  </p>
+                  <h6 className='text-sm font-semibold text-gray-900 mb-2'>Descripciones Disponibles</h6>
                   <div className='space-y-4 max-h-52 overflow-y-auto'>
                     {projectConfig.issueDescriptions.map((description) => (
                       <div key={description.id} className='bg-white border border-gray-200 rounded-lg p-3'>
@@ -382,6 +379,7 @@ export default function CreateTaskForm({ onSubmit, onCancel, taskObject, isEdit 
                           }}
                           placeholder={`Describe los detalles para: ${description.name}`}
                           required={false}
+                          rows={3}
                           className="w-full border border-gray-200 rounded-md p-2 text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                         />
                       </div>

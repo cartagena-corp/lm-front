@@ -185,11 +185,12 @@ export default function CreateSprintForm({ onSubmit, onCancel, currentSprint, is
             <div className="space-y-2">
                <label className="block text-sm font-semibold text-gray-900">
                   Meta del Sprint
-                  <span className="text-red-500 ml-1">*</span>
                </label>
                <AutoResizeTextarea
                   value={formData.goal || ''}
                   onChange={(value) => handleInputChange('goal', value)}
+                  required={false}
+                  rows={1}
                   placeholder={isEdit ? "Actualiza la meta del sprint" : "Describe el objetivo principal que se espera lograr con este sprint..."}
                   className={`block w-full px-4 py-3 text-sm border-2 rounded-xl shadow-sm transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 resize-none ${
                      errors.goal 

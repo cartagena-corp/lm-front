@@ -3,12 +3,13 @@ import { useRef, useEffect } from 'react'
 import type { TextareaHTMLAttributes } from 'react'
 
 type Props = {
-  value: string
-  onChange: (value: string) => void
-  className?: string
+   value: string
+   onChange: (value: string) => void
+   className?: string
+   rows?: number
 } & Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, 'value' | 'onChange' | 'className'>
 
-const AutoResizeTextarea = ({ value, onChange, className = '', ...rest }: Props) => {
+const AutoResizeTextarea = ({ value, onChange, className = '', rows = 1, ...rest }: Props) => {
    const textareaRef = useRef<HTMLTextAreaElement>(null)
 
    useEffect(() => {
@@ -29,7 +30,7 @@ const AutoResizeTextarea = ({ value, onChange, className = '', ...rest }: Props)
          ref={textareaRef}
          className={`w-full border border-black/15 rounded-md p-2 resize-none outline-none transition-all duration-150 max-h-28 overflow-y-auto ${className}`}
          value={value}
-         rows={1}
+         rows={rows}
          onChange={(e) => onChange(e.target.value)}
          {...rest}
       />
