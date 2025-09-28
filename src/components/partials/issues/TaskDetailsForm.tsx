@@ -129,7 +129,7 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
                               </div>
                               <div className="space-y-1">
                                  <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
-                                    <span className="text-sm text-gray-500">Asignado a:</span>
+                                    <span className="text-sm text-gray-500">Asignado a:&nbsp;&nbsp;</span>
                                     <span className="text-sm font-medium text-gray-900">
                                        {typeof task.assignedId === 'object'
                                           ? `${task.assignedId.firstName ?? "Sin"} ${task.assignedId.lastName ?? "asignar"}`
@@ -137,7 +137,7 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
                                     </span>
                                  </div>
                                  <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
-                                    <span className="text-sm text-gray-500">Informador:</span>
+                                    <span className="text-sm text-gray-500">Informador:&nbsp;&nbsp;</span>
                                     <span className="text-sm font-medium text-gray-900">
                                        {task.reporterId ? `${task.reporterId.firstName} ${task.reporterId.lastName}` : 'No especificado'}
                                     </span>
@@ -155,27 +155,27 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
                               </div>
                               <div className="space-y-1">
                                  <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
-                                    <span className="text-sm text-gray-500">Creación:</span>
+                                    <span className="text-sm text-gray-500">Creación:&nbsp;&nbsp;</span>
                                     <span className="text-sm font-medium text-gray-900">
                                        {formatDate(task.createdAt)}
                                     </span>
                                  </div>
                                  <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
-                                    <span className="text-sm text-gray-500">Actualización:</span>
+                                    <span className="text-sm text-gray-500">Actualización:&nbsp;&nbsp;</span>
                                     <span className="text-sm font-medium text-gray-900">
                                        {formatDate(task.updatedAt)}
                                     </span>
                                  </div>
                                  <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
-                                    <span className="text-sm text-gray-500">Fecha de inicio:</span>
+                                    <span className="text-sm text-gray-500">Fecha de inicio:&nbsp;&nbsp;</span>
                                     <span className="text-sm font-medium text-gray-900">{formatDate(task.startDate, false, true)}</span>
                                  </div>
                                  <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
-                                    <span className="text-sm text-gray-500">Fecha de fin:</span>
+                                    <span className="text-sm text-gray-500">Fecha de fin:&nbsp;&nbsp;</span>
                                     <span className="text-sm font-medium text-gray-900">{formatDate(task.endDate, false, true)}</span>
                                  </div>
                                  <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
-                                    <span className="text-sm text-gray-500">Fecha real de finalización:</span>
+                                    <span className="text-sm text-gray-500">Fecha real de finalización:&nbsp;&nbsp;</span>
                                     <span className="text-sm font-medium text-gray-900">{formatDate(task.realDate, false, true)}</span>
                                  </div>
                               </div>
@@ -191,7 +191,7 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
                               </div>
                               <div className="space-y-1">
                                  <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
-                                    <span className="text-sm text-gray-500">Estimado:</span>
+                                    <span className="text-sm text-gray-500">Estimado:&nbsp;&nbsp;</span>
                                     <span className="text-sm font-medium text-gray-900">
                                        {task.estimatedTime ? `${task.estimatedTime} horas` : 'No especificado'}
                                     </span>

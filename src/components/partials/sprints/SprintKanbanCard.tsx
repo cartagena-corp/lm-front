@@ -856,7 +856,10 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
                 estimatedTime: issue.estimatedTime || 0,
                 priority: issue.priority || 1,
                 status: newStatusId, // Asegurar que el status sea el nuevo
-                type: issue.type || 1
+                type: issue.type || 1,
+                startDate: issue.startDate,
+                endDate: issue.endDate,
+                realDate: issue.realDate
             }
 
             await updateIssue(token, updatePayload)
