@@ -77,10 +77,6 @@ export default function CreateSprintForm({ onSubmit, onCancel, currentSprint, is
          newErrors.title = 'El título es requerido'
       }
 
-      if (!formData.goal?.trim()) {
-         newErrors.goal = 'La meta del sprint es requerida'
-      }
-
       if (!formData.startDate) {
          newErrors.startDate = 'La fecha de inicio es requerida'
       }
