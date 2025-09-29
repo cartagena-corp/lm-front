@@ -875,8 +875,8 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
 
             await updateIssue(token, updatePayload)
 
-            // Éxito: limpiar estado optimista y mostrar toast de éxito
-            setOptimisticIssues(null)
+            // Éxito: NO limpiar estado optimista inmediatamente
+            // Dejar que el useEffect lo limpie cuando lleguen los datos reales del servidor
             toast.success(
                 `Tarea movida exitosamente a "${newStatusInfo?.name || 'Nuevo estado'}"`,
                 { id: toastId }
