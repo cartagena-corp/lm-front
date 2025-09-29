@@ -308,9 +308,6 @@ export default function CreateSprintForm({ onSubmit, onCancel, currentSprint, is
                         }`}
                         disabled={isSubmitting}
                      />
-                     <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
-                        <CalendarIcon size={18} />
-                     </div>
                   </div>
                   {errors.startDate && (
                      <div className="flex items-center gap-2 text-red-600">
@@ -341,9 +338,6 @@ export default function CreateSprintForm({ onSubmit, onCancel, currentSprint, is
                         }`}
                         disabled={isSubmitting}
                      />
-                     <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
-                        <CalendarIcon size={18} />
-                     </div>
                   </div>
                   {errors.endDate && (
                      <div className="flex items-center gap-2 text-red-600">
