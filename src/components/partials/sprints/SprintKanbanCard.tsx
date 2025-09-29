@@ -457,7 +457,7 @@ function StatusColumn({ status, issues, sprintId, activeId, overId, onViewDetail
                         )
                     })}
                 </SortableContext>
-                <button 
+                <button
                     className='bg-blue-50 border-blue-200 hover:border-blue-400 text-blue-600 text-sm rounded-lg flex justify-start items-center gap-2 border w-full border-dashed py-2 px-4 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer relative opacity-0 group-hover:opacity-100'
                     onClick={() => onCreateTaskInSprint(status.id)}
                     title={`Crear nueva tarea en este sprint con estado "${status.name}"`}
@@ -967,7 +967,6 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
         return 'Sin fechas'
     }
 
-
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             {/* Sprint Header */}
@@ -1195,12 +1194,28 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
                     </div>
                     {spr.startDate && (
                         <span>
-                            Inicio: {new Date(spr.startDate).toLocaleDateString('es-ES')}
+                            <b>Inicio:</b> {spr.startDate ? (() => {
+                                const [year, month, day] = spr.startDate.split('-').map(num => parseInt(num, 10))
+                                const date = new Date(year, month - 1, day)
+                                return date.toLocaleDateString('es-ES', {
+                                    day: '2-digit',
+                                    month: 'short',
+                                    year: 'numeric'
+                                })
+                            })() : 'No definida'}
                         </span>
                     )}
                     {spr.endDate && (
                         <span>
-                            Fin: {new Date(spr.endDate).toLocaleDateString('es-ES')}
+                            <b>Fin:</b> {spr.endDate ? (() => {
+                                const [year, month, day] = spr.endDate.split('-').map(num => parseInt(num, 10))
+                                const date = new Date(year, month - 1, day)
+                                return date.toLocaleDateString('es-ES', {
+                                    day: '2-digit',
+                                    month: 'short',
+                                    year: 'numeric'
+                                })
+                            })() : 'No definida'}
                         </span>
                     )}
                 </div>

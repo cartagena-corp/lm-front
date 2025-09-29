@@ -609,7 +609,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
             ...task,
             sprintId: spr.id // Asignar todas las tareas al sprint actual
          }))
-         
+
          // Crear las tareas con IA usando la funcionalidad existente
          const { createIssuesFromIA } = useIssueStore.getState()
          for (const taskData of tasksWithSprint) {
@@ -955,7 +955,25 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                         <div className="inline-flex items-center gap-2 px-3 py-1 bg-purple-50 rounded-full text-xs font-medium text-purple-800 border border-purple-200">
                            <CalendarIcon size={14} />
                            <span>
-                              {formatDate(spr.startDate)} – {formatDate(spr.endDate)}
+                              {spr.startDate ? (() => {
+                                 const [year, month, day] = spr.startDate.split('-').map(num => parseInt(num, 10))
+                                 const date = new Date(year, month - 1, day)
+                                 return date.toLocaleDateString('es-ES', {
+                                    day: '2-digit',
+                                    month: 'short',
+                                    year: 'numeric'
+                                 })
+                              })() : 'No definida'}
+                              &nbsp;–&nbsp;
+                              {spr.endDate ? (() => {
+                                 const [year, month, day] = spr.endDate.split('-').map(num => parseInt(num, 10))
+                                 const date = new Date(year, month - 1, day)
+                                 return date.toLocaleDateString('es-ES', {
+                                    day: '2-digit',
+                                    month: 'short',
+                                    year: 'numeric'
+                                 })
+                              })() : 'No definida'}
                            </span>
                         </div>
                      )}
@@ -1566,8 +1584,8 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
          {/* Modales */}
          <>
             <Modal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} title="" customWidth="sm:max-w-6xl" showCloseButton={false}>
-               <ImportIssuesModal 
-                  onCancel={() => setIsImportModalOpen(false)} 
+               <ImportIssuesModal
+                  onCancel={() => setIsImportModalOpen(false)}
                   sprintId={spr.id}
                />
             </Modal>
