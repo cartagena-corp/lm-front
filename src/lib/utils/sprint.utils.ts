@@ -2,17 +2,17 @@ import { SprintProps } from '@/lib/types/types'
 
 /**
  * Función para ordenar sprints con la siguiente prioridad:
- * 1. Backlog (id === 'null') siempre primero
- * 2. Sprint activo inmediatamente después del Backlog
- * 3. Resto de sprints ordenados por fecha de inicio (más reciente primero)
+ * 1. Sprint activo siempre primero
+ * 2. Resto de sprints ordenados por fecha de inicio (más reciente primero)
+ * 3. Backlog (id === 'null') siempre al final
  */
 export const sortSprints = (sprints: SprintProps[]): SprintProps[] => {
   return sprints.sort((a, b) => {
-    // El Backlog (id === 'null') siempre va primero
-    if (a.id === 'null') return -1
-    if (b.id === 'null') return 1
+    // El Backlog (id === 'null') siempre va al final
+    if (a.id === 'null') return 1
+    if (b.id === 'null') return -1
     
-    // El sprint activo va segundo (después del Backlog)
+    // El sprint activo va primero
     if (a.active && !b.active) return -1
     if (!a.active && b.active) return 1
     
