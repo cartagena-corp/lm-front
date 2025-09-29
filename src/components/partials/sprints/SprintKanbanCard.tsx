@@ -375,9 +375,10 @@ interface StatusColumnProps {
     onReassign: (issue: TaskProps) => void
     onDelete: (issue: TaskProps) => void
     onHistory: (issue: TaskProps) => void
+    onCreateTaskInSprint: (statusId: number) => void
 }
 
-function StatusColumn({ status, issues, sprintId, activeId, overId, onViewDetails, onEdit, onReassign, onDelete, onHistory }: StatusColumnProps) {
+function StatusColumn({ status, issues, sprintId, activeId, overId, onViewDetails, onEdit, onReassign, onDelete, onHistory, onCreateTaskInSprint }: StatusColumnProps) {
     const {
         attributes,
         listeners,
@@ -432,7 +433,7 @@ function StatusColumn({ status, issues, sprintId, activeId, overId, onViewDetail
 
             <div
                 ref={setDroppableNodeRef}
-                className="min-h-[200px] bg-gray-50 rounded-lg p-3 space-y-3 h-full"
+                className="min-h-[200px] bg-gray-50 rounded-lg p-3 space-y-3 h-full group"
             >
                 <SortableContext items={issues.filter(i => i.id).map(i => i.id!)} strategy={verticalListSortingStrategy}>
                     {issues.map((issue) => {
@@ -456,6 +457,14 @@ function StatusColumn({ status, issues, sprintId, activeId, overId, onViewDetail
                         )
                     })}
                 </SortableContext>
+                <button 
+                    className='bg-blue-50 border-blue-200 hover:border-blue-400 text-blue-600 text-sm rounded-lg flex justify-start items-center gap-2 border w-full border-dashed py-2 px-4 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer relative opacity-0 group-hover:opacity-100'
+                    onClick={() => onCreateTaskInSprint(status.id)}
+                    title={`Crear nueva tarea en este sprint con estado "${status.name}"`}
+                >
+                    <PlusIcon size={16} />
+                    <span>Crear tarea</span>
+                </button>
             </div>
         </div>
     )
@@ -509,7 +518,7 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
     const { projectConfig, addIssueStatus, editIssueStatus, setProjectConfig } = useConfigStore()
-    const { updateIssue, deleteIssue, assignIssue } = useIssueStore()
+    const { updateIssue, deleteIssue, assignIssue, createIssue } = useIssueStore()
     const { updateSprint, deleteSprint } = useSprintStore()
     const { getValidAccessToken } = useAuthStore()
 
@@ -517,6 +526,8 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
     const [isTaskUpdateModalOpen, setIsTaskUpdateModalOpen] = useState(false)
     const [isDeleteIssueModalOpen, setIsDeleteIssueModalOpen] = useState(false)
     const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false)
+    const [isCreateTaskInSprintModalOpen, setIsCreateTaskInSprintModalOpen] = useState(false)
+    const [selectedStatusForNewTask, setSelectedStatusForNewTask] = useState<number | null>(null)
     const [isCreateSprintModalOpen, setIsCreateSprintModalOpen] = useState(false)
     const [isDeleteSprintModalOpen, setIsDeleteSprintModalOpen] = useState(false)
     const [isReasignModalOpen, setIsReasignModalOpen] = useState(false)
@@ -918,6 +929,28 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
         setIsCreateTaskModalOpen(true)
     }
 
+    // Función específica para crear tareas dentro del sprint
+    const handleCreateTaskInSprint = async (newTask: any) => {
+        const token = await getValidAccessToken()
+        if (token) {
+            // Agregar el sprintId y status específico a la tarea antes de crearla
+            const taskWithSprintAndStatus = {
+                ...newTask,
+                sprintId: spr.id, // Asignar la tarea al sprint actual
+                status: selectedStatusForNewTask // Asignar el estado específico de la columna
+            }
+            await createIssue(token, taskWithSprintAndStatus)
+        }
+        setIsCreateTaskInSprintModalOpen(false)
+        setSelectedStatusForNewTask(null) // Limpiar el estado seleccionado
+    }
+
+    // Nueva función para manejar la apertura del modal con estado específico
+    const handleOpenCreateTaskInSprint = (statusId: number) => {
+        setSelectedStatusForNewTask(statusId)
+        setIsCreateTaskInSprintModalOpen(true)
+    }
+
     const handleIssueClick = (issue: TaskProps) => {
         setSelectedIssue(issue)
         setIsTaskDetailsModalOpen(true)
@@ -1229,6 +1262,7 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
                                             onReassign={handleReassign}
                                             onDelete={handleDelete}
                                             onHistory={handleHistory}
+                                            onCreateTaskInSprint={handleOpenCreateTaskInSprint}
                                         />
                                     ))}
                                 </SortableContext>
@@ -1384,6 +1418,41 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
                 <CreateTaskForm
                     onSubmit={() => setIsCreateTaskModalOpen(false)}
                     onCancel={() => setIsCreateTaskModalOpen(false)}
+                />
+            </Modal>
+
+            {/* Modal específico para crear tareas dentro del sprint actual */}
+            <Modal
+                isOpen={isCreateTaskInSprintModalOpen}
+                onClose={() => {
+                    setIsCreateTaskInSprintModalOpen(false)
+                    setSelectedStatusForNewTask(null)
+                }}
+                title=""
+                customWidth='max-w-2xl'
+                showCloseButton={false}
+            >
+                <CreateTaskForm
+                    onSubmit={handleCreateTaskInSprint}
+                    onCancel={() => {
+                        setIsCreateTaskInSprintModalOpen(false)
+                        setSelectedStatusForNewTask(null)
+                    }}
+                    taskObject={selectedStatusForNewTask ? {
+                        id: undefined,
+                        title: "",
+                        descriptions: [],
+                        priority: Number(projectConfig?.issuePriorities?.[0]?.id) || 1,
+                        status: selectedStatusForNewTask, // Pre-configurar con el estado seleccionado
+                        type: Number(projectConfig?.issueTypes?.[0]?.id) || 1,
+                        projectId: spr.projectId,
+                        assignedId: "",
+                        estimatedTime: 0,
+                        startDate: '',
+                        endDate: '',
+                        realDate: '',
+                    } as TaskProps : undefined}
+                    isEdit={false}
                 />
             </Modal>
 

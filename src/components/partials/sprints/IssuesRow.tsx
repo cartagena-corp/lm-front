@@ -22,6 +22,7 @@ import IssueConfig from '../config/issues/IssueConfig'
 import AuditHistory from '../audit/AuditHistory'
 import { getUserAvatar } from '@/lib/utils/avatar.utils'
 import ImportIssuesModal from '../issues/ImportIssuesModal'
+import CreateWithIA from '../issues/CreateWithIA'
 import DeleteAllForm from '../issues/DeleteAllForm'
 
 // Component DraggableIssueRow - Implementación igual a SprintKanbanCard
@@ -368,7 +369,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
    }
 
    const { getValidAccessToken, user } = useAuthStore()
-   const { deleteAllIssues, deleteIssue, updateIssue, assignIssue } = useIssueStore()
+   const { deleteAllIssues, deleteIssue, updateIssue, assignIssue, createIssue } = useIssueStore()
    const { updateSprint, deleteSprint, activeSprint, getIssuesBySprint, loadMoreIssuesBySprint, clearIssuesFromSprint } = useSprintStore()
 
    const wrapperRef = useRef<HTMLDivElement>(null)
@@ -384,7 +385,9 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
    const [isDeleteAllModalOpen, setIsDeleteAllModalOpen] = useState(false)
    const [isImportModalOpen, setIsImportModalOpen] = useState(false)
+   const [isCreateWithIAInSprintOpen, setIsCreateWithIAInSprintOpen] = useState(false)
    const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false)
+   const [isCreateTaskInSprintOpen, setIsCreateTaskInSprintOpen] = useState(false)
    const [sprintSelected, setSprintSelected] = useState<SprintProps>()
    const [openItemId, setOpenItemId] = useState<string | null>(null)
    const [taskActive, setTaskActive] = useState<TaskProps>()
@@ -583,6 +586,39 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
       setSelectedIds([])
    }
 
+   // Función específica para crear tareas dentro del sprint
+   const handleCreateTaskInSprint = async (newTask: any) => {
+      const token = await getValidAccessToken()
+      if (token) {
+         // Agregar el sprintId a la tarea antes de crearla
+         const taskWithSprint = {
+            ...newTask,
+            sprintId: spr.id // Asignar la tarea al sprint actual
+         }
+         await createIssue(token, taskWithSprint)
+      }
+      setIsCreateTaskInSprintOpen(false)
+   }
+
+   // Función específica para crear tareas con IA dentro del sprint
+   const handleCreateWithIAInSprint = async (detectedTasks: any[]) => {
+      const token = await getValidAccessToken()
+      if (token) {
+         // Agregar el sprintId a todas las tareas detectadas antes de crearlas
+         const tasksWithSprint = detectedTasks.map(task => ({
+            ...task,
+            sprintId: spr.id // Asignar todas las tareas al sprint actual
+         }))
+         
+         // Crear las tareas con IA usando la funcionalidad existente
+         const { createIssuesFromIA } = useIssueStore.getState()
+         for (const taskData of tasksWithSprint) {
+            await createIssuesFromIA(token, taskData)
+         }
+      }
+      setIsCreateWithIAInSprintOpen(false)
+   }
+
    // --- Asignado a (multi-select) ---
    const { projectParticipants } = useConfigStore()
    const { selectedBoard } = useBoardStore()
@@ -720,6 +756,35 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                   <div className="flex items-center gap-3 flex-shrink-0">
                      {spr.id !== 'null' ? (
                         <>
+                           <button
+                              onClick={() => setIsImportModalOpen(true)}
+                              className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                              title="Importar tareas en este sprint"
+                           >
+                              <ImportIcon size={16} stroke={2} />
+                              <span>Importar Tareas</span>
+                           </button>
+                           {
+                              // Solo mostrar si el usuario tiene el permiso GEMINI_ACTIVE
+                              (typeof user?.role === 'object' && user?.role?.permissions?.some(p => (p.name === "GEMINI_ACTIVE" || p.name === "GEMINI_CONFIG"))) && (
+                                 <button className="flex items-center gap-2 px-4 py-2 text-blue-700 bg-blue-50 border border-blue-300 rounded-lg hover:bg-blue-100 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                                    onClick={() => setIsCreateWithIAInSprintOpen(true)}
+                                    title="Crear tareas con IA en este sprint"
+                                 >
+                                    <ChatIAIcon size={18} stroke={2} />
+                                    <span>Crear tareas con IA</span>
+                                 </button>
+                              )
+                           }
+
+                           <button
+                              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md"
+                              onClick={() => setIsCreateTaskInSprintOpen(true)}
+                              title="Crear nueva tarea en este sprint"
+                           >
+                              <PlusIcon size={16} stroke={2} />
+                              <span>Nueva Tarea</span>
+                           </button>
                            {/* Botón de Activar Sprint */}
                            {!spr.active && (
                               <button
@@ -799,6 +864,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                            <button
                               onClick={() => setIsImportModalOpen(true)}
                               className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                              title="Importar tareas en el backlog"
                            >
                               <ImportIcon size={16} stroke={2} />
                               <span>Importar Tareas</span>
@@ -808,6 +874,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                               (typeof user?.role === 'object' && user?.role?.permissions?.some(p => (p.name === "GEMINI_ACTIVE" || p.name === "GEMINI_CONFIG"))) && (
                                  <button className="flex items-center gap-2 px-4 py-2 text-blue-700 bg-blue-50 border border-blue-300 rounded-lg hover:bg-blue-100 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                                     onClick={() => setIsCreateWithIAOpen(true)}
+                                    title="Crear tareas con IA en el backlog"
                                  >
                                     <ChatIAIcon size={18} stroke={2} />
                                     <span>Crear tareas con IA</span>
@@ -1499,7 +1566,10 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
          {/* Modales */}
          <>
             <Modal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} title="" customWidth="sm:max-w-6xl" showCloseButton={false}>
-               <ImportIssuesModal onCancel={() => setIsImportModalOpen(false)} />
+               <ImportIssuesModal 
+                  onCancel={() => setIsImportModalOpen(false)} 
+                  sprintId={spr.id}
+               />
             </Modal>
             <Modal isOpen={isUpdateSprintOpen} onClose={() => setIsUpdateSprintOpen(false)} title="" customWidth="sm:max-w-2xl" showCloseButton={false}>
                <CreateSprintForm
@@ -1565,6 +1635,36 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                   onSubmit={handleDeleteAll}
                   onCancel={() => setIsDeleteAllModalOpen(false)}
                   taskArray={selectedIds}
+               />
+            </Modal>
+
+            {/* Modal específico para crear tareas dentro del sprint actual */}
+            <Modal
+               isOpen={isCreateTaskInSprintOpen}
+               onClose={() => setIsCreateTaskInSprintOpen(false)}
+               title=""
+               customWidth='max-w-2xl'
+               showCloseButton={false}
+            >
+               <CreateTaskForm
+                  onSubmit={handleCreateTaskInSprint}
+                  onCancel={() => setIsCreateTaskInSprintOpen(false)}
+               />
+            </Modal>
+
+            {/* Modal específico para crear tareas con IA dentro del sprint actual */}
+            <Modal
+               isOpen={isCreateWithIAInSprintOpen}
+               onClose={() => setIsCreateWithIAInSprintOpen(false)}
+               title=""
+               customWidth="sm:max-w-4xl h-[90dvh]"
+               showCloseButton={false}
+               closeOnClickOutside={false}
+            >
+               <CreateWithIA
+                  onSubmit={handleCreateWithIAInSprint}
+                  onCancel={() => setIsCreateWithIAInSprintOpen(false)}
+                  sprintId={spr.id}
                />
             </Modal>
          </>

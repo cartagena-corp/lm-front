@@ -66,7 +66,7 @@ interface IssueState {
    detectIssues: (token: string, projectId: string, text?: string, file?: File) => Promise<any>
 
    getColumnsFromExcel: (token: string, file: File) => Promise<any>
-   importIssuesFromExcel: (token: string, file: File, projectId: string, mapping: Record<string, string>) => Promise<any>
+   importIssuesFromExcel: (token: string, file: File, projectId: string, mapping: Record<string, string>, sprintId?: string) => Promise<any>
 
    // Utility actions
    setSelectedIssue: (issue: TaskProps | null) => void
@@ -542,12 +542,17 @@ export const useIssueStore = create<IssueState>((set, get) => ({
       }
    },
    // Import Issues from Excel
-   importIssuesFromExcel: async (token: string, file: File, projectId: string, mapping: Record<string, string>) => {
+   importIssuesFromExcel: async (token: string, file: File, projectId: string, mapping: Record<string, string>, sprintId?: string) => {
       try {
          const formData = new FormData()
          formData.append('file', file)
          formData.append('projectId', projectId)
          formData.append('mapping', JSON.stringify(mapping))
+         
+         // Agregar sprintId si se proporciona
+         if (sprintId && sprintId !== 'null') {
+            formData.append('sprintId', sprintId)
+         }
 
          const response = await fetch(API_ROUTES.IMPORT_ISSUES, {
             method: 'POST',

@@ -7,6 +7,7 @@ import toast from "react-hot-toast"
 
 interface FormProps {
     onCancel: () => void
+    sprintId?: string // Opcional para asignar tareas importadas a un sprint específico
 }
 
 const ACCEPTED_FORMATS = [
@@ -25,7 +26,7 @@ const ISSUE_FIELDS = [
     // { key: "updatedAt", label: "Fecha de Última Actualización", multi: false },
 ]
 
-export default function ImportIssuesModal({ onCancel }: FormProps) {
+export default function ImportIssuesModal({ onCancel, sprintId }: FormProps) {
     const pathname = usePathname()
     const { getValidAccessToken } = useAuthStore()
     const { getColumnsFromExcel, importIssuesFromExcel } = useIssueStore()
@@ -154,12 +155,13 @@ export default function ImportIssuesModal({ onCancel }: FormProps) {
         const token = await getValidAccessToken()
         const projectId = pathname.split("/").pop()
         if (file && token && projectId) {
-            const res = await importIssuesFromExcel(token, file, projectId, mappingToSend)
+            const res = await importIssuesFromExcel(token, file, projectId, mappingToSend, sprintId)
             if (res !== "Successful import") {
                 toast.error("Error al importar las tareas: " + res)
                 return;
             }
-            toast.success("Tareas importadas correctamente")
+            const sprintText = sprintId && sprintId !== 'null' ? ' al sprint' : ''
+            toast.success(`Tareas importadas correctamente${sprintText}`)
             setInterval(() => {
                 onCancel()
                 window.location.reload()

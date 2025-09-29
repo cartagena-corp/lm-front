@@ -34,9 +34,10 @@ interface DetectedTask {
 interface FormProps {
     onSubmit: (data: DetectedTask[]) => void
     onCancel: () => void
+    sprintId?: string // Opcional para asignar tareas creadas con IA a un sprint específico
 }
 
-export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
+export default function CreateWithIA({ onSubmit, onCancel, sprintId }: FormProps) {
     const params = useParams()
     const { detectIssues, createIssuesFromIA } = useIssueStore()
     const { getValidAccessToken } = useAuthStore()
@@ -351,7 +352,8 @@ export default function CreateWithIA({ onSubmit, onCancel }: FormProps) {
                     title: task.title,
                     descriptionsDTO: task.descriptionsDTO,
                     projectId: params.id as string,
-                    assignedId: task.assignedId
+                    assignedId: task.assignedId,
+                    ...(sprintId && sprintId !== 'null' ? { sprintId } : {}) // Agregar sprintId si se proporciona
                 }))
 
                 await createIssuesFromIA(token, formattedTasks)

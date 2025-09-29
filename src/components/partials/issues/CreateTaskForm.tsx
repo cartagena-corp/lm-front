@@ -81,15 +81,16 @@ export default function CreateTaskForm({ onSubmit, onCancel, taskObject, isEdit 
     id: isEdit ? taskObject?.id : undefined,
     title: isEdit ? taskObject?.title || "" : "",
     descriptions: isEdit ? taskObject?.descriptions || [] : [],
-    priority: isEdit ? taskObject?.priority || Number(projectConfig?.issuePriorities[0]?.id) : Number(projectConfig?.issuePriorities[0]?.id),
-    status: isEdit ? taskObject?.status || Number(projectConfig?.issueStatuses[0]?.id) : Number(projectConfig?.issueStatuses[0]?.id),
-    type: isEdit ? taskObject?.type || Number(projectConfig?.issueTypes[0]?.id) : Number(projectConfig?.issueTypes[0]?.id),
-    projectId: isEdit ? taskObject?.projectId || selectedBoard?.id as string : selectedBoard?.id as string,
+    priority: taskObject?.priority || Number(projectConfig?.issuePriorities?.[0]?.id) || 1,
+    status: taskObject?.status || Number(projectConfig?.issueStatuses?.[0]?.id) || 1,
+    type: taskObject?.type || Number(projectConfig?.issueTypes?.[0]?.id) || 1,
+    projectId: taskObject?.projectId || selectedBoard?.id as string,
     assignedId: isEdit ? taskObject?.assignedId || "" : "",
     estimatedTime: isEdit ? taskObject?.estimatedTime || 0 : 0,
     startDate: isEdit ? taskObject?.startDate || '' : '',
     endDate: isEdit ? taskObject?.endDate || '' : '',
     realDate: isEdit ? taskObject?.realDate || '' : '',
+    sprintId: taskObject?.sprintId,
   })
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -279,7 +280,7 @@ export default function CreateTaskForm({ onSubmit, onCancel, taskObject, isEdit 
                   </button>
 
                   {isUserOpen && (
-                    <div className='absolute z-[9999] top-full mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-xl max-h-40 overflow-y-auto'>
+                    <div className='absolute z-[9999] top-full mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto'>
                       {allProjectUsers.map((obj, i) => (
                         <button
                           key={i}
