@@ -298,7 +298,7 @@ function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onView
                     {priorityInfo.name}
                 </div>
 
-                <div
+                {/* <div
                     className="px-2 py-1 rounded-full text-xs font-medium border"
                     style={{
                         backgroundColor: `${statusInfo.color}15`,
@@ -314,7 +314,7 @@ function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onView
                         />
                         {statusInfo.name}
                     </div>
-                </div>
+                </div> */}
             </div>
 
             {/* Description */}
@@ -323,7 +323,7 @@ function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onView
             </p>
 
             {/* Footer with assigned user and date */}
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center justify-between gap-1 overflow-hidden">
                 {/* Assigned user - clickable to reassign */}
                 <button
                     className="flex w-full justify-start items-center gap-2 text-xs text-gray-600 hover:bg-gray-50 rounded-lg p-1 transition-colors group"
