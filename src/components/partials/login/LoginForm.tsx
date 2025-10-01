@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { EyeIcon, EyeOffIcon } from '@/assets/Icon'
 
 interface LoginFormProps {
   onSubmit: (email: string, password: string) => void
@@ -12,6 +13,7 @@ export default function LoginForm({ onSubmit, isLoading = false }: LoginFormProp
   const [password, setPassword] = useState('')
   const [emailError, setEmailError] = useState('')
   const [passwordError, setPasswordError] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
 
   // Función para validar email
   const validateEmail = (email: string) => {
@@ -67,15 +69,31 @@ export default function LoginForm({ onSubmit, isLoading = false }: LoginFormProp
         </div>
 
         <div>
-          <input
-            type='password'
-            placeholder='Contraseña'
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            disabled={isLoading}
-            className={`w-full px-3 py-2 border rounded-md outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed ${passwordError ? 'border-red-500' : 'border-black/15'
-              }`}
-          />
+          <div className="relative">
+            <input
+              type={showPassword ? 'text' : 'password'}
+              placeholder='Contraseña'
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={isLoading}
+              className={`w-full px-3 py-2 ${password.length > 0 ? 'pr-10' : 'pr-3'} border rounded-md outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed ${passwordError ? 'border-red-500' : 'border-black/15'
+                }`}
+            />
+            {password.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                disabled={isLoading}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 disabled:cursor-not-allowed"
+              >
+                {showPassword ? (
+                  <EyeOffIcon size={20} stroke={1.5} />
+                ) : (
+                  <EyeIcon size={20} stroke={1.5} />
+                )}
+              </button>
+            )}
+          </div>
           {passwordError && <p className='text-red-500 text-xs mt-1'>{passwordError}</p>}
         </div>
 
