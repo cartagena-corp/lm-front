@@ -1598,7 +1598,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                />
             </Modal>
 
-            <Modal isOpen={isTaskDetailsModalOpen} customWidth="w-full m-10! h-full!" closeOnClickOutside={false} onClose={() => setIsTaskDetailsModalOpen(false)} title="" showCloseButton={false}>
+            <Modal isOpen={isTaskDetailsModalOpen} customWidth="w-full m-10! h-full!" removePadding closeOnClickOutside={false} onClose={() => setIsTaskDetailsModalOpen(false)} title="" showCloseButton={false}>
                <TaskDetailsForm
                   task={taskActive as TaskProps}
                   onSubmit={() => setIsTaskDetailsModalOpen(false)}

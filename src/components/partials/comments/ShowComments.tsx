@@ -32,13 +32,13 @@ export default function ShowComments({ arrayComments, task }: ShowCommentsProps)
       if (!scrollContainer) return
 
       let isThrottled = false
-      
+
       const handleScroll = () => {
          if (isThrottled) return
-         
+
          const { scrollTop, scrollHeight, clientHeight } = scrollContainer
          const threshold = 100 // pixels from bottom to trigger load
-         
+
          if (scrollHeight - scrollTop - clientHeight < threshold && hasMoreComments && !isLoadingMore) {
             isThrottled = true
             handleLoadMore().finally(() => {
@@ -142,11 +142,8 @@ export default function ShowComments({ arrayComments, task }: ShowCommentsProps)
 
          {/* Lista de comentarios */}
          {comments.content.length ? (
-            <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-               <div 
-                  ref={scrollContainerRef}
-                  className="max-h-60 overflow-y-auto"
-               >
+            <div className="bg-white border border-gray-100 rounded-xl overflow-hidden">
+               <div ref={scrollContainerRef}>
                   <div className="divide-y divide-gray-100">
                      {comments.content.map((c) => (
                         <div key={c.id} className="p-4">
@@ -154,7 +151,7 @@ export default function ShowComments({ arrayComments, task }: ShowCommentsProps)
                         </div>
                      ))}
                   </div>
-                  
+
                   {/* Loading indicator for infinite scroll */}
                   {isLoadingMore && (
                      <div className="flex items-center justify-center py-4 border-t border-gray-100">
@@ -164,7 +161,7 @@ export default function ShowComments({ arrayComments, task }: ShowCommentsProps)
                         </div>
                      </div>
                   )}
-                  
+
                   {/* Load more button - shown when there are more comments and not loading */}
                   {hasMoreComments && !isLoadingMore && (
                      <div className="flex items-center justify-center py-4 border-t border-gray-100">
@@ -176,7 +173,7 @@ export default function ShowComments({ arrayComments, task }: ShowCommentsProps)
                         </button>
                      </div>
                   )}
-                  
+
                   {/* End of comments indicator */}
                   {!hasMoreComments && comments.content.length > 0 && (
                      <div className="flex items-center justify-center py-4 border-t border-gray-100">
@@ -200,7 +197,7 @@ export default function ShowComments({ arrayComments, task }: ShowCommentsProps)
          )}
 
          {/* Área de nuevo comentario */}
-         <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4">
+         <div className="bg-white border border-gray-100 rounded-xl p-4">
             {/* Archivos adjuntos */}
             {files.length > 0 && (
                <div className="mb-4">
@@ -277,7 +274,7 @@ export default function ShowComments({ arrayComments, task }: ShowCommentsProps)
                         onPaste={handlePaste}
                      />
                   </div>
-                  
+
                   <div className="flex justify-between items-center">
                      <button
                         className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
@@ -288,7 +285,7 @@ export default function ShowComments({ arrayComments, task }: ShowCommentsProps)
                         <AttachIcon size={16} stroke={2} />
                         Adjuntar
                      </button>
-                     
+
                      <button
                         className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         onClick={handleAddComment}
@@ -310,7 +307,7 @@ export default function ShowComments({ arrayComments, task }: ShowCommentsProps)
                   </div>
                </div>
             )}
-            
+
             <input
                ref={fileInputRef}
                type="file"

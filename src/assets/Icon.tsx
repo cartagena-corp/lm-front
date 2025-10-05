@@ -348,3 +348,11 @@ export const ChevronRightIcon = ({ size = 24, stroke = 1.5 }: IconProps) => (
       <path d="m9 18 6-6-6-6" />
    </svg>
 )
+
+export const LinkRedirect = ({ size = 24, stroke = 1.5 }: IconProps) => (
+   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill={"none"} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={stroke}>
+      <path d="M21 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h6" />
+      <path d="m21 3-9 9" />
+      <path d="M15 3h6v6" />
+   </svg>
+)

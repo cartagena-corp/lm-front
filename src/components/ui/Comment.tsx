@@ -120,20 +120,20 @@ export default function Comment({ comment }: Props) {
             <div className="flex items-start gap-2">
                {/* Avatar */}
                <div className="flex-shrink-0">
-                  <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100">
+                  <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-100">
                      <Image
                         className="w-full h-full object-cover"
-                        src={getUserAvatar(comment.user, 40)}
+                        src={getUserAvatar(comment.user, 32)}
                         alt={`${comment.user.firstName} ${comment.user.lastName}`}
-                        width={40}
-                        height={40}
+                        width={32}
+                        height={32}
                      />
                   </div>
                </div>
 
                {/* Contenido del comentario */}
                <div className="flex-1 min-w-0">
-                  <div className="bg-gray-50 rounded-xl p-4">
+                  <div className="rounded-xl">
                      {/* Header del comentario */}
                      <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
