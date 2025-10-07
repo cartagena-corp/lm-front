@@ -17,9 +17,8 @@ export default function TaskDetailsPage() {
     const { getValidAccessToken } = useAuthStore()
     const { comments, getComments } = useCommentStore()
     const { selectedBoard, getBoard } = useBoardStore()
-    const { issues, getIssues, updateIssue } = useIssueStore()
+    const { selectedIssue, getSpecificIssue, updateIssue } = useIssueStore()
     const { projectConfig, setProjectConfig } = useConfigStore()
-    const [task, setTask] = useState<TaskProps | null>(null)
     const [loading, setLoading] = useState(true)
     const [isSidebarVisible, setIsSidebarVisible] = useState(false)
     const [isTaskUpdateModalOpen, setIsTaskUpdateModalOpen] = useState(false)
@@ -40,24 +39,17 @@ export default function TaskDetailsPage() {
                     await setProjectConfig(boardId as string, token)
                 }
 
-                // Cargar las issues si no están cargadas o están vacías
-                if (!issues.content || issues.content.length === 0) {
-                    await getIssues(token, boardId as string, { sprintId: '' })
-                }
+                // Cargar la issue específica usando su ID
+                await getSpecificIssue(token, taskId as string)
 
-                // Buscar la tarea en los issues cargados
-                const foundTask = issues.content.find((issue: any) => issue.id === taskId && 'title' in issue) as TaskProps
-                if (foundTask) {
-                    setTask(foundTask)
-                    // Cargar comentarios de la tarea
-                    await getComments(token, taskId as string)
-                }
+                // Cargar comentarios de la tarea
+                await getComments(token, taskId as string)
             }
             setLoading(false)
         }
 
         loadData()
-    }, [boardId, taskId, getValidAccessToken, getBoard, getComments, getIssues, setProjectConfig, selectedBoard, projectConfig, issues, router])
+    }, [boardId, taskId, getValidAccessToken, getBoard, getComments, getSpecificIssue, setProjectConfig, selectedBoard, projectConfig, router])
 
     const handleGoBack = () => {
         router.push(`/tableros/${boardId}`)
@@ -74,12 +66,8 @@ export default function TaskDetailsPage() {
         const token = await getValidAccessToken()
         if (token) {
             await updateIssue(token, formData)
-            // Recargar la tarea actualizada
-            await getIssues(token, boardId as string, { sprintId: '' })
-            const updatedTask = issues.content.find((issue: any) => issue.id === taskId && 'title' in issue) as TaskProps
-            if (updatedTask) {
-                setTask(updatedTask)
-            }
+            // Recargar la tarea actualizada directamente por su ID
+            await getSpecificIssue(token, taskId as string)
         }
         setIsTaskUpdateModalOpen(false)
     }
@@ -97,7 +85,7 @@ export default function TaskDetailsPage() {
         )
     }
 
-    if (!task) {
+    if (!selectedIssue) {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <div className="text-gray-500">Tarea no encontrada</div>
@@ -106,7 +94,7 @@ export default function TaskDetailsPage() {
     }
 
     return (
-        <div className="bg-gray-50 flex flex-col overflow-hidden h-screen">
+        <div className="bg-gray-50 flex flex-col overflow-hidden h-[94vh]">
             <div className="mx-auto w-full px-4 flex-shrink-0">
                 {/* Header con botón de regreso */}
                 <div className="flex justify-between items-center">
@@ -137,20 +125,17 @@ export default function TaskDetailsPage() {
                     <div className={`flex-1 transition-all duration-300 ease-in-out pr-4 h-full overflow-y-auto ${!isSidebarVisible ? 'pr-0' : ''}`}>
                         <div className="flex flex-col space-y-4">
                             {/* Sección de descripción */}
-                            <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-                                <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                                    Título
+                                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                                    {selectedIssue.title}
                                 </h3>
-                                <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap">{task.title}</p>
-                            </div>
                             <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
                                 <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
                                     Descripciones
                                 </h3>
                                 <div className="bg-white rounded-lg p-4 border border-gray-100 space-y-1">
-                                    {task.descriptions.length > 0 ? (
+                                    {selectedIssue.descriptions.length > 0 ? (
                                         <div className="space-y-4">
-                                            {task.descriptions.map((desc, id) => (
+                                            {selectedIssue.descriptions.map((desc, id) => (
                                                 <div key={id} className="space-y-1">
                                                     <h4 className="font-semibold text-gray-900 text-sm">{desc.title}</h4>
                                                     <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap">{desc.text}</p>
@@ -167,7 +152,7 @@ export default function TaskDetailsPage() {
 
                             {/* Sección de comentarios */}
                             <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
-                                <ShowComments arrayComments={comments} task={task} />
+                                <ShowComments arrayComments={comments} task={selectedIssue} />
                             </div>
                         </div>
                     </div>
@@ -206,15 +191,15 @@ export default function TaskDetailsPage() {
                                         <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
                                             <span className="text-sm text-gray-500">Asignado a:&nbsp;&nbsp;</span>
                                             <span className="text-sm font-medium text-gray-900">
-                                                {typeof task.assignedId === 'object'
-                                                    ? `${task.assignedId.firstName ?? "Sin"} ${task.assignedId.lastName ?? "asignar"}`
-                                                    : task.assignedId || 'No asignado'}
+                                                {typeof selectedIssue.assignedId === 'object'
+                                                    ? `${selectedIssue.assignedId.firstName ?? "Sin"} ${selectedIssue.assignedId.lastName ?? "asignar"}`
+                                                    : selectedIssue.assignedId || 'No asignado'}
                                             </span>
                                         </div>
                                         <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
                                             <span className="text-sm text-gray-500">Informador:&nbsp;&nbsp;</span>
                                             <span className="text-sm font-medium text-gray-900">
-                                                {task.reporterId ? `${task.reporterId.firstName} ${task.reporterId.lastName}` : 'No especificado'}
+                                                {selectedIssue.reporterId ? `${selectedIssue.reporterId.firstName} ${selectedIssue.reporterId.lastName}` : 'No especificado'}
                                             </span>
                                         </div>
                                     </div>
@@ -232,26 +217,26 @@ export default function TaskDetailsPage() {
                                         <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
                                             <span className="text-sm text-gray-500">Creación:&nbsp;&nbsp;</span>
                                             <span className="text-sm font-medium text-gray-900">
-                                                {formatDate(task.createdAt)}
+                                                {formatDate(selectedIssue.createdAt)}
                                             </span>
                                         </div>
                                         <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
                                             <span className="text-sm text-gray-500">Actualización:&nbsp;&nbsp;</span>
                                             <span className="text-sm font-medium text-gray-900">
-                                                {formatDate(task.updatedAt)}
+                                                {formatDate(selectedIssue.updatedAt)}
                                             </span>
                                         </div>
                                         <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
                                             <span className="text-sm text-gray-500">Fecha de inicio:&nbsp;&nbsp;</span>
-                                            <span className="text-sm font-medium text-gray-900">{formatDate(task.startDate, false, true)}</span>
+                                            <span className="text-sm font-medium text-gray-900">{formatDate(selectedIssue.startDate, false, true)}</span>
                                         </div>
                                         <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
                                             <span className="text-sm text-gray-500">Fecha de fin:&nbsp;&nbsp;</span>
-                                            <span className="text-sm font-medium text-gray-900">{formatDate(task.endDate, false, true)}</span>
+                                            <span className="text-sm font-medium text-gray-900">{formatDate(selectedIssue.endDate, false, true)}</span>
                                         </div>
                                         <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
                                             <span className="text-sm text-gray-500">Fecha real de finalización:&nbsp;&nbsp;</span>
-                                            <span className="text-sm font-medium text-gray-900">{formatDate(task.realDate, false, true)}</span>
+                                            <span className="text-sm font-medium text-gray-900">{formatDate(selectedIssue.realDate, false, true)}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -268,7 +253,7 @@ export default function TaskDetailsPage() {
                                         <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
                                             <span className="text-sm text-gray-500">Estimado:&nbsp;&nbsp;</span>
                                             <span className="text-sm font-medium text-gray-900">
-                                                {task.estimatedTime ? `${task.estimatedTime} horas` : 'No especificado'}
+                                                {selectedIssue.estimatedTime ? `${selectedIssue.estimatedTime} horas` : 'No especificado'}
                                             </span>
                                         </div>
                                     </div>
@@ -283,7 +268,7 @@ export default function TaskDetailsPage() {
                 <CreateTaskForm
                     onSubmit={handleUpdate}
                     onCancel={() => setIsTaskUpdateModalOpen(false)}
-                    taskObject={task || undefined}
+                    taskObject={selectedIssue || undefined}
                     isEdit={true}
                 />
             </Modal>

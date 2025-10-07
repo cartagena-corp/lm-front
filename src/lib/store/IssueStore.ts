@@ -50,6 +50,7 @@ interface IssueState {
 
    // Actions
    getIssues: (token: string, projectId: string, filters?: IssueFilters) => Promise<void>
+   getSpecificIssue: (token: string, issueId: string) => Promise<void>
    loadMoreIssues: (token: string, projectId: string, filters?: IssueFilters) => Promise<void>
    createIssue: (token: string, issueData: TaskProps) => Promise<void>
    updateIssue: (token: string, issueUpdated: IssueUpdated) => Promise<void>
@@ -87,6 +88,23 @@ export const useIssueStore = create<IssueState>((set, get) => ({
    isLoading: false,
    isLoadingMore: false,
    error: null,
+
+   getSpecificIssue: async (token: string, issueId: string) => {
+      set({ selectedIssue: null, isLoading: true, error: null })
+      try {
+         const response = await fetch(`${API_ROUTES.CRUD_ISSUES}/${issueId}`, {
+            method: 'GET', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+         })
+         if (!response.ok) { throw new Error(`Error ${response.status}: ${response.statusText}`) }
+
+         const issue: TaskProps = await response.json()
+         set({ selectedIssue: issue, isLoading: false })
+      } catch (error) {
+         const errorMessage = error instanceof Error ? error.message : 'Error al obtener la issue'
+         set({ error: errorMessage, isLoading: false })
+         console.error('Error en getSpecificIssue:', error)
+      }
+   },
 
    // Get Issues with filters
    getIssues: async (token: string, projectId: string, filters?: IssueFilters) => {
@@ -548,7 +566,7 @@ export const useIssueStore = create<IssueState>((set, get) => ({
          formData.append('file', file)
          formData.append('projectId', projectId)
          formData.append('mapping', JSON.stringify(mapping))
-         
+
          // Agregar sprintId si se proporciona
          if (sprintId && sprintId !== 'null') {
             formData.append('sprintId', sprintId)
