@@ -561,9 +561,9 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
       status: number,
       title: string,
       type: number
-   }) => {
+   }, filesMap?: Map<string, File[]>) => {
       const token = await getValidAccessToken()
-      if (token) await updateIssue(token, formData)
+      if (token) await updateIssue(token, formData, filesMap)
       setIsTaskUpdateModalOpen(false)
    }
 
@@ -587,7 +587,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
    }
 
    // Función específica para crear tareas dentro del sprint
-   const handleCreateTaskInSprint = async (newTask: any) => {
+   const handleCreateTaskInSprint = async (newTask: any, filesMap?: Map<string, File[]>) => {
       const token = await getValidAccessToken()
       if (token) {
          // Agregar el sprintId a la tarea antes de crearla
@@ -595,7 +595,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
             ...newTask,
             sprintId: spr.id // Asignar la tarea al sprint actual
          }
-         await createIssue(token, taskWithSprint)
+         await createIssue(token, taskWithSprint, filesMap)
       }
       setIsCreateTaskInSprintOpen(false)
    }

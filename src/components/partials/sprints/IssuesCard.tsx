@@ -157,9 +157,9 @@ export default function IssuesCard({ spr, setIsOpen, isOverlay = false }: { spr:
       status: number,
       title: string,
       type: number
-   }) => {
+   }, filesMap?: Map<string, File[]>) => {
       const token = await getValidAccessToken()
-      if (token) await updateIssue(token, formData)
+      if (token) await updateIssue(token, formData, filesMap)
       setIsTaskUpdateModalOpen(false)
    }
 

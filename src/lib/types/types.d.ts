@@ -26,6 +26,11 @@ export interface TaskProps {
       id?: string
       title: string
       text: string
+      attachments?: {
+         id: string
+         fileName: string
+         fileUrl: string
+      }[]
    }[]
    projectId: string
    priority: number                                   /* DEFAULT: "Baja" | "Media" | "Alta" */

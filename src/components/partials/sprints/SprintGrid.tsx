@@ -24,9 +24,9 @@ export default function SprintGrid() {
    const [selectedIds, setSelectedIds] = useState<string[]>([])
    const [activeId, setActiveId] = useState<string | null>(null)
 
-   const handleCreateTask = async (newTask: any) => {
+   const handleCreateTask = async (newTask: any, filesMap?: Map<string, File[]>) => {
       const token = await getValidAccessToken()
-      if (token) await createIssue(token, newTask)
+      if (token) await createIssue(token, newTask, filesMap)
       setIsCreateTaskOpen(false)
    }
 

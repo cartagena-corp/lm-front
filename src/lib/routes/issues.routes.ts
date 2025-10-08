@@ -3,6 +3,7 @@ const INTEGRATION_URL = process.env.NEXT_PUBLIC_SERVICE_INTEGRATION
 
 export const API_ROUTES = {
     GET_ISSUES_BY_PROJECT: `${BACKEND_URL}/api/issues/search`,
+    ADD_FILES_TO_DESCRIPTION: (issueId: string, descId: string) => `${BACKEND_URL}/api/issues/${issueId}/description/${descId}/files`,
     CRUD_ISSUES: `${BACKEND_URL}/api/issues`,
     ASIGN_ISSUE_TO_SPRINT: `${BACKEND_URL}/api/issues/assign`,
     REMOVE_ISSUE_FROM_SPRINT: `${BACKEND_URL}/api/issues/remove`,

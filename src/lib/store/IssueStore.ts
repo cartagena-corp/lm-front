@@ -52,8 +52,8 @@ interface IssueState {
    getIssues: (token: string, projectId: string, filters?: IssueFilters) => Promise<void>
    getSpecificIssue: (token: string, issueId: string) => Promise<void>
    loadMoreIssues: (token: string, projectId: string, filters?: IssueFilters) => Promise<void>
-   createIssue: (token: string, issueData: TaskProps) => Promise<void>
-   updateIssue: (token: string, issueUpdated: IssueUpdated) => Promise<void>
+   createIssue: (token: string, issueData: TaskProps, filesMap?: Map<string, File[]>) => Promise<void>
+   updateIssue: (token: string, issueUpdated: IssueUpdated, filesMap?: Map<string, File[]>) => Promise<void>
    deleteIssue: (token: string, issueId: string, projectId: string) => Promise<void>
    deleteAllIssues: (token: string, issueIds: string[], projectId: string) => Promise<void>
    assignIssueToSprint: (token: string, issueIds: string[], sprintId: string, projectId: string) => Promise<void>
@@ -211,7 +211,7 @@ export const useIssueStore = create<IssueState>((set, get) => ({
    },
 
    // Create Issue
-   createIssue: async (token: string, issueData: TaskProps) => {
+   createIssue: async (token: string, issueData: TaskProps, filesMap?: Map<string, File[]>) => {
       set({ isLoading: true, error: null })
 
       try {
@@ -230,6 +230,45 @@ export const useIssueStore = create<IssueState>((set, get) => ({
 
          const newIssue: TaskProps = await response.json()
 
+         // Si hay archivos, subirlos a las descripciones correspondientes
+         if (filesMap && filesMap.size > 0 && newIssue.id) {
+            const uploadPromises: Promise<void>[] = []
+
+            // Iterar sobre las descripciones de la issue creada
+            newIssue.descriptions.forEach(description => {
+               // Buscar si hay archivos para esta descripción (por título)
+               const files = filesMap.get(description.title)
+               
+               if (files && files.length > 0 && description.id) {
+                  // Crear FormData para cada descripción
+                  const formData = new FormData()
+                  files.forEach(file => {
+                     formData.append('files', file)
+                  })
+
+                  // Hacer la petición POST para subir archivos
+                  const uploadPromise = fetch(
+                     API_ROUTES.ADD_FILES_TO_DESCRIPTION(newIssue.id!, description.id),
+                     {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` },
+                        body: formData
+                     }
+                  ).then(res => {
+                     if (!res.ok) {
+                        console.error(`Error al subir archivos para descripción ${description.id}`)
+                     }
+                  })
+
+                  uploadPromises.push(uploadPromise)
+               }
+            })
+
+            // Esperar a que todas las subidas terminen
+            await Promise.all(uploadPromises)
+         }
+
+         // Agregar la issue al estado
          set((state) => ({
             issues: {
                ...state.issues,
@@ -249,7 +288,7 @@ export const useIssueStore = create<IssueState>((set, get) => ({
    },
 
    // Update Issue
-   updateIssue: async (token: string, issueUpdated: IssueUpdated) => {
+   updateIssue: async (token: string, issueUpdated: IssueUpdated, filesMap?: Map<string, File[]>) => {
       set({ isLoading: true, error: null })
 
       try {
@@ -271,6 +310,46 @@ export const useIssueStore = create<IssueState>((set, get) => ({
          })
 
          if (!response.ok) { throw new Error(`Error ${response.status}: ${response.statusText}`) }
+
+         const updatedIssue: TaskProps = await response.json()
+
+         // Si hay archivos nuevos, subirlos a las descripciones correspondientes
+         if (filesMap && filesMap.size > 0 && updatedIssue.id) {
+            const uploadPromises: Promise<void>[] = []
+
+            // Iterar sobre las descripciones de la issue actualizada
+            updatedIssue.descriptions.forEach(description => {
+               // Buscar si hay archivos nuevos para esta descripción (por título)
+               const files = filesMap.get(description.title)
+               
+               if (files && files.length > 0 && description.id) {
+                  // Crear FormData para cada descripción
+                  const formData = new FormData()
+                  files.forEach(file => {
+                     formData.append('files', file)
+                  })
+
+                  // Hacer la petición POST para subir archivos nuevos
+                  const uploadPromise = fetch(
+                     API_ROUTES.ADD_FILES_TO_DESCRIPTION(updatedIssue.id!, description.id),
+                     {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` },
+                        body: formData
+                     }
+                  ).then(res => {
+                     if (!res.ok) {
+                        console.error(`Error al subir archivos para descripción ${description.id}`)
+                     }
+                  })
+
+                  uploadPromises.push(uploadPromise)
+               }
+            })
+
+            // Esperar a que todas las subidas terminen
+            await Promise.all(uploadPromises)
+         }
 
          set((state) => ({
             issues: {

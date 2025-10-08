@@ -41,9 +41,9 @@ export default function SprintList() {
       })
    )
 
-   const handleCreateTask = async (newTask: any) => {
+   const handleCreateTask = async (newTask: any, filesMap?: Map<string, File[]>) => {
       const token = await getValidAccessToken()
-      if (token) await createIssue(token, newTask)
+      if (token) await createIssue(token, newTask, filesMap)
       setIsCreateTaskOpen(false)
    }
 

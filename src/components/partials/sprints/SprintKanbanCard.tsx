@@ -624,9 +624,9 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
         startDate?: string,
         endDate?: string,
         realDate?: string
-    }) => {
+    }, filesMap?: Map<string, File[]>) => {
         const token = await getValidAccessToken()
-        if (token) await updateIssue(token, formData)
+        if (token) await updateIssue(token, formData, filesMap)
         setIsTaskUpdateModalOpen(false)
         setSelectedIssue(null)
     }
@@ -930,7 +930,7 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
     }
 
     // Función específica para crear tareas dentro del sprint
-    const handleCreateTaskInSprint = async (newTask: any) => {
+    const handleCreateTaskInSprint = async (newTask: any, filesMap?: Map<string, File[]>) => {
         const token = await getValidAccessToken()
         if (token) {
             // Agregar el sprintId y status específico a la tarea antes de crearla
@@ -939,7 +939,7 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
                 sprintId: spr.id, // Asignar la tarea al sprint actual
                 status: selectedStatusForNewTask // Asignar el estado específico de la columna
             }
-            await createIssue(token, taskWithSprintAndStatus)
+            await createIssue(token, taskWithSprintAndStatus, filesMap)
         }
         setIsCreateTaskInSprintModalOpen(false)
         setSelectedStatusForNewTask(null) // Limpiar el estado seleccionado

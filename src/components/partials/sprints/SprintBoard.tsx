@@ -84,10 +84,10 @@ export default function SprintBoard() {
       }
    }, [sprints, activeSprintData])
 
-   const handleCreateTask = async (newTask: any) => {
+   const handleCreateTask = async (newTask: any, filesMap?: Map<string, File[]>) => {
       const token = await getValidAccessToken()
       if (token) {
-         await createIssue(token, newTask)
+         await createIssue(token, newTask, filesMap)
          // Refrescar las issues del sprint activo después de crear una nueva tarea
          await refreshActiveSprintIssues()
       }

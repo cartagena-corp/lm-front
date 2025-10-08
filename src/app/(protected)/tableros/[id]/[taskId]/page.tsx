@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuthStore } from '@/lib/store/AuthStore'
 import { useIssueStore } from '@/lib/store/IssueStore'
-import { CalendarIcon, ClockIcon, UsersIcon, ChevronRightIcon, EditIcon } from '@/assets/Icon'
+import { CalendarIcon, ClockIcon, UsersIcon, ChevronRightIcon, EditIcon, DownloadIcon } from '@/assets/Icon'
 import { TaskProps } from '@/lib/types/types'
 import ShowComments from '@/components/partials/comments/ShowComments'
 import { useCommentStore } from '@/lib/store/CommentStore'
@@ -12,6 +12,8 @@ import { useBoardStore } from '@/lib/store/BoardStore'
 import { useConfigStore } from '@/lib/store/ConfigStore'
 import Modal from '@/components/layout/Modal'
 import CreateTaskForm from '@/components/partials/issues/CreateTaskForm'
+import Link from 'next/link'
+import Image from 'next/image'
 
 export default function TaskDetailsPage() {
     const { getValidAccessToken } = useAuthStore()
@@ -62,20 +64,15 @@ export default function TaskDetailsPage() {
         status: number,
         title: string,
         type: number
-    }) => {
+    }, filesMap?: Map<string, File[]>) => {
         const token = await getValidAccessToken()
         if (token) {
-            await updateIssue(token, formData)
+            await updateIssue(token, formData, filesMap)
             // Recargar la tarea actualizada directamente por su ID
             await getSpecificIssue(token, taskId as string)
         }
         setIsTaskUpdateModalOpen(false)
     }
-
-    // Funciones auxiliares para obtener estilos de configuración
-    const getStatusStyle = (id: number) => projectConfig?.issueStatuses?.find(status => status.id === id)
-    const getPriorityStyle = (id: number) => projectConfig?.issuePriorities?.find(priority => priority.id === id)
-    const getTypeStyle = (id: number) => projectConfig?.issueTypes?.find(type => type.id === id)
 
     if (loading) {
         return (
@@ -139,6 +136,49 @@ export default function TaskDetailsPage() {
                                                 <div key={id} className="space-y-1">
                                                     <h4 className="font-semibold text-gray-900 text-sm">{desc.title}</h4>
                                                     <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap">{desc.text}</p>
+                                                    
+                                                    {/* Mostrar imágenes si existen */}
+                                                    {desc.attachments && desc.attachments.length > 0 && (
+                                                        <div className="flex flex-wrap gap-2 mt-3">
+                                                            {desc.attachments.map((file) => {
+                                                                const fileSplitted = file.fileName.split(".")
+                                                                const extension = fileSplitted[fileSplitted.length - 1]
+                                                                const isImage = ["jpg", "png", "jpeg", "gif", "bmp", "webp"].includes(extension.toLowerCase())
+                                                                const url = file.fileUrl
+
+                                                                return (
+                                                                    <div key={file.id} className="border border-gray-200 rounded-lg overflow-hidden hover:border-blue-300 hover:shadow-sm transition-all">
+                                                                        {isImage && url ? (
+                                                                            <Link href={url} target="_blank">
+                                                                                <div className="w-16 h-16 relative">
+                                                                                    <Image
+                                                                                        src={url}
+                                                                                        alt={file.fileName}
+                                                                                        fill
+                                                                                        className="object-cover hover:scale-105 transition-transform"
+                                                                                        unoptimized
+                                                                                    />
+                                                                                </div>
+                                                                            </Link>
+                                                                        ) : (
+                                                                            <Link
+                                                                                href={url}
+                                                                                target="_blank"
+                                                                                className="flex items-center gap-2 p-3 min-w-0 hover:bg-gray-50 transition-colors"
+                                                                            >
+                                                                                <div className="flex-shrink-0">
+                                                                                    <DownloadIcon size={16} stroke={2} />
+                                                                                </div>
+                                                                                <span className="text-xs text-gray-600 truncate">
+                                                                                    {file.fileName}
+                                                                                </span>
+                                                                            </Link>
+                                                                        )}
+                                                                    </div>
+                                                                )
+                                                            })}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             ))}
                                         </div>
