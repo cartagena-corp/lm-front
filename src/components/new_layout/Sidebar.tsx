@@ -184,18 +184,9 @@ export default function Sidebar() {
                         transition={{ duration: 0.3, ease: "easeInOut" }} animate={{ opacity: isSidebarHovered ? 0 : 1 }} initial={false}>
                         {user && (
                             user.picture && !imageError ? (
-                                <img
-                                    className="w-full h-full object-cover rounded-full"
-                                    src={user.picture}
-                                    alt="User Avatar"
-                                    onError={() => setImageError(true)}
-                                />
+                                <img className="w-full h-full object-cover rounded-full" src={user.picture} alt="User Avatar" onError={() => setImageError(true)} />
                             ) : (
-                                <img
-                                    className="w-full h-full object-cover rounded-full"
-                                    src={getUserAvatar(user, 40)}
-                                    alt="User Avatar"
-                                />
+                                <img className="w-full h-full object-cover rounded-full" src={getUserAvatar(user, 40)} alt="User Avatar" />
                             )
                         )}
                     </motion.div>
