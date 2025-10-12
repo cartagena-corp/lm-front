@@ -38,16 +38,7 @@ export default function CreatePermissionForm({ onSubmit, onCancel }: CreatePermi
     }
 
     return (
-        <div className="space-y-6">
-            <div className="text-center space-y-2">
-                <h3 className="text-lg font-semibold text-gray-900">
-                    Crear Nuevo Permiso
-                </h3>
-                <p className="text-sm text-gray-500">
-                    Define un nuevo permiso para el sistema
-                </p>
-            </div>
-
+        <div className="space-y-6 p-6">
             <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">
                     <label htmlFor="permissionName" className="block text-sm font-medium text-gray-700">
@@ -72,18 +63,12 @@ export default function CreatePermissionForm({ onSubmit, onCancel }: CreatePermi
                     </p>
                 </div>
 
-                <div className="flex items-center gap-3 pt-4">
-                    <button
-                        type="button"
-                        onClick={onCancel}
-                        className="bg-white hover:bg-gray-50 hover:border-gray-300 border-gray-200 border flex-1 duration-200 rounded-lg text-center text-sm py-2.5 px-4 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-                    >
+                <div className="flex justify-end gap-3 mt-4">
+                    <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 transition-all duration-200 text-sm font-medium" type="button"
+                        onClick={() => onCancel()}>
                         Cancelar
                     </button>
-                    <button
-                        type="submit"
-                        className="bg-blue-600 hover:bg-blue-700 text-white border-transparent border hover:shadow-md flex-1 duration-200 rounded-lg text-center text-sm py-2.5 px-4 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                    >
+                    <button className={`bg-blue-600 hover:bg-blue-700 focus:ring-blue-500 text-white focus:ring-2 rounded-md focus:ring-offset-2 transition-all duration-200 text-sm font-medium px-4 py-2`} type="submit">
                         Crear Permiso
                     </button>
                 </div>

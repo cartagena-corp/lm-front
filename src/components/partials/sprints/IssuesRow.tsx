@@ -13,7 +13,7 @@ import CreateTaskForm from '../issues/CreateTaskForm'
 import { useAuthStore } from '@/lib/store/AuthStore'
 import ReasignIssue from '../issues/ReasignIssue'
 import { CalendarIcon, CheckmarkIcon, EditIcon, DeleteIcon, PlusIcon, EyeIcon, ClockIcon, ForbiddenIcon, IAIcon, ChatIAIcon, ImportIcon, FilterIcon, XIcon } from '@/assets/Icon'
-import Modal from '../../layout/Modal'
+import { useModalStore } from '@/lib/hooks/ModalStore'
 import Image from 'next/image'
 import CreateSprintForm from './CreateSprintForm'
 import { useSprintStore } from '@/lib/store/SprintStore'
@@ -371,23 +371,13 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
    const { getValidAccessToken, user } = useAuthStore()
    const { deleteAllIssues, deleteIssue, updateIssue, assignIssue, createIssue } = useIssueStore()
    const { updateSprint, deleteSprint, activeSprint, getIssuesBySprint, loadMoreIssuesBySprint, clearIssuesFromSprint } = useSprintStore()
+   const { openModal, closeModal } = useModalStore()
 
    const wrapperRef = useRef<HTMLDivElement>(null)
    const wrapperSprintRef = useRef<HTMLDivElement>(null)
    const scrollContainerRef = useRef<HTMLDivElement>(null)
 
-   const [isTaskDetailsModalOpen, setIsTaskDetailsModalOpen] = useState(false)
-   const [isTaskUpdateModalOpen, setIsTaskUpdateModalOpen] = useState(false)
    const [isSprintOptionsOpen, setisSprintOptionsOpen] = useState(false)
-   const [isReasignModalOpen, setIsReasignModalOpen] = useState(false)
-   const [isUpdateSprintOpen, setIsUpdateSprintOpen] = useState(false)
-   const [isDeleteSprintOpen, setIsDeleteSprintOpen] = useState(false)
-   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
-   const [isDeleteAllModalOpen, setIsDeleteAllModalOpen] = useState(false)
-   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
-   const [isCreateWithIAInSprintOpen, setIsCreateWithIAInSprintOpen] = useState(false)
-   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false)
-   const [isCreateTaskInSprintOpen, setIsCreateTaskInSprintOpen] = useState(false)
    const [sprintSelected, setSprintSelected] = useState<SprintProps>()
    const [openItemId, setOpenItemId] = useState<string | null>(null)
    const [taskActive, setTaskActive] = useState<TaskProps>()
@@ -537,13 +527,13 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
    const handleUpdateSprint = async (formData: SprintProps) => {
       const token = await getValidAccessToken()
       if (token) await updateSprint(token, formData, formData.projectId)
-      setIsUpdateSprintOpen(false)
+      closeModal()
    }
 
    const handleDeleteSprint = async (sprint: SprintProps) => {
       const token = await getValidAccessToken()
       if (token) await deleteSprint(token, sprint.id as string, sprint.projectId)
-      setIsDeleteSprintOpen(false)
+      closeModal()
    }
 
    const handleActivateSprint = async (sprint: SprintProps) => {
@@ -564,25 +554,25 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
    }, filesMap?: Map<string, File[]>) => {
       const token = await getValidAccessToken()
       if (token) await updateIssue(token, formData, filesMap)
-      setIsTaskUpdateModalOpen(false)
+      closeModal()
    }
 
-   const handleReasign = async ({ newUserId, issueId }: { newUserId: string, issueId: string }) => {
+   const handleReasign = async ({ newUserId, issueId, task }: { newUserId: string, issueId: string, task: TaskProps }) => {
       const token = await getValidAccessToken()
-      if (token) await assignIssue(token, issueId, newUserId, taskActive?.projectId as string)
-      setIsReasignModalOpen(false)
+      if (token) await assignIssue(token, issueId, newUserId, task.projectId)
+      closeModal()
    }
 
-   const handleDelete = async () => {
+   const handleDelete = async ({ data, task }: { data: boolean, task: TaskProps }) => {
       const token = await getValidAccessToken()
-      if (token) await deleteIssue(token, taskActive?.id as string, taskActive?.projectId as string)
-      setIsDeleteModalOpen(false)
+      if (token) await deleteIssue(token, task.id as string, task.projectId)
+      closeModal()
    }
 
    const handleDeleteAll = async () => {
       const token = await getValidAccessToken()
       if (token) await deleteAllIssues(token, selectedIds, spr.projectId as string)
-      setIsDeleteAllModalOpen(false)
+      closeModal()
       setSelectedIds([])
    }
 
@@ -597,7 +587,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
          }
          await createIssue(token, taskWithSprint, filesMap)
       }
-      setIsCreateTaskInSprintOpen(false)
+      closeModal()
    }
 
    // Función específica para crear tareas con IA dentro del sprint
@@ -616,7 +606,152 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
             await createIssuesFromIA(token, taskData)
          }
       }
-      setIsCreateWithIAInSprintOpen(false)
+      closeModal()
+   }
+
+   // Modal handlers
+   const handleImportModal = () => {
+      openModal({
+         size: "xxl",
+         title: "Importar Tareas",
+         desc: "Importa tareas desde un archivo CSV o Excel al sprint actual",
+         children: <ImportIssuesModal onCancel={() => closeModal()} sprintId={spr.id} />,
+         Icon: <ImportIcon size={20} />,
+         closeOnBackdrop: false,
+         closeOnEscape: true,
+         mode: "CREATE"
+      })
+   }
+
+   const handleUpdateSprintModal = () => {
+      openModal({
+         size: "lg",
+         title: "Editar Sprint",
+         desc: `Modifica la información del sprint ${spr.title}`,
+         children: <CreateSprintForm onSubmit={handleUpdateSprint} onCancel={() => closeModal()} currentSprint={sprintSelected as SprintProps} isEdit={true} />,
+         Icon: <EditIcon size={20} />,
+         closeOnBackdrop: false,
+         closeOnEscape: true,
+         mode: "UPDATE"
+      })
+   }
+
+   const handleDeleteSprintModal = () => {
+      openModal({
+         size: "md",
+         children: <DeleteSprintForm onSubmit={handleDeleteSprint} onCancel={() => closeModal()} sprintObject={sprintSelected as SprintProps} />,
+         closeOnBackdrop: false,
+         closeOnEscape: true,
+         mode: "DELETE"
+      })
+   }
+
+   const handleTaskDetailsModal = (task: TaskProps) => {
+      setTaskActive(task)
+      openModal({
+         size: "full",
+         desc: "Detalles completos de la tarea",
+         children: <TaskDetailsForm task={task} onSubmit={() => closeModal()} onCancel={() => closeModal()} />,
+         Icon: <EyeIcon size={20} />,
+         closeOnBackdrop: false,
+         closeOnEscape: true,
+         mode: "UPDATE"
+      })
+   }
+
+   const handleTaskUpdateModal = (task: TaskProps) => {
+      setTaskActive(task)
+      openModal({
+         size: "lg",
+         title: "Editar Tarea",
+         desc: `Modifica la información de la tarea ${task.title}`,
+         children: <CreateTaskForm onSubmit={handleUpdate} onCancel={() => closeModal()} taskObject={task} isEdit={true} />,
+         Icon: <EditIcon size={20} />,
+         closeOnBackdrop: false,
+         closeOnEscape: true,
+         mode: "UPDATE"
+      })
+   }
+
+   const handleReasignModal = (task: TaskProps) => {
+      setTaskActive(task)
+      openModal({
+         size: "lg",
+         title: "Reasignar Tarea",
+         desc: `Reasigna la tarea ${task.title} a otro usuario`,
+         children: <ReasignIssue onSubmit={(data) => handleReasign({ ...data, task })} onCancel={() => closeModal()} taskObject={task} />,
+         Icon: <EditIcon size={20} />,
+         closeOnBackdrop: false,
+         closeOnEscape: true,
+         mode: "UPDATE"
+      })
+   }
+
+   const handleDeleteTaskModal = (task: TaskProps) => {
+      setTaskActive(task)
+      openModal({
+         size: "lg",
+         title: "Eliminar Tarea",
+         desc: `Esta acción no se puede deshacer`,
+         children: <DeleteIssueForm onSubmit={(data) => handleDelete({ data, task })} onCancel={() => closeModal()} taskObject={task} />,
+         Icon: <DeleteIcon size={20} />,
+         closeOnBackdrop: false,
+         closeOnEscape: true,
+         mode: "DELETE"
+      })
+   }
+
+   const handleHistoryModal = (task: TaskProps) => {
+      setTaskActive(task)
+      openModal({
+         size: "lg",
+         title: "Historial de Cambios",
+         desc: `Historial completo de la tarea ${task.title}`,
+         children: <AuditHistory issueId={task.id} currentIssue={task} onCancel={() => closeModal()} />,
+         Icon: <ClockIcon size={20} />,
+         closeOnBackdrop: false,
+         closeOnEscape: true,
+         mode: "UPDATE"
+      })
+   }
+
+   const handleDeleteAllModal = () => {
+      openModal({
+         size: "lg",
+         title: "Eliminar Tareas Seleccionadas",
+         desc: `Esta acción no se puede deshacer`,
+         children: <DeleteAllForm onSubmit={handleDeleteAll} onCancel={() => closeModal()} taskArray={selectedIds} />,
+         Icon: <DeleteIcon size={20} />,
+         closeOnBackdrop: false,
+         closeOnEscape: true,
+         mode: "DELETE"
+      })
+   }
+
+   const handleCreateTaskInSprintModal = () => {
+      openModal({
+         size: "lg",
+         title: "Crear Tarea en Sprint",
+         desc: `Crea una nueva tarea en el sprint ${spr.title}`,
+         children: <CreateTaskForm onSubmit={handleCreateTaskInSprint} onCancel={() => closeModal()} />,
+         Icon: <PlusIcon size={20} />,
+         closeOnBackdrop: false,
+         closeOnEscape: true,
+         mode: "CREATE"
+      })
+   }
+
+   const handleCreateWithIAInSprintModal = () => {
+      openModal({
+         size: "full",
+         title: "Crear Tareas con IA",
+         desc: "Chatea con IA para crear tareas de forma rápida y eficiente.",
+         children: <CreateWithIA onSubmit={handleCreateWithIAInSprint} onCancel={() => closeModal()} sprintId={spr.id} />,
+         Icon: <ChatIAIcon size={20} />,
+         closeOnBackdrop: false,
+         closeOnEscape: true,
+         mode: "CREATE"
+      })
    }
 
    // --- Asignado a (multi-select) ---
@@ -757,7 +892,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                      {spr.id !== 'null' ? (
                         <>
                            <button
-                              onClick={() => setIsImportModalOpen(true)}
+                              onClick={handleImportModal}
                               className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                               title="Importar tareas en este sprint"
                            >
@@ -768,7 +903,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                               // Solo mostrar si el usuario tiene el permiso GEMINI_ACTIVE
                               (typeof user?.role === 'object' && user?.role?.permissions?.some(p => (p.name === "GEMINI_ACTIVE" || p.name === "GEMINI_CONFIG"))) && (
                                  <button className="flex items-center gap-2 px-4 py-2 text-blue-700 bg-blue-50 border border-blue-300 rounded-lg hover:bg-blue-100 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                                    onClick={() => setIsCreateWithIAInSprintOpen(true)}
+                                    onClick={handleCreateWithIAInSprintModal}
                                     title="Crear tareas con IA en este sprint"
                                  >
                                     <ChatIAIcon size={18} stroke={2} />
@@ -779,7 +914,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
 
                            <button
                               className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md"
-                              onClick={() => setIsCreateTaskInSprintOpen(true)}
+                              onClick={handleCreateTaskInSprintModal}
                               title="Crear nueva tarea en este sprint"
                            >
                               <PlusIcon size={16} stroke={2} />
@@ -821,7 +956,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                                        <button
                                           className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-3 transition-colors"
                                           onClick={() => {
-                                             setIsUpdateSprintOpen(true)
+                                             handleUpdateSprintModal()
                                              setisSprintOptionsOpen(false)
                                           }}
                                        >
@@ -847,7 +982,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                                        <button
                                           className="w-full px-4 py-2 text-left text-sm hover:bg-red-50 flex items-center gap-3 transition-colors text-red-600"
                                           onClick={() => {
-                                             setIsDeleteSprintOpen(true)
+                                             handleDeleteSprintModal()
                                              setisSprintOptionsOpen(false)
                                           }}
                                        >
@@ -862,7 +997,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                      ) : (
                         <>
                            <button
-                              onClick={() => setIsImportModalOpen(true)}
+                              onClick={handleImportModal}
                               className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                               title="Importar tareas"
                            >
@@ -991,7 +1126,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                            <div className="w-6 h-6 flex items-center justify-center">
                               {
                                  selectedIds.length > 0 &&
-                                 <button onClick={() => setIsDeleteAllModalOpen(true)} className='text-red-500 hover:text-red-700 transition-colors cursor-pointer'>
+                                 <button onClick={handleDeleteAllModal} className='text-red-500 hover:text-red-700 transition-colors cursor-pointer'>
                                     <DeleteIcon size={16} stroke={2} />
                                  </button>
                               }
@@ -1263,26 +1398,11 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                                  task={task}
                                  selectedIds={selectedIds}
                                  toggleSelect={toggleSelect}
-                                 onViewDetails={() => {
-                                    setIsTaskDetailsModalOpen(true)
-                                    setTaskActive(task)
-                                 }}
-                                 onEdit={() => {
-                                    setIsTaskUpdateModalOpen(true)
-                                    setTaskActive(task)
-                                 }}
-                                 onReassign={() => {
-                                    setIsReasignModalOpen(true)
-                                    setTaskActive(task)
-                                 }}
-                                 onDelete={() => {
-                                    setIsDeleteModalOpen(true)
-                                    setTaskActive(task)
-                                 }}
-                                 onHistory={() => {
-                                    setIsHistoryModalOpen(true)
-                                    setTaskActive(task)
-                                 }}
+                                 onViewDetails={() => handleTaskDetailsModal(task)}
+                                 onEdit={() => handleTaskUpdateModal(task)}
+                                 onReassign={() => handleReasignModal(task)}
+                                 onDelete={() => handleDeleteTaskModal(task)}
+                                 onHistory={() => handleHistoryModal(task)}
                                  getStatusStyle={getStatusStyle}
                                  getPriorityStyle={getPriorityStyle}
                                  getTypeStyle={getTypeStyle}
@@ -1580,112 +1700,6 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                )}
             </div>
          </Droppable >
-
-         {/* Modales */}
-         <>
-            <Modal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} title="" customWidth="sm:max-w-6xl" showCloseButton={false}>
-               <ImportIssuesModal
-                  onCancel={() => setIsImportModalOpen(false)}
-                  sprintId={spr.id}
-               />
-            </Modal>
-            <Modal isOpen={isUpdateSprintOpen} onClose={() => setIsUpdateSprintOpen(false)} title="" customWidth="sm:max-w-2xl" showCloseButton={false}>
-               <CreateSprintForm
-                  onSubmit={handleUpdateSprint}
-                  onCancel={() => setIsUpdateSprintOpen(false)}
-                  currentSprint={sprintSelected as SprintProps}
-                  isEdit={true}
-               />
-            </Modal>
-
-            <Modal isOpen={isTaskDetailsModalOpen} customWidth="w-full m-10! h-full!" removePadding closeOnClickOutside={false} onClose={() => setIsTaskDetailsModalOpen(false)} title="" showCloseButton={false}>
-               <TaskDetailsForm
-                  task={taskActive as TaskProps}
-                  onSubmit={() => setIsTaskDetailsModalOpen(false)}
-                  onCancel={() => setIsTaskDetailsModalOpen(false)}
-               />
-            </Modal>
-
-            <Modal isOpen={isTaskUpdateModalOpen} customWidth="sm:max-w-4xl" onClose={() => setIsTaskUpdateModalOpen(false)} title={``} showCloseButton={false}>
-               <CreateTaskForm
-                  onSubmit={handleUpdate}
-                  onCancel={() => setIsTaskUpdateModalOpen(false)}
-                  taskObject={taskActive as TaskProps}
-                  isEdit={true}
-               />
-            </Modal>
-
-            <Modal isOpen={isReasignModalOpen} onClose={() => setIsReasignModalOpen(false)} title="" customWidth='max-w-xl' showCloseButton={false}>
-               <ReasignIssue
-                  onSubmit={handleReasign}
-                  onCancel={() => setIsReasignModalOpen(false)}
-                  taskObject={taskActive as TaskProps}
-               />
-            </Modal>
-
-            <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="">
-               <DeleteIssueForm
-                  onSubmit={handleDelete}
-                  onCancel={() => setIsDeleteModalOpen(false)}
-                  taskObject={taskActive as TaskProps}
-               />
-            </Modal>
-
-            <Modal isOpen={isDeleteSprintOpen} onClose={() => setIsDeleteSprintOpen(false)} title="">
-               <DeleteSprintForm
-                  onSubmit={handleDeleteSprint}
-                  onCancel={() => setIsDeleteSprintOpen(false)}
-                  sprintObject={sprintSelected as SprintProps}
-               />
-            </Modal>
-
-            <Modal isOpen={isHistoryModalOpen} onClose={() => setIsHistoryModalOpen(false)} title="" customWidth="max-w-4xl" showCloseButton={false}>
-               <AuditHistory
-                  issueId={taskActive?.id}
-                  title={`Historial de cambios: ${taskActive?.title}`}
-                  currentIssue={taskActive}
-                  onCancel={() => setIsHistoryModalOpen(false)}
-               />
-            </Modal>
-
-            <Modal isOpen={isDeleteAllModalOpen} onClose={() => setIsDeleteAllModalOpen(false)} title="">
-               <DeleteAllForm
-                  onSubmit={handleDeleteAll}
-                  onCancel={() => setIsDeleteAllModalOpen(false)}
-                  taskArray={selectedIds}
-               />
-            </Modal>
-
-            {/* Modal específico para crear tareas dentro del sprint actual */}
-            <Modal
-               isOpen={isCreateTaskInSprintOpen}
-               onClose={() => setIsCreateTaskInSprintOpen(false)}
-               title=""
-               customWidth='max-w-2xl'
-               showCloseButton={false}
-            >
-               <CreateTaskForm
-                  onSubmit={handleCreateTaskInSprint}
-                  onCancel={() => setIsCreateTaskInSprintOpen(false)}
-               />
-            </Modal>
-
-            {/* Modal específico para crear tareas con IA dentro del sprint actual */}
-            <Modal
-               isOpen={isCreateWithIAInSprintOpen}
-               onClose={() => setIsCreateWithIAInSprintOpen(false)}
-               title=""
-               customWidth="sm:max-w-4xl h-[90dvh]"
-               showCloseButton={false}
-               closeOnClickOutside={false}
-            >
-               <CreateWithIA
-                  onSubmit={handleCreateWithIAInSprint}
-                  onCancel={() => setIsCreateWithIAInSprintOpen(false)}
-                  sprintId={spr.id}
-               />
-            </Modal>
-         </>
       </>
    )
 }

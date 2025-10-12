@@ -1,14 +1,15 @@
 "use client"
-import { useState, useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 
 // Components
-import Modal from '@/components/layout/Modal'
 import CreateUserFormConfig from './CreateUserFormConfig'
 import DeleteUserForm from './DeleteUserForm'
 import ImportUsersForm from './ImportUsersForm'
+import EditUserForm from './EditUserForm'
 
 // Store
 import { useAuthStore } from '@/lib/store/AuthStore'
+import { useModalStore } from '@/lib/hooks/ModalStore'
 
 // Utils
 import { getUserAvatar } from '@/lib/utils/avatar.utils'
@@ -18,8 +19,7 @@ import { getUserRoleName } from '@/lib/utils/user.utils'
 import { PermissionProps, UserProps } from '@/lib/types/types'
 
 // Icons
-import { UsersIcon, PlusIcon, EditIcon, DownloadIcon, MenuIcon, DeleteIcon } from '@/assets/Icon'
-import EditUserForm from './EditUserForm'
+import { UsersIcon, PlusIcon, EditIcon, DownloadIcon, DeleteIcon } from '@/assets/Icon'
 import toast from 'react-hot-toast'
 
 // Utilidad para normalizar el campo role
@@ -46,18 +46,13 @@ export default function UsersManagement() {
         importUsers
     } = useAuthStore()
 
+    const { openModal, closeModal } = useModalStore()
+
     // Estados para búsqueda y paginación
     const [searchQuery, setSearchQuery] = useState('')
     const [isLoadingMore, setIsLoadingMore] = useState(false)
     const usersListRef = useRef<HTMLDivElement>(null)
     const [displayedUsers, setDisplayedUsers] = useState<UserProps[]>([])
-
-    // Estados para modales
-    const [showCreateUserModal, setShowCreateUserModal] = useState(false)
-    const [showImportUsersModal, setShowImportUsersModal] = useState(false)
-    const [showEditUserModal, setShowEditUserModal] = useState(false)
-    const [showDeleteUserModal, setShowDeleteUserModal] = useState(false)
-    const [selectedUser, setSelectedUser] = useState<UserProps | null>(null)
 
     // Cargar datos iniciales
     useEffect(() => {
@@ -134,32 +129,28 @@ export default function UsersManagement() {
         const token = await getValidAccessToken()
         if (token) {
             await addUser(token, data)
-            setShowCreateUserModal(false)
-            loadData() // Recargar lista después de crear
+            closeModal()
+            loadData()
             toast.success('Usuario creado correctamente')
         }
     }
 
-    const handleDeleteUser = async () => {
-        if (!selectedUser) return
-
+    const handleDeleteUser = async (user: UserProps) => {
         const token = await getValidAccessToken()
         if (token) {
-            await deleteUser(token, selectedUser.id)
-            setShowDeleteUserModal(false)
-            setSelectedUser(null)
-            loadData() // Recargar lista después de eliminar
+            await deleteUser(token, user.id)
+            closeModal()
+            loadData()
             toast.success('Usuario eliminado correctamente')
         }
     }
 
-    const handleEditUser = async (data: { userId: string, newRole: string }) => {
+    const handleEditUser = async (user: UserProps, data: { userId: string, newRole: string }) => {
         const token = await getValidAccessToken()
         if (token) {
             await editUser(token, data.userId, { role: data.newRole })
-            setShowEditUserModal(false)
-            setSelectedUser(null)
-            loadData() // Recargar lista después de editar
+            closeModal()
+            loadData()
             toast.success('Usuario editado correctamente')
         }
     }
@@ -168,9 +159,58 @@ export default function UsersManagement() {
         const token = await getValidAccessToken()
         if (token) {
             await importUsers(token, file)
-            setShowImportUsersModal(false)
-            loadData() // Recargar lista después de importar
+            closeModal()
+            loadData()
         }
+    }
+
+    const handleCreateUserModal = () => {
+        openModal({
+            size: "lg",
+            title: "Crear Usuario",
+            desc: "Agrega un nuevo usuario al sistema",
+            children: <CreateUserFormConfig onSubmit={handleCreateUser} onCancel={() => closeModal()} />,
+            Icon: <PlusIcon size={20} stroke={1.75} />,
+            closeOnBackdrop: false,
+            closeOnEscape: false,
+            mode: "CREATE"
+        })
+    }
+
+    const handleImportUsersModal = () => {
+        openModal({
+            size: "lg",
+            title: "Importar Usuarios",
+            desc: "Importa múltiples usuarios desde un archivo",
+            children: <ImportUsersForm onSubmit={handleImportUsers} onCancel={() => closeModal()} isLoading={isLoading} />,
+            Icon: <DownloadIcon size={20} stroke={1.75} />,
+            closeOnBackdrop: false,
+            closeOnEscape: false,
+            mode: "CREATE"
+        })
+    }
+
+    const handleEditUserModal = (user: UserProps) => {
+        openModal({
+            size: "lg",
+            title: "Editar Usuario",
+            desc: "Modifica la información del usuario",
+            children: <EditUserForm user={user} onSubmit={(data) => handleEditUser(user, data)} onCancel={() => closeModal()} />,
+            Icon: <EditIcon size={20} stroke={1.75} />,
+            closeOnBackdrop: false,
+            closeOnEscape: false,
+            mode: "UPDATE"
+        })
+    }
+
+    const handleDeleteUserModal = (user: UserProps) => {
+        openModal({
+            size: "md",
+            children: <DeleteUserForm user={user} onSubmit={() => handleDeleteUser(user)} onCancel={() => closeModal()} />,
+            closeOnBackdrop: false,
+            closeOnEscape: false,
+            mode: "DELETE"
+        })
     }
 
     if (error) {
@@ -223,14 +263,14 @@ export default function UsersManagement() {
                         hasPermissionCreateUser &&
                         <div className="flex items-center gap-2">
                             <button
-                                onClick={() => setShowImportUsersModal(true)}
+                                onClick={handleImportUsersModal}
                                 className="bg-white hover:bg-blue-50 text-blue-600 border border-blue-600 px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
                             >
                                 <DownloadIcon size={16} />
                                 Importar
                             </button>
                             <button
-                                onClick={() => setShowCreateUserModal(true)}
+                                onClick={handleCreateUserModal}
                                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
                             >
                                 <PlusIcon size={16} />
@@ -296,10 +336,7 @@ export default function UsersManagement() {
                                             {
                                                 hasPermissionUpdateUser &&
                                                 <button
-                                                    onClick={() => {
-                                                        setSelectedUser(user)
-                                                        setShowEditUserModal(true)
-                                                    }}
+                                                    onClick={() => handleEditUserModal(user)}
                                                     className="text-gray-400 hover:text-blue-600 transition-colors opacity-0 group-hover:opacity-100 p-2 hover:bg-blue-100 rounded-lg"
                                                 >
                                                     <EditIcon size={16} />
@@ -308,10 +345,7 @@ export default function UsersManagement() {
                                             {
                                                 (hasPermissionDeleteUser) &&
                                                 <button
-                                                    onClick={() => {
-                                                        setSelectedUser(user)
-                                                        setShowDeleteUserModal(true)
-                                                    }}
+                                                    onClick={() => handleDeleteUserModal(user)}
                                                     className="text-gray-400 hover:text-blue-600 transition-colors opacity-0 group-hover:opacity-100 p-2 hover:bg-blue-100 rounded-lg"
                                                 >
                                                     <DeleteIcon size={16} />
@@ -330,64 +364,6 @@ export default function UsersManagement() {
                     </div>
                 )}
             </div>
-
-            {/* Modales */}
-            <Modal
-                isOpen={showCreateUserModal}
-                onClose={() => setShowCreateUserModal(false)}
-                title=""
-            >
-                <CreateUserFormConfig
-                    onSubmit={handleCreateUser}
-                    onCancel={() => setShowCreateUserModal(false)}
-                />
-            </Modal>
-
-            <Modal
-                isOpen={showImportUsersModal}
-                onClose={() => setShowImportUsersModal(false)}
-                title=""
-            >
-                <ImportUsersForm
-                    onSubmit={handleImportUsers}
-                    onCancel={() => setShowImportUsersModal(false)}
-                    isLoading={isLoading}
-                />
-            </Modal>
-
-            <Modal
-                isOpen={showEditUserModal}
-                onClose={() => setShowEditUserModal(false)}
-                title=""
-            >
-                {selectedUser && (
-                    <EditUserForm
-                        user={selectedUser}
-                        onSubmit={handleEditUser}
-                        onCancel={() => {
-                            setShowEditUserModal(false)
-                            setSelectedUser(null)
-                        }}
-                    />
-                )}
-            </Modal>
-
-            <Modal
-                isOpen={showDeleteUserModal}
-                onClose={() => setShowDeleteUserModal(false)}
-                title=""
-            >
-                {selectedUser && (
-                    <DeleteUserForm
-                        user={selectedUser}
-                        onSubmit={handleDeleteUser}
-                        onCancel={() => {
-                            setShowDeleteUserModal(false)
-                            setSelectedUser(null)
-                        }}
-                    />
-                )}
-            </Modal>
         </div >
     )
 }

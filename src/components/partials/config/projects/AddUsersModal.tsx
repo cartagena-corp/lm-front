@@ -5,7 +5,6 @@ import { useAuthStore } from "@/lib/store/AuthStore"
 import { UserProps } from "@/lib/types/types"
 import { getUserAvatar } from "@/lib/utils/avatar.utils"
 import { getUserRoleName } from "@/lib/utils/user.utils"
-import Modal from "@/components/layout/Modal"
 import InviteUserForm from "./InviteUserForm"
 import {
     UsersIcon,
@@ -17,8 +16,6 @@ import {
 } from "@/assets/Icon"
 
 interface AddUsersModalProps {
-    isOpen: boolean
-    onClose: () => void
     onSubmit: (userIds: string[]) => void
     onInviteUser?: (data: { email: string; role: string }) => void
     projectParticipants: UserProps[]
@@ -27,8 +24,6 @@ interface AddUsersModalProps {
 }
 
 export default function AddUsersModal({
-    isOpen,
-    onClose,
     onSubmit,
     onInviteUser,
     projectParticipants,
@@ -51,6 +46,7 @@ export default function AddUsersModal({
     const [searchQuery, setSearchQuery] = useState('')
     const [isLoadingMore, setIsLoadingMore] = useState(false)
     const [showInviteForm, setShowInviteForm] = useState(false)
+    const [isModalOpen, setIsModalOpen] = useState(true)
     const modalUsersListRef = useRef<HTMLDivElement>(null)
 
     // Verificar permisos del usuario
@@ -60,13 +56,13 @@ export default function AddUsersModal({
     // Efecto para búsqueda con debounce
     useEffect(() => {
         const timeoutId = setTimeout(() => {
-            if (isOpen) {
+            if (isModalOpen) {
                 handleSearch()
             }
         }, 500)
 
         return () => clearTimeout(timeoutId)
-    }, [searchQuery, isOpen])
+    }, [searchQuery, isModalOpen])
 
     // Efecto para detectar scroll y cargar más usuarios
     useEffect(() => {
@@ -82,27 +78,27 @@ export default function AddUsersModal({
         }
 
         const listElement = modalUsersListRef.current
-        if (listElement && isOpen) {
+        if (listElement && isModalOpen) {
             listElement.addEventListener('scroll', handleScroll)
             return () => listElement.removeEventListener('scroll', handleScroll)
         }
-    }, [isLoadingMore, usersPagination, isOpen])
+    }, [isLoadingMore, usersPagination, isModalOpen])
 
     // Efecto para cargar usuarios al abrir el modal
     useEffect(() => {
-        if (isOpen) {
+        if (isModalOpen) {
             handleSearch()
         }
-    }, [isOpen])
+    }, [isModalOpen])
 
     // Efecto para limpiar estado al cerrar
     useEffect(() => {
-        if (!isOpen) {
+        if (!isModalOpen) {
             setSelectedUsers(new Set())
             setSearchQuery('')
             setShowInviteForm(false)
         }
-    }, [isOpen])
+    }, [isModalOpen])
 
     const handleSearch = async () => {
         const token = await getValidAccessToken()
@@ -137,13 +133,6 @@ export default function AddUsersModal({
         onSubmit(Array.from(selectedUsers))
     }
 
-    const handleClose = () => {
-        setSelectedUsers(new Set())
-        setSearchQuery('')
-        setShowInviteForm(false)
-        onClose()
-    }
-
     const handleInviteUser = (data: { email: string; role: string }) => {
         if (onInviteUser) {
             onInviteUser(data)
@@ -157,12 +146,7 @@ export default function AddUsersModal({
     )
 
     return (
-        <Modal
-            isOpen={isOpen}
-            onClose={handleClose}
-            title=""
-            customWidth="sm:max-w-2xl"
-        >
+        <>
             {showInviteForm ? (
                 <InviteUserForm
                     onSubmit={handleInviteUser}
@@ -172,16 +156,7 @@ export default function AddUsersModal({
                     loadingMessage={inviteLoadingMessage}
                 />
             ) : (
-                <div className="space-y-6">
-                {/* Header */}
-                <div className="text-center space-y-2">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                        Agregar Participantes
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                        Selecciona los usuarios que quieres agregar al proyecto
-                    </p>
-                </div>
+                <div className="space-y-6 p-6">
 
                 {/* Search Bar */}
                 <div className="relative">
@@ -305,12 +280,6 @@ export default function AddUsersModal({
                         </p>
                         <div className="flex items-center gap-3">
                             <button
-                                onClick={handleClose}
-                                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                            >
-                                Cancelar
-                            </button>
-                            <button
                                 onClick={handleSubmit}
                                 disabled={selectedUsers.size === 0 || isLoading}
                                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
@@ -325,6 +294,6 @@ export default function AddUsersModal({
                 </div>
                 </div>
             )}
-        </Modal>
+        </>
     )
 }

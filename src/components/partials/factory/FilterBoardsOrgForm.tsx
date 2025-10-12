@@ -55,30 +55,6 @@ export default function FilterBoardsOrgForm({ onSubmit, onCancel, initialData }:
 
    return (
       <div className="bg-white border-gray-100 rounded-xl shadow-sm border">
-         {/* Header */}
-         <div className="border-b border-gray-100 p-6">
-            <div className="flex items-center justify-between">
-               <div className="flex items-center gap-3">
-                  <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-lg">
-                     <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                     </svg>
-                  </div>
-                  <div>
-                     <h3 className="text-lg font-semibold text-gray-900">Ordenar tableros</h3>
-                     <p className="text-sm text-gray-500">Configura cómo se muestran los tableros</p>
-                  </div>
-               </div>
-               <button
-                  type="button"
-                  onClick={onCancel}
-                  className="flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-               >
-                  <XIcon />
-               </button>
-            </div>
-         </div>
-
          {/* Form Content */}
          <form onSubmit={handleSubmit} className="p-6">
             <div className='space-y-5'>
@@ -88,10 +64,10 @@ export default function FilterBoardsOrgForm({ onSubmit, onCancel, initialData }:
                      Ordenar resultados
                   </label>
                   <div className='flex gap-3'>
-                     <button 
+                     <button
                         onClick={() => {
                            setIsSortBySelectOpen(!isSortBySelectOpen)
-                        }} 
+                        }}
                         type='button'
                         className='border-gray-200 flex items-center justify-between rounded-lg border flex-1 px-4 py-3 hover:border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 relative'
                      >
@@ -106,8 +82,8 @@ export default function FilterBoardsOrgForm({ onSubmit, onCancel, initialData }:
                         {isSortBySelectOpen && (
                            <div className='border-gray-200 bg-white shadow-lg absolute z-10 top-full mt-1 left-0 flex flex-col rounded-lg border text-sm w-full max-h-48 overflow-y-auto'>
                               {sortBySelect.map((obj) => (
-                                 <div 
-                                    key={obj.id} 
+                                 <div
+                                    key={obj.id}
                                     onClick={() => { setFormData({ ...formData, sortBy: obj.id }), setIsSortBySelectOpen(false) }}
                                     className='hover:bg-blue-50 duration-150 w-full text-start py-3 px-4 flex items-center gap-3 cursor-pointer'
                                  >
@@ -124,14 +100,14 @@ export default function FilterBoardsOrgForm({ onSubmit, onCancel, initialData }:
                      </button>
 
                      {/* Botón de dirección ascendente/descendente */}
-                     <button 
-                        onClick={() => { 
+                     <button
+                        onClick={() => {
                            const newIsAsc = !isAsc
                            const newDirection = newIsAsc ? "asc" : "desc"
                            setIsAsc(newIsAsc)
                            setFormData({ ...formData, direction: newDirection })
-                        }} 
-                        type='button' 
+                        }}
+                        type='button'
                         className={`border-gray-200 border p-3 rounded-lg hover:border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${isAsc ? 'bg-blue-50 border-blue-200' : 'bg-gray-50'}`}
                         title={isAsc ? 'Orden ascendente (A-Z, 1-9, más reciente)' : 'Orden descendente (Z-A, 9-1, más antiguo)'}
                      >
@@ -157,20 +133,13 @@ export default function FilterBoardsOrgForm({ onSubmit, onCancel, initialData }:
                </div>
             </div>
 
-            {/* Botones */}
-            <div className="flex items-center gap-3 pt-4">
-               <button
-                  type="button"
-                  onClick={onCancel}
-                  className="bg-white hover:bg-gray-50 hover:border-gray-300 border-gray-200 border flex-1 duration-200 rounded-lg text-center text-sm py-2.5 px-4 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-               >
+            <div className="flex justify-end gap-3 mt-4">
+               <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 transition-all duration-200 text-sm font-medium" type="button"
+                  onClick={() => onCancel()}>
                   Cancelar
                </button>
-               <button
-                  type="submit"
-                  className="bg-blue-600 hover:bg-blue-700 text-white border-transparent border hover:shadow-md flex-1 duration-200 rounded-lg text-center text-sm py-2.5 px-4 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-               >
-                  Aplicar cambios
+               <button className={`bg-blue-600 hover:bg-blue-700 focus:ring-blue-500 text-white focus:ring-2 rounded-md focus:ring-offset-2 transition-all duration-200 text-sm font-medium px-4 py-2`} type="submit">
+                  Aplicar Filtros
                </button>
             </div>
          </form>

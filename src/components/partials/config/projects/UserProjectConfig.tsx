@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useAuthStore } from "@/lib/store/AuthStore"
 import { useConfigStore } from "@/lib/store/ConfigStore"
 import { getUserAvatar } from "@/lib/utils/avatar.utils"
@@ -8,6 +8,7 @@ import { getUserRoleName } from "@/lib/utils/user.utils"
 import { UserProps } from "@/lib/types/types"
 import { API_ROUTES } from "@/lib/routes/oauth.routes"
 import AddUsersModal from "./AddUsersModal"
+import { useModalStore } from "@/lib/hooks/ModalStore"
 import {
     UsersIcon,
     PlusIcon,
@@ -19,25 +20,10 @@ interface UserProjectConfigProps {
 }
 
 export default function UserProjectConfig({ projectId }: UserProjectConfigProps) {
-    const {
-        getValidAccessToken,
-        clearError: clearAuthError,
-        addUser,
-        getListUsers,
-        listUsers
-    } = useAuthStore()
+    const { projectParticipants, isLoading: configLoading, error: configError, addParticipantsToProject, removeParticipantsFromProject, clearError: clearConfigError } = useConfigStore()
+    const { getValidAccessToken, clearError: clearAuthError, addUser } = useAuthStore()
+    const { openModal, closeModal } = useModalStore()
 
-    const {
-        projectParticipants,
-        isLoading: configLoading,
-        error: configError,
-        addParticipantsToProject,
-        removeParticipantsFromProject,
-        clearError: clearConfigError
-    } = useConfigStore()
-
-    // Estados para modales
-    const [showAddUsersModal, setShowAddUsersModal] = useState(false)
     const [inviteLoading, setInviteLoading] = useState(false)
     const [inviteLoadingMessage, setInviteLoadingMessage] = useState("Invitando...")
 
@@ -47,7 +33,7 @@ export default function UserProjectConfig({ projectId }: UserProjectConfigProps)
         const token = await getValidAccessToken()
         if (token) {
             await addParticipantsToProject(token, projectId, userIds)
-            setShowAddUsersModal(false)
+            closeModal()
         }
     }
 
@@ -111,7 +97,7 @@ export default function UserProjectConfig({ projectId }: UserProjectConfigProps)
                     console.error('❌ Error en la búsqueda de usuario:', response.status, response.statusText)
                 }
 
-                setShowAddUsersModal(false)
+                closeModal()
 
             } catch (error) {
                 console.error('Error al invitar usuario:', error)
@@ -121,6 +107,19 @@ export default function UserProjectConfig({ projectId }: UserProjectConfigProps)
                 setInviteLoadingMessage("Invitando...")
             }
         }
+    }
+
+    const handleOpenAddUsersModal = () => {
+        openModal({
+            size: "lg",
+            title: "Agregar Participantes",
+            desc: "Selecciona los usuarios que quieres agregar al proyecto",
+            children: <AddUsersModal onSubmit={handleAddUsers} onInviteUser={handleInviteUser} projectParticipants={projectParticipants} isLoading={configLoading || inviteLoading} inviteLoadingMessage={inviteLoadingMessage} />,
+            Icon: <PlusIcon size={20} stroke={1.75} />,
+            closeOnBackdrop: false,
+            closeOnEscape: false,
+            mode: "CREATE"
+        })
     }
 
     if (error) {
@@ -147,12 +146,12 @@ export default function UserProjectConfig({ projectId }: UserProjectConfigProps)
     }
 
     return (
-        <div className="space-y-6">
+        <div className="bg-white">
             {/* Header */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div className="p-6">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-green-50 text-green-600">
+                        <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
                             <UsersIcon size={20} />
                         </div>
                         <div>
@@ -164,18 +163,15 @@ export default function UserProjectConfig({ projectId }: UserProjectConfigProps)
                             </p>
                         </div>
                     </div>
-                    <button
-                        onClick={() => setShowAddUsersModal(true)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
-                    >
-                        <PlusIcon size={16} />
+                    <button onClick={handleOpenAddUsersModal} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center text-sm gap-2" >
+                        <PlusIcon size={16} stroke={2.5} />
                         Agregar Participantes
                     </button>
                 </div>
             </div>
 
             {/* Participants List */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+            <div className="bg-white">
                 {(configLoading && projectParticipants.length === 0) ? (
                     <div className="p-8 text-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -190,9 +186,9 @@ export default function UserProjectConfig({ projectId }: UserProjectConfigProps)
                         <p className="text-gray-600">Comienza agregando participantes al proyecto</p>
                     </div>
                 ) : (
-                    <div className="divide-y divide-gray-100">
+                    <div className="divide-gray-100 divide-y max-h-[50vh] overflow-y-auto">
                         {projectParticipants.map((user) => (
-                            <div key={user.id} className="p-6 hover:bg-gray-50 transition-colors">
+                            <div key={user.id} className="py-2 px-6 hover:bg-gray-50 transition-colors">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-4">
                                         <img
@@ -216,7 +212,7 @@ export default function UserProjectConfig({ projectId }: UserProjectConfigProps)
                                     <div className="flex items-center gap-2">
                                         <button
                                             onClick={() => handleRemoveUser(user.id)}
-                                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                            className="p-2 text-red-700 hover:bg-red-100 rounded-lg transition-colors"
                                             title="Eliminar del proyecto"
                                         >
                                             <XIcon size={16} />
@@ -228,17 +224,6 @@ export default function UserProjectConfig({ projectId }: UserProjectConfigProps)
                     </div>
                 )}
             </div>
-
-            {/* Modal para agregar usuarios */}
-            <AddUsersModal
-                isOpen={showAddUsersModal}
-                onClose={() => setShowAddUsersModal(false)}
-                onSubmit={handleAddUsers}
-                onInviteUser={handleInviteUser}
-                projectParticipants={projectParticipants}
-                isLoading={configLoading || inviteLoading}
-                inviteLoadingMessage={inviteLoadingMessage}
-            />
         </div>
     )
 }

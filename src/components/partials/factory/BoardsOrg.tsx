@@ -6,8 +6,8 @@ import { useAuthStore } from "@/lib/store/AuthStore"
 import { ProjectProps } from "@/lib/types/types"
 import ChangeBoardOrganizationModal from "@/components/partials/config/boards/ChangeBoardOrganizationModal"
 import FilterBoardsOrgForm from "@/components/partials/factory/FilterBoardsOrgForm"
-import Modal from "@/components/layout/Modal"
-import { PlusIcon, BoardIcon } from "@/assets/Icon"
+import { useModalStore } from "@/lib/hooks/ModalStore"
+import { BoardIcon, FilterIcon } from "@/assets/Icon"
 import toast from "react-hot-toast"
 
 interface BoardsOrgProps {
@@ -18,6 +18,7 @@ interface BoardsOrgProps {
 export default function BoardsOrg({ organization, idOrg }: BoardsOrgProps) {
     const { boards, error, getBoardsByOrganization, loadMoreBoardsByOrganization, changeBoardOrganization } = useOrganizationStore()
     const { getValidAccessToken } = useAuthStore()
+    const { openModal, closeModal } = useModalStore()
     const [searchTerm, setSearchTerm] = useState<string>('')
     const [page, setPage] = useState<number>(0)
     const [isLoading, setIsLoading] = useState<boolean>(true)
@@ -31,11 +32,7 @@ export default function BoardsOrg({ organization, idOrg }: BoardsOrgProps) {
     // Debounce para la búsqueda
     const searchTimeout = useRef<NodeJS.Timeout | null>(null)
 
-    // State for change organization modal
-    const [showChangeOrgModal, setShowChangeOrgModal] = useState(false)
-    const [selectedBoard, setSelectedBoard] = useState<ProjectProps | null>(null)
     const [showBoardMenu, setShowBoardMenu] = useState<string | null>(null)
-    const [showFilterModal, setShowFilterModal] = useState(false)
     const menuRef = useRef<HTMLDivElement>(null)
 
     // Cargar tableros iniciales
@@ -152,21 +149,21 @@ export default function BoardsOrg({ organization, idOrg }: BoardsOrgProps) {
         return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [])
 
-    const handleChangeOrganization = async (data: { organizationId: string }) => {
-        if (!selectedBoard) return
+    const handleChangeOrganization = async (board: ProjectProps, data: { organizationId: string }) => {
+        if (!board) return
 
         try {
             const token = await getValidAccessToken()
             if (!token) return
 
-            const success = await changeBoardOrganization(token, selectedBoard.id, data.organizationId)
+            const success = await changeBoardOrganization(token, board.id, data.organizationId)
 
             if (success) {
                 // Actualizar la lista de tableros
                 await getBoardsByOrganization(token, idOrg, direction, sortBy, 0, 10, searchTerm)
                 // setDisplayedBoards([]) // Reset displayed boards
                 setPage(0) // Reset page
-                setShowChangeOrgModal(false)
+                closeModal()
                 toast.success("Tablero movido exitosamente")
             }
         } catch (error) {
@@ -177,7 +174,7 @@ export default function BoardsOrg({ organization, idOrg }: BoardsOrgProps) {
     const handleFilterSubmit = async (filterData: { sortBy: string; direction: string }) => {
         setSortBy(filterData.sortBy)
         setDirection(filterData.direction)
-        setShowFilterModal(false)
+        closeModal()
 
         // Resetear la paginación y recargar los datos
         setPage(0)
@@ -206,6 +203,31 @@ export default function BoardsOrg({ organization, idOrg }: BoardsOrgProps) {
         return 'Sin estado'
     }
 
+    const handleFilterModal = () => {
+        openModal({
+            size: "lg",
+            title: "Ordenar Tableros",
+            desc: "Configura cómo se muestran los tableros",
+            children: <FilterBoardsOrgForm initialData={{ sortBy, direction }} onSubmit={handleFilterSubmit} onCancel={() => closeModal()} />,
+            Icon: <FilterIcon size={20} stroke={1.75} />,
+            closeOnBackdrop: false,
+            closeOnEscape: false,
+        })
+    }
+
+    const handleChangeOrgModal = (board: ProjectProps) => {
+        openModal({
+            size: "lg",
+            title: "Cambiar Organización",
+            desc: "Selecciona la nueva organización en donde se guardará este tablero",
+            children: <ChangeBoardOrganizationModal board={board} currentOrganization={{ organizationId: organization.organizationId, organizationName: organization.organizationName }} onSubmit={(data) => handleChangeOrganization(board, data)} onCancel={() => closeModal()} />,
+            Icon: <FilterIcon size={20} stroke={1.75} />,
+            closeOnBackdrop: false,
+            closeOnEscape: false,
+            mode: "UPDATE"
+        })
+    }
+
     return (
         <>
             <div className="p-4">
@@ -213,7 +235,7 @@ export default function BoardsOrg({ organization, idOrg }: BoardsOrgProps) {
                     <h2 className="text-xl font-semibold mb-4">Tableros de la Organización</h2>
 
                     <div className="mb-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                        <button className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" onClick={() => setShowFilterModal(true)} >
+                        <button className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" onClick={() => handleFilterModal()} >
                             <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                             </svg>
@@ -261,8 +283,7 @@ export default function BoardsOrg({ organization, idOrg }: BoardsOrgProps) {
                                                 <div className="py-1">
                                                     <button
                                                         onClick={() => {
-                                                            setSelectedBoard(board)
-                                                            setShowChangeOrgModal(true)
+                                                            handleChangeOrgModal(board)
                                                             setShowBoardMenu(null)
                                                         }}
                                                         className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -320,38 +341,7 @@ export default function BoardsOrg({ organization, idOrg }: BoardsOrgProps) {
                 )}
             </div>
 
-            {/* Modal for filtering boards */}
-            <Modal
-                showCloseButton={false}
-                isOpen={showFilterModal}
-                onClose={() => setShowFilterModal(false)}
-                title=""
-            >
-                <FilterBoardsOrgForm
-                    initialData={{ sortBy, direction }}
-                    onSubmit={handleFilterSubmit}
-                    onCancel={() => setShowFilterModal(false)}
-                />
-            </Modal>
-
-            {/* Modal for changing organization */}
-            <Modal
-                isOpen={showChangeOrgModal}
-                onClose={() => setShowChangeOrgModal(false)}
-                title=""
-            >
-                {selectedBoard && (
-                    <ChangeBoardOrganizationModal
-                        board={selectedBoard}
-                        currentOrganization={{
-                            organizationId: organization.organizationId,
-                            organizationName: organization.organizationName
-                        }}
-                        onSubmit={handleChangeOrganization}
-                        onCancel={() => setShowChangeOrgModal(false)}
-                    />
-                )}
-            </Modal>
+            {/* Modals are now managed by the modal store */}
         </>
     )
 }

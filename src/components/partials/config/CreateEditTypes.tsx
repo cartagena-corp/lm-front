@@ -23,7 +23,7 @@ export default function CreateEditTypes({ onSubmit, onCancel, currentTypes = { n
 
    const validateForm = () => {
       const newErrors: { name?: string; color?: string } = {}
-      
+
       if (!formData.name.trim()) {
          newErrors.name = "El nombre es requerido"
       } else if (formData.name.trim().length < 2) {
@@ -61,17 +61,7 @@ export default function CreateEditTypes({ onSubmit, onCancel, currentTypes = { n
    }
 
    return (
-      <div className="space-y-6">
-         {/* Header */}
-         <div className="text-center space-y-2">
-            <h3 className="text-lg font-semibold text-gray-900">
-               {currentTypes.name ? "Editar Tipo" : "Crear Tipo"}
-            </h3>
-            <p className="text-sm text-gray-500">
-               {currentTypes.name ? "Modifica la información del tipo" : "Define un nuevo tipo para las tareas"}
-            </p>
-         </div>
-
+      <div className="space-y-6 p-6">
          <form onSubmit={handleSubmit} className="space-y-6">
             {/* Name Input - First */}
             <div className="space-y-2">
@@ -81,11 +71,10 @@ export default function CreateEditTypes({ onSubmit, onCancel, currentTypes = { n
                <div className="relative">
                   <input
                      onChange={handleNameChange}
-                     className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200 ${
-                        errors.name 
-                           ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
-                           : 'border-gray-300 hover:border-gray-400'
-                     }`}
+                     className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200 ${errors.name
+                        ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                        : 'border-gray-300 hover:border-gray-400'
+                        }`}
                      placeholder="Ej: Bug, Feature, Task..."
                      value={formData.name}
                      name="name"
@@ -103,11 +92,11 @@ export default function CreateEditTypes({ onSubmit, onCancel, currentTypes = { n
                <label className="block text-sm font-medium text-gray-700">
                   Color del tipo
                </label>
-               <ColorPicker 
-                  id="color" 
-                  inputRef={colorRef} 
-                  value={formData.color} 
-                  label="" 
+               <ColorPicker
+                  id="color"
+                  inputRef={colorRef}
+                  value={formData.color}
+                  label=""
                   onChange={handleColorChange}
                />
                {errors.color && (
@@ -134,19 +123,12 @@ export default function CreateEditTypes({ onSubmit, onCancel, currentTypes = { n
                </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex items-center gap-3 pt-4">
-               <button
-                  type="button"
-                  onClick={onCancel}
-                  className="bg-white hover:bg-gray-50 hover:border-gray-300 border-gray-200 border flex-1 duration-200 rounded-lg text-center text-sm py-2.5 px-4 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-               >
+            <div className="flex justify-end gap-3 mt-4">
+               <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 transition-all duration-200 text-sm font-medium" type="button"
+                  onClick={() => onCancel()}>
                   Cancelar
                </button>
-               <button
-                  type="submit"
-                  className="bg-purple-600 hover:bg-purple-700 text-white border-transparent border hover:shadow-md flex-1 duration-200 rounded-lg text-center text-sm py-2.5 px-4 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
-               >
+               <button className={`${currentTypes.name ? "bg-purple-600 hover:bg-purple-700 focus:ring-purple-500" : "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"} text-white focus:ring-2 rounded-md focus:ring-offset-2 transition-all duration-200 text-sm font-medium px-4 py-2`} type="submit">
                   {currentTypes.name ? "Guardar cambios" : "Crear tipo"}
                </button>
             </div>

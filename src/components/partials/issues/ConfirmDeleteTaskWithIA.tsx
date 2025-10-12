@@ -1,17 +1,23 @@
-"use client"
-import { DeleteIcon } from '@/assets/Icon'
+import { DeleteIcon } from "@/assets/Icon"
 
-interface PermissionProps {
-    name: string
+interface DetectedTask {
+    title: string
+    descriptionsDTO: Array<{
+        title: string
+        text: string
+    }>
+    projectId: string
+    assignedId: string
+    suggestedAssignee?: string
 }
 
-interface DeletePermissionFormProps {
-    permission: PermissionProps
+interface ConfirmDeleteTaskWithIAProps {
+    task: DetectedTask
     onSubmit: () => void
     onCancel: () => void
 }
 
-export default function DeletePermissionForm({ permission, onSubmit, onCancel }: DeletePermissionFormProps) {
+export default function ConfirmDeleteTaskWithIA({ task, onSubmit, onCancel }: ConfirmDeleteTaskWithIAProps) {
     return (
         <div className="p-6">
             {/* Header con icono */}
@@ -24,11 +30,11 @@ export default function DeletePermissionForm({ permission, onSubmit, onCancel }:
             {/* Título y descripción */}
             <div className="text-center mb-8">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    Eliminar Permiso
+                    Eliminar Tarea
                 </h3>
                 <hgroup className="flex flex-col">
                     <h6 className="text-sm text-gray-600 leading-relaxed">
-                        Estás a punto de eliminar el permiso <b className="text-red-600">{permission.name}</b> de forma permanente.
+                        Estás a punto de eliminar la tarea <b className="text-red-600">{task.title}</b> de forma permanente.
                     </h6>
                     <p className="text-sm text-gray-600 leading-relaxed">
                         Esta acción <b>NO</b> se puede deshacer.

@@ -1,4 +1,5 @@
 declare module 'frappe-gantt'
+import { ReactNode, JSX } from "react"
 
 //* Projects
 export interface ProjectProps {
@@ -297,4 +298,30 @@ export interface AuditPagination {
    totalElements: number
    size: number
    number: number
+}
+
+export interface ModalOptions {
+   size?: "sm" | "md" | "lg" | "xl" | "xxl" | "full"
+   mode?: "CREATE" | "UPDATE" | "DELETE"
+   closeOnBackdrop?: boolean
+   closeOnEscape?: boolean
+   children: ReactNode
+   Icon?: ReactNode
+   title?: string
+   desc?: string
+   id?: string // Identificador único para la modal
+}
+
+export interface ModalInstance extends ModalOptions {
+   id: string
+   isOpen: boolean
+}
+
+export interface ModalState {
+   modals: ModalInstance[]
+   openModal: (options: ModalOptions) => string
+   closeModal: (id?: string) => void
+   closeAllModals: () => void
+   isOpen: boolean
+   currentModal: ModalInstance | null
 }

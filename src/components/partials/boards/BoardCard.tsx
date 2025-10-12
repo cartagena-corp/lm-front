@@ -1,19 +1,17 @@
-import { CalendarIcon, MenuIcon } from "@/assets/Icon"
+import { CalendarIcon, ClockIcon, DeleteIcon, MenuIcon } from "@/assets/Icon"
 import { useConfigStore } from "@/lib/store/ConfigStore"
-import { ConfigProjectStatusProps, ProjectProps } from "@/lib/types/types"
+import { ProjectProps } from "@/lib/types/types"
 import Link from "next/link"
-import Modal from "../../layout/Modal"
 import { useState, useEffect, useRef } from "react"
 import DeleteBoardForm from "../boards/DeleteBoardForm"
 import { useAuthStore } from "@/lib/store/AuthStore"
 import { useBoardStore } from "@/lib/store/BoardStore"
 import AuditHistory from "../audit/AuditHistory"
+import { useModalStore } from "@/lib/hooks/ModalStore"
 
 export default function BoardCard({ board }: { board: ProjectProps }) {
    const { getValidAccessToken, user } = useAuthStore()
    const { deleteBoard } = useBoardStore()
-   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
-   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false)
    const [isMenuOpen, setIsMenuOpen] = useState(false)
    const { projectStatus } = useConfigStore()
    const menuRef = useRef<HTMLDivElement>(null)
@@ -61,11 +59,37 @@ export default function BoardCard({ board }: { board: ProjectProps }) {
    const handleDelete = async (gonnaDelete: boolean) => {
       const token = await getValidAccessToken()
       if (token && gonnaDelete) await deleteBoard(token, board.id)
-      setIsDeleteModalOpen(false)
+      closeModal()
    }
 
    const isOverdue = board.endDate && new Date(board.endDate) < new Date()
    const daysRemaining = board.endDate ? Math.ceil((new Date(board.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null
+
+   const { openModal, closeModal } = useModalStore()
+
+   const handleShowHistoryModal = () => {
+      openModal({
+         size: "xl",
+         title: `Historial del proyecto: ${board.name}`,
+         desc: "Historial de cambios y actividades",
+         Icon: <ClockIcon size={20} stroke={1.75} />,
+         children: <AuditHistory onCancel={() => closeModal()} projectId={board.id} />,
+         closeOnBackdrop: false,
+         closeOnEscape: false,
+
+      })
+   }
+
+   const handleDeleteBoardModal = () => {
+      openModal({
+         size: "md",
+         Icon: <DeleteIcon size={20} stroke={1.75} />,
+         children: <DeleteBoardForm onSubmit={handleDelete} onCancel={() => closeModal()} projectObject={board} />,
+         closeOnBackdrop: false,
+         closeOnEscape: false,
+         mode: "DELETE"
+      })
+   }
 
    return (
       <div className="bg-white flex flex-col shadow-md hover:shadow-lg transition-all duration-200 rounded-xl border border-gray-100 h-96 p-6 group hover:border-gray-200">
@@ -99,7 +123,7 @@ export default function BoardCard({ board }: { board: ProjectProps }) {
                            <button
                               className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors"
                               onClick={() => {
-                                 setIsHistoryModalOpen(true)
+                                 handleShowHistoryModal()
                                  setIsMenuOpen(false)
                               }}
                            >
@@ -147,7 +171,7 @@ export default function BoardCard({ board }: { board: ProjectProps }) {
          <section className="flex items-center gap-3 mt-4 flex-shrink-0">
             {user && board.createdBy && user.id === board.createdBy.id && (
                <button
-                  onClick={() => setIsDeleteModalOpen(true)}
+                  onClick={() => handleDeleteBoardModal()}
                   type="button"
                   className="bg-white hover:bg-red-50 hover:border-red-200 hover:text-red-600 border-gray-200 border flex-1 duration-200 rounded-lg text-center text-sm py-2.5 px-4 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                >
@@ -161,34 +185,6 @@ export default function BoardCard({ board }: { board: ProjectProps }) {
                Ver detalles
             </Link>
          </section>
-
-         {/* Modal para eliminar el proyecto */}
-         <Modal
-            isOpen={isDeleteModalOpen}
-            onClose={() => setIsDeleteModalOpen(false)}
-            title=""
-         >
-            <DeleteBoardForm
-               onSubmit={handleDelete}
-               onCancel={() => setIsDeleteModalOpen(false)}
-               projectObject={board}
-            />
-         </Modal>
-
-         {/* Modal para ver historial */}
-         <Modal
-            isOpen={isHistoryModalOpen}
-            onClose={() => setIsHistoryModalOpen(false)}
-            title=""
-            customWidth="max-w-4xl"
-            showCloseButton={false}
-         >
-            <AuditHistory
-               projectId={board.id}
-               title={`Historial del proyecto: ${board.name}`}
-               onCancel={() => setIsHistoryModalOpen(false)}
-            />
-         </Modal>
       </div>
    )
 }

@@ -30,7 +30,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { toast } from 'react-hot-toast'
 import { CalendarIcon, MenuIcon, EditIcon, DeleteIcon, PlusIcon, ClockIcon, UsersIcon, EyeIcon } from '@/assets/Icon'
-import Modal from '../../layout/Modal'
+import { useModalStore } from '@/lib/hooks/ModalStore'
 import CreateTaskForm from '../issues/CreateTaskForm'
 import TaskDetailsForm from '../issues/TaskDetailsForm'
 import DeleteIssueForm from '../issues/DeleteIssueForm'
@@ -521,18 +521,9 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
     const { updateIssue, deleteIssue, assignIssue, createIssue } = useIssueStore()
     const { updateSprint, deleteSprint } = useSprintStore()
     const { getValidAccessToken } = useAuthStore()
+    const { openModal, closeModal } = useModalStore()
 
-    const [isTaskDetailsModalOpen, setIsTaskDetailsModalOpen] = useState(false)
-    const [isTaskUpdateModalOpen, setIsTaskUpdateModalOpen] = useState(false)
-    const [isDeleteIssueModalOpen, setIsDeleteIssueModalOpen] = useState(false)
-    const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false)
-    const [isCreateTaskInSprintModalOpen, setIsCreateTaskInSprintModalOpen] = useState(false)
     const [selectedStatusForNewTask, setSelectedStatusForNewTask] = useState<number | null>(null)
-    const [isCreateSprintModalOpen, setIsCreateSprintModalOpen] = useState(false)
-    const [isDeleteSprintModalOpen, setIsDeleteSprintModalOpen] = useState(false)
-    const [isReasignModalOpen, setIsReasignModalOpen] = useState(false)
-    const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false)
-    const [isCreateStatusModalOpen, setIsCreateStatusModalOpen] = useState(false)
     const [selectedIssue, setSelectedIssue] = useState<TaskProps | null>(null)
     const [activeId, setActiveId] = useState<string | null>(null)
     const [overId, setOverId] = useState<string | null>(null)
@@ -541,6 +532,15 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
 
     // Estado optimista para los issues
     const [optimisticIssues, setOptimisticIssues] = useState<TaskProps[] | null>(null)
+
+    // Estado optimista para el orden de las columnas
+    const [optimisticStatuses, setOptimisticStatuses] = useState<ConfigProjectStatusProps[] | null>(null)
+
+    // Refs para manejar el debounce de actualizaciones al servidor
+    const pendingStatusUpdateRef = useRef<{
+        timeoutId: NodeJS.Timeout | null,
+        statuses: ConfigProjectStatusProps[] | null
+    }>({ timeoutId: null, statuses: null })
 
     // Configuración de sensores personalizados para el drag
     const sensors = useSensors(
@@ -567,19 +567,37 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
     }
 
     // Ordenar los estados por orderIndex, y luego por id si no tienen orderIndex
-    const statuses = [...(projectConfig?.issueStatuses || [])].sort((a, b) => {
-        const orderA = (a as ConfigProjectStatusProps).orderIndex ?? 999999
-        const orderB = (b as ConfigProjectStatusProps).orderIndex ?? 999999
-        if (orderA === orderB) {
-            return a.id - b.id
-        }
-        return orderA - orderB
-    })
+    // Usar estados optimistas si existen, sino usar los del proyecto
+    const statuses = optimisticStatuses !== null
+        ? optimisticStatuses
+        : [...(projectConfig?.issueStatuses || [])].sort((a, b) => {
+            const orderA = (a as ConfigProjectStatusProps).orderIndex ?? 999999
+            const orderB = (b as ConfigProjectStatusProps).orderIndex ?? 999999
+            if (orderA === orderB) {
+                return a.id - b.id
+            }
+            return orderA - orderB
+        })
 
     // Efecto para limpiar estado optimista cuando cambian los datos del sprint
     useEffect(() => {
         setOptimisticIssues(null)
     }, [spr.tasks?.content])
+
+    // Efecto para limpiar estado optimista de columnas cuando cambian los estados del proyecto
+    useEffect(() => {
+        setOptimisticStatuses(null)
+    }, [projectConfig?.issueStatuses])
+
+    // Efecto de limpieza para cancelar timeouts pendientes
+    useEffect(() => {
+        return () => {
+            // Limpiar timeout pendiente cuando el componente se desmonte
+            if (pendingStatusUpdateRef.current.timeoutId) {
+                clearTimeout(pendingStatusUpdateRef.current.timeoutId)
+            }
+        }
+    }, [])
 
     // Group issues by status
     const issuesByStatus = statuses.reduce((acc, status) => {
@@ -589,28 +607,23 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
 
     // Callback functions for issue actions
     const handleViewDetails = (issue: TaskProps) => {
-        setSelectedIssue(issue)
-        setIsTaskDetailsModalOpen(true)
+        handleTaskDetailsModal(issue)
     }
 
     const handleEdit = (issue: TaskProps) => {
-        setSelectedIssue(issue)
-        setIsTaskUpdateModalOpen(true)
+        handleTaskUpdateModal(issue)
     }
 
     const handleReassign = (issue: TaskProps) => {
-        setSelectedIssue(issue)
-        setIsReasignModalOpen(true)
+        handleReasignModal(issue)
     }
 
     const handleDelete = (issue: TaskProps) => {
-        setSelectedIssue(issue)
-        setIsDeleteIssueModalOpen(true)
+        handleDeleteIssueModal(issue)
     }
 
     const handleHistory = (issue: TaskProps) => {
-        setSelectedIssue(issue)
-        setIsHistoryModalOpen(true)
+        handleHistoryModal(issue)
     }
 
     // Handler functions for modals
@@ -627,21 +640,21 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
     }, filesMap?: Map<string, File[]>) => {
         const token = await getValidAccessToken()
         if (token) await updateIssue(token, formData, filesMap)
-        setIsTaskUpdateModalOpen(false)
+        closeModal()
         setSelectedIssue(null)
     }
 
     const handleReasignIssue = async ({ newUserId, issueId }: { newUserId: string, issueId: string }) => {
         const token = await getValidAccessToken()
         if (token) await assignIssue(token, issueId, newUserId, selectedIssue?.projectId as string)
-        setIsReasignModalOpen(false)
+        closeModal()
         setSelectedIssue(null)
     }
 
     const handleDeleteIssue = async () => {
         const token = await getValidAccessToken()
         if (token && selectedIssue) await deleteIssue(token, selectedIssue.id as string, selectedIssue.projectId as string)
-        setIsDeleteIssueModalOpen(false)
+        closeModal()
         setSelectedIssue(null)
     }
 
@@ -763,46 +776,96 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
             return
         }
 
+        // --- OPTIMISTIC UPDATE INSTANTÁNEO ---
         // Crear nueva lista reordenada
         const reorderedStatuses = [...statuses]
         const [movedStatus] = reorderedStatuses.splice(activeIndex, 1)
         reorderedStatuses.splice(overIndex, 0, movedStatus)
 
-        // Actualizar orderIndex en el backend
-        const toastId = toast.loading('Reordenando columnas...')
+        // Actualizar orderIndex en la lista reordenada
+        const updatedStatuses = reorderedStatuses.map((status, index) => ({
+            ...status,
+            orderIndex: index + 1
+        }))
 
-        try {
-            const token = await getValidAccessToken()
-            if (!token) {
-                throw new Error('No se pudo obtener el token de autenticación')
-            }
+        // Aplicar actualización optimista INMEDIATAMENTE sin esperar
+        setOptimisticStatuses(updatedStatuses)
 
-            // Actualizar orderIndex de cada estado que cambió de posición
-            for (let i = 0; i < reorderedStatuses.length; i++) {
-                const status = reorderedStatuses[i] as ConfigProjectStatusProps
-                const newOrderIndex = i + 1 // Empezar desde 1
-
-                // Solo actualizar si el orderIndex cambió
-                if (status.orderIndex !== newOrderIndex) {
-                    await editIssueStatus(token, spr.projectId, {
-                        id: status.id.toString(),
-                        name: status.name,
-                        color: status.color,
-                        orderIndex: newOrderIndex
-                    })
-                }
-            }
-
-            // Recargar configuración del proyecto para reflejar los cambios
-            await setProjectConfig(spr.projectId, token)
-
-            toast.success('Columnas reordenadas exitosamente', { id: toastId })
-
-        } catch (error) {
-            console.error('Error reordering columns:', error)
-            const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
-            toast.error(`Error al reordenar columnas: ${errorMessage}`, { id: toastId })
+        // Cancelar cualquier actualización pendiente anterior
+        if (pendingStatusUpdateRef.current.timeoutId) {
+            clearTimeout(pendingStatusUpdateRef.current.timeoutId)
         }
+
+        // Guardar los estados actualizados para la sincronización
+        pendingStatusUpdateRef.current.statuses = updatedStatuses
+
+        // Programar la sincronización con el backend después de 800ms de inactividad
+        pendingStatusUpdateRef.current.timeoutId = setTimeout(async () => {
+            const statusesToSync = pendingStatusUpdateRef.current.statuses
+            if (!statusesToSync) return
+
+            try {
+                const token = await getValidAccessToken()
+                if (!token) {
+                    throw new Error('No se pudo obtener el token de autenticación')
+                }
+
+                // Obtener los estados originales para comparar
+                const originalStatuses = [...(projectConfig?.issueStatuses || [])].sort((a, b) => {
+                    const orderA = (a as ConfigProjectStatusProps).orderIndex ?? 999999
+                    const orderB = (b as ConfigProjectStatusProps).orderIndex ?? 999999
+                    if (orderA === orderB) {
+                        return a.id - b.id
+                    }
+                    return orderA - orderB
+                })
+
+                // Actualizar orderIndex de cada estado que cambió de posición
+                for (let i = 0; i < statusesToSync.length; i++) {
+                    const status = statusesToSync[i] as ConfigProjectStatusProps
+                    const originalStatus = originalStatuses.find(s => s.id === status.id) as ConfigProjectStatusProps | undefined
+
+                    // Solo actualizar si el orderIndex cambió
+                    if (!originalStatus || (originalStatus as ConfigProjectStatusProps).orderIndex !== status.orderIndex) {
+                        await editIssueStatus(token, spr.projectId, {
+                            id: status.id.toString(),
+                            name: status.name,
+                            color: status.color,
+                            orderIndex: status.orderIndex
+                        })
+                    }
+                }
+
+                // Recargar configuración del proyecto para reflejar los cambios del servidor
+                await setProjectConfig(spr.projectId, token)
+
+                // Limpiar la referencia
+                pendingStatusUpdateRef.current.statuses = null
+                pendingStatusUpdateRef.current.timeoutId = null
+
+                // Toast de confirmación silenciosa (opcional, se puede omitir)
+                toast.success('Orden de columnas sincronizado', {
+                    duration: 1500,
+                    position: 'bottom-center'
+                })
+
+            } catch (error) {
+                console.error('Error syncing column order:', error)
+                const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
+
+                // En caso de error, revertir al estado del servidor
+                setOptimisticStatuses(null)
+
+                toast.error(`Error al sincronizar orden de columnas: ${errorMessage}`, {
+                    duration: 4000,
+                    position: 'bottom-center'
+                })
+
+                // Limpiar la referencia
+                pendingStatusUpdateRef.current.statuses = null
+                pendingStatusUpdateRef.current.timeoutId = null
+            }
+        }, 800) // Esperar 800ms después del último cambio antes de sincronizar
     }
 
     const handleIssueMove = async (activeId: string, overId: string) => {
@@ -898,35 +961,35 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
     }
 
     const handleEditSprint = () => {
-        setIsCreateSprintModalOpen(true)
+        handleEditSprintModal()
     }
 
     const handleUpdateSprint = async (formData: SprintProps) => {
         const token = await getValidAccessToken()
         if (token) await updateSprint(token, formData, formData.projectId)
-        setIsCreateSprintModalOpen(false)
+        closeModal()
     }
 
     const handleDeleteSprintModal = () => {
-        setIsDeleteSprintModalOpen(true)
+        handleDeleteSprintModalOpen()
     }
 
     const handleDeleteSprint = async (sprint: SprintProps) => {
         const token = await getValidAccessToken()
         if (token) await deleteSprint(token, sprint.id as string, sprint.projectId)
-        setIsDeleteSprintModalOpen(false)
+        closeModal()
     }
 
     const handleCreateStatus = async (statusData: { name: string, color: string }) => {
         const token = await getValidAccessToken()
         if (token && spr.projectId) {
             await addIssueStatus(token, spr.projectId, statusData)
-            setIsCreateStatusModalOpen(false)
+            closeModal()
         }
     }
 
     const handleCreateTask = () => {
-        setIsCreateTaskModalOpen(true)
+        handleCreateTaskModal()
     }
 
     // Función específica para crear tareas dentro del sprint
@@ -941,19 +1004,17 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
             }
             await createIssue(token, taskWithSprintAndStatus, filesMap)
         }
-        setIsCreateTaskInSprintModalOpen(false)
+        closeModal()
         setSelectedStatusForNewTask(null) // Limpiar el estado seleccionado
     }
 
     // Nueva función para manejar la apertura del modal con estado específico
     const handleOpenCreateTaskInSprint = (statusId: number) => {
-        setSelectedStatusForNewTask(statusId)
-        setIsCreateTaskInSprintModalOpen(true)
+        handleCreateTaskInSprintModal(statusId)
     }
 
     const handleIssueClick = (issue: TaskProps) => {
-        setSelectedIssue(issue)
-        setIsTaskDetailsModalOpen(true)
+        handleTaskDetailsModal(issue)
     }
 
     const getStatusDates = () => {
@@ -967,18 +1028,227 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
         return 'Sin fechas'
     }
 
+    // Modal handlers
+    const handleTaskDetailsModal = (issue: TaskProps) => {
+        setSelectedIssue(issue)
+        openModal({
+            size: "full",
+            desc: "Visualiza toda la información de la tarea",
+            children: (
+                <TaskDetailsForm
+                    task={issue}
+                    onSubmit={() => closeModal()}
+                    onCancel={() => closeModal()}
+                />
+            ),
+            Icon: <EyeIcon size={20} stroke={1.75} />,
+            closeOnBackdrop: true,
+            closeOnEscape: true,
+            mode: "UPDATE"
+        })
+    }
+
+    const handleTaskUpdateModal = (issue: TaskProps) => {
+        setSelectedIssue(issue)
+        openModal({
+            size: "xl",
+            title: "Editar Tarea",
+            desc: "Modifica la información de la tarea",
+            children: (
+                <CreateTaskForm
+                    onSubmit={handleUpdateIssue}
+                    onCancel={() => closeModal()}
+                    taskObject={issue}
+                    isEdit={true}
+                />
+            ),
+            Icon: <EditIcon size={20} stroke={1.75} />,
+            closeOnBackdrop: false,
+            closeOnEscape: true,
+            mode: "UPDATE"
+        })
+    }
+
+    const handleReasignModal = (issue: TaskProps) => {
+        setSelectedIssue(issue)
+        openModal({
+            size: "lg",
+            title: "Reasignar Tarea",
+            desc: "Asigna la tarea a otro miembro del equipo",
+            children: (
+                <ReasignIssue
+                    taskObject={issue}
+                    onSubmit={handleReasignIssue}
+                    onCancel={() => closeModal()}
+                />
+            ),
+            Icon: <UsersIcon size={20} stroke={1.75} />,
+            closeOnBackdrop: false,
+            closeOnEscape: true,
+            mode: "UPDATE"
+        })
+    }
+
+    const handleHistoryModal = (issue: TaskProps) => {
+        setSelectedIssue(issue)
+        openModal({
+            size: "xl",
+            title: "Historial de Cambios",
+            desc: "Revisa todos los cambios realizados en la tarea",
+            children: (
+                <AuditHistory
+                    projectId={issue.projectId}
+                    issueId={issue.id as string}
+                    currentIssue={issue}
+                    onCancel={() => closeModal()}
+                />
+            ),
+            Icon: <ClockIcon size={20} stroke={1.75} />,
+            closeOnBackdrop: true,
+            closeOnEscape: true,
+            mode: "UPDATE"
+        })
+    }
+
+    const handleDeleteIssueModal = (issue: TaskProps) => {
+        setSelectedIssue(issue)
+        openModal({
+            size: "md",
+            children: (
+                <DeleteIssueForm
+                    onSubmit={handleDeleteIssue}
+                    onCancel={() => closeModal()}
+                    taskObject={issue}
+                />
+            ),
+            closeOnBackdrop: false,
+            closeOnEscape: true,
+            mode: "DELETE"
+        })
+    }
+
+    const handleCreateTaskModal = () => {
+        openModal({
+            size: "lg",
+            title: "Crear Nueva Tarea",
+            desc: "Agrega una nueva tarea al proyecto",
+            children: (
+                <CreateTaskForm
+                    onSubmit={() => closeModal()}
+                    onCancel={() => closeModal()}
+                />
+            ),
+            Icon: <PlusIcon size={20} stroke={1.75} />,
+            closeOnBackdrop: false,
+            closeOnEscape: true,
+            mode: "CREATE"
+        })
+    }
+
+    const handleCreateTaskInSprintModal = (statusId: number) => {
+        setSelectedStatusForNewTask(statusId)
+        openModal({
+            size: "lg",
+            title: "Crear Tarea en Sprint",
+            desc: "Agrega una nueva tarea directamente al sprint con estado específico",
+            children: (
+                <CreateTaskForm
+                    onSubmit={handleCreateTaskInSprint}
+                    onCancel={() => {
+                        closeModal()
+                        setSelectedStatusForNewTask(null)
+                    }}
+                    taskObject={{
+                        id: undefined,
+                        title: "",
+                        descriptions: [],
+                        priority: Number(projectConfig?.issuePriorities?.[0]?.id) || 1,
+                        status: statusId,
+                        type: Number(projectConfig?.issueTypes?.[0]?.id) || 1,
+                        projectId: spr.projectId,
+                        assignedId: "",
+                        estimatedTime: 0,
+                        startDate: '',
+                        endDate: '',
+                        realDate: '',
+                    } as TaskProps}
+                    isEdit={false}
+                />
+            ),
+            Icon: <PlusIcon size={20} stroke={1.75} />,
+            closeOnBackdrop: false,
+            closeOnEscape: true,
+            mode: "CREATE"
+        })
+    }
+
+    const handleEditSprintModal = () => {
+        openModal({
+            size: "lg",
+            title: "Editar Sprint",
+            desc: "Modifica la información del sprint",
+            children: (
+                <CreateSprintForm
+                    onSubmit={handleUpdateSprint}
+                    onCancel={() => closeModal()}
+                    currentSprint={spr}
+                    isEdit={true}
+                />
+            ),
+            Icon: <EditIcon size={20} stroke={1.75} />,
+            closeOnBackdrop: false,
+            closeOnEscape: true,
+            mode: "UPDATE"
+        })
+    }
+
+    const handleDeleteSprintModalOpen = () => {
+        openModal({
+            size: "md",
+            children: (
+                <DeleteSprintForm
+                    onSubmit={handleDeleteSprint}
+                    onCancel={() => closeModal()}
+                    sprintObject={spr}
+                />
+            ),
+            closeOnBackdrop: false,
+            closeOnEscape: true,
+            mode: "DELETE"
+        })
+    }
+
+    const handleCreateStatusModal = () => {
+        openModal({
+            size: "lg",
+            title: "Crear Nuevo Estado",
+            desc: "Define un nuevo estado para las tareas del proyecto",
+            children: (
+                <CreateEditStatus
+                    onSubmit={handleCreateStatus}
+                    onCancel={() => closeModal()}
+                    currentStatus={{ name: "", color: "#6366f1" }}
+                />
+            ),
+            Icon: <PlusIcon size={20} stroke={1.75} />,
+            closeOnBackdrop: false,
+            closeOnEscape: true,
+            mode: "CREATE"
+        })
+    }
+
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             {/* Sprint Header */}
-            <div className="px-6 py-4 border-b border-gray-100">
-                <div className="flex flex-col gap-2">
+            <div className="px-6 pt-4">
+                <div className="flex flex-col">
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center">
                             <div className="flex items-center gap-2">
                                 <CalendarIcon size={20} />
                                 <h3 className="text-lg font-semibold text-gray-900">{spr.title}</h3>
                             </div>
-                            <div className="flex items-center gap-2">
+                            {/* <div className="flex items-center gap-2">
                                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${spr.status === 1
                                     ? 'bg-green-100 text-green-800'
                                     : spr.status === 2
@@ -990,7 +1260,7 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
                                 <span className="text-sm text-gray-500">
                                     {issues.length} {issues.length === 1 ? 'tarea' : 'tareas'}
                                 </span>
-                            </div>
+                            </div> */}
                         </div>
                         <div className="flex items-center gap-2">
                             {spr.id === 'null' ? (
@@ -1031,7 +1301,7 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
                         </div>
                     </div>
                     {/* Filtro de participantes */}
-                    <div className="flex items-center gap-2 mt-2">
+                    <div className="flex items-center gap-2">
                         <span className="text-xs text-gray-500">Asignado a:</span>
                         <div className="relative" ref={userRef} style={{ minWidth: 180 }}>
                             <button
@@ -1184,10 +1454,7 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
                         </div>
                     </div>
                 </div>
-                {spr.goal && (
-                    <p className="text-sm text-gray-600 mt-2">{spr.goal}</p>
-                )}
-                <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
+                {/* <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
                     <div className="flex items-center gap-1">
                         <ClockIcon size={14} />
                         <span>{getStatusDates()}</span>
@@ -1218,7 +1485,7 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
                             })() : 'No definida'}
                         </span>
                     )}
-                </div>
+                </div> */}
             </div>
 
             {/* Kanban Columns */}
@@ -1291,7 +1558,7 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
 
                                     <div className="min-h-[200px] bg-gray-50 rounded-lg flex items-center justify-center h-full">
                                         <button
-                                            onClick={() => setIsCreateStatusModalOpen(true)}
+                                            onClick={handleCreateStatusModal}
                                             className="flex flex-col justify-center items-center gap-2 w-full h-full border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 group"
                                         >
                                             <div className="text-gray-400 group-hover:text-blue-500">
@@ -1341,175 +1608,6 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
                     </DragOverlay>
                 </DndContext>
             </div>
-
-            {/* Modals */}
-            <Modal
-                isOpen={isTaskDetailsModalOpen}
-                onClose={() => setIsTaskDetailsModalOpen(false)}
-                title=""
-                customWidth="sm:"
-                showCloseButton={false}
-            >
-                {selectedIssue && (
-                    <TaskDetailsForm
-                        task={selectedIssue}
-                        onSubmit={() => setIsTaskDetailsModalOpen(false)}
-                        onCancel={() => setIsTaskDetailsModalOpen(false)}
-                    />
-                )}
-            </Modal>
-
-            <Modal
-                isOpen={isTaskUpdateModalOpen}
-                onClose={() => setIsTaskUpdateModalOpen(false)}
-                title=""
-                customWidth='max-w-2xl'
-                showCloseButton={false}
-            >
-                {selectedIssue && (
-                    <CreateTaskForm
-                        onSubmit={handleUpdateIssue}
-                        onCancel={() => setIsTaskUpdateModalOpen(false)}
-                        taskObject={selectedIssue}
-                        isEdit={true}
-                    />
-                )}
-            </Modal>
-
-            <Modal
-                isOpen={isReasignModalOpen}
-                onClose={() => setIsReasignModalOpen(false)}
-                title=""
-                showCloseButton={false}
-            >
-                {selectedIssue && (
-                    <ReasignIssue
-                        taskObject={selectedIssue}
-                        onSubmit={handleReasignIssue}
-                        onCancel={() => setIsReasignModalOpen(false)}
-                    />
-                )}
-            </Modal>
-
-            <Modal
-                isOpen={isHistoryModalOpen}
-                onClose={() => setIsHistoryModalOpen(false)}
-                title=""
-                customWidth="max-w-4xl"
-                showCloseButton={false}
-            >
-                {selectedIssue && (
-                    <AuditHistory
-                        projectId={selectedIssue.projectId}
-                        issueId={selectedIssue.id as string}
-                        title="Historial de la tarea"
-                        currentIssue={selectedIssue}
-                        onCancel={() => setIsHistoryModalOpen(false)}
-                    />
-                )}
-            </Modal>
-
-            <Modal
-                isOpen={isDeleteIssueModalOpen}
-                onClose={() => setIsDeleteIssueModalOpen(false)}
-                title=""
-            >
-                {selectedIssue && (
-                    <DeleteIssueForm
-                        onSubmit={handleDeleteIssue}
-                        onCancel={() => setIsDeleteIssueModalOpen(false)}
-                        taskObject={selectedIssue}
-                    />
-                )}
-            </Modal>
-
-            <Modal
-                isOpen={isCreateTaskModalOpen}
-                onClose={() => setIsCreateTaskModalOpen(false)}
-                title=""
-                customWidth='max-w-2xl'
-                showCloseButton={false}
-            >
-                <CreateTaskForm
-                    onSubmit={() => setIsCreateTaskModalOpen(false)}
-                    onCancel={() => setIsCreateTaskModalOpen(false)}
-                />
-            </Modal>
-
-            {/* Modal específico para crear tareas dentro del sprint actual */}
-            <Modal
-                isOpen={isCreateTaskInSprintModalOpen}
-                onClose={() => {
-                    setIsCreateTaskInSprintModalOpen(false)
-                    setSelectedStatusForNewTask(null)
-                }}
-                title=""
-                customWidth='max-w-2xl'
-                showCloseButton={false}
-            >
-                <CreateTaskForm
-                    onSubmit={handleCreateTaskInSprint}
-                    onCancel={() => {
-                        setIsCreateTaskInSprintModalOpen(false)
-                        setSelectedStatusForNewTask(null)
-                    }}
-                    taskObject={selectedStatusForNewTask ? {
-                        id: undefined,
-                        title: "",
-                        descriptions: [],
-                        priority: Number(projectConfig?.issuePriorities?.[0]?.id) || 1,
-                        status: selectedStatusForNewTask, // Pre-configurar con el estado seleccionado
-                        type: Number(projectConfig?.issueTypes?.[0]?.id) || 1,
-                        projectId: spr.projectId,
-                        assignedId: "",
-                        estimatedTime: 0,
-                        startDate: '',
-                        endDate: '',
-                        realDate: '',
-                    } as TaskProps : undefined}
-                    isEdit={false}
-                />
-            </Modal>
-
-            <Modal
-                isOpen={isCreateSprintModalOpen}
-                onClose={() => setIsCreateSprintModalOpen(false)}
-                title=""
-                customWidth="sm:max-w-2xl"
-                showCloseButton={false}
-            >
-                <CreateSprintForm
-                    onSubmit={handleUpdateSprint}
-                    onCancel={() => setIsCreateSprintModalOpen(false)}
-                    currentSprint={spr}
-                    isEdit={true}
-                />
-            </Modal>
-
-            <Modal
-                isOpen={isDeleteSprintModalOpen}
-                onClose={() => setIsDeleteSprintModalOpen(false)}
-                title=""
-            >
-                <DeleteSprintForm
-                    onSubmit={handleDeleteSprint}
-                    onCancel={() => setIsDeleteSprintModalOpen(false)}
-                    sprintObject={spr}
-                />
-            </Modal>
-
-            <Modal
-                isOpen={isCreateStatusModalOpen}
-                onClose={() => setIsCreateStatusModalOpen(false)}
-                title=""
-                customWidth="max-w-2xl"
-            >
-                <CreateEditStatus
-                    onSubmit={handleCreateStatus}
-                    onCancel={() => setIsCreateStatusModalOpen(false)}
-                    currentStatus={{ name: "", color: "#6366f1" }}
-                />
-            </Modal>
         </div>
     )
 }

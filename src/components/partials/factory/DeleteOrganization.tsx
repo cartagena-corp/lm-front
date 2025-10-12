@@ -1,17 +1,13 @@
-"use client"
-import { DeleteIcon } from '@/assets/Icon'
+import { DeleteIcon } from "@/assets/Icon"
 
-interface PermissionProps {
-    name: string
-}
-
-interface DeletePermissionFormProps {
-    permission: PermissionProps
-    onSubmit: () => void
+interface DeleteOrganizationProps {
+    organizationDate: string
+    organizationName: string
     onCancel: () => void
+    onClick: () => void
 }
 
-export default function DeletePermissionForm({ permission, onSubmit, onCancel }: DeletePermissionFormProps) {
+export default function DeleteOrganization({ organizationName, organizationDate, onCancel, onClick }: DeleteOrganizationProps) {
     return (
         <div className="p-6">
             {/* Header con icono */}
@@ -24,11 +20,11 @@ export default function DeletePermissionForm({ permission, onSubmit, onCancel }:
             {/* Título y descripción */}
             <div className="text-center mb-8">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    Eliminar Permiso
+                    Eliminar Organización
                 </h3>
                 <hgroup className="flex flex-col">
                     <h6 className="text-sm text-gray-600 leading-relaxed">
-                        Estás a punto de eliminar el permiso <b className="text-red-600">{permission.name}</b> de forma permanente.
+                        Estás a punto de eliminar la organización <b className="text-red-600">{organizationName}</b> de forma permanente.
                     </h6>
                     <p className="text-sm text-gray-600 leading-relaxed">
                         Esta acción <b>NO</b> se puede deshacer.
@@ -40,7 +36,7 @@ export default function DeletePermissionForm({ permission, onSubmit, onCancel }:
                     onClick={() => onCancel()}>
                     Cancelar
                 </button>
-                <button className="w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium" type="button" onClick={() => onSubmit()}>
+                <button className="w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium" type="button" onClick={onClick}>
                     Eliminar
                 </button>
             </div>

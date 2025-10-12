@@ -21,12 +21,12 @@ export default function ReasignIssue({ onSubmit, onCancel, taskObject }: Reasign
    // Combine project participants with the project creator (avoid duplicates)
    const allProjectUsers = useMemo(() => {
       const participants = [...projectParticipants]
-      
+
       // Add project creator if not already in participants
       if (selectedBoard?.createdBy && !participants.some(p => p.id === selectedBoard.createdBy?.id)) {
          // Find the creator in the full user list to get complete information including email
          const creatorFromUserList = listUsers.find(user => user.id === selectedBoard.createdBy?.id)
-         
+
          participants.push({
             id: selectedBoard.createdBy.id,
             firstName: selectedBoard.createdBy.firstName,
@@ -35,7 +35,7 @@ export default function ReasignIssue({ onSubmit, onCancel, taskObject }: Reasign
             picture: selectedBoard.createdBy.picture
          })
       }
-      
+
       return participants
    }, [projectParticipants, selectedBoard?.createdBy, listUsers])
 
@@ -56,41 +56,17 @@ export default function ReasignIssue({ onSubmit, onCancel, taskObject }: Reasign
          document.removeEventListener('mousedown', handleClickOutside)
       }
    }, [])
-   
+
    return (
       <div className="bg-white border-gray-100 rounded-xl shadow-sm border">
-         {/* Header */}
-         <div className="border-b border-gray-100 p-6">
-            <div className="flex items-center justify-between">
-               <div className="flex items-center gap-3">
-                  <div className="bg-blue-50 text-blue-600 rounded-lg p-2">
-                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                     </svg>
-                  </div>
-                  <div>
-                     <h3 className="text-lg font-semibold text-gray-900">Reasignar Tarea</h3>
-                     <p className="text-sm text-gray-500">Selecciona el nuevo usuario responsable</p>
-                  </div>
-               </div>
-               <button
-                  type="button"
-                  onClick={onCancel}
-                  className="bg-white text-gray-400 hover:text-gray-700 rounded-md cursor-pointer p-2 hover:bg-gray-50 transition-all duration-200"
-               >
-                  <XIcon size={20} />
-               </button>
-            </div>
-         </div>
-
          {/* Content */}
          <div className="p-6">
             <div className="space-y-4">
                {/* Current Task Info */}
                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                   <div className="flex items-center gap-3">
-                     <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                      </div>
@@ -99,7 +75,7 @@ export default function ReasignIssue({ onSubmit, onCancel, taskObject }: Reasign
                         <p className="text-xs text-gray-500 mt-1">
                            Asignado actualmente a: {' '}
                            <span className="font-medium">
-                              {typeof taskObject.assignedId === 'object' && taskObject.assignedId 
+                              {typeof taskObject.assignedId === 'object' && taskObject.assignedId
                                  ? `${taskObject.assignedId.firstName} ${taskObject.assignedId.lastName}`
                                  : 'Sin asignar'
                               }
@@ -116,16 +92,16 @@ export default function ReasignIssue({ onSubmit, onCancel, taskObject }: Reasign
                      <span className='text-red-500 ml-1'>*</span>
                   </label>
                   <div className="relative" ref={userRef}>
-                     <button 
+                     <button
                         onClick={() => setIsUserOpen(!isUserOpen)}
                         type='button'
-                        className='w-full text-left bg-white border border-gray-200 rounded-lg px-4 py-3 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200'
+                        className='w-full text-left bg-white border border-gray-200 rounded-lg px-4 py-3 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200'
                      >
                         <div className='flex items-center justify-between'>
                            <div className='flex items-center gap-3'>
                               <div className='w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden'>
                                  {userSelected ? (
-                                    <img 
+                                    <img
                                        src={getUserAvatar(userSelected, 32)}
                                        alt='Usuario seleccionado'
                                        className="w-full h-full object-cover rounded-full"
@@ -151,23 +127,23 @@ export default function ReasignIssue({ onSubmit, onCancel, taskObject }: Reasign
                            </svg>
                         </div>
                      </button>
-                     
+
                      {isUserOpen && (
-                        <div className='absolute z-[9999] top-full mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-xl max-h-48 overflow-y-auto'>
+                        <div className='absolute z-[9999] top-full mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto'>
                            {allProjectUsers.map((obj, i) => (
                               <button
-                                 key={i} 
+                                 key={i}
                                  type="button"
-                                 onClick={() => { 
+                                 onClick={() => {
                                     setUserSelected(obj)
-                                    setIsUserOpen(false) 
+                                    setIsUserOpen(false)
                                  }}
                                  className='w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors first:rounded-t-lg last:rounded-b-lg'
                               >
                                  <div className="flex items-center gap-3">
                                     <div className={`w-2 h-2 rounded-full ${obj.id === userSelected?.id ? 'bg-blue-600' : 'bg-transparent'}`} />
                                     <div className='w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden'>
-                                       <img 
+                                       <img
                                           src={getUserAvatar(obj, 32)}
                                           alt={obj.id}
                                           className="w-full h-full object-cover rounded-full"
@@ -195,21 +171,14 @@ export default function ReasignIssue({ onSubmit, onCancel, taskObject }: Reasign
                </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex items-center gap-3 pt-6 border-t border-gray-100">
-               <button
-                  type="button"
-                  onClick={onCancel}
-                  className="bg-white hover:bg-gray-50 hover:border-gray-300 border-gray-200 border flex-1 duration-200 rounded-lg text-center text-sm py-2.5 px-4 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-               >
+            <div className="flex justify-end gap-3 mt-4">
+               <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 transition-all duration-200 text-sm font-medium" type="button"
+                  onClick={() => onCancel()}>
                   Cancelar
                </button>
-               <button 
+               <button disabled={!userSelected} className={`bg-purple-600 hover:bg-purple-700 focus:ring-purple-500 text-white focus:ring-2 rounded-md focus:ring-offset-2 transition-all duration-200 text-sm font-medium px-4 py-2`}
                   onClick={() => onSubmit({ newUserId: userSelected?.id as string, issueId: taskObject.id as string })}
-                  type="button"
-                  disabled={!userSelected}
-                  className="bg-blue-600 hover:bg-blue-700 text-white border-transparent border hover:shadow-md flex-1 duration-200 rounded-lg text-center text-sm py-2.5 px-4 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-               >
+                  type="button">
                   Reasignar Tarea
                </button>
             </div>

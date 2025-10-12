@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { RoleProps } from "@/lib/types/types"
 import { useAuthStore } from "@/lib/store/AuthStore"
+import { ChevronRightIcon } from "@/assets/Icon"
 
 interface CreateUserFormConfigProps {
     onSubmit: (data: { email: string; role: string }) => void
@@ -50,16 +51,7 @@ export default function CreateUserFormConfig({ onSubmit, onCancel }: CreateUserF
     }
 
     return (
-        <div className="space-y-6">
-            <div className="text-center space-y-2">
-                <h3 className="text-lg font-semibold text-gray-900">
-                    Agregar Nuevo Usuario
-                </h3>
-                <p className="text-sm text-gray-500">
-                    Ingresa el correo electrónico del usuario y asígnale un rol
-                </p>
-            </div>
-
+        <div className="space-y-6 p-6">
             <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Email Input */}
                 <div>
@@ -74,11 +66,10 @@ export default function CreateUserFormConfig({ onSubmit, onCancel }: CreateUserF
                             setFormData({ ...formData, email: e.target.value })
                             if (errors.email) setErrors({ ...errors, email: "" })
                         }}
-                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-colors ${
-                            errors.email
-                                ? "border-red-300 focus:ring-red-200"
-                                : "border-gray-300 focus:ring-blue-200 focus:border-blue-500"
-                        }`}
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-colors ${errors.email
+                            ? "border-red-300 focus:ring-red-200"
+                            : "border-gray-300 focus:ring-blue-200 focus:border-blue-500"
+                            }`}
                         placeholder="usuario@ejemplo.com"
                     />
                     {errors.email && (
@@ -95,27 +86,16 @@ export default function CreateUserFormConfig({ onSubmit, onCancel }: CreateUserF
                         <button
                             type="button"
                             onClick={() => setIsRoleSelectOpen(!isRoleSelectOpen)}
-                            className={`w-full px-3 py-2 text-left border rounded-lg focus:outline-none focus:ring-2 transition-colors ${
-                                errors.role
-                                    ? "border-red-300 focus:ring-red-200"
-                                    : "border-gray-300 focus:ring-blue-200 focus:border-blue-500"
-                            }`}
+                            className={`w-full px-3 py-2 text-left border rounded-lg focus:outline-none focus:ring-2 transition-colors ${errors.role
+                                ? "border-red-300 focus:ring-red-200"
+                                : "border-gray-300 focus:ring-blue-200 focus:border-blue-500"
+                                }`}
                         >
                             {formData.role || "Selecciona un rol"}
-                            <span className="absolute inset-y-0 right-0 flex items-center pr-2">
-                                <svg
-                                    className={`h-5 w-5 text-gray-400 transition-transform ${
-                                        isRoleSelectOpen ? "transform rotate-180" : ""
-                                    }`}
-                                    viewBox="0 0 20 20"
-                                    fill="currentColor"
-                                >
-                                    <path
-                                        fillRule="evenodd"
-                                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                        clipRule="evenodd"
-                                    />
-                                </svg>
+                            <span className={`${isRoleSelectOpen ? "-rotate-180" : "rotate-0"} absolute inset-y-0 right-0 flex items-center p-2 duration-200`}>
+                                <span className="rotate-90">
+                                    <ChevronRightIcon size={18} stroke={1.75} />
+                                </span>
                             </span>
                         </button>
 
@@ -148,20 +128,13 @@ export default function CreateUserFormConfig({ onSubmit, onCancel }: CreateUserF
                     )}
                 </div>
 
-                {/* Form Actions */}
-                <div className="flex items-center gap-3 pt-4">
-                    <button
-                        type="submit"
-                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
-                    >
-                        Agregar Usuario
-                    </button>
-                    <button
-                        type="button"
-                        onClick={onCancel}
-                        className="flex-1 bg-white hover:bg-gray-50 text-gray-600 border border-gray-300 px-4 py-2 rounded-lg transition-colors"
-                    >
+                <div className="flex justify-end gap-3 mt-4">
+                    <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 transition-all duration-200 text-sm font-medium" type="button"
+                        onClick={() => onCancel()}>
                         Cancelar
+                    </button>
+                    <button className={`bg-blue-600 hover:bg-blue-700 focus:ring-blue-500 text-white focus:ring-2 rounded-md focus:ring-offset-2 transition-all duration-200 text-sm font-medium px-4 py-2`} type="submit">
+                        Agregar Usuario
                     </button>
                 </div>
             </form>

@@ -1,8 +1,6 @@
 import { Analytics } from "@vercel/analytics/next"
 import Notifications from '@/components/layout/Notifications'
-import Sidebar from '@/components/layout/Sidebar'
-import MainLayout from '@/components/layout/MainLayout'
-import MobileMenuButton from '@/components/layout/MobileMenuButton'
+import ConditionalLayout from '@/components/new_layout/ConditionalLayout'
 import { Toaster } from 'react-hot-toast'
 import { Inter } from 'next/font/google'
 import '../assets/globals.css'
@@ -36,11 +34,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/frappe-gantt/dist/frappe-gantt.css" />
       </head>
       <body className={`${inter.className} bg-gray-50`}>
-        <Sidebar />
-        <MobileMenuButton />
-        <MainLayout>
+        <ConditionalLayout>
           {children}
-        </MainLayout>
+        </ConditionalLayout>
         <Toaster
           position="bottom-right"
           reverseOrder={false}

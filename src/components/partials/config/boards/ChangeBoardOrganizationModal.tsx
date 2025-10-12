@@ -44,21 +44,15 @@ export default function ChangeBoardOrganizationModal({ board, currentOrganizatio
     )
 
     return (
-        <div className="space-y-6">
-            {/* Header */}
-            <div className="text-center space-y-2">
-                <h3 className="text-lg font-semibold text-gray-900">
-                    Cambiar Organización del Tablero
-                </h3>
-            </div>
+        <div className="space-y-6 p-6">
 
             {/* Board Info */}
-            <div className="p-4 bg-gray-50 rounded-lg">
+            <div className="p-4 bg-purple-50 text-purple-600 rounded-lg">
                 <div>
-                    <h4 className="font-medium text-gray-900">
+                    <h4 className="font-medium">
                         {board.name}
                     </h4>
-                    <p className="text-sm text-gray-500">{board.description}</p>
+                    <p className="text-sm text-black">{board.description}</p>
                     <p className="text-xs text-gray-400 mt-1">
                         Creado: {new Date(board.createdAt).toLocaleDateString()}
                     </p>
@@ -75,7 +69,7 @@ export default function ChangeBoardOrganizationModal({ board, currentOrganizatio
                         id="organization"
                         value={selectedOrganization}
                         onChange={(e) => setSelectedOrganization(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                         required
                     >
                         <option value="">Seleccionar organización</option>
@@ -89,39 +83,30 @@ export default function ChangeBoardOrganizationModal({ board, currentOrganizatio
 
                 {/* Visual Representation */}
                 {selectedOrganization && (
-                    <div className="p-4 bg-blue-50 rounded-lg">
+                    <div className="p-4 bg-purple-50 rounded-lg">
                         <div className="flex items-center justify-between">
                             <div className="flex-1 text-center">
                                 <div className="text-sm font-medium text-gray-500 mb-1">Organización Actual</div>
-                                <div className="text-blue-600 font-medium">{currentOrganization.organizationName}</div>
+                                <div className="text-purple-600 font-medium">{currentOrganization.organizationName}</div>
                             </div>
-                            <div className="text-blue-500 mx-4">
+                            <div className="text-purple-500 mx-4">
                                 <ChevronRightIcon size={24} />
                             </div>
                             <div className="flex-1 text-center">
                                 <div className="text-sm font-medium text-gray-500 mb-1">Nueva Organización</div>
-                                <div className="text-blue-600 font-medium">
+                                <div className="text-purple-600 font-medium">
                                     {organizations.find(org => org.organizationId === selectedOrganization)?.organizationName}
                                 </div>
                             </div>
                         </div>
                     </div>
                 )}
-
-                {/* Action Buttons */}
-                <div className="flex items-center gap-3 pt-4">
-                    <button
-                        type="button"
-                        onClick={onCancel}
-                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-                    >
+                <div className="flex justify-end gap-3 mt-4">
+                    <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 transition-all duration-200 text-sm font-medium" type="button"
+                        onClick={() => onCancel()}>
                         Cancelar
                     </button>
-                    <button
-                        type="submit"
-                        disabled={!selectedOrganization}
-                        className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                    >
+                    <button disabled={!selectedOrganization} className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all duration-200 text-sm font-medium" type="submit">
                         Confirmar Cambio
                     </button>
                 </div>

@@ -35,28 +35,8 @@ export default function ProjectConfigModal({ onClose, projectId }: ProjectConfig
 
     return (
         <div className="bg-white rounded-lg max-w-6xl mx-auto max-h-[90vh] overflow-hidden">
-            {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
-                        <ConfigIcon size={24} />
-                    </div>
-                    <div>
-                        <h2 className="text-xl font-semibold text-gray-900">Configuración del Proyecto</h2>
-                        <p className="text-sm text-gray-600">Gestiona la configuración específica de este proyecto</p>
-                    </div>
-                </div>
-                <button
-                    type="button"
-                    onClick={onClose}
-                    className="flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-                >
-                    <XIcon />
-                </button>
-            </div>
-
             {/* Navigation Tabs */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-2">
+            <div className="bg-white border-b border-gray-200 p-2">
                 <nav className="flex space-x-2">
                     {configTabs.map((tab) => {
                         const Icon = tab.icon
@@ -79,7 +59,7 @@ export default function ProjectConfigModal({ onClose, projectId }: ProjectConfig
             </div>
 
             {/* Content Area */}
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)] space-y-6">
+            <div className="overflow-y-auto space-y-6">
                 {/* Dynamic Content */}
                 {activeTab.id === 1 ? (
                     <SprintConfig projectId={projectId} />

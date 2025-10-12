@@ -94,20 +94,10 @@ export default function CreateUserForm({ onSubmit, onCancel, organizationId }: C
    }
 
    return (
-      <div className="space-y-6">
-         {/* Header */}
-         <div className="text-center space-y-2">
-            <h3 className="text-lg font-semibold text-gray-900">
-               Agregar Usuario
-            </h3>
-            <p className="text-sm text-gray-500">
-               Invita a un nuevo usuario a la organización: {organization?.organizationName || 'Cargando...'}
-            </p>
-         </div>
-
-         <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-6 p-6">
+         <form onSubmit={handleSubmit} className="space-y-2">
             {/* Organization Field - Display only */}
-            <div className="space-y-2">
+            <div className="space-y-1">
                <label htmlFor="organization" className="block text-sm font-medium text-gray-700">
                   Organización
                </label>
@@ -121,7 +111,7 @@ export default function CreateUserForm({ onSubmit, onCancel, organizationId }: C
             </div>
 
             {/* Email Input */}
-            <div className="space-y-2">
+            <div className="space-y-1">
                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                   Correo electrónico
                </label>
@@ -144,7 +134,7 @@ export default function CreateUserForm({ onSubmit, onCancel, organizationId }: C
             </div>
 
             {/* Role Select - Custom Button Select */}
-            <div className="space-y-2 relative" ref={roleSelectRef}>
+            <div className="space-y-1 relative" ref={roleSelectRef}>
                <label htmlFor="role" className="block text-sm font-medium text-gray-700">
                   Rol del usuario
                </label>
@@ -176,7 +166,7 @@ export default function CreateUserForm({ onSubmit, onCancel, organizationId }: C
                </button>
 
                {isRoleSelectOpen && (
-                  <div className="border-gray-200 bg-white shadow-lg absolute z-10 top-full mt-1 flex flex-col rounded-lg border text-sm w-full max-h-40 overflow-y-auto">
+                  <div className="border-gray-200 bg-white shadow-lg absolute z-10 top-full mt-1 flex flex-col rounded-lg border text-sm w-full max-h-60 overflow-y-auto">
                      {organizationRoles.map((role) => (
                         <div
                            key={role.name}
@@ -202,24 +192,13 @@ export default function CreateUserForm({ onSubmit, onCancel, organizationId }: C
                )}
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex items-center gap-3 pt-4">
-               <button
-                  type="button"
-                  onClick={onCancel}
-                  className="bg-white hover:bg-gray-50 hover:border-gray-300 border-gray-200 border flex-1 duration-200 rounded-lg text-center text-sm py-2.5 px-4 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-               >
+            <div className="flex justify-end gap-3 mt-4">
+               <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 transition-all duration-200 text-sm font-medium" type="button"
+                  onClick={() => onCancel()}>
                   Cancelar
                </button>
-               <button
-                  type="submit"
-                  disabled={organizationRoles.length === 0}
-                  className={`text-white border-transparent border hover:shadow-md flex-1 duration-200 rounded-lg text-center text-sm py-2.5 px-4 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${organizationRoles.length === 0
-                     ? 'bg-gray-400 cursor-not-allowed'
-                     : 'bg-blue-600 hover:bg-blue-700'
-                     }`}
-               >
-                  {organizationRoles.length === 0 ? 'Cargando...' : 'Agregar Usuario'}
+               <button className={`${organizationRoles.length === 0 ? "bg-gray-600 hover:bg-gray-700 focus:ring-gray-500" : "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"} text-white focus:ring-2 rounded-md focus:ring-offset-2 transition-all duration-200 text-sm font-medium px-4 py-2`} type="submit">
+                  {organizationRoles.length === 0 ? "Cargando..." : "Agregar usuario"}
                </button>
             </div>
          </form>

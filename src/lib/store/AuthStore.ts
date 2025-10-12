@@ -462,8 +462,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
 
       try {
          const response = await fetch(API_ROUTES.USER_LOGOUT, {
-            method: 'POST',
-            credentials: 'include'
+            method: 'POST', credentials: 'include'
          })
 
          if (!response.ok) {

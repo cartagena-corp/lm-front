@@ -7,8 +7,8 @@ import { UserProps } from "@/lib/types/types"
 import { getUserAvatar } from "@/lib/utils/avatar.utils"
 import { getUserRoleName } from "@/lib/utils/user.utils"
 import CreateUserForm from "@/components/partials/config/users/CreateUserForm"
-import Modal from "@/components/layout/Modal"
-import { PlusIcon, UsersIcon } from "@/assets/Icon"
+import { useModalStore } from "@/lib/hooks/ModalStore"
+import { ChangeIcon, PlusIcon, UsersIcon } from "@/assets/Icon"
 import toast from "react-hot-toast"
 import ChangeUserOrganizationModal from "@/components/partials/config/users/ChangeUserOrganizationModal"
 
@@ -27,10 +27,10 @@ interface UsersOrgProps {
 export default function UsersOrg({ organization }: UsersOrgProps) {
     const { users, error, getUsersByOrganization, loadMoreUsersByOrganization } = useOrganizationStore()
     const { getValidAccessToken, addUserWithOrganization } = useAuthStore()
+    const { openModal, closeModal } = useModalStore()
     const [searchTerm, setSearchTerm] = useState<string>('')
     const [page, setPage] = useState<number>(0)
     const [isLoading, setIsLoading] = useState<boolean>(true)
-    const [showCreateUserModal, setShowCreateUserModal] = useState(false)
 
     // Referencia para el contenedor con scroll
     const containerRef = useRef<HTMLDivElement>(null)
@@ -138,9 +138,6 @@ export default function UsersOrg({ organization }: UsersOrgProps) {
         }
     }, [users, page, isLoading, organization.organizationId, searchTerm])
 
-    // State for change organization modal
-    const [showChangeOrgModal, setShowChangeOrgModal] = useState(false)
-    const [selectedUser, setSelectedUser] = useState<UserProps | null>(null)
     const [showUserMenu, setShowUserMenu] = useState<string | null>(null)
     const menuRef = useRef<HTMLDivElement>(null)
 
@@ -157,7 +154,7 @@ export default function UsersOrg({ organization }: UsersOrgProps) {
     }, [])
 
     const handleUserSubmit = async (data: { email: string, role: string, organizationId: string }) => {
-        setShowCreateUserModal(false)
+        closeModal()
         try {
             const token = await getValidAccessToken()
             if (!token) return
@@ -171,24 +168,50 @@ export default function UsersOrg({ organization }: UsersOrgProps) {
         }
     }
 
-    const handleChangeOrganization = async (data: { organizationId: string, role: string }) => {
-        if (!selectedUser) return
+    const handleChangeOrganization = async (user: UserProps, data: { organizationId: string, role: string }) => {
+        if (!user) return
 
         try {
             const token = await getValidAccessToken()
             if (!token) return
 
-            const success = await useOrganizationStore.getState().changeUserOrganization(token, selectedUser.id, data)
+            const success = await useOrganizationStore.getState().changeUserOrganization(token, user.id, data)
 
             if (success) {
                 // Actualizar la lista de usuarios
                 await getUsersByOrganization(token, organization.organizationId, searchTerm, 0, 10)
-                setShowChangeOrgModal(false)
+                closeModal()
                 toast.success("Usuario movido exitosamente")
             }
         } catch (error) {
             toast.error("Error al cambiar la organización del usuario")
         }
+    }
+
+    const handleCreateUserModal = () => {
+        openModal({
+            size: "lg",
+            title: "Agregar Usuario",
+            desc: "Añade un nuevo usuario a la organización",
+            children: <CreateUserForm onSubmit={handleUserSubmit} onCancel={() => closeModal()} organizationId={organization.organizationId} />,
+            Icon: <PlusIcon size={20} stroke={1.75} />,
+            closeOnBackdrop: false,
+            closeOnEscape: false,
+            mode: "CREATE"
+        })
+    }
+
+    const handleChangeOrgModal = (user: UserProps) => {
+        openModal({
+            size: "lg",
+            title: "Cambiar Organización",
+            desc: "Mueve el usuario a otra organización",
+            children: <ChangeUserOrganizationModal user={user} currentOrganization={{ organizationId: organization.organizationId, organizationName: organization.organizationName }} onSubmit={(data) => handleChangeOrganization(user, data)} onCancel={() => closeModal()} />,
+            Icon: <ChangeIcon size={20} stroke={1.75} />,
+            closeOnBackdrop: false,
+            closeOnEscape: false,
+            mode: "UPDATE"
+        })
     }
 
     return (
@@ -208,7 +231,7 @@ export default function UsersOrg({ organization }: UsersOrgProps) {
                     />
                     {/* Button to open the Add User modal */}
                     <button
-                        onClick={() => setShowCreateUserModal(true)}
+                        onClick={() => handleCreateUserModal()}
                         className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
                     >
                         <PlusIcon size={16} />
@@ -260,8 +283,7 @@ export default function UsersOrg({ organization }: UsersOrgProps) {
                                             <div className="py-1">
                                                 <button
                                                     onClick={() => {
-                                                        setSelectedUser(user)
-                                                        setShowChangeOrgModal(true)
+                                                        handleChangeOrgModal(user)
                                                         setShowUserMenu(null)
                                                     }}
                                                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -292,37 +314,7 @@ export default function UsersOrg({ organization }: UsersOrgProps) {
                     </div>
                 )}
             </div>
-            {/* Modal for creating a new user */}
-            <Modal
-                isOpen={showCreateUserModal}
-                onClose={() => setShowCreateUserModal(false)}
-                title=""
-            >
-                <CreateUserForm
-                    onSubmit={handleUserSubmit}
-                    onCancel={() => setShowCreateUserModal(false)}
-                    organizationId={organization.organizationId}
-                />
-            </Modal>
-
-            {/* Modal for changing organization */}
-            <Modal
-                isOpen={showChangeOrgModal}
-                onClose={() => setShowChangeOrgModal(false)}
-                title=""
-            >
-                {selectedUser && (
-                    <ChangeUserOrganizationModal
-                        user={selectedUser}
-                        currentOrganization={{
-                            organizationId: organization.organizationId,
-                            organizationName: organization.organizationName
-                        }}
-                        onSubmit={handleChangeOrganization}
-                        onCancel={() => setShowChangeOrgModal(false)}
-                    />
-                )}
-            </Modal>
+            {/* Modals are now managed by the modal store */}
         </>
     )
 }

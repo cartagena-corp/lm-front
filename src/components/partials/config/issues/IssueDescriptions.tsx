@@ -1,10 +1,10 @@
 import { DeleteIcon, EditIcon, PlusIcon, ConfigIcon } from "@/assets/Icon"
-import Modal from "@/components/layout/Modal"
 import { useConfigStore } from "@/lib/store/ConfigStore"
 import { useState } from "react"
 import CreateEditDescription from "@/components/partials/config/issues/CreateEditDescription"
 import { useAuthStore } from "@/lib/store/AuthStore"
 import DeleteIssueDescription from "@/components/partials/config/issues/DeleteIssueDescription"
+import { useModalStore } from "@/lib/hooks/ModalStore"
 
 interface IssueDescriptionsProps {
    projectId: string
@@ -12,20 +12,8 @@ interface IssueDescriptionsProps {
 }
 
 export default function IssueDescriptions({ projectId, onClose }: IssueDescriptionsProps) {
-   const { 
-      projectConfig,
-      isLoading,
-      addIssueDescription, 
-      editIssueDescription, 
-      deleteIssueDescription 
-   } = useConfigStore()
-   
+   const { projectConfig, isLoading, addIssueDescription, editIssueDescription, deleteIssueDescription } = useConfigStore()
    const { getValidAccessToken } = useAuthStore()
-
-   const [isEditDescriptionOpen, setIsEditDescriptionOpen] = useState(false)
-   const [isDeleteDescriptionOpen, setIsDeleteDescriptionOpen] = useState(false)
-   const [isCreateDescriptionOpen, setIsCreateDescriptionOpen] = useState(false)
-   const [currentDescription, setCurrentDescription] = useState<{ id?: string, name: string }>({ name: "" })
 
    // Obtener las descripciones desde projectConfig
    const issueDescriptions = projectConfig?.issueDescriptions || []
@@ -33,19 +21,57 @@ export default function IssueDescriptions({ projectId, onClose }: IssueDescripti
    const handleCreateDescription = async (data: { name: string }) => {
       const token = await getValidAccessToken()
       if (token) await addIssueDescription(token, projectId, data)
-      setIsCreateDescriptionOpen(false)
+      closeModal()
    }
 
-   const handleEditDescription = async (data: { name: string }) => {
+   const handleEditDescription = async (data: { id: string, name: string }) => {
       const token = await getValidAccessToken()
-      if (token) await editIssueDescription(token, projectId, currentDescription.id as string, data)
-      setIsEditDescriptionOpen(false)
+      if (token) await editIssueDescription(token, projectId, data.id, { name: data.name })
+      closeModal()
    }
 
-   const handleDeleteDescription = async () => {
+   const handleDeleteDescription = async (id: string) => {
       const token = await getValidAccessToken()
-      if (token) await deleteIssueDescription(token, projectId, currentDescription.id as string)
-      setIsDeleteDescriptionOpen(false)
+      if (token) await deleteIssueDescription(token, projectId, id)
+      closeModal()
+   }
+
+   const { openModal, closeModal } = useModalStore()
+
+   const handleCreateDescriptionModal = () => {
+      openModal({
+         size: "lg",
+         title: "Crear Nueva Descripción",
+         desc: "Ingresa el nombre para la nueva descripción de tareas",
+         children: <CreateEditDescription onSubmit={handleCreateDescription} onCancel={() => closeModal()} currentDescription={{ name: "" }} />,
+         Icon: <PlusIcon size={20} stroke={1.75} />,
+         closeOnBackdrop: false,
+         closeOnEscape: false,
+         mode: "CREATE"
+      })
+   }
+
+   const handleUpdateDescriptionModal = ({ id, name }: { id: string, name: string }) => {
+      openModal({
+         size: "lg",
+         title: "Editar Descripción",
+         desc: "Modifica el nombre de la descripción",
+         children: <CreateEditDescription onSubmit={(data) => handleEditDescription({ id, ...data })} onCancel={() => closeModal()} currentDescription={{ name }} />,
+         Icon: <EditIcon size={20} stroke={1.75} />,
+         closeOnBackdrop: false,
+         closeOnEscape: false,
+         mode: "UPDATE"
+      })
+   }
+
+   const handleDeleteDescriptionModal = ({ id, name }: { id: string, name: string }) => {
+      openModal({
+         size: "md",
+         children: <DeleteIssueDescription onSubmit={() => handleDeleteDescription(id)} onCancel={() => closeModal()} descriptionName={name} />,
+         closeOnBackdrop: false,
+         closeOnEscape: false,
+         mode: "DELETE"
+      })
    }
 
    return (
@@ -57,13 +83,7 @@ export default function IssueDescriptions({ projectId, onClose }: IssueDescripti
                   <h4 className="text-lg font-semibold text-gray-900">Descripciones de Tareas</h4>
                   <p className="text-sm text-gray-500 mt-1">Gestiona las descripciones disponibles para las tareas de este proyecto</p>
                </div>
-               <button
-                  onClick={() => {
-                     setCurrentDescription({ name: "" })
-                     setIsCreateDescriptionOpen(true)
-                  }}
-                  className="whitespace-nowrap flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium"
-               >
+               <button className="whitespace-nowrap flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium" onClick={() => handleCreateDescriptionModal()} >
                   <PlusIcon size={16} stroke={2.5} />
                   Nueva Descripción
                </button>
@@ -83,13 +103,7 @@ export default function IssueDescriptions({ projectId, onClose }: IssueDescripti
                      </div>
                      <h5 className="text-lg font-medium text-gray-900 mb-2">No hay descripciones configuradas</h5>
                      <p className="text-gray-500 mb-6">Crea tu primera descripción para comenzar a organizar las tareas</p>
-                     <button
-                        onClick={() => {
-                           setCurrentDescription({ name: "" })
-                           setIsCreateDescriptionOpen(true)
-                        }}
-                        className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium mx-auto"
-                     >
+                     <button onClick={() => handleCreateDescriptionModal()} className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium mx-auto"  >
                         <PlusIcon size={16} />
                         Crear Primera Descripción
                      </button>
@@ -109,24 +123,11 @@ export default function IssueDescriptions({ projectId, onClose }: IssueDescripti
                                  </span>
                               </div>
                               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                                 <button
-                                    onClick={() => {
-                                       setCurrentDescription({ ...description, id: description.id?.toString() })
-                                       setIsEditDescriptionOpen(true)
-                                    }}
-                                    className="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-md transition-colors duration-200"
-                                    title="Editar descripción"
-                                 >
+                                 <button onClick={() => handleUpdateDescriptionModal({ id: description.id?.toString(), name: description.name })} className="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-md transition-colors duration-200" title="Editar descripción" >
                                     <EditIcon size={14} />
                                  </button>
-                                 <button
-                                    onClick={() => {
-                                       setCurrentDescription({ ...description, id: description.id?.toString() })
-                                       setIsDeleteDescriptionOpen(true)
-                                    }}
-                                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors duration-200"
-                                    title="Eliminar descripción"
-                                 >
+                                 <button className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors duration-200" title="Eliminar descripción"
+                                    onClick={() => handleDeleteDescriptionModal({ id: description.id?.toString(), name: description.name })}>
                                     <DeleteIcon size={14} />
                                  </button>
                               </div>
@@ -137,33 +138,6 @@ export default function IssueDescriptions({ projectId, onClose }: IssueDescripti
                )}
             </div>
          </section>
-
-         {/* Modal para crear descripción */}
-         <Modal isOpen={isCreateDescriptionOpen} onClose={() => setIsCreateDescriptionOpen(false)} title="">
-            <CreateEditDescription 
-               onSubmit={handleCreateDescription} 
-               onCancel={() => setIsCreateDescriptionOpen(false)} 
-               currentDescription={currentDescription} 
-            />
-         </Modal>
-
-         {/* Modal para editar descripción */}
-         <Modal isOpen={isEditDescriptionOpen} onClose={() => setIsEditDescriptionOpen(false)} title="">
-            <CreateEditDescription 
-               onSubmit={handleEditDescription} 
-               onCancel={() => setIsEditDescriptionOpen(false)} 
-               currentDescription={currentDescription} 
-            />
-         </Modal>
-
-         {/* Modal para eliminar descripción */}
-         <Modal isOpen={isDeleteDescriptionOpen} onClose={() => setIsDeleteDescriptionOpen(false)} title="">
-            <DeleteIssueDescription 
-               onSubmit={handleDeleteDescription} 
-               onCancel={() => setIsDeleteDescriptionOpen(false)} 
-               descriptionName={currentDescription.name} 
-            />
-         </Modal>
       </>
    )
 }

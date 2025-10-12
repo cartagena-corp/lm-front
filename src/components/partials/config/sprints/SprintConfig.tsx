@@ -3,17 +3,12 @@ import { DeleteIcon, EditIcon, PlusIcon, ConfigIcon } from "@/assets/Icon"
 import { useAuthStore } from "@/lib/store/AuthStore"
 import { useConfigStore } from "@/lib/store/ConfigStore"
 import CreateEditStatus from "../CreateEditStatus"
-import Modal from "@/components/layout/Modal"
-import { useState } from "react"
+import { useModalStore } from "@/lib/hooks/ModalStore"
 
 export default function SprintConfig({ projectId }: { projectId: string }) {
-   const [isCreateStatusOpen, setIsCreateStatusOpen] = useState(false)
-   const [isEditStatusOpen, setIsEditStatusOpen] = useState(false)
-   const [isDeleteStatusOpen, setIsDeleteStatusOpen] = useState(false)
-   const [currentStatus, setCurrentStatus] = useState<{ id?: string, name: string, color: string }>({ name: "", color: "#000000" })
-
    const { getValidAccessToken } = useAuthStore()
    const { projectConfig, isLoading, addSprintStatus, editSprintStatus, deleteSprintStatus } = useConfigStore()
+   const { openModal, closeModal } = useModalStore()
 
    // Obtener los estados de sprint desde projectConfig
    const sprintStatuses = projectConfig?.sprintStatuses || []
@@ -21,26 +16,62 @@ export default function SprintConfig({ projectId }: { projectId: string }) {
    const handleCreateStatus = async (data: { name: string, color: string }) => {
       const token = await getValidAccessToken()
       if (token) await addSprintStatus(token, projectId, data)
-      setIsCreateStatusOpen(false)
+      closeModal()
    }
 
-   const handleEditStatus = async (data: { name: string, color: string }) => {
+   const handleEditStatus = async (data: { id: string, name: string, color: string }) => {
       const token = await getValidAccessToken()
-      if (token) await editSprintStatus(token, projectId, { id: currentStatus.id as string, ...data })
-      setIsEditStatusOpen(false)
+      if (token) await editSprintStatus(token, projectId, data)
+      closeModal()
    }
 
-   const handleDeleteStatus = async () => {
+   const handleDeleteStatus = async (data: { id: string, name: string, color: string }) => {
       const token = await getValidAccessToken()
-      if (token) await deleteSprintStatus(token, projectId, currentStatus.id as string)
-      setIsDeleteStatusOpen(false)
+      if (token) await deleteSprintStatus(token, projectId, data.id)
+      closeModal()
+   }
+
+   const handleCreateStatusModal = () => {
+      openModal({
+         size: "lg",
+         title: "Crear Nuevo Estado",
+         desc: "Define un nuevo estado para los sprints",
+         children: <CreateEditStatus onSubmit={handleCreateStatus} onCancel={() => closeModal()} currentStatus={{ name: "", color: "#000000" }} />,
+         Icon: <PlusIcon size={20} stroke={1.75} />,
+         closeOnBackdrop: false,
+         closeOnEscape: false,
+         mode: "CREATE"
+      })
+   }
+
+   const handleUpdateStatusModal = ({ id, name, color }: { id: string, name: string, color: string }) => {
+      openModal({
+         size: "lg",
+         title: "Editar Estado",
+         desc: "Modifica la información del estado",
+         children: <CreateEditStatus onSubmit={(data) => handleEditStatus({ id, ...data })} onCancel={() => closeModal()} currentStatus={{ name, color }} />,
+         Icon: <EditIcon size={20} stroke={1.75} />,
+         closeOnBackdrop: false,
+         closeOnEscape: false,
+         mode: "UPDATE"
+      })
+   }
+
+   const handleDeleteStatusModal = ({ id, name, color }: { id: string, name: string, color: string }) => {
+      openModal({
+         size: "md",
+         children: <DeleteSprintStatus onSubmit={() => handleDeleteStatus({ id, name, color })} onCancel={() => closeModal()} status={{ id, name, color }} />,
+         closeOnBackdrop: false,
+         closeOnEscape: false,
+         mode: "DELETE"
+      })
    }
 
    return (
       <>
-         <section className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300">
+         <section className="bg-white">
             {/* Header */}
-            <div className="p-6 border-b border-gray-100">
+            <div className="p-6 border-b border-gray-200">
                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                      <div className="bg-green-50 text-green-600 rounded-lg p-2">
@@ -52,10 +83,7 @@ export default function SprintConfig({ projectId }: { projectId: string }) {
                      </div>
                   </div>
                   <button
-                     onClick={() => {
-                        setCurrentStatus({ name: "", color: "#000000" })
-                        setIsCreateStatusOpen(true)
-                     }}
+                     onClick={handleCreateStatusModal}
                      className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium"
                   >
                      <PlusIcon size={16} stroke={4} />
@@ -82,10 +110,7 @@ export default function SprintConfig({ projectId }: { projectId: string }) {
                      <h4 className="text-lg font-medium text-gray-900 mb-2">No hay estados configurados</h4>
                      <p className="text-gray-500 mb-6">Crea tu primer estado para comenzar a organizar tus sprints</p>
                      <button
-                        onClick={() => {
-                           setCurrentStatus({ name: "", color: "#000000" })
-                           setIsCreateStatusOpen(true)
-                        }}
+                        onClick={handleCreateStatusModal}
                         className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium mx-auto"
                      >
                         <PlusIcon size={16} />
@@ -118,20 +143,14 @@ export default function SprintConfig({ projectId }: { projectId: string }) {
                               </div>
                               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                  <button
-                                    onClick={() => {
-                                       setCurrentStatus({ ...status, id: status.id?.toString() })
-                                       setIsEditStatusOpen(true)
-                                    }}
+                                    onClick={() => handleUpdateStatusModal({ id: status.id?.toString() || "", name: status.name, color: status.color })}
                                     className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-md transition-colors duration-200"
                                     title="Editar estado"
                                  >
                                     <EditIcon size={14} />
                                  </button>
                                  <button
-                                    onClick={() => {
-                                       setCurrentStatus({ ...status, id: status.id?.toString() })
-                                       setIsDeleteStatusOpen(true)
-                                    }}
+                                    onClick={() => handleDeleteStatusModal({ id: status.id?.toString() || "", name: status.name, color: status.color })}
                                     className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors duration-200"
                                     title="Eliminar estado"
                                  >
@@ -145,21 +164,6 @@ export default function SprintConfig({ projectId }: { projectId: string }) {
                )}
             </div>
          </section>
-
-         {/* Modal para crear estado */}
-         <Modal isOpen={isCreateStatusOpen} onClose={() => setIsCreateStatusOpen(false)} title="">
-            <CreateEditStatus onSubmit={handleCreateStatus} onCancel={() => setIsCreateStatusOpen(false)} currentStatus={currentStatus} />
-         </Modal>
-
-         {/* Modal para editar estado */}
-         <Modal isOpen={isEditStatusOpen} onClose={() => setIsEditStatusOpen(false)} title="">
-            <CreateEditStatus onSubmit={handleEditStatus} onCancel={() => setIsEditStatusOpen(false)} currentStatus={currentStatus} />
-         </Modal>
-
-         {/* Modal para eliminar estado */}
-         <Modal isOpen={isDeleteStatusOpen} onClose={() => setIsDeleteStatusOpen(false)} title="">
-            <DeleteSprintStatus onSubmit={handleDeleteStatus} onCancel={() => setIsDeleteStatusOpen(false)} status={currentStatus} />
-         </Modal>
       </>
    )
 }

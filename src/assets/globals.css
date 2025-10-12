@@ -1,5 +1,17 @@
 @import "tailwindcss";
 
+@theme {
+  /* Colores personalizados para el sidebar */
+  --color-primary: #1e293b;
+  --color-primary-text: #f8fafc;
+  --color-primary-hover: #334155;
+  --color-primary-border: #64748b;
+  --color-background: #f8fafc;
+  --color-button-secondary-background: #ffffff;
+  --color-button-secondary-text: #1e293b;
+  --color-background-background: #e2e8f0;
+}
+
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-rgb: 255, 255, 255;

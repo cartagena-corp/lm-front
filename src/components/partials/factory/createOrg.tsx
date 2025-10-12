@@ -16,33 +16,6 @@ export default function CreateOrg({ onSubmit, onCancel, orgObject, isEdit = fals
 
     return (
         <div className="bg-white border-gray-100 rounded-xl shadow-sm border">
-            {/* Header */}
-            <div className="border-b border-gray-100 p-6">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="bg-blue-50 text-blue-600 rounded-lg p-2">
-                            <PlusIcon size={24} />
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-semibold text-gray-900">
-                                {isEdit ? 'Editar Organización' : 'Crear Nueva Organización'}
-                            </h3>
-                            <p className="text-sm text-gray-500">
-                                {isEdit ? 'Modifica los detalles de la organización' : 'Completa los detalles de la nueva organización'}
-                            </p>
-                        </div>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={onCancel}
-                        className="bg-white text-gray-400 hover:text-gray-700 rounded-md cursor-pointer p-2 hover:bg-gray-50 transition-all duration-200"
-                    >
-                        <XIcon size={20} />
-                    </button>
-                </div>
-            </div>
-
-            {/* Body */}
             <div className="p-6">
                 <form onSubmit={handleSubmit} className="flex flex-col gap-6">
                     <div className="flex flex-col gap-1">

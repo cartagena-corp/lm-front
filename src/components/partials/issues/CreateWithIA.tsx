@@ -7,7 +7,8 @@ import { useAuthStore } from "@/lib/store/AuthStore"
 import { useBoardStore } from "@/lib/store/BoardStore"
 import { UserProps } from "@/lib/types/types"
 import { getUserAvatar } from "@/lib/utils/avatar.utils"
-import Modal from "@/components/layout/Modal"
+import { useModalStore } from "@/lib/hooks/ModalStore"
+import ConfirmDeleteTaskWithIA from "./ConfirmDeleteTaskWithIA"
 import toast from "react-hot-toast"
 
 interface Message {
@@ -43,6 +44,7 @@ export default function CreateWithIA({ onSubmit, onCancel, sprintId }: FormProps
     const { getValidAccessToken } = useAuthStore()
     const { projectParticipants, getProjectParticipants, selectedBoard } = useBoardStore()
     const { listUsers } = useAuthStore()
+    const { openModal, closeModal } = useModalStore()
 
     // Estados
     const [messages, setMessages] = useState<Message[]>([
@@ -232,7 +234,7 @@ export default function CreateWithIA({ onSubmit, onCancel, sprintId }: FormProps
 
         // Guardar referencia al archivo antes de limpiarlo
         const fileToSend = attachedFile
-        
+
         // Limpiar el archivo adjuntado inmediatamente al enviar
         setAttachedFile(null)
 
@@ -242,7 +244,7 @@ export default function CreateWithIA({ onSubmit, onCancel, sprintId }: FormProps
 
             // Determinar el texto a enviar
             let textToSend = inputText.trim()
-            
+
             // Si hay archivo adjuntado pero no hay texto, usar mensaje por defecto
             if (fileToSend && !textToSend) {
                 textToSend = "Del siguiente archivo, necesito que obtengas todas las tareas posibles"
@@ -377,8 +379,6 @@ export default function CreateWithIA({ onSubmit, onCancel, sprintId }: FormProps
         return detectedTasks.every(task => isValidAssignment(task.assignedId))
     }
 
-    const [deleteTaskIndex, setDeleteTaskIndex] = useState<number | null>(null)
-
     // Función para eliminar el archivo adjuntado
     const handleRemoveAttachedFile = () => {
         setAttachedFile(null)
@@ -409,7 +409,19 @@ export default function CreateWithIA({ onSubmit, onCancel, sprintId }: FormProps
             return newSelections
         })
 
-        setDeleteTaskIndex(null)
+        closeModal()
+    }
+
+    // Handler para abrir el modal de confirmación de eliminación
+    const handleDeleteTaskModal = (index: number) => {
+        const task = detectedTasks[index]
+        openModal({
+            size: "md",
+            children: <ConfirmDeleteTaskWithIA task={task} onSubmit={() => handleDeleteTask(index)} onCancel={() => closeModal()} />,
+            closeOnBackdrop: false,
+            closeOnEscape: true,
+            mode: "DELETE"
+        })
     }
 
     // Maneja el drop de archivos - solo adjunta el primer archivo y reemplaza el anterior
@@ -421,7 +433,7 @@ export default function CreateWithIA({ onSubmit, onCancel, sprintId }: FormProps
 
         if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
             const firstFile = e.dataTransfer.files[0]
-            
+
             // Reemplazar el archivo anterior con el nuevo (solo el primero)
             setAttachedFile(firstFile)
             // No mostrar mensaje en el chat al adjuntar archivo
@@ -455,7 +467,7 @@ export default function CreateWithIA({ onSubmit, onCancel, sprintId }: FormProps
     }
 
     return (
-        <div className={`bg-white border-dashed rounded-xl shadow-sm h-full flex flex-col relative border-2
+        <div className={`bg-white border-dashed rounded-xl shadow-sm flex flex-col relative border-2 min-h-[80vh] max-h-[80vh]
             ${isDragActive ? "border-blue-600" : "border-transparent"}`}
             onDragOver={handleDragOver}
             onDrop={handleDrop}
@@ -470,33 +482,8 @@ export default function CreateWithIA({ onSubmit, onCancel, sprintId }: FormProps
                     <span className="text-lg font-semibold text-blue-700">Suelta aquí para adjuntar archivos</span>
                 </div>
             )}
-            {/* Header */}
-            <div className="border-b border-gray-100 p-6">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="bg-blue-50 text-blue-600 rounded-md p-2">
-                            <ChatIAIcon size={24} />
-                        </div>
-                        <div className="flex flex-col">
-                            <h3 className="text-gray-900 font-semibold text-lg">Crea tareas con IA</h3>
-                            <p className="text-gray-500 text-sm">
-                                Chatea con IA para crear tareas de forma rápida y eficiente.
-                            </p>
-                        </div>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={onCancel}
-                        disabled={isProcessing}
-                        className="bg-white text-gray-400 hover:text-gray-700 rounded-md cursor-pointer p-2 hover:bg-gray-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <XIcon size={20} />
-                    </button>
-                </div>
-            </div>
-
             {/* Content */}
-            <section className="overflow-y-auto p-6 flex flex-col gap-4">
+            <section className="flex-1 overflow-y-auto p-6 flex flex-col gap-4">
                 {messages.map((message, index) => (
                     <div
                         key={index}
@@ -510,7 +497,7 @@ export default function CreateWithIA({ onSubmit, onCancel, sprintId }: FormProps
                                     <span className="truncate max-w-[200px]">{message.attachedFile}</span>
                                 </div>
                             )}
-                            
+
                             <div
                                 className={`text-sm p-3 rounded-2xl ${message.isUser
                                     ? 'bg-blue-600 text-white rounded-br-none whitespace-pre-wrap'
@@ -740,7 +727,7 @@ export default function CreateWithIA({ onSubmit, onCancel, sprintId }: FormProps
                                                             <EditIcon size={16} />
                                                         </button>
                                                         <button
-                                                            onClick={() => setDeleteTaskIndex(index)}
+                                                            onClick={() => handleDeleteTaskModal(index)}
                                                             className="p-1 text-gray-400 hover:text-red-600"
                                                             title="Eliminar tarea"
                                                         >
@@ -930,7 +917,7 @@ export default function CreateWithIA({ onSubmit, onCancel, sprintId }: FormProps
                             className="focus-within:ring-blue-500 focus-within:border-blue-500 focus-within:ring-2 transition-all max-h-28! w-full p-2.5 text-sm border resize-none focus:outline-none placeholder-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
                             value={inputText}
                             onChange={setInputText}
-                            placeholder={attachedFile 
+                            placeholder={attachedFile
                                 ? "Escribe tu mensaje o deja vacío para usar el texto por defecto..."
                                 : "Puedes pegar transcripciones de reuniones u otros textos para convertirlos automáticamente en tareas."
                             }
@@ -982,74 +969,7 @@ export default function CreateWithIA({ onSubmit, onCancel, sprintId }: FormProps
                 )}
             </div>
 
-            {/* Modal de confirmación de eliminación */}
-            {deleteTaskIndex !== null && (
-                <Modal
-                    isOpen={deleteTaskIndex !== null}
-                    onClose={() => setDeleteTaskIndex(null)}
-                    title=""
-                >
-                    <div className="space-y-6">
-                        {/* Icono de advertencia */}
-                        <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full">
-                            <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                            </svg>
-                        </div>
-
-                        {/* Contenido del mensaje */}
-                        <div className="text-center space-y-3">
-                            <h3 className="text-lg font-semibold text-gray-900">
-                                ¿Eliminar tarea?
-                            </h3>
-                            <div className="text-sm text-gray-600 leading-relaxed">
-                                <p>
-                                    Estás a punto de eliminar la tarea{' '}
-                                    <span className="font-semibold text-red-600">"{detectedTasks[deleteTaskIndex].title}"</span>.
-                                </p>
-                                <p className="mt-2">
-                                    Esta acción no se puede deshacer.
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Información de la tarea */}
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                            <div className="flex items-start gap-3">
-                                <div className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
-                                <div className="flex-1 min-w-0">
-                                    <h4 className="font-medium text-red-900 text-sm">
-                                        {detectedTasks[deleteTaskIndex].title}
-                                    </h4>
-                                    {detectedTasks[deleteTaskIndex].descriptionsDTO && detectedTasks[deleteTaskIndex].descriptionsDTO.length > 0 && (
-                                        <p className="text-red-700 text-xs mt-1 line-clamp-2">
-                                            {detectedTasks[deleteTaskIndex].descriptionsDTO[0].text}
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Botones */}
-                        <div className="flex items-center gap-3 pt-2">
-                            <button
-                                type="button"
-                                onClick={() => setDeleteTaskIndex(null)}
-                                className="bg-white hover:bg-gray-50 hover:border-gray-300 border-gray-200 border flex-1 duration-200 rounded-lg text-center text-sm py-2.5 px-4 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => handleDeleteTask(deleteTaskIndex)}
-                                className="bg-red-600 hover:bg-red-700 text-white border-transparent border hover:shadow-md flex-1 duration-200 rounded-lg text-center text-sm py-2.5 px-4 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                            >
-                                Eliminar tarea
-                            </button>
-                        </div>
-                    </div>
-                </Modal>
-            )}
+            {/* Modals are now managed by the modal store */}
         </div>
     )
 }

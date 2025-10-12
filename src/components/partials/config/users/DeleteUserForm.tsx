@@ -1,7 +1,5 @@
-import { AlertCircleIcon, XIcon } from "@/assets/Icon"
+import { DeleteIcon } from "@/assets/Icon"
 import { UserProps } from "@/lib/types/types"
-import { getUserRoleName } from "@/lib/utils/user.utils"
-import { getUserAvatar } from "@/lib/utils/avatar.utils"
 
 interface DeleteUserFormProps {
    onSubmit: () => void
@@ -13,62 +11,36 @@ export default function DeleteUserForm({ onSubmit, onCancel, user }: DeleteUserF
    if (!user) return null
 
    return (
-      <div className="bg-white rounded-lg max-w-md mx-auto">
-         <div className="flex items-center justify-between p-6 border-b border-gray-200">
-            <div className="flex items-center gap-3">
-               <div className="p-2 bg-red-50 text-red-600 rounded-lg">
-                  <AlertCircleIcon size={20} />
-               </div>
-               <h2 className="text-xl font-semibold text-gray-900">Desactivar Usuario</h2>
+      <div className="p-6">
+         {/* Header con icono */}
+         <div className="flex items-center justify-center mb-6">
+            <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center">
+               <DeleteIcon size={32} />
             </div>
          </div>
 
-         <div className="p-6">
-            <div className="mb-6">
-               <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-                  <img 
-                     src={user ? getUserAvatar(user, 48) : getUserAvatar({ email: 'Usuario' }, 48)} 
-                     alt={`${user?.firstName} ${user?.lastName}`}
-                     className="w-12 h-12 rounded-full object-cover"
-                  />
-                  <div>
-                     <h3 className="font-medium text-gray-900">
-                        {user.firstName} {user.lastName}
-                     </h3>
-                     <p className="text-sm text-gray-500">{user.email}</p>
-                     <p className="text-xs text-gray-400">
-                        Rol: {user ? getUserRoleName(user) : 'Sin rol'}
-                     </p>
-                  </div>
-               </div>
-            </div>
-
-            <div className="mb-6">
-               <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <h4 className="text-red-800 font-medium mb-2">⚠️ Acción irreversible</h4>
-                  <p className="text-red-700 text-sm">
-                     Esta acción no se puede deshacer. El usuario será desactivado permanentemente 
-                     del sistema y se perderán todos los datos relacionados.
-                  </p>
-               </div>
-            </div>
-
-            <div className="flex justify-end gap-3">
-               <button
-                  type="button"
-                  onClick={onCancel}
-                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-               >
-                  Cancelar
-               </button>
-               <button
-                  type="button"
-                  onClick={onSubmit}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-               >
-                  Eliminar Usuario
-               </button>
-            </div>
+         {/* Título y descripción */}
+         <div className="text-center mb-8">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+               Eliminar Usuario
+            </h3>
+            <hgroup className="flex flex-col">
+               <h6 className="text-sm text-gray-600 leading-relaxed">
+                  Estás a punto de eliminar el usuario <b className="text-red-600">{user.email}</b> de forma permanente.
+               </h6>
+               <p className="text-sm text-gray-600 leading-relaxed">
+                  Esta acción <b>NO</b> se puede deshacer.
+               </p>
+            </hgroup>
+         </div>
+         <div className="flex justify-center gap-2 mt-4">
+            <button className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 transition-all duration-200 text-sm font-medium" type="button"
+               onClick={() => onCancel()}>
+               Cancelar
+            </button>
+            <button className="w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium" type="button" onClick={() => onSubmit()}>
+               Eliminar
+            </button>
          </div>
       </div>
    )

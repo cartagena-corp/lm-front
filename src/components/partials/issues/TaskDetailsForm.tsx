@@ -40,7 +40,7 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
    return (
       <div className="bg-white border-gray-100 rounded-xl shadow-sm border h-full flex flex-col">
          {/* Header */}
-         <div className="border-b border-gray-100 p-6 flex-shrink-0">
+         <div className="p-6 pb-0 flex-shrink-0">
             <div className="flex items-center justify-between">
                <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
@@ -48,7 +48,7 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
                   </div>
                   <div className='flex flex-col pr-10'>
                      {/* el id al que redirige es al de la tarea: task.id */}
-                     <Link href={`/tableros/${task.projectId}/${task.id}`} className="text-lg font-semibold hover inline">
+                     <Link href={`/tableros/${task.projectId}/${task.id}`} className="text-lg font-semibold hover inline" onClick={() => onCancel()}>
                         <h3 className="text-gray-900 hover:text-blue-600 transition-colors text-lg font-semibold">{task.title} <span className="inline-block ml-1 align-middle"><LinkRedirect size={16} stroke={2} /></span></h3>
                      </Link>
                      <p className="text-sm text-gray-500">Detalles y comentarios de la tarea</p>
@@ -69,9 +69,9 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
             <form onSubmit={handleSubmit} className="h-full">
                <div className="flex items-stretch relative h-full">
                   {/* Main Content */}
-                  <div className="flex-1 flex flex-col space-y-4 transition-all duration-300 ease-in-out pr-4 h-full overflow-hidden">
+                  <div className="flex-1 flex flex-col items-stretch space-y-4 transition-all duration-300 ease-in-out pr-4 h-full max-h-[77vh] overflow-y-auto">
                      {/* Description Section */}
-                     <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm flex-1 flex flex-col min-h-0">
+                     <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm flex-1 flex flex-col">
                         <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2 flex-shrink-0">
                            Descripciones
                         </h3>
@@ -82,7 +82,7 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
                                     <div key={desc.id} className="bg-white rounded-lg p-4 border border-gray-100 space-y-1">
                                        <h4 className="font-semibold text-gray-900 text-sm">{desc.title}</h4>
                                        <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap">{desc.text}</p>
-                                       
+
                                        {/* Mostrar imágenes si existen */}
                                        {desc.attachments && desc.attachments.length > 0 && (
                                           <div className="flex flex-wrap gap-2 mt-3">
@@ -137,7 +137,7 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
                      </div>
 
                      {/* Comments Section */}
-                     <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex-1 flex flex-col min-h-0">
+                     <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex-1 flex flex-col">
                         <div className="flex-1 overflow-y-auto min-h-0">
                            <ShowComments arrayComments={comments} task={task} />
                         </div>

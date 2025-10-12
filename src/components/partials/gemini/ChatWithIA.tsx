@@ -203,7 +203,7 @@ export default function ChatWithIA({ onCancel }: { onCancel: () => void }) {
     }
 
     return (
-        <div className={`bg-white border-dashed rounded-xl shadow-sm h-full flex flex-col relative border-2
+        <div className={`bg-white border-dashed rounded-xl shadow-sm flex flex-col relative border-2 min-h-[80vh] max-h-[80vh]
             ${isDragActive ? "border-blue-600" : "border-transparent"}`}
             onDragOver={handleDragOver}
             onDrop={handleDrop}
@@ -218,33 +218,8 @@ export default function ChatWithIA({ onCancel }: { onCancel: () => void }) {
                     <span className="text-lg font-semibold text-blue-700">Suelta aquí para adjuntar archivos</span>
                 </div>
             )}
-            {/* Header */}
-            <div className="border-b border-gray-100 p-6">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="bg-blue-50 text-blue-600 rounded-md p-2">
-                            <ChatIAIcon size={24} />
-                        </div>
-                        <div className="flex flex-col">
-                            <h3 className="text-gray-900 font-semibold text-lg">Chatea con IA</h3>
-                            <p className="text-gray-500 text-sm">
-                                Chatea con nuestro asistente de IA para que te ayude a solucionar tus dudas.
-                            </p>
-                        </div>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={onCancel}
-                        disabled={isProcessing}
-                        className="bg-white text-gray-400 hover:text-gray-700 rounded-md cursor-pointer p-2 hover:bg-gray-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <XIcon size={20} />
-                    </button>
-                </div>
-            </div>
-
             {/* Content */}
-            <section className="overflow-y-auto p-6 flex flex-col gap-4">
+            <section className="flex-1 overflow-y-auto p-6 flex flex-col gap-4">
                 {messages.map((message, index) => (
                     <div
                         key={index}

@@ -61,35 +61,7 @@ export default function InviteUserForm({ onSubmit, onCancel, isLoading = false, 
     }
 
     return (
-        <div className="space-y-6">
-            <div className="text-center space-y-2">
-                <div className="p-3 bg-blue-50 text-blue-600 rounded-lg w-fit mx-auto">
-                    <UsersIcon size={24} />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900">
-                    Invitar Usuario a La Muralla
-                </h3>
-                <p className="text-sm text-gray-500">
-                    Este usuario no se encuentra en la plataforma. <br /> Invítalo ingresando su correo electrónico y asignándole un rol.
-                </p>
-            </div>
-
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                    <div className="text-amber-600 mt-0.5">
-                        <SendIcon size={16} />
-                    </div>
-                    <div>
-                        <p className="text-sm text-amber-800 font-medium">
-                            ¿Qué sucede al invitar?
-                        </p>
-                        <p className="text-sm text-amber-700 mt-1">
-                            Se creará una cuenta para este usuario y se agregará automáticamente al proyecto.
-                        </p>
-                    </div>
-                </div>
-            </div>
-
+        <div className="space-y-6 p-6">
             <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Email Input */}
                 <div>
@@ -104,11 +76,10 @@ export default function InviteUserForm({ onSubmit, onCancel, isLoading = false, 
                             setFormData({ ...formData, email: e.target.value })
                             if (errors.email) setErrors({ ...errors, email: "" })
                         }}
-                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-colors ${
-                            errors.email
-                                ? "border-red-300 focus:ring-red-200"
-                                : "border-gray-300 focus:ring-blue-200 focus:border-blue-500"
-                        }`}
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-colors ${errors.email
+                            ? "border-red-300 focus:ring-red-200"
+                            : "border-gray-300 focus:ring-blue-200 focus:border-blue-500"
+                            }`}
                         placeholder="usuario@ejemplo.com"
                         disabled={isLoading}
                     />
@@ -130,18 +101,16 @@ export default function InviteUserForm({ onSubmit, onCancel, isLoading = false, 
                             type="button"
                             onClick={() => !isLoading && setIsRoleSelectOpen(!isRoleSelectOpen)}
                             disabled={isLoading}
-                            className={`w-full px-3 py-2 text-left border rounded-lg focus:outline-none focus:ring-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                                errors.role
-                                    ? "border-red-300 focus:ring-red-200"
-                                    : "border-gray-300 focus:ring-blue-200 focus:border-blue-500"
-                            }`}
+                            className={`w-full px-3 py-2 text-left border rounded-lg focus:outline-none focus:ring-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${errors.role
+                                ? "border-red-300 focus:ring-red-200"
+                                : "border-gray-300 focus:ring-blue-200 focus:border-blue-500"
+                                }`}
                         >
                             {formData.role || "Selecciona un rol"}
                             <span className="absolute inset-y-0 right-0 flex items-center pr-2">
                                 <svg
-                                    className={`h-5 w-5 text-gray-400 transition-transform ${
-                                        isRoleSelectOpen ? "transform rotate-180" : ""
-                                    }`}
+                                    className={`h-5 w-5 text-gray-400 transition-transform ${isRoleSelectOpen ? "transform rotate-180" : ""
+                                        }`}
                                     viewBox="0 0 20 20"
                                     fill="currentColor"
                                 >
@@ -186,28 +155,43 @@ export default function InviteUserForm({ onSubmit, onCancel, isLoading = false, 
                     </p>
                 </div>
 
-                {/* Form Actions */}
-                <div className="border-t border-gray-200 pt-6">
-                    <div className="flex items-center gap-3">
-                        <button
-                            type="button"
-                            onClick={onCancel}
-                            disabled={isLoading}
-                            className="flex-1 bg-white hover:bg-gray-50 text-gray-600 border border-gray-300 px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            Cancelar
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                        >
-                            {isLoading && (
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                            )}
-                            {isLoading ? loadingMessage : "Invitar Usuario"}
-                        </button>
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                        <div className="text-amber-600 mt-0.5">
+                            <SendIcon size={16} />
+                        </div>
+                        <div>
+                            <p className="text-sm text-amber-800 font-medium">
+                                ¿Qué sucede al invitar?
+                            </p>
+                            <p className="text-sm text-amber-700 mt-1">
+                                Se creará una cuenta para este usuario y se agregará automáticamente al proyecto.
+                            </p>
+                        </div>
                     </div>
+                </div>
+
+
+                {/* Form Actions */}
+                <div className="flex items-center gap-3">
+                    <button
+                        type="button"
+                        onClick={onCancel}
+                        disabled={isLoading}
+                        className="flex-1 bg-white hover:bg-gray-50 text-gray-600 border border-gray-300 px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        type="submit"
+                        disabled={isLoading}
+                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                        {isLoading && (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        )}
+                        {isLoading ? loadingMessage : "Invitar Usuario"}
+                    </button>
                 </div>
             </form>
         </div>

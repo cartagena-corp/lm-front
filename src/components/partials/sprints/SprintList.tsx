@@ -8,7 +8,7 @@ import CreateTaskForm from '../issues/CreateTaskForm'
 import { useAuthStore } from '@/lib/store/AuthStore'
 import CreateSprintForm from './CreateSprintForm'
 import { PlusIcon, CalendarIcon } from '@/assets/Icon'
-import Modal from '../../layout/Modal'
+import { useModalStore } from '@/lib/hooks/ModalStore'
 import IssuesRow from './IssuesRow'
 import { useState } from 'react'
 import { sortSprints } from '@/lib/utils/sprint.utils'
@@ -20,10 +20,7 @@ export default function SprintList() {
    const { sprints, createSprint, isLoading } = useSprintStore()
    const { getValidAccessToken } = useAuthStore()
    const { selectedBoard } = useBoardStore()
-
-   const [isCreateSprintOpen, setIsCreateSprintOpen] = useState(false)
-   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
-   const [isCreateWithIAOpen, setIsCreateWithIAOpen] = useState(false)
+   const { openModal, closeModal } = useModalStore()
 
    const [selectedIds, setSelectedIds] = useState<string[]>([])
    const [activeId, setActiveId] = useState<string | null>(null)
@@ -44,7 +41,7 @@ export default function SprintList() {
    const handleCreateTask = async (newTask: any, filesMap?: Map<string, File[]>) => {
       const token = await getValidAccessToken()
       if (token) await createIssue(token, newTask, filesMap)
-      setIsCreateTaskOpen(false)
+      closeModal()
    }
 
    const handleCreateSprint = async (newSprint: any) => {
@@ -55,7 +52,7 @@ export default function SprintList() {
             projectId: selectedBoard?.id as string,
             status: newSprint.status
          })
-      setIsCreateSprintOpen(false)
+      closeModal()
    }
 
    const handleCreateWithIA = async (detectedTasks: any) => {
@@ -84,8 +81,64 @@ export default function SprintList() {
          console.error('Error al crear las tareas:', error);
          toast.error('Error al crear las tareas', { id: toastId });
       } finally {
-         setIsCreateWithIAOpen(false);
+         closeModal();
       }
+   }
+
+   // Modal handlers
+   const handleCreateTaskModal = () => {
+      openModal({
+         size: "xl",
+         title: "Crear Nueva Tarea",
+         desc: "Agrega una nueva tarea al proyecto",
+         children: (
+            <CreateTaskForm
+               onSubmit={handleCreateTask}
+               onCancel={() => closeModal()}
+            />
+         ),
+         Icon: <PlusIcon size={20} stroke={1.75} />,
+         closeOnBackdrop: false,
+         closeOnEscape: true,
+         mode: "CREATE"
+      })
+   }
+
+   const handleCreateSprintModal = () => {
+      openModal({
+         size: "lg",
+         title: "Crear Nuevo Sprint",
+         desc: "Organiza tus tareas en un nuevo sprint",
+         children: (
+            <CreateSprintForm
+               onSubmit={handleCreateSprint}
+               onCancel={() => closeModal()}
+               isEdit={false}
+            />
+         ),
+         Icon: <CalendarIcon size={20} stroke={1.75} />,
+         closeOnBackdrop: false,
+         closeOnEscape: true,
+         mode: "CREATE"
+      })
+   }
+
+   const handleCreateWithIAModal = () => {
+      openModal({
+         size: "full",
+         title: "Crear Tareas con IA",
+         desc: "Deja que la IA te ayude a crear múltiples tareas de forma inteligente",
+         children: (
+            <CreateWithIA
+               onSubmit={handleCreateWithIA}
+               onCancel={() => closeModal()}
+            />
+         ),
+         Icon: <PlusIcon size={20} stroke={1.75} />,
+         closeOnBackdrop: false,
+         closeOnEscape: false,
+         mode: "CREATE"
+      })
    }
 
    const handleDragStart = (event: DragStartEvent) => {
@@ -271,8 +324,8 @@ export default function SprintList() {
                      key={spr.id}
                      spr={spr}
                      isOverlay={false}
-                     setIsOpen={setIsCreateTaskOpen}
-                     setIsCreateWithIAOpen={setIsCreateWithIAOpen}
+                     setIsOpen={handleCreateTaskModal}
+                     setIsCreateWithIAOpen={handleCreateWithIAModal}
                   />
                ))}
 
@@ -296,7 +349,7 @@ export default function SprintList() {
          {/* Create Sprint Button */}
          <div className="bg-white rounded-xl shadow-sm  overflow-hidden">
             <button
-               onClick={() => setIsCreateSprintOpen(true)}
+               onClick={handleCreateSprintModal}
                disabled={isLoading}
                className="w-full p-8 border-2 border-dashed border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 rounded-xl group disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -315,48 +368,6 @@ export default function SprintList() {
                </div>
             </button>
          </div>
-
-         {/* Modals */}
-         <Modal
-            isOpen={isCreateTaskOpen}
-            onClose={() => setIsCreateTaskOpen(false)}
-            title=""
-            customWidth='max-w-2xl'
-            showCloseButton={false}
-         >
-            <CreateTaskForm
-               onSubmit={handleCreateTask}
-               onCancel={() => setIsCreateTaskOpen(false)}
-            />
-         </Modal>
-
-         <Modal
-            isOpen={isCreateSprintOpen}
-            onClose={() => setIsCreateSprintOpen(false)}
-            title=""
-            customWidth="sm:max-w-2xl"
-            showCloseButton={false}
-         >
-            <CreateSprintForm
-               onSubmit={handleCreateSprint}
-               onCancel={() => setIsCreateSprintOpen(false)}
-               isEdit={false}
-            />
-         </Modal>
-
-         <Modal
-            isOpen={isCreateWithIAOpen}
-            onClose={() => setIsCreateWithIAOpen(false)}
-            title=""
-            customWidth="sm:max-w-4xl h-[90dvh]"
-            showCloseButton={false}
-            closeOnClickOutside={false}
-         >
-            <CreateWithIA
-               onSubmit={handleCreateWithIA}
-               onCancel={() => setIsCreateWithIAOpen(false)}
-            />
-         </Modal>
       </div>
    )
 }

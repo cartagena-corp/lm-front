@@ -6,7 +6,7 @@ import { DeleteIcon, DownloadIcon } from "@/assets/Icon"
 import Link from "next/link"
 import { useCommentStore } from "@/lib/store/CommentStore"
 import { useAuthStore } from "@/lib/store/AuthStore"
-import Modal from "../layout/Modal"
+import { useModalStore } from "@/lib/hooks/ModalStore"
 import DeleteCommentForm from "../partials/comments/DeleteCommentForm"
 import { getUserAvatar } from "@/lib/utils/avatar.utils"
 import DeleteReplyForm from "../partials/comments/DeleteReplyForm"
@@ -18,11 +18,10 @@ interface Props {
 export default function Comment({ comment }: Props) {
    const { addResponse, getResponses, deleteComment, deleteResponse } = useCommentStore()
    const { getValidAccessToken, user } = useAuthStore()
+   const { openModal, closeModal } = useModalStore()
 
    const [replyId, setReplyId] = useState("")
    const [gonnaReply, setGonnaReply] = useState<boolean>(false)
-   const [isDeleteCommentModalOpen, setIsDeleteCommentModalOpen] = useState<boolean>(false)
-   const [isDeleteReplyModalOpen, setIsDeleteReplyModalOpen] = useState<boolean>(false)
    const [viewResponses, setViewResponses] = useState<boolean>(false)
    const [newReply, setNewReply] = useState("")
    const [commentResponses, setCommentResponses] = useState<any[]>([])
@@ -82,12 +81,13 @@ export default function Comment({ comment }: Props) {
    const handleDeleteComment = async () => {
       const token = await getValidAccessToken()
       if (token) await deleteComment(token, comment.id, comment.issueId)
+      closeModal()
    }
 
    const handleDeleteReply = async (responseId: string) => {
       const token = await getValidAccessToken()
       if (token) await deleteResponse(token, responseId, comment.id)
-      setIsDeleteReplyModalOpen(false)
+      closeModal()
       setViewResponses(false)
       setReplyId("")
       loadResponses()
@@ -111,6 +111,40 @@ export default function Comment({ comment }: Props) {
          hour: '2-digit',
          minute: '2-digit',
          hour12: false
+      })
+   }
+
+   const handleDeleteCommentModal = () => {
+      openModal({
+         size: "md",
+         children: (
+            <DeleteCommentForm
+               onSubmit={handleDeleteComment}
+               onCancel={() => closeModal()}
+            />
+         ),
+         Icon: <DeleteIcon size={20} stroke={1.75} />,
+         closeOnBackdrop: false,
+         closeOnEscape: true,
+         mode: "DELETE"
+      })
+   }
+
+   const handleDeleteReplyModal = (responseId: string) => {
+      setReplyId(responseId)
+      openModal({
+         size: "md",
+         children: (
+            <DeleteReplyForm
+               responseId={responseId}
+               onSubmit={handleDeleteReply}
+               onCancel={() => closeModal()}
+            />
+         ),
+         Icon: <DeleteIcon size={20} stroke={1.75} />,
+         closeOnBackdrop: false,
+         closeOnEscape: true,
+         mode: "DELETE"
       })
    }
 
@@ -147,7 +181,7 @@ export default function Comment({ comment }: Props) {
                         {comment.userId === user?.id && (
                            <button
                               type="button"
-                              onClick={() => setIsDeleteCommentModalOpen(true)}
+                              onClick={handleDeleteCommentModal}
                               className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
                               title="Eliminar comentario"
                            >
@@ -297,10 +331,7 @@ export default function Comment({ comment }: Props) {
                                     {reply.userId === user?.id && (
                                        <button
                                           type="button"
-                                          onClick={() => {
-                                             setIsDeleteReplyModalOpen(true)
-                                             setReplyId(reply.id)
-                                          }}
+                                          onClick={() => handleDeleteReplyModal(reply.id)}
                                           className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
                                           title="Eliminar respuesta"
                                        >
@@ -323,33 +354,6 @@ export default function Comment({ comment }: Props) {
                </div>
             )}
          </div>
-
-         {/* Modal para eliminar comentario */}
-         <Modal
-            isOpen={isDeleteCommentModalOpen}
-            onClose={() => setIsDeleteCommentModalOpen(false)}
-            title=""
-            customWidth="max-w-md"
-         >
-            <DeleteCommentForm
-               onSubmit={handleDeleteComment}
-               onCancel={() => setIsDeleteCommentModalOpen(false)}
-            />
-         </Modal>
-
-         {/* Modal para eliminar respuesta */}
-         <Modal
-            isOpen={isDeleteReplyModalOpen}
-            onClose={() => setIsDeleteReplyModalOpen(false)}
-            title=""
-            customWidth="max-w-md"
-         >
-            <DeleteReplyForm
-               responseId={replyId}
-               onSubmit={handleDeleteReply}
-               onCancel={() => setIsDeleteReplyModalOpen(false)}
-            />
-         </Modal>
       </>
    )
 }

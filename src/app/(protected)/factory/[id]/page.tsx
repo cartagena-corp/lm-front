@@ -8,10 +8,12 @@ import { useEffect, useState, useRef } from "react"
 import { useOrganizationStore } from "@/lib/store/OrganizationStore"
 import { useBoardStore } from "@/lib/store/BoardStore"
 import { useAuthStore } from "@/lib/store/AuthStore"
-import { FactoryIcon } from "@/assets/Icon"
-import Modal from "@/components/layout/Modal"
+import { DeleteIcon, EditIcon, FactoryIcon } from "@/assets/Icon"
 import { useRouter } from "next/navigation"
 import toast from "react-hot-toast"
+import { useModalStore } from "@/lib/hooks/ModalStore"
+import DeleteOrganization from "@/components/partials/factory/DeleteOrganization"
+import UpdateOrganization from "@/components/partials/factory/UpdateOrganization"
 
 export default function Factory() {
     const router = useRouter()
@@ -23,16 +25,13 @@ export default function Factory() {
 
     // Estados para los modales y menú
     const [showMenu, setShowMenu] = useState(false)
-    const [showEditModal, setShowEditModal] = useState(false)
-    const [showDeleteModal, setShowDeleteModal] = useState(false)
-    const [newOrgName, setNewOrgName] = useState('')
     const menuRef = useRef<HTMLDivElement>(null)
 
     const { id } = useParams()
 
     const renderTabContent = () => {
         if (!id) return null // Verificar que el ID existe
-        
+
         switch (activeTab) {
             case 'boards': return <BoardsOrg organization={organization} idOrg={id as string} />
             case 'users': return <UsersOrg organization={organization} />
@@ -57,16 +56,13 @@ export default function Factory() {
     useEffect(() => {
         const loadData = async () => {
             if (!id) return // Verificar que el ID existe
-            
+
             const token = await getValidAccessToken()
             if (!token) return
 
             // Fetch organization details
             const orgRes = await getSpecificOrganization(token, id as string)
-            if (orgRes) {
-                setOrganization(orgRes)
-                setNewOrgName(orgRes.organizationName)
-            }
+            if (orgRes) setOrganization(orgRes)
 
             // Fetch boards for the organization
             await getBoardsByOrganization(token, id as string)
@@ -75,8 +71,7 @@ export default function Factory() {
         loadData()
     }, [id]) // Agregar id como dependencia
 
-    const handleEditSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
+    const handleEdit = async (newOrgName: string) => {
         const token = await getValidAccessToken()
         if (!token) return
 
@@ -84,8 +79,8 @@ export default function Factory() {
         if (success) {
             const updatedOrg = await getSpecificOrganization(token, organization.organizationId)
             if (updatedOrg) setOrganization(updatedOrg)
-            setShowEditModal(false)
             toast.success('Organización actualizada exitosamente')
+            closeModal()
         }
     }
 
@@ -97,12 +92,39 @@ export default function Factory() {
         if (success) {
             router.push('/factory')
             toast.success('Organización eliminada exitosamente')
+            closeModal()
         }
+    }
+
+    const { openModal, closeModal } = useModalStore()
+
+    const handleDeleteOrganizacion = () => {
+        openModal({
+            size: "md",
+            children: <DeleteOrganization organizationName={organization.organizationName} organizationDate={organization.createdAt} onClick={() => handleDelete()} onCancel={() => closeModal()} />,
+            closeOnBackdrop: false,
+            closeOnEscape: false,
+            mode: "DELETE"
+        })
+    }
+
+    const handleEditOrganizacion = () => {
+        openModal({
+            size: "md",
+            title: "Editar Organización",
+            desc: "Edita el nombre de la organización",
+            Icon: <EditIcon size={20} stroke={1.75} />,
+            children: <UpdateOrganization organizationName={organization.organizationName} onClick={(newOrgName: string) => handleEdit(newOrgName)} onCancel={() => closeModal()} />,
+            closeOnBackdrop: false,
+            closeOnEscape: false,
+
+            mode: "UPDATE"
+        })
     }
 
     return (
         <>
-            <header className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+            <section className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <div className="p-3 bg-blue-100 text-blue-600 rounded-xl">
@@ -131,7 +153,7 @@ export default function Factory() {
                                     <button
                                         onClick={() => {
                                             setShowMenu(false)
-                                            setShowEditModal(true)
+                                            handleEditOrganizacion()
                                         }}
                                         className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                                     >
@@ -140,7 +162,7 @@ export default function Factory() {
                                     <button
                                         onClick={() => {
                                             setShowMenu(false)
-                                            setShowDeleteModal(true)
+                                            handleDeleteOrganizacion()
                                         }}
                                         className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                                     >
@@ -151,77 +173,7 @@ export default function Factory() {
                         )}
                     </div>
                 </div>
-
-                {/* Modal de edición */}
-                <Modal
-                    isOpen={showEditModal}
-                    onClose={() => setShowEditModal(false)}
-                    title="Editar Organización"
-                >
-                    <form onSubmit={handleEditSubmit} className="space-y-6 py-4">
-                        <div className="space-y-2">
-                            <label htmlFor="orgName" className="block text-sm font-medium text-gray-700">
-                                Nombre de la organización
-                            </label>
-                            <input
-                                type="text"
-                                id="orgName"
-                                value={newOrgName}
-                                onChange={(e) => setNewOrgName(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                required
-                            />
-                        </div>
-                        <div className="flex gap-3">
-                            <button
-                                type="button"
-                                onClick={() => setShowEditModal(false)}
-                                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                type="submit"
-                                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                            >
-                                Guardar Cambios
-                            </button>
-                        </div>
-                    </form>
-                </Modal>
-
-                {/* Modal de eliminación */}
-                <Modal
-                    isOpen={showDeleteModal}
-                    onClose={() => setShowDeleteModal(false)}
-                    title="Eliminar Organización"
-                >
-                    <div className="space-y-6 py-4">
-                        <div className="text-center space-y-2">
-                            <p className="text-gray-500">
-                                ¿Estás seguro de que deseas eliminar la organización{' '}
-                                <span className="font-semibold text-red-500">{organization.organizationName}</span>?
-                                <br />
-                                Esta acción no se puede deshacer.
-                            </p>
-                        </div>
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => setShowDeleteModal(false)}
-                                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={handleDelete}
-                                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                            >
-                                Eliminar
-                            </button>
-                        </div>
-                    </div>
-                </Modal>
-            </header>
+            </section>
             <section className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                 {/* Tabs */}
                 <nav className="flex space-x-4 border-b border-gray-200 mb-4">

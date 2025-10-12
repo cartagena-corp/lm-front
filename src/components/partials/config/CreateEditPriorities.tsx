@@ -23,7 +23,7 @@ export default function CreateEditPriorities({ onSubmit, onCancel, currentPriori
 
    const validateForm = () => {
       const newErrors: { name?: string; color?: string } = {}
-      
+
       if (!formData.name.trim()) {
          newErrors.name = "El nombre es requerido"
       } else if (formData.name.trim().length < 2) {
@@ -61,17 +61,7 @@ export default function CreateEditPriorities({ onSubmit, onCancel, currentPriori
    }
 
    return (
-      <div className="space-y-6">
-         {/* Header */}
-         <div className="text-center space-y-2">
-            <h3 className="text-lg font-semibold text-gray-900">
-               {currentPriorities.name ? "Editar Prioridad" : "Crear Prioridad"}
-            </h3>
-            <p className="text-sm text-gray-500">
-               {currentPriorities.name ? "Modifica la información de la prioridad" : "Define una nueva prioridad para las tareas"}
-            </p>
-         </div>
-
+      <div className="space-y-6 p-6">
          <form onSubmit={handleSubmit} className="space-y-6">
             {/* Name Input - First */}
             <div className="space-y-2">
@@ -81,11 +71,10 @@ export default function CreateEditPriorities({ onSubmit, onCancel, currentPriori
                <div className="relative">
                   <input
                      onChange={handleNameChange}
-                     className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200 ${
-                        errors.name 
-                           ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
-                           : 'border-gray-300 hover:border-gray-400'
-                     }`}
+                     className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200 ${errors.name
+                        ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                        : 'border-gray-300 hover:border-gray-400'
+                        }`}
                      placeholder="Ej: Alta, Media, Baja, Crítica..."
                      value={formData.name}
                      name="name"
@@ -103,11 +92,11 @@ export default function CreateEditPriorities({ onSubmit, onCancel, currentPriori
                <label className="block text-sm font-medium text-gray-700">
                   Color de la prioridad
                </label>
-               <ColorPicker 
-                  id="color" 
-                  inputRef={colorRef} 
-                  value={formData.color} 
-                  label="" 
+               <ColorPicker
+                  id="color"
+                  inputRef={colorRef}
+                  value={formData.color}
+                  label=""
                   onChange={handleColorChange}
                />
                {errors.color && (
@@ -145,7 +134,8 @@ export default function CreateEditPriorities({ onSubmit, onCancel, currentPriori
                </button>
                <button
                   type="submit"
-                  className="bg-purple-600 hover:bg-purple-700 text-white border-transparent border hover:shadow-md flex-1 duration-200 rounded-lg text-center text-sm py-2.5 px-4 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                  className={`${currentPriorities.name ? "bg-purple-600 hover:bg-purple-700 focus:ring-purple-500" : "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"}
+                   text-white border-transparent border hover:shadow-md flex-1 duration-200 rounded-lg text-center text-sm py-2.5 px-4 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-offset-2`}
                >
                   {currentPriorities.name ? "Guardar cambios" : "Crear prioridad"}
                </button>

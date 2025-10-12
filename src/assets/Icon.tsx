@@ -275,6 +275,50 @@ export const SidebarExpandIcon = ({ size = 24, stroke = 1.5 }: IconProps) => {
    )
 }
 
+export const SidebarOpenIcon = ({ size = 24, stroke = 1.5 }: IconProps) => {
+   return (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill="none">
+         <path d="M3 3H21C21 3 21 3 21 3V21C21 21 21 21 21 21H3C3 21 3 21 3 21V3C3 3 3 3 3 3Z" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+         <path d="M9 3V21" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+         <path d="M12 8L14 10L12 12" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+   )
+}
+
+export const SidebarCloseIcon = ({ size = 24, stroke = 1.5 }: IconProps) => {
+   return (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill="none">
+         <path d="M3 3H21C21 3 21 3 21 3V21C21 21 21 21 21 21H3C3 21 3 21 3 21V3C3 3 3 3 3 3Z" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+         <path d="M9 3V21" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+         <path d="M14 8L12 10L14 12" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+   )
+}
+
+export const IAChatIcon = ({ size = 24, stroke = 1.5 }: IconProps) => {
+   return (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill={"none"}>
+         <path d="M14.1706 20.8905C18.3536 20.6125 21.6856 17.2332 21.9598 12.9909C22.0134 12.1607 22.0134 11.3009 21.9598 10.4707C21.6856 6.22838 18.3536 2.84913 14.1706 2.57107C12.7435 2.47621 11.2536 2.47641 9.8294 2.57107C5.64639 2.84913 2.31441 6.22838 2.04024 10.4707C1.98659 11.3009 1.98659 12.1607 2.04024 12.9909C2.1401 14.536 2.82343 15.9666 3.62791 17.1746C4.09501 18.0203 3.78674 19.0758 3.30021 19.9978C2.94941 20.6626 2.77401 20.995 2.91484 21.2351C3.05568 21.4752 3.37026 21.4829 3.99943 21.4982C5.24367 21.5285 6.08268 21.1757 6.74868 20.6846C7.1264 20.4061 7.31527 20.2668 7.44544 20.2508C7.5756 20.2348 7.83177 20.3403 8.34401 20.5513C8.8044 20.7409 9.33896 20.8579 9.8294 20.8905C11.2536 20.9852 12.7435 20.9854 14.1706 20.8905Z" stroke="currentColor" strokeWidth={stroke} strokeLinejoin="round" />
+         <path d="M7.5 15L9.34189 9.47434C9.43631 9.19107 9.7014 9 10 9C10.2986 9 10.5637 9.19107 10.6581 9.47434L12.5 15M15.5 9V15M8.5 13H11.5" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+   )
+}
+
+export const IAConfigIcon = ({ size = 24, stroke = 1.5 }: IconProps) => {
+   return (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill={"none"}>
+         <path d="M4 16.4999C4 18.1567 5.34315 19.4999 7 19.4999C7 20.8806 8.11929 21.9999 9.5 21.9999C10.8807 21.9999 12 20.8806 12 19.4999C12 20.8806 13.1193 21.9998 14.5 21.9998C15.8807 21.9998 17 20.8805 17 19.4998C18.6569 19.4998 20 18.1566 20 16.4998C20 15.9311 19.8418 15.3994 19.567 14.9463C20.9527 14.6812 22 13.4628 22 11.9998C22 10.5367 20.9527 9.31831 19.567 9.05325C19.8418 8.60012 20 8.06842 20 7.49976C20 5.8429 18.6569 4.49976 17 4.49976C17 3.11904 15.8807 1.99976 14.5 1.99976C13.1193 1.99976 12 3.11914 12 4.49985C12 3.11914 10.8807 1.99985 9.5 1.99985C8.11929 1.99985 7 3.11914 7 4.49985C5.34315 4.49985 4 5.843 4 7.49985C4 8.06851 4.15822 8.60022 4.43304 9.05335C3.04727 9.3184 2 10.5368 2 11.9999C2 13.4629 3.04727 14.6813 4.43304 14.9464C4.15822 15.3995 4 15.9312 4 16.4999Z" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+         <path d="M7.5 14.4999L9.34189 8.97422C9.43631 8.69095 9.7014 8.49988 10 8.49988C10.2986 8.49988 10.5637 8.69095 10.6581 8.97422L12.5 14.4999M15.5 8.49988V14.4999M8.5 12.4999H11.5" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+   )
+}
+
+export const LaMurallaIcon = ({ size = 24 }) => (
+   <svg width={size} height={size} viewBox="0 0 280 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M60 40H110V0H170V40H220V0H280V200H185V145C185 120.147 164.853 100 140 100C115.147 100 95 120.147 95 145V200H0V0H60V40Z" fill="currentColor" />
+   </svg>
+)
+
 export const ExpandIcon = ({ size = 24, stroke = 1.5 }: IconProps) => {
    return (
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill="none">
@@ -349,10 +393,26 @@ export const ChevronRightIcon = ({ size = 24, stroke = 1.5 }: IconProps) => (
    </svg>
 )
 
+export const ArrowRightIcon = ({ size = 24, stroke = 1.5 }: IconProps) => (
+   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill={"none"} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={stroke}>
+      <path d="M5 12h14" />
+      <path d="m12 5 7 7-7 7" />
+   </svg>
+)
+
 export const LinkRedirect = ({ size = 24, stroke = 1.5 }: IconProps) => (
    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill={"none"} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={stroke}>
       <path d="M21 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h6" />
       <path d="m21 3-9 9" />
       <path d="M15 3h6v6" />
+   </svg>
+)
+
+export const ChangeIcon = ({ size = 24, stroke = 1.5 }: IconProps) => (
+   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill={"none"} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={stroke}>
+      <path d="m2 9 3-3 3 3" />
+      <path d="M13 18H7a2 2 0 0 1-2-2V6" />
+      <path d="m22 15-3 3-3-3" />
+      <path d="M11 6h6a2 2 0 0 1 2 2v10" />
    </svg>
 )

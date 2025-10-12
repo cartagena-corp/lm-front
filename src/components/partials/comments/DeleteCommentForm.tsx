@@ -21,25 +21,16 @@ export default function DeleteCommentForm({ onSubmit, onCancel }: DeleteCommentF
                Eliminar comentario
             </h3>
             <p className="text-sm text-gray-600 leading-relaxed">
-               Estás a punto de eliminar este comentario de forma permanente. 
+               Estás a punto de eliminar este comentario de forma permanente.
                Esta acción no se puede deshacer.
             </p>
          </div>
-
-         {/* Botones de acción */}
-         <div className="flex gap-3">
-            <button
-               type="button"
-               onClick={onCancel}
-               className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all"
-            >
+         <div className="flex justify-center gap-2 mt-4">
+            <button className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 transition-all duration-200 text-sm font-medium" type="button"
+               onClick={() => onCancel()}>
                Cancelar
             </button>
-            <button
-               type="button"
-               onClick={onSubmit}
-               className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-red-600 border border-transparent rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all"
-            >
+            <button className="w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium" type="button" onClick={onSubmit}>
                Eliminar
             </button>
          </div>

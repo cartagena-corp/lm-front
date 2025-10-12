@@ -40,9 +40,9 @@ export default function IssueConfig({ projectId }: IssueConfigProps) {
    const [view, setView] = useState(listView[0])
    
    return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+      <div className="bg-white">
          {/* Header */}
-         <div className="border-b border-gray-100 p-6">
+         <div className="border-b border-gray-200 p-6">
             <div className="flex items-center gap-3">
                <div className="bg-purple-50 text-purple-600 rounded-lg p-2">
                   <ConfigIcon size={24} />
@@ -55,7 +55,7 @@ export default function IssueConfig({ projectId }: IssueConfigProps) {
          </div>
 
          {/* Navigation Tabs */}
-         <div className="border-b border-gray-100">
+         <div className="border-b border-gray-200">
             <nav className="flex justify-between" aria-label="Tabs">
                {listView.map((tab) => (
                   <button
@@ -64,7 +64,7 @@ export default function IssueConfig({ projectId }: IssueConfigProps) {
                      className={`${
                         view.id === tab.id
                            ? 'border-purple-500 text-purple-600 bg-purple-50'
-                           : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                           : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-200'
                      } whitespace-nowrap w-full py-4 px-3 border-b-2 font-medium text-sm transition-all duration-200 flex justify-center items-center gap-2`}
                   >
                      <span className="text-base">{tab.icon}</span>

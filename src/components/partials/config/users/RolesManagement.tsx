@@ -1,10 +1,11 @@
 "use client"
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { useAuthStore } from '@/lib/store/AuthStore'
-import Modal from '@/components/layout/Modal'
-import { ConfigIcon, PlusIcon, MenuIcon, EditIcon, DeleteIcon } from '@/assets/Icon'
+import { useModalStore } from '@/lib/hooks/ModalStore'
+import { ConfigIcon, PlusIcon, EditIcon, DeleteIcon } from '@/assets/Icon'
 import RoleForm from './RoleForm'
 import DeleteRoleForm from './DeleteRoleForm'
+import toast from 'react-hot-toast'
 
 interface RoleProps {
     name: string
@@ -29,11 +30,7 @@ export default function RolesManagement() {
         listPermissions
     } = useAuthStore()
 
-    // Estados para modales
-    const [showCreateRoleModal, setShowCreateRoleModal] = useState(false)
-    const [showEditRoleModal, setShowEditRoleModal] = useState(false)
-    const [showDeleteRoleModal, setShowDeleteRoleModal] = useState(false)
-    const [selectedRole, setSelectedRole] = useState<RoleProps | null>(null)
+    const { openModal, closeModal } = useModalStore()
 
     // Cargar datos iniciales
     useEffect(() => {
@@ -52,33 +49,66 @@ export default function RolesManagement() {
         const token = await getValidAccessToken()
         if (token) {
             await createRole(token, data)
-            setShowCreateRoleModal(false)
+            closeModal()
+            toast.success(`Rol ${data.name} creado`)
             loadData()
         }
     }
 
-    const handleEditRole = async (data: { name: string, permissions: PermissionProps[] }) => {
-        if (!selectedRole) return
-
+    const handleEditRole = async (role: RoleProps, data: { name: string, permissions: PermissionProps[] }) => {
         const token = await getValidAccessToken()
         if (token) {
-            await updateRole(token, selectedRole.name, { permissions: data.permissions })
-            setShowEditRoleModal(false)
-            setSelectedRole(null)
+            await updateRole(token, role.name, { permissions: data.permissions })
+            closeModal()
+            toast.success(`Rol ${data.name} actualizado`)
             loadData()
         }
     }
 
-    const handleDeleteRole = async () => {
-        if (!selectedRole) return
-
+    const handleDeleteRole = async (role: RoleProps) => {
         const token = await getValidAccessToken()
         if (token) {
-            await deleteRole(token, selectedRole.name)
-            setShowDeleteRoleModal(false)
-            setSelectedRole(null)
+            await deleteRole(token, role.name)
+            closeModal()
+            toast.success(`Rol "${role.name}" eliminado`)
             loadData()
         }
+    }
+
+    const handleCreateRoleModal = () => {
+        openModal({
+            size: "lg",
+            title: "Crear Rol",
+            desc: "Define un nuevo rol con sus permisos",
+            children: <RoleForm onSubmit={handleCreateRole} onCancel={() => closeModal()} />,
+            Icon: <PlusIcon size={20} stroke={1.75} />,
+            closeOnBackdrop: false,
+            closeOnEscape: false,
+            mode: "CREATE"
+        })
+    }
+
+    const handleEditRoleModal = (role: RoleProps) => {
+        openModal({
+            size: "lg",
+            title: "Editar Rol",
+            desc: "Modifica los permisos del rol",
+            children: <RoleForm role={role} onSubmit={(data) => handleEditRole(role, data)} onCancel={() => closeModal()} isEdit={true} />,
+            Icon: <EditIcon size={20} stroke={1.75} />,
+            closeOnBackdrop: false,
+            closeOnEscape: false,
+            mode: "UPDATE"
+        })
+    }
+
+    const handleDeleteRoleModal = (role: RoleProps) => {
+        openModal({
+            size: "md",
+            children: <DeleteRoleForm role={role} onSubmit={() => handleDeleteRole(role)} onCancel={() => closeModal()} />,
+            closeOnBackdrop: false,
+            closeOnEscape: false,
+            mode: "DELETE"
+        })
     }
 
     if (error) {
@@ -127,7 +157,7 @@ export default function RolesManagement() {
                     {
                         hasPermissionCreateRole &&
                         <button
-                            onClick={() => setShowCreateRoleModal(true)}
+                            onClick={handleCreateRoleModal}
                             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
                         >
                             <PlusIcon size={16} />
@@ -187,10 +217,7 @@ export default function RolesManagement() {
                                             {
                                                 hasPermissionEditRole &&
                                                 <button
-                                                    onClick={() => {
-                                                        setSelectedRole(role)
-                                                        setShowEditRoleModal(true)
-                                                    }}
+                                                    onClick={() => handleEditRoleModal(role)}
                                                     className="text-gray-400 hover:text-purple-600 transition-colors opacity-0 group-hover:opacity-100 p-2 hover:bg-purple-100 rounded-lg"
                                                 >
                                                     <EditIcon size={16} />
@@ -199,10 +226,7 @@ export default function RolesManagement() {
                                             {
                                                 hasPermissionDeleteRole &&
                                                 <button
-                                                    onClick={() => {
-                                                        setSelectedRole(role)
-                                                        setShowDeleteRoleModal(true)
-                                                    }}
+                                                    onClick={() => handleDeleteRoleModal(role)}
                                                     className="text-gray-400 hover:text-purple-600 transition-colors opacity-0 group-hover:opacity-100 p-2 hover:bg-purple-100 rounded-lg"
                                                 >
                                                     <DeleteIcon size={16} />
@@ -216,53 +240,6 @@ export default function RolesManagement() {
                     </div>
                 )}
             </div>
-
-            {/* Modales */}
-            <Modal
-                isOpen={showCreateRoleModal}
-                onClose={() => setShowCreateRoleModal(false)}
-                title=""
-            >
-                <RoleForm
-                    onSubmit={handleCreateRole}
-                    onCancel={() => setShowCreateRoleModal(false)}
-                />
-            </Modal>
-
-            <Modal
-                isOpen={showEditRoleModal}
-                onClose={() => setShowEditRoleModal(false)}
-                title=""
-            >
-                {selectedRole && (
-                    <RoleForm
-                        role={selectedRole}
-                        onSubmit={handleEditRole}
-                        onCancel={() => {
-                            setShowEditRoleModal(false)
-                            setSelectedRole(null)
-                        }}
-                        isEdit={true}
-                    />
-                )}
-            </Modal>
-
-            <Modal
-                isOpen={showDeleteRoleModal}
-                onClose={() => setShowDeleteRoleModal(false)}
-                title=""
-            >
-                {selectedRole && (
-                    <DeleteRoleForm
-                        role={selectedRole}
-                        onSubmit={handleDeleteRole}
-                        onCancel={() => {
-                            setShowDeleteRoleModal(false)
-                            setSelectedRole(null)
-                        }}
-                    />
-                )}
-            </Modal>
         </div>
     )
 }

@@ -1,4 +1,4 @@
-import { AlertCircleIcon } from "@/assets/Icon"
+import { DeleteIcon } from "@/assets/Icon"
 
 interface FilterFormProps {
    onSubmit: () => void
@@ -8,54 +8,35 @@ interface FilterFormProps {
 
 export default function DeleteProjectStatus({ onSubmit, onCancel, status }: FilterFormProps) {
    return (
-      <div className="space-y-6">
-         {/* Warning Icon and Message */}
-         <div className="text-center">
-            <div className="bg-red-100 text-red-600 mx-auto flex h-12 w-12 items-center justify-center rounded-full mb-4">
-               <AlertCircleIcon size={24} stroke={2} />
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-               ¿Eliminar estado de proyecto?
-            </h3>
-            <div className="text-gray-500 text-sm space-y-2">
-               <p>
-                  Estás a punto de eliminar permanentemente el estado:
-               </p>
-               <div
-                  className="inline-flex items-center rounded-full text-sm font-medium gap-2 px-3 py-1.5"
-                  style={{
-                     backgroundColor: `${status.color}15`,
-                     color: status.color,
-                     border: `1px solid ${status.color}30`
-                  }}
-               >
-                  <div
-                     className="w-2 h-2 rounded-full"
-                     style={{ backgroundColor: status.color }}
-                  />
-                  {status.name}
-               </div>
-               <p className="text-xs text-gray-400 ">
-                  Esta acción no se puede deshacer.
-               </p>
+      <div className="p-6">
+         {/* Header con icono */}
+         <div className="flex items-center justify-center mb-6">
+            <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center">
+               <DeleteIcon size={32} />
             </div>
          </div>
 
-         {/* Actions */}
-         <div className="flex gap-3">
-            <button
-               type="button"
-               onClick={onCancel}
-               className="flex-1 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium"
-            >
+         {/* Título y descripción */}
+         <div className="text-center mb-8">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+               Eliminar Estado
+            </h3>
+            <hgroup className="flex flex-col">
+               <h6 className="text-sm text-gray-600 leading-relaxed">
+                  Estás a punto de eliminar el estado <b className="text-red-600">{status.name}</b> de forma permanente.
+               </h6>
+               <p className="text-sm text-gray-600 leading-relaxed">
+                  Esta acción <b>NO</b> se puede deshacer.
+               </p>
+            </hgroup>
+         </div>
+         <div className="flex justify-center gap-2 mt-4">
+            <button className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 transition-all duration-200 text-sm font-medium" type="button"
+               onClick={() => onCancel()}>
                Cancelar
             </button>
-            <button
-               type="button"
-               onClick={onSubmit}
-               className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium"
-            >
-               Eliminar Estado
+            <button className="w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium" type="button" onClick={() => onSubmit()}>
+               Eliminar
             </button>
          </div>
       </div>

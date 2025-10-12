@@ -5,15 +5,14 @@ import { useParams, useRouter } from 'next/navigation'
 import { useAuthStore } from '@/lib/store/AuthStore'
 import { useIssueStore } from '@/lib/store/IssueStore'
 import { CalendarIcon, ClockIcon, UsersIcon, ChevronRightIcon, EditIcon, DownloadIcon } from '@/assets/Icon'
-import { TaskProps } from '@/lib/types/types'
 import ShowComments from '@/components/partials/comments/ShowComments'
 import { useCommentStore } from '@/lib/store/CommentStore'
 import { useBoardStore } from '@/lib/store/BoardStore'
 import { useConfigStore } from '@/lib/store/ConfigStore'
-import Modal from '@/components/layout/Modal'
 import CreateTaskForm from '@/components/partials/issues/CreateTaskForm'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useModalStore } from '@/lib/hooks/ModalStore'
 
 export default function TaskDetailsPage() {
     const { getValidAccessToken } = useAuthStore()
@@ -23,7 +22,6 @@ export default function TaskDetailsPage() {
     const { projectConfig, setProjectConfig } = useConfigStore()
     const [loading, setLoading] = useState(true)
     const [isSidebarVisible, setIsSidebarVisible] = useState(false)
-    const [isTaskUpdateModalOpen, setIsTaskUpdateModalOpen] = useState(false)
     const router = useRouter()
     const { id: boardId, taskId } = useParams()
 
@@ -53,9 +51,7 @@ export default function TaskDetailsPage() {
         loadData()
     }, [boardId, taskId, getValidAccessToken, getBoard, getComments, getSpecificIssue, setProjectConfig, selectedBoard, projectConfig, router])
 
-    const handleGoBack = () => {
-        router.push(`/tableros/${boardId}`)
-    }
+    const handleGoBack = () => router.push(`/tableros/${boardId}`)
 
     const handleUpdate = async (formData: {
         descriptions: { id?: string, title: string, text: string }[],
@@ -71,7 +67,23 @@ export default function TaskDetailsPage() {
             // Recargar la tarea actualizada directamente por su ID
             await getSpecificIssue(token, taskId as string)
         }
-        setIsTaskUpdateModalOpen(false)
+        closeModal()
+    }
+
+    const { openModal, closeModal } = useModalStore()
+
+    const handleUpdateBoardModal = () => {
+        openModal({
+            size: "lg",
+            title: "Editar Tarea",
+            desc: "Modifica los detalles de la tarea",
+            Icon: <EditIcon size={20} stroke={1.75} />,
+            children: <CreateTaskForm onSubmit={handleUpdate} onCancel={() => closeModal()} taskObject={selectedIssue || undefined} isEdit={true} />,
+            closeOnBackdrop: false,
+            closeOnEscape: false,
+            
+            mode: "UPDATE"
+        })
     }
 
     if (loading) {
@@ -106,7 +118,7 @@ export default function TaskDetailsPage() {
                     </button>
 
                     <button
-                        onClick={() => setIsTaskUpdateModalOpen(true)}
+                        onClick={() => handleUpdateBoardModal()}
                         className="flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors duration-200 mb-4 text-sm"
                     >
                         <span>Editar tarea</span>
@@ -122,9 +134,9 @@ export default function TaskDetailsPage() {
                     <div className={`flex-1 transition-all duration-300 ease-in-out pr-4 h-full overflow-y-auto ${!isSidebarVisible ? 'pr-0' : ''}`}>
                         <div className="flex flex-col space-y-4">
                             {/* Sección de descripción */}
-                                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                                    {selectedIssue.title}
-                                </h3>
+                            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                                {selectedIssue.title}
+                            </h3>
                             <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
                                 <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
                                     Descripciones
@@ -136,7 +148,7 @@ export default function TaskDetailsPage() {
                                                 <div key={id} className="space-y-1">
                                                     <h4 className="font-semibold text-gray-900 text-sm">{desc.title}</h4>
                                                     <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap">{desc.text}</p>
-                                                    
+
                                                     {/* Mostrar imágenes si existen */}
                                                     {desc.attachments && desc.attachments.length > 0 && (
                                                         <div className="flex flex-wrap gap-2 mt-3">
@@ -245,6 +257,80 @@ export default function TaskDetailsPage() {
                                     </div>
                                 </div>
 
+                                {/* Sección de detalles */}
+                                <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className="p-2 bg-orange-100 rounded-lg text-orange-600">
+                                            <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                            </svg>
+                                        </div>
+                                        <h3 className="font-semibold text-gray-900">Detalles</h3>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                                            <span className="text-sm text-gray-500">Estado:&nbsp;&nbsp;</span>
+                                            {(() => {
+                                                const status = projectConfig?.issueStatuses?.find((s: { id: number }) => s.id === selectedIssue.status)
+                                                return status ? (
+                                                    <span 
+                                                        className="px-3 py-1 rounded-full text-xs font-medium"
+                                                        style={{ 
+                                                            backgroundColor: `${status.color}20`,
+                                                            color: status.color,
+                                                            border: `1px solid ${status.color}40`
+                                                        }}
+                                                    >
+                                                        {status.name}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-sm font-medium text-gray-400">No especificado</span>
+                                                )
+                                            })()}
+                                        </div>
+                                        <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                                            <span className="text-sm text-gray-500">Tipo:&nbsp;&nbsp;</span>
+                                            {(() => {
+                                                const type = projectConfig?.issueTypes?.find((t: { id: number }) => t.id === selectedIssue.type)
+                                                return type ? (
+                                                    <span 
+                                                        className="px-3 py-1 rounded-full text-xs font-medium"
+                                                        style={{ 
+                                                            backgroundColor: `${type.color}20`,
+                                                            color: type.color,
+                                                            border: `1px solid ${type.color}40`
+                                                        }}
+                                                    >
+                                                        {type.name}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-sm font-medium text-gray-400">No especificado</span>
+                                                )
+                                            })()}
+                                        </div>
+                                        <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                                            <span className="text-sm text-gray-500">Prioridad:&nbsp;&nbsp;</span>
+                                            {(() => {
+                                                const priority = projectConfig?.issuePriorities?.find((p: { id: number }) => p.id === selectedIssue.priority)
+                                                return priority ? (
+                                                    <span 
+                                                        className="px-3 py-1 rounded-full text-xs font-medium"
+                                                        style={{ 
+                                                            backgroundColor: `${priority.color}20`,
+                                                            color: priority.color,
+                                                            border: `1px solid ${priority.color}40`
+                                                        }}
+                                                    >
+                                                        {priority.name}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-sm font-medium text-gray-400">No especificado</span>
+                                                )
+                                            })()}
+                                        </div>
+                                    </div>
+                                </div>
+
                                 {/* Sección de fechas */}
                                 <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
                                     <div className="flex items-center gap-2 mb-2">
@@ -303,20 +389,10 @@ export default function TaskDetailsPage() {
                     </div>
                 </div>
             </div>
-            {/* Modal para editar tarea */}
-            <Modal isOpen={isTaskUpdateModalOpen} customWidth="sm:max-w-4xl" onClose={() => setIsTaskUpdateModalOpen(false)} title={``} showCloseButton={false}>
-                <CreateTaskForm
-                    onSubmit={handleUpdate}
-                    onCancel={() => setIsTaskUpdateModalOpen(false)}
-                    taskObject={selectedIssue || undefined}
-                    isEdit={true}
-                />
-            </Modal>
         </div>
     )
 }
 
-// Formatea fechas a formato legible
 function formatDate(dateStr?: string, includeTime = false, onlyDate = false): string {
     if (!dateStr) return 'No especificado';
     let date: Date;

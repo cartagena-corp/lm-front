@@ -1,42 +1,25 @@
 "use client"
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { useAuthStore } from '@/lib/store/AuthStore'
-import Modal from '@/components/layout/Modal'
-import { EyeIcon, PlusIcon, DeleteIcon, MenuIcon } from '@/assets/Icon'
+import { useModalStore } from '@/lib/hooks/ModalStore'
+import { EyeIcon, PlusIcon, DeleteIcon } from '@/assets/Icon'
 import DeletePermissionForm from './DeletePermissionForm'
 import CreatePermissionForm from './CreatePermissionForm'
+import toast from 'react-hot-toast'
 
 interface PermissionProps {
     name: string
 }
 
 export default function PermissionsManagement() {
-    const {
-        permissions,
-        isLoading,
-        error,
-        getValidAccessToken,
-        listPermissions,
-        createPermission,
-        deletePermission,
-        clearError
-    } = useAuthStore()
+    const { permissions, isLoading, error, getValidAccessToken, listPermissions, createPermission, deletePermission, clearError } = useAuthStore()
+    const { openModal, closeModal } = useModalStore()
 
-    // Estados para modales
-    const [showCreatePermissionModal, setShowCreatePermissionModal] = useState(false)
-    const [showDeletePermissionModal, setShowDeletePermissionModal] = useState(false)
-    const [selectedPermission, setSelectedPermission] = useState<PermissionProps | null>(null)
-
-    // Cargar datos iniciales
-    useEffect(() => {
-        loadData()
-    }, [])
+    useEffect(() => { loadData() }, [])
 
     const loadData = async () => {
         const token = await getValidAccessToken()
-        if (token) {
-            await listPermissions(token)
-        }
+        if (token) await listPermissions(token)
     }
 
     // Handlers para permisos
@@ -44,21 +27,43 @@ export default function PermissionsManagement() {
         const token = await getValidAccessToken()
         if (token) {
             await createPermission(token, data)
-            setShowCreatePermissionModal(false)
+            closeModal()
+            toast.success(`Permiso ${data.name} creado`)
             loadData()
         }
     }
 
-    const handleDeletePermission = async () => {
-        if (!selectedPermission) return
-
+    const handleDeletePermission = async (permission: PermissionProps) => {
         const token = await getValidAccessToken()
         if (token) {
-            await deletePermission(token, selectedPermission.name)
-            setShowDeletePermissionModal(false)
-            setSelectedPermission(null)
+            await deletePermission(token, permission.name)
+            closeModal()
+            toast.success(`Permiso "${permission.name}" eliminado`)
             loadData()
         }
+    }
+
+    const handleCreatePermissionModal = () => {
+        openModal({
+            size: "lg",
+            title: "Crear Permiso",
+            desc: "Define un nuevo permiso para el sistema",
+            children: <CreatePermissionForm onSubmit={handleCreatePermission} onCancel={() => closeModal()} />,
+            Icon: <PlusIcon size={20} stroke={1.75} />,
+            closeOnBackdrop: false,
+            closeOnEscape: false,
+            mode: "CREATE"
+        })
+    }
+
+    const handleDeletePermissionModal = (permission: PermissionProps) => {
+        openModal({
+            size: "md",
+            children: <DeletePermissionForm permission={permission} onSubmit={() => handleDeletePermission(permission)} onCancel={() => closeModal()} />,
+            closeOnBackdrop: false,
+            closeOnEscape: false,
+            mode: "DELETE"
+        })
     }
 
     if (error) {
@@ -106,7 +111,7 @@ export default function PermissionsManagement() {
                     {
                         hasPermissionCreatePermission &&
                         <button
-                            onClick={() => setShowCreatePermissionModal(true)}
+                            onClick={handleCreatePermissionModal}
                             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
                         >
                             <PlusIcon size={16} />
@@ -147,10 +152,7 @@ export default function PermissionsManagement() {
                                             hasPermissionDeletePermission &&
                                             <div>
                                                 <button
-                                                    onClick={() => {
-                                                        setSelectedPermission(permission)
-                                                        setShowDeletePermissionModal(true)
-                                                    }}
+                                                    onClick={() => handleDeletePermissionModal(permission)}
                                                     className="text-red-400 hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100 p-2 hover:bg-red-100 rounded-lg"
                                                 >
                                                     <DeleteIcon size={16} />
@@ -164,35 +166,6 @@ export default function PermissionsManagement() {
                     </div>
                 )}
             </div>
-
-            {/* Modales */}
-            <Modal
-                isOpen={showCreatePermissionModal}
-                onClose={() => setShowCreatePermissionModal(false)}
-                title=""
-            >
-                <CreatePermissionForm
-                    onSubmit={handleCreatePermission}
-                    onCancel={() => setShowCreatePermissionModal(false)}
-                />
-            </Modal>
-
-            <Modal
-                isOpen={showDeletePermissionModal}
-                onClose={() => setShowDeletePermissionModal(false)}
-                title=""
-            >
-                {selectedPermission && (
-                    <DeletePermissionForm
-                        permission={selectedPermission}
-                        onSubmit={handleDeletePermission}
-                        onCancel={() => {
-                            setShowDeletePermissionModal(false)
-                            setSelectedPermission(null)
-                        }}
-                    />
-                )}
-            </Modal>
         </div>
     )
 }
