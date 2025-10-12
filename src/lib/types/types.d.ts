@@ -147,7 +147,8 @@ export interface ProjectConfigProps {
    issueStatuses: {
       id: number,
       name: string,
-      color: string
+      color: string,
+      orderIndex?: number
    }[],
    issuePriorities: {
       id: number,

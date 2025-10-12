@@ -517,7 +517,7 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
-    const { projectConfig, addIssueStatus, editIssueStatus, setProjectConfig } = useConfigStore()
+    const { projectConfig, addIssueStatus, editIssueStatus, updateIssueStatusesOrder, updateProjectConfigStatuses, setProjectConfig } = useConfigStore()
     const { updateIssue, deleteIssue, assignIssue, createIssue } = useIssueStore()
     const { updateSprint, deleteSprint } = useSprintStore()
     const { getValidAccessToken } = useAuthStore()
@@ -810,36 +810,22 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
                     throw new Error('No se pudo obtener el token de autenticación')
                 }
 
-                // Obtener los estados originales para comparar
-                const originalStatuses = [...(projectConfig?.issueStatuses || [])].sort((a, b) => {
-                    const orderA = (a as ConfigProjectStatusProps).orderIndex ?? 999999
-                    const orderB = (b as ConfigProjectStatusProps).orderIndex ?? 999999
-                    if (orderA === orderB) {
-                        return a.id - b.id
-                    }
-                    return orderA - orderB
-                })
+                // Preparar el array de estados para enviar al backend
+                const statusesPayload = statusesToSync.map(status => ({
+                    id: status.id,
+                    name: status.name,
+                    color: status.color,
+                    orderIndex: status.orderIndex ?? 1
+                }))
 
-                // Actualizar orderIndex de cada estado que cambió de posición
-                for (let i = 0; i < statusesToSync.length; i++) {
-                    const status = statusesToSync[i] as ConfigProjectStatusProps
-                    const originalStatus = originalStatuses.find(s => s.id === status.id) as ConfigProjectStatusProps | undefined
+                // Enviar todos los estados en una sola petición
+                await updateIssueStatusesOrder(token, spr.projectId, statusesPayload)
 
-                    // Solo actualizar si el orderIndex cambió
-                    if (!originalStatus || (originalStatus as ConfigProjectStatusProps).orderIndex !== status.orderIndex) {
-                        await editIssueStatus(token, spr.projectId, {
-                            id: status.id.toString(),
-                            name: status.name,
-                            color: status.color,
-                            orderIndex: status.orderIndex
-                        })
-                    }
-                }
+                // Actualizar el projectConfig localmente con los nuevos estados ordenados
+                updateProjectConfigStatuses(statusesToSync)
 
-                // Recargar configuración del proyecto para reflejar los cambios del servidor
-                await setProjectConfig(spr.projectId, token)
-
-                // Limpiar la referencia
+                // Limpiar el estado optimista y las referencias
+                setOptimisticStatuses(null)
                 pendingStatusUpdateRef.current.statuses = null
                 pendingStatusUpdateRef.current.timeoutId = null
 

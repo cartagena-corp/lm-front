@@ -33,6 +33,8 @@ interface ConfigProjectState {
    // Issue Status Actions
    addIssueStatus: (token: string, projectId: string, newProjectStatus: { name: string, color: string }) => Promise<void>
    editIssueStatus: (token: string, projectId: string, projectStatus: { id: string, name: string, color: string, orderIndex?: number }) => Promise<void>
+   updateIssueStatusesOrder: (token: string, projectId: string, statuses: { id: number, name: string, color: string, orderIndex: number }[]) => Promise<void>
+   updateProjectConfigStatuses: (statuses: ConfigProjectStatusProps[]) => void
    deleteIssueStatus: (token: string, projectId: string, projectStatusId: string) => Promise<void>
 
    // Issue Priorities Actions
@@ -306,8 +308,10 @@ export const useConfigStore = create<ConfigProjectState>((set, get) => ({
             throw new Error(`Error al agregar estado de issue: ${response.statusText}`)
          }
 
-         toast.success('Estado de issue agregado exitosamente')
+         // Para crear, necesitamos recargar para obtener el ID del nuevo estado
          await get().setProjectConfig(projectId, token)
+         
+         toast.success('Estado de issue agregado exitosamente')
 
       } catch (error) {
          const errorMessage = handleApiError(error, 'addIssueStatus')
@@ -323,25 +327,51 @@ export const useConfigStore = create<ConfigProjectState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${API_ROUTES.CRUD_CONFIG_ISSUES_STATUS}/${projectStatus.id}`, {
+         // Obtener el estado actual del proyecto
+         const currentConfig = get().projectConfig
+         if (!currentConfig?.issueStatuses) {
+            throw new Error('No se puede editar: configuración no disponible')
+         }
+
+         // Actualizar el estado específico en el array completo
+         const updatedStatuses = currentConfig.issueStatuses.map(status => 
+            status.id === parseInt(projectStatus.id)
+               ? {
+                  ...status,
+                  name: projectStatus.name,
+                  color: projectStatus.color,
+                  ...(projectStatus.orderIndex !== undefined && { orderIndex: projectStatus.orderIndex })
+               }
+               : status
+         )
+
+         // Preparar el payload con todos los estados
+         const statusesPayload = updatedStatuses.map(status => ({
+            id: status.id,
+            name: status.name,
+            color: status.color,
+            orderIndex: status.orderIndex ?? 999999
+         }))
+
+         // Enviar todos los estados al backend
+         const response = await fetch(`${API_ROUTES.CRUD_CONFIG_ISSUES_STATUS}/${projectId}`, {
             method: 'PUT',
             headers: {
                "Content-Type": "application/json",
                "Authorization": `Bearer ${token}`
             },
-            body: JSON.stringify({
-               name: projectStatus.name,
-               color: projectStatus.color,
-               ...(projectStatus.orderIndex !== undefined && { orderIndex: projectStatus.orderIndex })
-            })
+            body: JSON.stringify(statusesPayload)
          })
 
          if (!response.ok) {
             throw new Error(`Error al editar estado de issue: ${response.statusText}`)
          }
 
+         // Actualizar el estado local sin hacer petición GET
+         get().updateProjectConfigStatuses(updatedStatuses)
+         set({ isLoading: false })
+
          toast.success('Estado de issue editado exitosamente')
-         await get().setProjectConfig(projectId, token)
 
       } catch (error) {
          const errorMessage = handleApiError(error, 'editIssueStatus')
@@ -350,6 +380,48 @@ export const useConfigStore = create<ConfigProjectState>((set, get) => ({
             isLoading: false
          })
          toast.error('Error al editar estado de issue')
+      }
+   },
+
+   updateIssueStatusesOrder: async (token, projectId, statuses) => {
+      set({ isLoading: true, error: null })
+
+      try {
+         const response = await fetch(`${API_ROUTES.CRUD_CONFIG_ISSUES_STATUS}/${projectId}`, {
+            method: 'PUT',
+            headers: {
+               "Content-Type": "application/json",
+               "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify(statuses)
+         })
+
+         if (!response.ok) {
+            throw new Error(`Error al actualizar orden de estados: ${response.statusText}`)
+         }
+
+         // Solo actualizar el estado de carga sin recargar toda la configuración
+         set({ isLoading: false })
+
+      } catch (error) {
+         const errorMessage = handleApiError(error, 'updateIssueStatusesOrder')
+         set({
+            error: errorMessage,
+            isLoading: false
+         })
+         throw error // Re-throw para que el componente pueda manejar el error
+      }
+   },
+
+   updateProjectConfigStatuses: (statuses) => {
+      const currentConfig = get().projectConfig
+      if (currentConfig) {
+         set({
+            projectConfig: {
+               ...currentConfig,
+               issueStatuses: statuses
+            }
+         })
       }
    },
 
@@ -369,8 +441,17 @@ export const useConfigStore = create<ConfigProjectState>((set, get) => ({
             throw new Error(`Error al eliminar estado de issue: ${response.statusText}`)
          }
 
+         // Actualizar localmente eliminando el estado
+         const currentConfig = get().projectConfig
+         if (currentConfig?.issueStatuses) {
+            const updatedStatuses = currentConfig.issueStatuses.filter(
+               status => status.id !== parseInt(projectStatusId)
+            )
+            get().updateProjectConfigStatuses(updatedStatuses)
+         }
+
+         set({ isLoading: false })
          toast.success('Estado de issue eliminado exitosamente')
-         await get().setProjectConfig(projectId, token)
 
       } catch (error) {
          const errorMessage = handleApiError(error, 'deleteIssueStatus')
