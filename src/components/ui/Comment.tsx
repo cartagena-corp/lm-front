@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react"
-import AutoResizeTextarea from "./AutoResizeTextarea"
+import TextArea from "./TextArea"
+import SafeHtml from "./SafeHtml"
 import { CommentProps } from "@/lib/types/types"
 import Image from "next/image"
 import { DeleteIcon, DownloadIcon } from "@/assets/Icon"
@@ -24,6 +25,7 @@ export default function Comment({ comment }: Props) {
    const [gonnaReply, setGonnaReply] = useState<boolean>(false)
    const [viewResponses, setViewResponses] = useState<boolean>(false)
    const [newReply, setNewReply] = useState("")
+   const [replyFiles, setReplyFiles] = useState<File[]>([])
    const [commentResponses, setCommentResponses] = useState<any[]>([])
    const [isLoadingResponses, setIsLoadingResponses] = useState<boolean>(false)
 
@@ -191,9 +193,10 @@ export default function Comment({ comment }: Props) {
                      </div>
 
                      {/* Texto del comentario */}
-                     <p className="text-xs text-gray-700 mb-3 whitespace-pre-wrap">
-                        {comment.text}
-                     </p>
+                     <SafeHtml 
+                        html={comment.text} 
+                        className="text-xs text-gray-700 mb-3 [&_code]:font-mono [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs"
+                     />
 
                      {/* Archivos adjuntos */}
                      {comment.attachments.length > 0 && (
@@ -266,29 +269,35 @@ export default function Comment({ comment }: Props) {
 
             {/* Área de respuesta */}
             {gonnaReply && (
-               <div className="ml-14 bg-white border border-gray-200 rounded-lg p-2">
-                  <div className="flex gap-3">
-                     <div className="flex-1">
-                        <AutoResizeTextarea
-                           value={newReply}
-                           onChange={setNewReply}
-                           placeholder="Escribe tu respuesta..."
-                           className="w-full text-xs p-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-none"
-                        />
-                     </div>
-                     <button
-                        type="button"
-                        className="flex-shrink-0 w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        onClick={handleReply}
-                        disabled={!newReply.trim()}
-                        title="Enviar respuesta"
-                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" className="w-4 h-4">
-                           <path d="M21.0477 3.05293C18.8697 0.707363 2.48648 6.4532 2.50001 8.551C2.51535 10.9299 8.89809 11.6617 10.6672 12.1581C11.7311 12.4565 12.016 12.7625 12.2613 13.8781C13.3723 18.9305 13.9301 21.4435 15.2014 21.4996C17.2278 21.5892 23.1733 5.342 21.0477 3.05293Z" stroke="currentColor" strokeWidth="2" />
-                           <path d="M11.5 12.5L15 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                     </button>
-                  </div>
+               <div className="ml-14 bg-white border border-gray-200 rounded-lg p-3">
+                  <TextArea
+                     title=""
+                     value={newReply}
+                     onChange={setNewReply}
+                     placeholder="Escribe tu respuesta..."
+                     maxLength={2000}
+                     minHeight='60px'
+                     maxHeight='150px'
+                     files={replyFiles}
+                     onFilesChange={setReplyFiles}
+                     onRemoveFile={(index) => {
+                        setReplyFiles(prev => prev.filter((_, i) => i !== index))
+                     }}
+                     extensionAllowed="*"
+                  />
+                  <button
+                     type="button"
+                     className="mt-3 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                     onClick={handleReply}
+                     disabled={!newReply.trim()}
+                     title="Enviar respuesta"
+                  >
+                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" className="w-4 h-4">
+                        <path d="M21.0477 3.05293C18.8697 0.707363 2.48648 6.4532 2.50001 8.551C2.51535 10.9299 8.89809 11.6617 10.6672 12.1581C11.7311 12.4565 12.016 12.7625 12.2613 13.8781C13.3723 18.9305 13.9301 21.4435 15.2014 21.4996C17.2278 21.5892 23.1733 5.342 21.0477 3.05293Z" stroke="currentColor" strokeWidth="2" />
+                        <path d="M11.5 12.5L15 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                     </svg>
+                     Responder
+                  </button>
                </div>
             )}
 
@@ -339,9 +348,10 @@ export default function Comment({ comment }: Props) {
                                        </button>
                                     )}
                                  </div>
-                                 <p className="text-xs/tight text-gray-700 whitespace-pre-wrap">
-                                    {reply.text}
-                                 </p>
+                                 <SafeHtml 
+                                    html={reply.text} 
+                                    className="text-xs/tight text-gray-700 [&_code]:font-mono [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs"
+                                 />
                               </div>
                            </div>
                         </div>
