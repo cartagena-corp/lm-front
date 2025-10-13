@@ -326,3 +326,23 @@ export interface ModalState {
    isOpen: boolean
    currentModal: ModalInstance | null
 }
+
+//* TextArea Component
+export interface TextAreaProps {
+   title: string
+   value: string
+   onChange: (value: string) => void
+   maxLength?: number
+   placeholder?: string
+   minHeight?: string
+   maxHeight?: string
+   onFilesChange?: (files: File[]) => void
+   files?: File[]
+   onRemoveFile?: (index: number) => void
+   extensionAllowed?: string // Extensiones permitidas (ej: "image/*", ".pdf,.doc,.docx", etc.)
+}
+
+export interface TooltipPosition {
+   top: number
+   left: number
+}

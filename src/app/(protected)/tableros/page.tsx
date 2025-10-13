@@ -13,6 +13,7 @@ import { BoardIcon, FilterIcon, PlusIcon } from '@/assets/Icon'
 import { useEffect, useState, Suspense } from 'react'
 import { useModalStore } from '@/lib/hooks/ModalStore'
 import { useRouter, useSearchParams } from 'next/navigation'
+import TextArea from '@/components/ui/TextArea'
 
 function TablerosContent() {
    const { boards, getBoards, createBoard, importFromJira, isLoading, error } = useBoardStore()
@@ -50,7 +51,7 @@ function TablerosContent() {
    // Función para actualizar la URL con los filtros (sin page y size)
    const updateSearchParams = (filters: FilterProjectProps) => {
       const params = new URLSearchParams()
-      
+
       if (filters.name) params.set('name', filters.name)
       if (filters.status) params.set('status', filters.status.toString())
       if (filters.createdBy) params.set('createdBy', filters.createdBy)
@@ -105,10 +106,10 @@ function TablerosContent() {
 
             // Obtener filtros desde la URL
             const filtersFromUrl = getFiltersFromSearchParams()
-            
+
             if (filtersFromUrl) {
                setCurrentFilters(filtersFromUrl)
-               
+
                // Transform FilterProjectProps to BoardFilters
                const boardFilters = {
                   name: filtersFromUrl.name || undefined,
@@ -235,7 +236,7 @@ function TablerosContent() {
          children: <CreateBoardForm onSubmit={handleCreateBoard} onCancel={() => closeModal()} />,
          closeOnBackdrop: false,
          closeOnEscape: false,
-         
+
       })
    }
 
@@ -248,13 +249,32 @@ function TablerosContent() {
          children: <FilterProjectForm onSubmit={handleFilter} onCancel={() => closeModal()} initialFilters={getFiltersFromSearchParams()} />,
          closeOnBackdrop: false,
          closeOnEscape: false,
-         
+
          mode: "UPDATE"
       })
    }
 
+   // const [mensajePrueba, setMensajePrueba] = useState("")
+   // const [archivosPrueba, setArchivosPrueba] = useState<File[]>([])
+   // const handleRemoveFile = (index: number) => {
+   //    setArchivosPrueba(prev => prev.filter((_, i) => i !== index))
+   // }
+
    return (
       <>
+         {/* 
+         <TextArea
+            title="Mensaje de prueba (no relacionado con tableros)"
+            placeholder="Escribe un mensaje..."
+            value={mensajePrueba}
+            onChange={(value) => setMensajePrueba(value)}
+            files={archivosPrueba}
+            onFilesChange={setArchivosPrueba}
+            onRemoveFile={handleRemoveFile}
+         />
+
+         {JSON.stringify(mensajePrueba)} 
+         */}
          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 md:mb-8 gap-4">
             <h1 className="text-2xl font-bold text-gray-900">Tableros</h1>
             <div className="flex flex-col sm:flex-row gap-3">

@@ -81,7 +81,7 @@ export default function TaskDetailsPage() {
             children: <CreateTaskForm onSubmit={handleUpdate} onCancel={() => closeModal()} taskObject={selectedIssue || undefined} isEdit={true} />,
             closeOnBackdrop: false,
             closeOnEscape: false,
-            
+
             mode: "UPDATE"
         })
     }
@@ -147,8 +147,9 @@ export default function TaskDetailsPage() {
                                             {selectedIssue.descriptions.map((desc, id) => (
                                                 <div key={id} className="space-y-1">
                                                     <h4 className="font-semibold text-gray-900 text-sm">{desc.title}</h4>
-                                                    <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap">{desc.text}</p>
-
+                                                    <hgroup className='text-gray-600 leading-relaxed text-xs'>
+                                                        {desc.text}
+                                                    </hgroup>
                                                     {/* Mostrar imágenes si existen */}
                                                     {desc.attachments && desc.attachments.length > 0 && (
                                                         <div className="flex flex-wrap gap-2 mt-3">
@@ -273,9 +274,9 @@ export default function TaskDetailsPage() {
                                             {(() => {
                                                 const status = projectConfig?.issueStatuses?.find((s: { id: number }) => s.id === selectedIssue.status)
                                                 return status ? (
-                                                    <span 
+                                                    <span
                                                         className="px-3 py-1 rounded-full text-xs font-medium"
-                                                        style={{ 
+                                                        style={{
                                                             backgroundColor: `${status.color}20`,
                                                             color: status.color,
                                                             border: `1px solid ${status.color}40`
@@ -293,9 +294,9 @@ export default function TaskDetailsPage() {
                                             {(() => {
                                                 const type = projectConfig?.issueTypes?.find((t: { id: number }) => t.id === selectedIssue.type)
                                                 return type ? (
-                                                    <span 
+                                                    <span
                                                         className="px-3 py-1 rounded-full text-xs font-medium"
-                                                        style={{ 
+                                                        style={{
                                                             backgroundColor: `${type.color}20`,
                                                             color: type.color,
                                                             border: `1px solid ${type.color}40`
@@ -313,9 +314,9 @@ export default function TaskDetailsPage() {
                                             {(() => {
                                                 const priority = projectConfig?.issuePriorities?.find((p: { id: number }) => p.id === selectedIssue.priority)
                                                 return priority ? (
-                                                    <span 
+                                                    <span
                                                         className="px-3 py-1 rounded-full text-xs font-medium"
-                                                        style={{ 
+                                                        style={{
                                                             backgroundColor: `${priority.color}20`,
                                                             color: priority.color,
                                                             border: `1px solid ${priority.color}40`
