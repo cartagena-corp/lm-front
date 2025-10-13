@@ -239,32 +239,6 @@ export default function CreateTaskForm({ onSubmit, onCancel, taskObject, isEdit 
 	return (
 		<>
 			<div className="bg-white">
-				{/* Header
-				<div className="border-b border-gray-100 p-6">
-					<div className="flex items-center justify-between">
-						<div className="flex items-center gap-3">
-							<div className="bg-blue-50 text-blue-600 rounded-lg p-2">
-								<PlusIcon size={24} />
-							</div>
-							<div>
-								<h3 className="text-lg font-semibold text-gray-900">
-									{isEdit ? 'Editar Tarea' : 'Crear Nueva Tarea'}
-								</h3>
-								<p className="text-sm text-gray-500">
-									{isEdit ? 'Modifica los detalles de la tarea' : 'Completa los detalles de la nueva tarea'}
-								</p>
-							</div>
-						</div>
-						<button
-							type="button"
-							onClick={onCancel}
-							className="bg-white text-gray-400 hover:text-gray-700 rounded-md cursor-pointer p-2 hover:bg-gray-50 transition-all duration-200"
-						>
-							<XIcon size={20} />
-						</button>
-					</div>
-				</div> */}
-
 				{/* Form Content */}
 				<form onSubmit={handleSubmit} className="p-6">
 					<div className='space-y-2'>

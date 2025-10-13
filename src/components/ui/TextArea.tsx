@@ -661,7 +661,7 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
                     onKeyDown={handleKeyDown}
                     onPaste={handlePaste}
                     data-placeholder={placeholder}
-                    className="rounded-b-lg w-full px-4 py-3 text-md outline-none bg-white min-h-[60px] max-h-[180px] overflow-auto break-words empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400 [&_code]:font-mono [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-sm"
+                    className="rounded-b-lg w-full px-4 py-3 text-xs outline-none bg-white min-h-[60px] max-h-[180px] overflow-auto break-words empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400 [&_code]:font-mono [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-sm"
                     style={{
                         minHeight,
                         maxHeight,

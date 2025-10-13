@@ -84,7 +84,7 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
                                        <h4 className="font-semibold text-gray-900 text-sm">{desc.title}</h4>
                                        <SafeHtml 
                                           html={desc.text} 
-                                          className="text-sm text-gray-600 leading-relaxed [&_code]:font-mono [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs"
+                                          className="text-xs text-gray-600 leading-relaxed [&_code]:font-mono [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs"
                                        />
 
                                        {/* Mostrar imágenes si existen */}

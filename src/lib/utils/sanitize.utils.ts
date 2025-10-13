@@ -13,17 +13,52 @@ export const sanitizeHtml = (dirty: string): string => {
     // Configuración de DOMPurify para permitir solo tags de formato seguros
     const config = {
         ALLOWED_TAGS: [
+            // Tags de formato básico
             'b', 'i', 'u', 'strong', 'em', 'mark', 'small', 'del', 'ins', 'sub', 'sup',
-            'span', 'code', 'br', 'p', 'div'
+            'strike', 's', 'font',
+            // Tags de estructura
+            'span', 'code', 'br', 'p', 'div', 'pre',
+            // Tags de lista
+            'ul', 'ol', 'li',
+            // Tags de encabezado
+            'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+            // Otros
+            'blockquote', 'hr'
         ],
-        ALLOWED_ATTR: ['style', 'class'],
+        ALLOWED_ATTR: [
+            'style', 
+            'class', 
+            'color',  // Para <font color="">
+            'face',   // Para <font face="">
+            'size'    // Para <font size="">
+        ],
         ALLOWED_STYLES: {
             '*': {
-                'color': [/^#[0-9a-fA-F]{3,6}$/],
-                'background-color': [/^#[0-9a-fA-F]{3,6}$/],
-                'text-decoration': [/^(underline|line-through|none)$/],
-                'font-weight': [/^(bold|normal|[1-9]00)$/],
-                'font-style': [/^(italic|normal)$/],
+                // Colores
+                'color': [/.*/],
+                'background-color': [/.*/],
+                'background': [/.*/],
+                
+                // Decoración de texto
+                'text-decoration': [/.*/],
+                'text-decoration-line': [/.*/],
+                'text-decoration-color': [/.*/],
+                'text-decoration-style': [/.*/],
+                
+                // Fuente
+                'font-weight': [/.*/],
+                'font-style': [/.*/],
+                'font-family': [/.*/],
+                'font-size': [/.*/],
+                
+                // Espaciado
+                'padding': [/.*/],
+                'margin': [/.*/],
+                'line-height': [/.*/],
+                
+                // Display
+                'display': [/.*/],
+                'white-space': [/.*/],
             }
         },
         KEEP_CONTENT: true,
