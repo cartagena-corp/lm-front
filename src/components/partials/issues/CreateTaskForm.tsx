@@ -6,7 +6,7 @@ import { useConfigStore } from '@/lib/store/ConfigStore'
 import { useAuthStore } from '@/lib/store/AuthStore'
 import { PlusIcon, XIcon, DownloadIcon, AttachIcon } from '@/assets/Icon'
 import { useBoardStore } from '@/lib/store/BoardStore'
-import AutoResizeTextarea from '@/components/ui/AutoResizeTextarea'
+import TextArea from '@/components/ui/TextArea'
 import { getUserAvatar } from '@/lib/utils/avatar.utils'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -54,7 +54,6 @@ export default function CreateTaskForm({ onSubmit, onCancel, taskObject, isEdit 
 	// Initialize descriptions with project descriptions and their values
 	const [descriptionValues, setDescriptionValues] = useState<{ [key: string]: string }>({})
 	const [descriptionFiles, setDescriptionFiles] = useState<{ [key: string]: File[] }>({})
-	const [dragActiveDesc, setDragActiveDesc] = useState<{ [key: string]: boolean }>({})
 	const [deletedAttachmentIds, setDeletedAttachmentIds] = useState<string[]>([])
 
 	// Effect to populate description values when editing and projectConfig is available
@@ -205,81 +204,8 @@ export default function CreateTaskForm({ onSubmit, onCancel, taskObject, isEdit 
 		}))
 	}
 
-	const handleFileChange = (descriptionId: string, files: FileList | null) => {
-		if (files) {
-			// Filtrar solo imágenes
-			const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'))
-			if (imageFiles.length > 0) {
-				setDescriptionFiles(prev => ({
-					...prev,
-					[descriptionId]: [...(prev[descriptionId] || []), ...imageFiles]
-				}))
-			}
-		}
-	}
-
-	const removeFile = (descriptionId: string, fileIndex: number) => {
-		setDescriptionFiles(prev => ({
-			...prev,
-			[descriptionId]: prev[descriptionId].filter((_, idx) => idx !== fileIndex)
-		}))
-	}
-
 	const removeExistingAttachment = (attachmentId: string) => {
 		setDeletedAttachmentIds(prev => [...prev, attachmentId])
-	}
-
-	const handleDragOver = (e: React.DragEvent<HTMLElement>, descriptionId: string) => {
-		e.preventDefault()
-		setDragActiveDesc(prev => ({ ...prev, [descriptionId]: true }))
-	}
-
-	const handleDragLeave = (e: React.DragEvent<HTMLElement>, descriptionId: string) => {
-		const rect = e.currentTarget.getBoundingClientRect()
-		if (
-			e.clientX < rect.left ||
-			e.clientX > rect.right ||
-			e.clientY < rect.top ||
-			e.clientY > rect.bottom
-		) {
-			setDragActiveDesc(prev => ({ ...prev, [descriptionId]: false }))
-		}
-	}
-
-	const handleDrop = (e: React.DragEvent<HTMLElement>, descriptionId: string) => {
-		e.preventDefault()
-		setDragActiveDesc(prev => ({ ...prev, [descriptionId]: false }))
-		const dropped = Array.from(e.dataTransfer.files)
-		// Filtrar solo imágenes
-		const imageFiles = dropped.filter(file => file.type.startsWith('image/'))
-		if (imageFiles.length > 0) {
-			setDescriptionFiles(prev => ({
-				...prev,
-				[descriptionId]: [...(prev[descriptionId] || []), ...imageFiles]
-			}))
-		}
-	}
-
-	const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>, descriptionId: string) => {
-		if (e.clipboardData && e.clipboardData.items) {
-			const items = Array.from(e.clipboardData.items)
-			const imageFiles: File[] = []
-			items.forEach(item => {
-				if (item.kind === 'file' && item.type.startsWith('image/')) {
-					const file = item.getAsFile()
-					if (file) {
-						imageFiles.push(file)
-					}
-				}
-			})
-			if (imageFiles.length > 0) {
-				setDescriptionFiles(prev => ({
-					...prev,
-					[descriptionId]: [...(prev[descriptionId] || []), ...imageFiles]
-				}))
-				e.preventDefault()
-			}
-		}
 	}
 
 	const priorityRef = useRef(null)
@@ -451,196 +377,114 @@ export default function CreateTaskForm({ onSubmit, onCancel, taskObject, isEdit 
 
 						{/* Lista de Descripciones del Proyecto */}
 						{projectConfig?.issueDescriptions && projectConfig.issueDescriptions.length > 0 && (
-							<div className=''>
-								<div className='bg-gray-50 border border-gray-200 rounded-lg p-4'>
-									<h6 className='text-sm font-semibold text-gray-900 mb-2'>Descripciones Disponibles</h6>
-									<div className='space-y-4 max-h-52 overflow-y-auto'>
-										{projectConfig.issueDescriptions.map((description) => (
-											<div key={description.id} className='bg-white border border-gray-200 rounded-lg p-3'>
-												<div className='flex items-center justify-between'>
-													<label className='text-sm font-medium text-gray-900 mb-2 block'>
-														{description.name}
-													</label>
-													<div className='flex items-center gap-2 text-xs mb-2'>
-														<div className={`w-2 h-2 rounded-full ${(descriptionValues[description.id]?.length || 0) > 5000
-															? 'bg-red-500'
-															: (descriptionValues[description.id]?.length || 0) > 4500
-																? 'bg-orange-500'
-																: 'bg-green-500'
-															}`} />
-														<span className={`font-medium ${(descriptionValues[description.id]?.length || 0) > 5000
-															? 'text-red-600'
-															: (descriptionValues[description.id]?.length || 0) > 4500
-																? 'text-orange-600'
-																: 'text-green-600'
-															}`}>
-															{descriptionValues[description.id]?.length || 0}/5000
-														</span>
-													</div>
-												</div>
-												<AutoResizeTextarea
-													value={descriptionValues[description.id] || ''}
-													onChange={(value) => {
-														if (value.length <= 5000) {
-															handleDescriptionChange(description.id.toString(), value)
-														}
-													}}
-													onPaste={(e) => handlePaste(e, description.id.toString())}
-													placeholder={`Describe los detalles para: ${description.name}`}
-													required={false}
-													rows={3}
-													className="w-full border border-gray-200 rounded-md p-2 text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-												/>
+							<div className='bg-gray-50 border border-gray-200 rounded-lg p-4'>
+								<h6 className='text-sm font-semibold text-gray-900 mb-2'>Descripciones Disponibles</h6>
+								<div className='space-y-4 max-h-52 overflow-y-auto'>
+									{projectConfig.issueDescriptions.map((description) => (
+										<div key={description.id} className='bg-white border border-gray-200 rounded-lg p-3'>
+											<TextArea
+												title={description.name}
+												value={descriptionValues[description.id] || ''}
+												onChange={(value) => {
+													handleDescriptionChange(description.id.toString(), value)
+												}}
+												placeholder={`Describe los detalles para: ${description.name}`}
+												maxLength={5000}
+												minHeight='80px'
+												maxHeight='200px'
+												files={descriptionFiles[description.id] || []}
+												onFilesChange={(files) => {
+													setDescriptionFiles(prev => ({
+														...prev,
+														[description.id]: files
+													}))
+												}}
+												onRemoveFile={(index) => {
+													setDescriptionFiles(prev => ({
+														...prev,
+														[description.id]: prev[description.id].filter((_, i) => i !== index)
+													}))
+												}}
+											/>
 
-												{/* Área de archivos */}
-												<div
-													className='mt-2'
-													onDragOver={(e) => handleDragOver(e, description.id.toString())}
-													onDragLeave={(e) => handleDragLeave(e, description.id.toString())}
-													onDrop={(e) => handleDrop(e, description.id.toString())}
-												>
-													{/* Mostrar imágenes existentes si estamos editando */}
-													{isEdit && taskObject?.descriptions && (
-														(() => {
-															const originalDesc = taskObject.descriptions.find(
-																desc => desc.title === description.name
-															)
+											{/* Mostrar imágenes existentes (de la base de datos) si estamos editando */}
+											{isEdit && taskObject?.descriptions && (
+												(() => {
+													const originalDesc = taskObject.descriptions.find(
+														desc => desc.title === description.name
+													)
 
-															if (originalDesc?.attachments && originalDesc.attachments.length > 0) {
-																// Filtrar attachments que no han sido eliminados
-																const activeAttachments = originalDesc.attachments.filter(
-																	att => !deletedAttachmentIds.includes(att.id)
-																)
+													if (originalDesc?.attachments && originalDesc.attachments.length > 0) {
+														// Filtrar attachments que no han sido eliminados
+														const activeAttachments = originalDesc.attachments.filter(
+															att => !deletedAttachmentIds.includes(att.id)
+														)
 
-																if (activeAttachments.length === 0) return null
+														if (activeAttachments.length === 0) return null
 
-																return (
-																	<div className="mb-3">
-																		<p className="text-xs font-medium text-gray-700 mb-2">Archivos actuales:</p>
-																		<div className="flex flex-wrap gap-3">
-																			{activeAttachments.map((file) => {
-																				const fileSplitted = file.fileName.split(".")
-																				const extension = fileSplitted[fileSplitted.length - 1]
-																				const isImage = ["jpg", "png", "jpeg", "gif", "bmp", "webp"].includes(extension.toLowerCase())
-																				const url = file.fileUrl
+														return (
+															<div className="mt-2">
+																<p className="text-xs font-semibold text-gray-600 mb-2">Archivos existentes:</p>
+																<div className="flex flex-wrap gap-2">
+																	{activeAttachments.map((file) => {
+																		const fileSplitted = file.fileName.split(".")
+																		const extension = fileSplitted[fileSplitted.length - 1]
+																		const isImage = ["jpg", "png", "jpeg", "gif", "bmp", "webp"].includes(extension.toLowerCase())
+																		const url = file.fileUrl
 
-																				return (
-																					<div key={file.id} className="relative group">
-																						<div className="border border-gray-200 rounded-lg overflow-hidden hover:border-blue-300 hover:shadow-sm transition-all">
-																							{isImage && url ? (
-																								<Link href={url} target="_blank">
-																									<div className="w-16 h-16 relative">
-																										<Image
-																											src={url}
-																											alt={file.fileName}
-																											fill
-																											className="object-cover hover:scale-105 transition-transform"
-																											unoptimized
-																										/>
-																									</div>
-																								</Link>
-																							) : (
-																								<Link
-																									href={url}
-																									target="_blank"
-																									className="flex items-center gap-2 p-3 min-w-0 hover:bg-gray-50 transition-colors"
-																								>
-																									<div className="flex-shrink-0">
-																										<DownloadIcon size={16} stroke={2} />
-																									</div>
-																									<span className="text-xs text-gray-600 truncate">
-																										{file.fileName}
-																									</span>
-																								</Link>
-																							)}
-																						</div>
-																						<button
-																							type="button"
-																							className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm z-10"
-																							onClick={(e) => {
-																								e.preventDefault()
-																								removeExistingAttachment(file.id)
-																							}}
-																							title="Eliminar archivo"
+																		return (
+																			<div key={file.id} className="relative group">
+																				<div className="border border-gray-200 rounded-lg overflow-hidden hover:border-blue-300 hover:shadow-sm transition-all">
+																					{isImage && url ? (
+																						<Link href={url} target="_blank">
+																							<div className="w-20 h-20 relative">
+																								<Image
+																									src={url}
+																									alt={file.fileName}
+																									fill
+																									className="object-cover hover:scale-105 transition-transform"
+																									unoptimized
+																								/>
+																							</div>
+																						</Link>
+																					) : (
+																						<Link
+																							href={url}
+																							target="_blank"
+																							className="flex items-center gap-2 p-3 min-w-0 hover:bg-gray-50 transition-colors"
 																						>
-																							<XIcon size={12} stroke={2} />
-																						</button>
-																					</div>
-																				)
-																			})}
-																		</div>
-																	</div>
-																)
-															}
-															return null
-														})()
-													)}
-
-													{/* Previsualizaciones de archivos nuevos */}
-													{descriptionFiles[description.id] && descriptionFiles[description.id].length > 0 && (
-														<div className="mb-3">
-															<p className="text-xs font-medium text-gray-700 mb-2">
-																{isEdit ? 'Nuevas imágenes:' : 'Imágenes adjuntas:'}
-															</p>
-															<div className="flex flex-wrap gap-3">
-																{descriptionFiles[description.id].map((file, idx) => {
-																	const url = URL.createObjectURL(file)
-																	return (
-																		<div key={idx} className="relative group">
-																			<div className="border border-gray-200 rounded-lg overflow-hidden bg-gray-50 hover:bg-gray-100 transition-colors">
-																				<div className="w-16 h-16 relative">
-																					<Image
-																						src={url}
-																						alt={file.name}
-																						fill
-																						className="object-cover"
-																					/>
+																							<div className="flex-shrink-0">
+																								<DownloadIcon size={16} stroke={2} />
+																							</div>
+																							<span className="text-xs text-gray-600 truncate w-20">
+																								{file.fileName}
+																							</span>
+																						</Link>
+																					)}
 																				</div>
+																				<button
+																					type="button"
+																					className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+																					onClick={(e) => {
+																						e.preventDefault()
+																						removeExistingAttachment(file.id)
+																					}}
+																					title="Eliminar archivo"
+																				>
+																					<XIcon size={12} stroke={1.5} />
+																				</button>
 																			</div>
-																			<button
-																				type="button"
-																				className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
-																				onClick={() => removeFile(description.id.toString(), idx)}
-																				title="Eliminar imagen"
-																			>
-																				<XIcon size={12} stroke={2} />
-																			</button>
-																		</div>
-																	)
-																})}
+																		)
+																	})}
+																</div>
 															</div>
-														</div>
-													)}
-
-													{/* Botón de adjuntar archivos */}
-													<div className={`${dragActiveDesc[description.id] ? 'bg-blue-50 border-blue-300 rounded-lg p-3' : ''}`}>
-														{dragActiveDesc[description.id] && (
-															<div className="text-center mb-2">
-																<p className="text-xs font-medium text-blue-900">Suelta las imágenes aquí</p>
-															</div>
-														)}
-														<input
-															type="file"
-															multiple
-															accept="image/*"
-															id={`file-input-${description.id}`}
-															onChange={(e) => handleFileChange(description.id.toString(), e.target.files)}
-															className="hidden"
-														/>
-														<button
-															type="button"
-															onClick={() => document.getElementById(`file-input-${description.id}`)?.click()}
-															className="inline-flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-															title="Adjuntar imágenes (también puedes arrastrar o pegar con Ctrl+V)"
-														>
-															<AttachIcon size={14} stroke={2} />
-															Adjuntar imágenes
-														</button>
-													</div>
-												</div>
-											</div>
-										))}
-									</div>
+														)
+													}
+													return null
+												})()
+											)}
+										</div>
+									))}
 								</div>
 							</div>
 						)}

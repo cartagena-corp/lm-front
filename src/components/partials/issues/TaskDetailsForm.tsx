@@ -9,6 +9,7 @@ import { useAuthStore } from '@/lib/store/AuthStore'
 import { CalendarIcon, ClockIcon, UsersIcon, XIcon, ListIcon, ChevronRightIcon, LinkRedirect, DownloadIcon } from '@/assets/Icon'
 import Link from 'next/link'
 import Image from 'next/image'
+import SafeHtml from '@/components/ui/SafeHtml'
 
 interface TaskDetailsFormProps {
    onSubmit: () => void
@@ -81,7 +82,10 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
                                  {task.descriptions.map(desc => (
                                     <div key={desc.id} className="bg-white rounded-lg p-4 border border-gray-100 space-y-1">
                                        <h4 className="font-semibold text-gray-900 text-sm">{desc.title}</h4>
-                                       <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap">{desc.text}</p>
+                                       <SafeHtml 
+                                          html={desc.text} 
+                                          className="text-sm text-gray-600 leading-relaxed [&_code]:font-mono [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs"
+                                       />
 
                                        {/* Mostrar imágenes si existen */}
                                        {desc.attachments && desc.attachments.length > 0 && (

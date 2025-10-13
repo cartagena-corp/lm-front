@@ -24,6 +24,7 @@ import { getUserAvatar } from '@/lib/utils/avatar.utils'
 import ImportIssuesModal from '../issues/ImportIssuesModal'
 import CreateWithIA from '../issues/CreateWithIA'
 import DeleteAllForm from '../issues/DeleteAllForm'
+import SafeHtml from '@/components/ui/SafeHtml'
 
 // Component DraggableIssueRow - Implementación igual a SprintKanbanCard
 interface DraggableIssueRowProps {
@@ -189,9 +190,12 @@ function DraggableIssueRow({ task, selectedIds, toggleSelect, onViewDetails, onE
             </h6>
             {
                (task.descriptions.length > 0) ?
-                  <p className="text-xs text-gray-500 line-clamp-1" title={task.descriptions[0].text}>
-                     {task.descriptions[0].text}
-                  </p>
+                  <hgroup className="text-xs text-gray-500 line-clamp-1">
+                     <SafeHtml
+                        html={task.descriptions[0].text}
+                        className="text-sm text-gray-600 leading-relaxed [&_code]:font-mono [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs"
+                     />
+                  </hgroup>
                   :
                   <p className="text-xs text-gray-500 line-clamp-1">
                      {
@@ -662,7 +666,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
    const handleTaskUpdateModal = (task: TaskProps) => {
       setTaskActive(task)
       openModal({
-         size: "lg",
+         size: "xl",
          title: "Editar Tarea",
          desc: `Modifica la información de la tarea ${task.title}`,
          children: <CreateTaskForm onSubmit={handleUpdate} onCancel={() => closeModal()} taskObject={task} isEdit={true} />,
@@ -730,7 +734,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
 
    const handleCreateTaskInSprintModal = () => {
       openModal({
-         size: "lg",
+         size: "xxl",
          title: "Crear Tarea en Sprint",
          desc: `Crea una nueva tarea en el sprint ${spr.title}`,
          children: <CreateTaskForm onSubmit={handleCreateTaskInSprint} onCancel={() => closeModal()} />,

@@ -225,37 +225,8 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
     }
 
     const removeFormat = () => {
-        if (typeof window === 'undefined') return
-
-        const selection = window.getSelection()
-        if (!selection || selection.rangeCount === 0) return
-
-        const range = selection.getRangeAt(0)
-
-        // Extraer el contenido como texto plano
-        const fragment = range.cloneContents()
-        const tempDiv = document.createElement('div')
-        tempDiv.appendChild(fragment)
-        const plainText = tempDiv.textContent || tempDiv.innerText || ''
-
-        if (!plainText) return
-
-        // Eliminar el contenido seleccionado
-        range.deleteContents()
-
-        // Crear un nodo de texto plano e insertarlo
-        const textNode = document.createTextNode(plainText)
-        range.insertNode(textNode)
-
-        // Colapsar el rango al final del texto insertado
-        range.setStartAfter(textNode)
-        range.setEndAfter(textNode)
-        selection.removeAllRanges()
-        selection.addRange(range)
-
-        // Update content
-        updateContent()
-
+        executeCommand('removeFormat')
+        executeCommand('unlink')
         // Force update to reflect changes
         setTimeout(() => setForceUpdate(prev => prev + 1), 10)
     }

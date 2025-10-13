@@ -13,6 +13,7 @@ import CreateTaskForm from '@/components/partials/issues/CreateTaskForm'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useModalStore } from '@/lib/hooks/ModalStore'
+import SafeHtml from '@/components/ui/SafeHtml'
 
 export default function TaskDetailsPage() {
     const { getValidAccessToken } = useAuthStore()
@@ -137,70 +138,66 @@ export default function TaskDetailsPage() {
                             <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                                 {selectedIssue.title}
                             </h3>
-                            <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-                                <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                                    Descripciones
-                                </h3>
-                                <div className="bg-white rounded-lg p-4 border border-gray-100 space-y-1">
-                                    {selectedIssue.descriptions.length > 0 ? (
-                                        <div className="space-y-4">
-                                            {selectedIssue.descriptions.map((desc, id) => (
-                                                <div key={id} className="space-y-1">
-                                                    <h4 className="font-semibold text-gray-900 text-sm">{desc.title}</h4>
-                                                    <hgroup className='text-gray-600 leading-relaxed text-xs'>
-                                                        {desc.text}
-                                                    </hgroup>
-                                                    {/* Mostrar imágenes si existen */}
-                                                    {desc.attachments && desc.attachments.length > 0 && (
-                                                        <div className="flex flex-wrap gap-2 mt-3">
-                                                            {desc.attachments.map((file) => {
-                                                                const fileSplitted = file.fileName.split(".")
-                                                                const extension = fileSplitted[fileSplitted.length - 1]
-                                                                const isImage = ["jpg", "png", "jpeg", "gif", "bmp", "webp"].includes(extension.toLowerCase())
-                                                                const url = file.fileUrl
+                            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+                                {selectedIssue.descriptions.length > 0 ? (
+                                    <div className="space-y-4">
+                                        {selectedIssue.descriptions.map((desc, id) => (
+                                            <div key={id} className="space-y-1">
+                                                <h4 className="font-semibold text-gray-900 text-sm">{desc.title}</h4>
+                                                <SafeHtml
+                                                    html={desc.text}
+                                                    className="text-xs text-gray-600 leading-relaxed [&_code]:font-mono [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs"
+                                                />
+                                                {/* Mostrar imágenes si existen */}
+                                                {desc.attachments && desc.attachments.length > 0 && (
+                                                    <div className="flex flex-wrap gap-2 mt-3">
+                                                        {desc.attachments.map((file) => {
+                                                            const fileSplitted = file.fileName.split(".")
+                                                            const extension = fileSplitted[fileSplitted.length - 1]
+                                                            const isImage = ["jpg", "png", "jpeg", "gif", "bmp", "webp"].includes(extension.toLowerCase())
+                                                            const url = file.fileUrl
 
-                                                                return (
-                                                                    <div key={file.id} className="border border-gray-200 rounded-lg overflow-hidden hover:border-blue-300 hover:shadow-sm transition-all">
-                                                                        {isImage && url ? (
-                                                                            <Link href={url} target="_blank">
-                                                                                <div className="w-16 h-16 relative">
-                                                                                    <Image
-                                                                                        src={url}
-                                                                                        alt={file.fileName}
-                                                                                        fill
-                                                                                        className="object-cover hover:scale-105 transition-transform"
-                                                                                        unoptimized
-                                                                                    />
-                                                                                </div>
-                                                                            </Link>
-                                                                        ) : (
-                                                                            <Link
-                                                                                href={url}
-                                                                                target="_blank"
-                                                                                className="flex items-center gap-2 p-3 min-w-0 hover:bg-gray-50 transition-colors"
-                                                                            >
-                                                                                <div className="flex-shrink-0">
-                                                                                    <DownloadIcon size={16} stroke={2} />
-                                                                                </div>
-                                                                                <span className="text-xs text-gray-600 truncate">
-                                                                                    {file.fileName}
-                                                                                </span>
-                                                                            </Link>
-                                                                        )}
-                                                                    </div>
-                                                                )
-                                                            })}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div className="flex items-center justify-center text-gray-500 py-8">
-                                            <p className="text-sm">No hay descripción disponible</p>
-                                        </div>
-                                    )}
-                                </div>
+                                                            return (
+                                                                <div key={file.id} className="border border-gray-200 rounded-lg overflow-hidden hover:border-blue-300 hover:shadow-sm transition-all">
+                                                                    {isImage && url ? (
+                                                                        <Link href={url} target="_blank">
+                                                                            <div className="w-16 h-16 relative">
+                                                                                <Image
+                                                                                    src={url}
+                                                                                    alt={file.fileName}
+                                                                                    fill
+                                                                                    className="object-cover hover:scale-105 transition-transform"
+                                                                                    unoptimized
+                                                                                />
+                                                                            </div>
+                                                                        </Link>
+                                                                    ) : (
+                                                                        <Link
+                                                                            href={url}
+                                                                            target="_blank"
+                                                                            className="flex items-center gap-2 p-3 min-w-0 hover:bg-gray-50 transition-colors"
+                                                                        >
+                                                                            <div className="flex-shrink-0">
+                                                                                <DownloadIcon size={16} stroke={2} />
+                                                                            </div>
+                                                                            <span className="text-xs text-gray-600 truncate">
+                                                                                {file.fileName}
+                                                                            </span>
+                                                                        </Link>
+                                                                    )}
+                                                                </div>
+                                                            )
+                                                        })}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center justify-center text-gray-500 py-8">
+                                        <p className="text-sm">No hay descripción disponible</p>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Sección de comentarios */}
