@@ -190,12 +190,10 @@ function DraggableIssueRow({ task, selectedIds, toggleSelect, onViewDetails, onE
             </h6>
             {
                (task.descriptions.length > 0) ?
-                  <hgroup className="text-xs text-gray-500 line-clamp-1">
-                     <SafeHtml
-                        html={task.descriptions[0].text}
-                        className="text-sm text-gray-600 leading-relaxed [&_code]:font-mono [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs"
-                     />
-                  </hgroup>
+                  <SafeHtml
+                     html={task.descriptions[0].text}
+                     className="line-clamp-1 text-xs text-gray-600 leading-relaxed [&_code]:font-mono [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs"
+                  />
                   :
                   <p className="text-xs text-gray-500 line-clamp-1">
                      {
