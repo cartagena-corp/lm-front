@@ -57,6 +57,14 @@ export interface TaskProps {
    estimatedTime: number
    sprintId?: string
    realDate?: string // YYYY-MM-DD, opcional para detalles y edición
+   subtasks?: TaskProps[]
+   relatedIssues?: any[]
+   relatedTo?: any[]
+   organizationId?: string
+   parent?: {
+      id: string
+      title: string
+   }
 }
 
 //* Comments
@@ -276,11 +284,14 @@ export interface BoardPagination {
 export interface AuditHistoryProps {
    id: string
    issueId: string
+   issueTitle?: string
    userId: string
    action: string
    description: string
    timestamp: string
    projectId: string
+   beforeChange?: TaskProps
+   afterChange?: TaskProps
    userBasicDataDto: {
       firstName: string
       createdAt: string

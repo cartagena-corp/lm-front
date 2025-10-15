@@ -13,7 +13,7 @@ import { BoardIcon, FilterIcon, PlusIcon } from '@/assets/Icon'
 import { useEffect, useState, Suspense } from 'react'
 import { useModalStore } from '@/lib/hooks/ModalStore'
 import { useRouter, useSearchParams } from 'next/navigation'
-import TextArea from '@/components/ui/TextArea'
+import { Live3_PieChartLabels } from '@/components/partials/audit/PieChart'
 
 function TablerosContent() {
    const { boards, getBoards, createBoard, importFromJira, isLoading, error } = useBoardStore()

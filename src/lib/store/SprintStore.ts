@@ -14,6 +14,7 @@ const getIssuesBySprintId = async (token: string, sprintId: string, projectId: s
       if (filter?.type) params.append('type', filter.type.toString())
       if (filter?.status) params.append('status', filter.status.toString())
       if (filter?.priority) params.append('priority', filter.priority.toString())
+      params.append('isParent', "true")
 
       // Para el backlog (sprintId === 'null'), buscar issues con sprintId null
       // Para sprints específicos, buscar issues con ese sprintId específico
@@ -249,6 +250,7 @@ export const useSprintStore = create<SprintState>((set, get) => ({
          const params = new URLSearchParams()
          params.append('projectId', projectId)
          params.append('size', '10')
+         params.append('isParent', "true")
          if (filter) params.append(filter.key, filter.value)
 
 

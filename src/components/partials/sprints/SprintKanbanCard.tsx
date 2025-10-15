@@ -40,6 +40,7 @@ import ReasignIssue from '../issues/ReasignIssue'
 import AuditHistory from '../audit/AuditHistory'
 import CreateEditStatus from '../config/CreateEditStatus'
 import { getUserAvatar } from '@/lib/utils/avatar.utils'
+import SafeHtml from '@/components/ui/SafeHtml'
 
 interface DraggableIssueProps {
     issue: TaskProps
@@ -194,7 +195,13 @@ function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onView
         >
             {/* Header with type and title */}
             <div className="flex items-start justify-between mb-3">
-                <div className="flex flex-col gap-2 flex-1 min-w-0">
+                <div className="flex flex-col gap-1 flex-1 min-w-0">
+                    <span
+                        className="text-sm font-semibold text-gray-900 truncate"
+                        title={issue.title}
+                    >
+                        {issue.title}
+                    </span>
                     <div className="flex items-center gap-2">
                         <div
                             className="rounded-full text-[10px] border px-2 whitespace-nowrap w-fit"
@@ -205,13 +212,17 @@ function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onView
                         >
                             {typeInfo.name}
                         </div>
+                        <div
+                            className="rounded-full text-[10px] border px-2 whitespace-nowrap w-fit"
+                            style={{
+                                backgroundColor: `${priorityInfo.color}15`,
+                                color: priorityInfo.color,
+                            }}
+                            title={priorityInfo.name}
+                        >
+                            {priorityInfo.name}
+                        </div>
                     </div>
-                    <span
-                        className="text-sm font-medium text-gray-900 line-clamp-1"
-                        title={issue.title}
-                    >
-                        {issue.title}
-                    </span>
                 </div>
 
                 {/* Actions menu */}
@@ -284,43 +295,15 @@ function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onView
                 </div>
             </div>
 
-            {/* Priority and Status badges */}
-            <div className="flex items-center gap-2 mb-3">
-                <div
-                    className="px-2 py-1 rounded-full text-xs font-medium border"
-                    style={{
-                        backgroundColor: `${priorityInfo.color}15`,
-                        color: priorityInfo.color,
-                        borderColor: `${priorityInfo.color}30`
-                    }}
-                    title={priorityInfo.name}
-                >
-                    {priorityInfo.name}
-                </div>
-
-                {/* <div
-                    className="px-2 py-1 rounded-full text-xs font-medium border"
-                    style={{
-                        backgroundColor: `${statusInfo.color}15`,
-                        color: statusInfo.color,
-                        borderColor: `${statusInfo.color}30`
-                    }}
-                    title={statusInfo.name}
-                >
-                    <div className="flex items-center gap-1">
-                        <div
-                            className="w-1.5 h-1.5 rounded-full"
-                            style={{ backgroundColor: statusInfo.color }}
-                        />
-                        {statusInfo.name}
-                    </div>
-                </div> */}
-            </div>
-
             {/* Description */}
-            <p className="text-xs text-gray-600 mb-3 line-clamp-2">
-                {issue.descriptions?.[0]?.text || 'Sin descripción'}
-            </p>
+            <hgroup className="text-xs text-gray-600 mb-3 line-clamp-4">
+                <SafeHtml
+                    html={issue.descriptions?.[0]?.text || 'Sin descripción'}
+                    className="text-xs text-gray-600 leading-relaxed [&_code]:font-mono [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs"
+                />
+                {/* <SafeHtml html={issue.descriptions?.[0]?.text || 'Sin descripción'} />
+                {issue.descriptions?.[0]?.text || 'Sin descripción'} */}
+            </hgroup>
 
             {/* Footer with assigned user and date */}
             <div className="flex items-center justify-between gap-1 overflow-hidden">

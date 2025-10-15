@@ -12,7 +12,7 @@ import { useIssueStore } from '@/lib/store/IssueStore'
 import CreateTaskForm from '../issues/CreateTaskForm'
 import { useAuthStore } from '@/lib/store/AuthStore'
 import ReasignIssue from '../issues/ReasignIssue'
-import { CalendarIcon, CheckmarkIcon, EditIcon, DeleteIcon, PlusIcon, EyeIcon, ClockIcon, ForbiddenIcon, IAIcon, ChatIAIcon, ImportIcon, FilterIcon, XIcon } from '@/assets/Icon'
+import { CalendarIcon, CheckmarkIcon, EditIcon, DeleteIcon, PlusIcon, EyeIcon, ClockIcon, ForbiddenIcon, IAIcon, ChatIAIcon, ImportIcon, FilterIcon, XIcon, DashboardIcon } from '@/assets/Icon'
 import { useModalStore } from '@/lib/hooks/ModalStore'
 import Image from 'next/image'
 import CreateSprintForm from './CreateSprintForm'
@@ -25,6 +25,7 @@ import ImportIssuesModal from '../issues/ImportIssuesModal'
 import CreateWithIA from '../issues/CreateWithIA'
 import DeleteAllForm from '../issues/DeleteAllForm'
 import SafeHtml from '@/components/ui/SafeHtml'
+import Dashboard from '../audit/Dashboard'
 
 // Component DraggableIssueRow - Implementación igual a SprintKanbanCard
 interface DraggableIssueRowProps {
@@ -36,6 +37,7 @@ interface DraggableIssueRowProps {
    onReassign: () => void
    onDelete: () => void
    onHistory: () => void
+   onDashboard: () => void
    getStatusStyle: (id: number) => any
    getPriorityStyle: (id: number) => any
    getTypeStyle: (id: number) => any
@@ -44,7 +46,7 @@ interface DraggableIssueRowProps {
    wrapperRef: React.RefObject<HTMLDivElement>
 }
 
-function DraggableIssueRow({ task, selectedIds, toggleSelect, onViewDetails, onEdit, onReassign, onDelete, onHistory, getStatusStyle, getPriorityStyle, getTypeStyle, openItemId, setOpenItemId, wrapperRef }: DraggableIssueRowProps) {
+function DraggableIssueRow({ task, selectedIds, toggleSelect, onViewDetails, onEdit, onReassign, onDelete, onHistory, onDashboard, getStatusStyle, getPriorityStyle, getTypeStyle, openItemId, setOpenItemId, wrapperRef }: DraggableIssueRowProps) {
    const id = task.id as string
    const isChecked = selectedIds.includes(id)
 
@@ -303,12 +305,23 @@ function DraggableIssueRow({ task, selectedIds, toggleSelect, onViewDetails, onE
                         className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
                         onPointerDown={e => e.stopPropagation()}
                         onClick={() => {
+                           onDashboard()
+                           setOpenItemId(null)
+                        }}
+                     >
+                        <DashboardIcon size={14} />
+                        Ver Dashboard
+                     </button>
+                     <button
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
+                        onPointerDown={e => e.stopPropagation()}
+                        onClick={() => {
                            onViewDetails()
                            setOpenItemId(null)
                         }}
                      >
                         <EyeIcon size={14} />
-                        Ver detalles
+                        Ver Detalles
                      </button>
                      <button
                         className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
@@ -480,25 +493,6 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
       }
    }, [spr.tasks])
 
-   const formatDate = (fecha: string | null, includeTime = false): string => {
-      if (!fecha) return 'No definida'
-      const dateObj = new Date(fecha)
-      if (isNaN(dateObj.getTime())) return 'Fecha inválida'
-      const day = dateObj.getDate().toString().padStart(2, '0')
-      const month = dateObj
-         .toLocaleString('es-ES', { month: 'short' })
-         .replace('.', '')
-         .toLowerCase()
-      const year = dateObj.getFullYear()
-      let formatted = `${day} ${month} ${year}`
-      if (includeTime) {
-         const hours = dateObj.getHours().toString().padStart(2, '0')
-         const minutes = dateObj.getMinutes().toString().padStart(2, '0')
-         formatted += ` ${hours}:${minutes}`
-      }
-      return formatted
-   }
-
    const getStatusStyle = (id: number) => projectConfig?.issueStatuses?.find(status => status.id === id)
    const getPriorityStyle = (id: number) => projectConfig?.issuePriorities?.find(priority => priority.id === id)
    const getTypeStyle = (id: number) => projectConfig?.issueTypes?.find(type => type.id === id)
@@ -648,6 +642,21 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
       })
    }
 
+   const handleShowDashboardModal = async () => {
+      const token = await getValidAccessToken()
+      if (token && sprintSelected) {
+         openModal({
+            size: "xxl",
+            title: `Dashboard del sprint: ${sprintSelected.title}`,
+            desc: "Estadísticas y métricas del sprint",
+            Icon: <DashboardIcon size={20} />,
+            children: <Dashboard projectId={spr.projectId as string} sprintId={sprintSelected.id as string} token={token} />,
+            closeOnBackdrop: false,
+            closeOnEscape: false,
+         })
+      }
+   }
+
    const handleTaskDetailsModal = (task: TaskProps) => {
       setTaskActive(task)
       openModal({
@@ -692,11 +701,8 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
    const handleDeleteTaskModal = (task: TaskProps) => {
       setTaskActive(task)
       openModal({
-         size: "lg",
-         title: "Eliminar Tarea",
-         desc: `Esta acción no se puede deshacer`,
+         size: "md",
          children: <DeleteIssueForm onSubmit={(data) => handleDelete({ data, task })} onCancel={() => closeModal()} taskObject={task} />,
-         Icon: <DeleteIcon size={20} />,
          closeOnBackdrop: false,
          closeOnEscape: true,
          mode: "DELETE"
@@ -706,7 +712,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
    const handleHistoryModal = (task: TaskProps) => {
       setTaskActive(task)
       openModal({
-         size: "lg",
+         size: "xl",
          title: "Historial de Cambios",
          desc: `Historial completo de la tarea ${task.title}`,
          children: <AuditHistory issueId={task.id} currentIssue={task} onCancel={() => closeModal()} />,
@@ -717,13 +723,26 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
       })
    }
 
+   const handleIssueDashboardModal = async (task: TaskProps) => {
+      const token = await getValidAccessToken()
+      if (token) {
+         setTaskActive(task)
+         openModal({
+            size: "xxl",
+            title: `Dashboard de la tarea: ${task.title}`,
+            desc: "Estadísticas y métricas de la tarea",
+            Icon: <DashboardIcon size={20} />,
+            children: <Dashboard projectId={task.projectId} issueId={task.id as string} token={token} />,
+            closeOnBackdrop: false,
+            closeOnEscape: false,
+         })
+      }
+   }
+
    const handleDeleteAllModal = () => {
       openModal({
-         size: "lg",
-         title: "Eliminar Tareas Seleccionadas",
-         desc: `Esta acción no se puede deshacer`,
+         size: "md",
          children: <DeleteAllForm onSubmit={handleDeleteAll} onCancel={() => closeModal()} taskArray={selectedIds} />,
-         Icon: <DeleteIcon size={20} />,
          closeOnBackdrop: false,
          closeOnEscape: true,
          mode: "DELETE"
@@ -955,6 +974,16 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                               {isSprintOptionsOpen && (
                                  <div className="absolute top-full right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-xl z-50 overflow-hidden">
                                     <div className="py-1">
+                                       <button
+                                          className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-3 transition-colors"
+                                          onClick={() => {
+                                             handleShowDashboardModal()
+                                             setisSprintOptionsOpen(false)
+                                          }}
+                                       >
+                                          <DashboardIcon size={16} />
+                                          <span>Ver Dashboard</span>
+                                       </button>
                                        <button
                                           className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-3 transition-colors"
                                           onClick={() => {
@@ -1405,6 +1434,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                                  onReassign={() => handleReasignModal(task)}
                                  onDelete={() => handleDeleteTaskModal(task)}
                                  onHistory={() => handleHistoryModal(task)}
+                                 onDashboard={() => handleIssueDashboardModal(task)}
                                  getStatusStyle={getStatusStyle}
                                  getPriorityStyle={getPriorityStyle}
                                  getTypeStyle={getTypeStyle}
