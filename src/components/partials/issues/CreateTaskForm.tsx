@@ -379,6 +379,7 @@ export default function CreateTaskForm({ onSubmit, onCancel, taskObject, isEdit 
 														[description.id]: prev[description.id].filter((_, i) => i !== index)
 													}))
 												}}
+												projectId={selectedBoard?.id as string}
 											/>
 
 											{/* Mostrar imágenes existentes (de la base de datos) si estamos editando */}
