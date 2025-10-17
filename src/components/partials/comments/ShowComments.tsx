@@ -152,6 +152,7 @@ export default function ShowComments({ arrayComments, task }: ShowCommentsProps)
                   setFiles(prev => prev.filter((_, i) => i !== index))
                }}
                extensionAllowed="*"
+               projectId={task.projectId as string}
             />
 
             <div className="flex justify-end items-center mt-3">

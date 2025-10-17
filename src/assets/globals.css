@@ -161,3 +161,28 @@ input[type=number] {
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 #f1f5f9;
 }
+
+/* Issue badge styles */
+.issue-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  margin: 0 2px;
+}
+
+.issue-badge-line {
+  width: 7px;
+  height: 7px;
+  border-radius: 100px;
+}
+
+.issue-badge a {
+  color: #2563eb;
+  font-size: 11px;
+  font-weight: 500;
+  text-decoration: none;
+}

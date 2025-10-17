@@ -351,6 +351,7 @@ export interface TextAreaProps {
    files?: File[]
    onRemoveFile?: (index: number) => void
    extensionAllowed?: string // Extensiones permitidas (ej: "image/*", ".pdf,.doc,.docx", etc.)
+   projectId?: string // ID del proyecto para buscar issues
 }
 
 export interface TooltipPosition {

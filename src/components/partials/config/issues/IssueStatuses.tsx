@@ -1,7 +1,5 @@
 import { DeleteIcon, EditIcon, PlusIcon, ConfigIcon } from "@/assets/Icon"
-import Modal from "@/components/layout/Modal"
 import { useConfigStore } from "@/lib/store/ConfigStore"
-import { useState } from "react"
 import CreateEditStatus from "../CreateEditStatus"
 import { useAuthStore } from "@/lib/store/AuthStore"
 import DeleteIssueStatus from "./DeleteIssueStatus"

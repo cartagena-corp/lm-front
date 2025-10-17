@@ -1,9 +1,13 @@
 'use client'
 
-import { XIcon, AttachIcon, BoldIcon, ItalicIcon, StrikethroughIcon, CodeIcon, UnderlineIcon, PaletteIcon, HighlighterIcon } from '@/assets/Icon'
-import { TextAreaProps, TooltipPosition } from '@/lib/types/types'
-import React, { useState, useRef, useEffect } from 'react'
+import { XIcon, AttachIcon, BoldIcon, ItalicIcon, StrikethroughIcon, CodeIcon, UnderlineIcon, PaletteIcon, HighlighterIcon, PlusIcon } from '@/assets/Icon'
+import { TextAreaProps, TooltipPosition, TaskProps } from '@/lib/types/types'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
 import SelectionTooltip from './SelectionTooltip'
+import { useIssueStore } from '@/lib/store/IssueStore'
+import { useAuthStore } from '@/lib/store/AuthStore'
+import { useConfigStore } from '@/lib/store/ConfigStore'
+import DOMPurify from 'dompurify'
 
 export default function TextArea({ title, value, onChange, files = [], onRemoveFile, onFilesChange,
     placeholder = 'Escribe aquí...',
@@ -11,6 +15,7 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
     maxHeight = '180px',
     minHeight = '60px',
     maxLength = 5000,
+    projectId,
 }: TextAreaProps) {
     const [showTooltip, setShowTooltip] = useState(false)
     const [tooltipPosition, setTooltipPosition] = useState<TooltipPosition>({ top: 0, left: 0 })
@@ -20,12 +25,22 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
     const [activeTextColor, setActiveTextColor] = useState<string | null>(null)
     const [activeHighlightColor, setActiveHighlightColor] = useState<string | null>(null)
     const [, setForceUpdate] = useState(0) // Force re-render to update button states
+    const [showIssueTooltip, setShowIssueTooltip] = useState(false)
+    const [issueSearchQuery, setIssueSearchQuery] = useState('')
+    const [currentPage, setCurrentPage] = useState(0)
     const editorRef = useRef<HTMLDivElement>(null)
     const containerRef = useRef<HTMLDivElement>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
     const colorPickerRef = useRef<HTMLDivElement>(null)
     const highlightPickerRef = useRef<HTMLDivElement>(null)
     const tooltipRef = useRef<HTMLDivElement>(null)
+    const issueTooltipRef = useRef<HTMLDivElement>(null)
+    const issueScrollRef = useRef<HTMLDivElement>(null)
+    const searchDebounceRef = useRef<NodeJS.Timeout | null>(null)
+
+    const { getIssues, issues, isLoading, isLoadingMore, loadMoreIssues } = useIssueStore()
+    const { getValidAccessToken } = useAuthStore()
+    const { projectConfig } = useConfigStore()
 
     const colors = [
         { name: 'Blanco', hex: '#ffffff' }, // Fila 1
@@ -333,6 +348,75 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
 
         // Check if Backspace or Delete is pressed
         if (e.key === 'Backspace' || e.key === 'Delete') {
+            const selection = window.getSelection()
+            
+            // Handle deletion of issue badge (contenteditable="false" spans)
+            if (selection && selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0)
+                let node = range.startContainer
+
+                // Check if we're next to or inside a contenteditable="false" element
+                let badgeElement: Element | null = null
+
+                // If we're in a text node, check its siblings
+                if (node.nodeType === Node.TEXT_NODE) {
+                    if (e.key === 'Backspace' && range.startOffset === 0) {
+                        // Cursor at start of text node, check previous sibling
+                        const prevSibling = node.previousSibling
+                        if (prevSibling && prevSibling.nodeType === Node.ELEMENT_NODE) {
+                            const element = prevSibling as Element
+                            if (element.getAttribute('contenteditable') === 'false') {
+                                badgeElement = element
+                            }
+                        }
+                    } else if (e.key === 'Delete' && range.startOffset === node.textContent?.length) {
+                        // Cursor at end of text node, check next sibling
+                        const nextSibling = node.nextSibling
+                        if (nextSibling && nextSibling.nodeType === Node.ELEMENT_NODE) {
+                            const element = nextSibling as Element
+                            if (element.getAttribute('contenteditable') === 'false') {
+                                badgeElement = element
+                            }
+                        }
+                    }
+                } else if (node.nodeType === Node.ELEMENT_NODE) {
+                    const element = node as Element
+                    if (element.getAttribute('contenteditable') === 'false') {
+                        badgeElement = element
+                    } else {
+                        // Check children at cursor position
+                        const childNodes = Array.from(element.childNodes)
+                        const offset = range.startOffset
+
+                        if (e.key === 'Backspace' && offset > 0) {
+                            const prevChild = childNodes[offset - 1]
+                            if (prevChild && prevChild.nodeType === Node.ELEMENT_NODE) {
+                                const prevElement = prevChild as Element
+                                if (prevElement.getAttribute('contenteditable') === 'false') {
+                                    badgeElement = prevElement
+                                }
+                            }
+                        } else if (e.key === 'Delete' && offset < childNodes.length) {
+                            const nextChild = childNodes[offset]
+                            if (nextChild && nextChild.nodeType === Node.ELEMENT_NODE) {
+                                const nextElement = nextChild as Element
+                                if (nextElement.getAttribute('contenteditable') === 'false') {
+                                    badgeElement = nextElement
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // If we found a badge element, remove it
+                if (badgeElement) {
+                    e.preventDefault()
+                    badgeElement.remove()
+                    updateContent()
+                    return
+                }
+            }
+
             const currentText = getTextLength(editor.innerHTML)
 
             // If only 1 character left (or less), clear all formats on next update
@@ -453,6 +537,131 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
         }
     }
 
+    // Handle issue tooltip
+    const handleIssueTooltipToggle = async () => {
+        if (!projectId) return
+
+        const newShowState = !showIssueTooltip
+        setShowIssueTooltip(newShowState)
+
+        if (newShowState) {
+            setCurrentPage(0)
+            setIssueSearchQuery('')
+            try {
+                const token = await getValidAccessToken()
+                await getIssues(token, projectId, { page: 0, size: 10 })
+            } catch (error) {
+                console.error('Error loading issues:', error)
+            }
+        }
+    }
+
+    // Handle issue search with debounce
+    const handleIssueSearch = useCallback((query: string) => {
+        if (!projectId) return
+
+        // Update the search query immediately for UI feedback
+        setIssueSearchQuery(query)
+
+        // Clear existing timeout
+        if (searchDebounceRef.current) {
+            clearTimeout(searchDebounceRef.current)
+        }
+
+        // Set new timeout for API call (1 second debounce)
+        searchDebounceRef.current = setTimeout(async () => {
+            setCurrentPage(0)
+            
+            try {
+                const token = await getValidAccessToken()
+                await getIssues(token, projectId, {
+                    keyword: query || undefined,
+                    page: 0,
+                    size: 10
+                })
+            } catch (error) {
+                console.error('Error searching issues:', error)
+            }
+        }, 1000)
+    }, [projectId, getValidAccessToken, getIssues])
+
+    // Cleanup debounce timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (searchDebounceRef.current) {
+                clearTimeout(searchDebounceRef.current)
+            }
+        }
+    }, [])
+
+    // Handle infinite scroll for issues
+    const handleIssueScroll = useCallback(async () => {
+        if (!projectId || isLoadingMore || !issueScrollRef.current) return
+
+        const { scrollTop, scrollHeight, clientHeight } = issueScrollRef.current
+
+        if (scrollTop + clientHeight >= scrollHeight - 50 && currentPage + 1 < issues.totalPages) {
+            const nextPage = currentPage + 1
+            setCurrentPage(nextPage)
+
+            try {
+                const token = await getValidAccessToken()
+                await loadMoreIssues(token, projectId, {
+                    keyword: issueSearchQuery || undefined,
+                    page: nextPage,
+                    size: 10
+                })
+            } catch (error) {
+                console.error('Error loading more issues:', error)
+            }
+        }
+    }, [projectId, isLoadingMore, currentPage, issues.totalPages, issueSearchQuery, getValidAccessToken, loadMoreIssues])
+
+    // Handle issue selection
+    const handleIssueSelect = (issue: TaskProps) => {
+        if (!editorRef.current || typeof window === 'undefined' || !projectId) return
+
+        // Get issue type info for the color
+        const issueType = projectConfig?.issueTypes?.find((t: any) => t.id === issue.type)
+        const typeColor = issueType?.color || '#6B7280'
+
+        // Sanitize issue title to prevent XSS
+        const sanitizedTitle = DOMPurify.sanitize(issue.title, {
+            ALLOWED_TAGS: [],
+            ALLOWED_ATTR: [],
+            KEEP_CONTENT: true
+        })
+
+        // Validate and sanitize color (must be a valid hex color)
+        const sanitizedColor = /^#[0-9A-Fa-f]{6}$/.test(typeColor) ? typeColor : '#6B7280'
+
+        // Validate projectId and issue.id (must be alphanumeric or UUID)
+        const isValidId = (id: string | number | undefined): id is string | number => {
+            if (!id) return false
+            return /^[a-zA-Z0-9-_]+$/.test(String(id))
+        }
+        
+        if (!isValidId(projectId) || !isValidId(issue.id)) {
+            console.error('Invalid projectId or issueId')
+            return
+        }
+
+        // Create a non-editable badge element with link
+        const issueLink = `<span contenteditable="false" class="issue-badge"><span class="issue-badge-line" style="background:${sanitizedColor}"></span><a href="/tableros/${projectId}/${issue.id}" target="_blank" rel="noopener noreferrer">${sanitizedTitle}</a></span>&nbsp;`
+
+        // Sanitize the complete HTML before insertion
+        const sanitizedLink = DOMPurify.sanitize(issueLink, {
+            ALLOWED_TAGS: ['span', 'a'],
+            ALLOWED_ATTR: ['contenteditable', 'class', 'style', 'href', 'target', 'rel'],
+            ALLOW_DATA_ATTR: false
+        })
+
+        editorRef.current.focus()
+        document.execCommand('insertHTML', false, sanitizedLink)
+        updateContent()
+        setShowIssueTooltip(false)
+    }
+
     // Close color pickers when clicking outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -461,6 +670,9 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
             }
             if (highlightPickerRef.current && !highlightPickerRef.current.contains(event.target as Node)) {
                 setShowHighlightPicker(false)
+            }
+            if (issueTooltipRef.current && !issueTooltipRef.current.contains(event.target as Node)) {
+                setShowIssueTooltip(false)
             }
 
             // Close tooltip when clicking outside of it and outside the editor
@@ -616,6 +828,88 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
                         onChange={handleFileChange}
                         className="hidden"
                     />
+
+                    {/* Reference issue button */}
+                    {projectId && (
+                        <div className="relative" ref={issueTooltipRef}>
+                            <button
+                                type="button"
+                                onClick={handleIssueTooltipToggle}
+                                className="p-2 hover:bg-gray-200 rounded transition-colors text-blue-600"
+                                title="Referenciar tarea"
+                            >
+                                <PlusIcon size={16} stroke={1.5} />
+                            </button>
+
+                            {/* Issue search tooltip */}
+                            {showIssueTooltip && (
+                                <div className="absolute bottom-full right-0 mb-2 w-80 bg-white border border-gray-200 rounded-lg shadow-xl z-20">
+                                    <div
+                                        ref={issueScrollRef}
+                                        onScroll={handleIssueScroll}
+                                        className="max-h-80 overflow-y-auto border-b border-gray-200"
+                                    >
+                                        {isLoading && currentPage === 0 ? (
+                                            <div className="p-4 text-center text-sm text-gray-500">
+                                                Cargando issues...
+                                            </div>
+                                        ) : issues.content.length === 0 ? (
+                                            <div className="p-4 text-center text-sm text-gray-500">
+                                                No se encontraron issues
+                                            </div>
+                                        ) : (
+                                            <>
+                                                {(issues.content as TaskProps[]).map((issue) => {
+                                                    const issueType = projectConfig?.issueTypes?.find((t: any) => t.id === issue.type)
+                                                    const typeColor = issueType?.color || '#6B7280'
+                                                    const typeName = issueType?.name || 'N/A'
+
+                                                    return (
+                                                        <button
+                                                            key={issue.id}
+                                                            type="button"
+                                                            onClick={() => handleIssueSelect(issue)}
+                                                            className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 transition-colors"
+                                                        >
+                                                            <div className="flex items-center gap-3" title={typeName}>
+                                                                <span className="w-1 h-10 rounded-full flex-shrink-0" style={{ backgroundColor: typeColor }} />
+                                                                <div className="flex-1 min-w-0">
+                                                                    <p className="text-sm font-medium text-gray-900 truncate">
+                                                                        {issue.title}
+                                                                    </p>
+                                                                    {issue.descriptions && issue.descriptions[0] && (
+                                                                        <p className="text-xs text-gray-500 truncate mt-1">
+                                                                            {issue.descriptions[0].title}
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </button>
+                                                    )
+                                                })}
+
+                                                {isLoadingMore && (
+                                                    <div className="p-3 text-center text-sm text-gray-500">
+                                                        Cargando más...
+                                                    </div>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
+
+                                    <div className="p-3">
+                                        <input
+                                            type="search"
+                                            placeholder="Buscar issues..."
+                                            value={issueSearchQuery}
+                                            onChange={(e) => handleIssueSearch(e.target.value)}
+                                            className="w-full px-1 text-sm rounded-lg outline-none"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {/* Character counter */}
@@ -661,7 +955,7 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
                     onKeyDown={handleKeyDown}
                     onPaste={handlePaste}
                     data-placeholder={placeholder}
-                    className="rounded-b-lg w-full px-4 py-3 text-xs outline-none bg-white min-h-[60px] max-h-[180px] overflow-auto break-words empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400 [&_code]:font-mono [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-sm"
+                    className="rounded-b-lg w-full px-4 py-3 text-xs outline-none bg-white min-h-[60px] max-h-[180px] overflow-auto break-words empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400 [&_code]:font-mono [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-sm [&_span[contenteditable='false']]:select-none [&_span[contenteditable='false']]:inline-flex [&_span[contenteditable='false']]:items-center [&_span[contenteditable='false']]:align-middle"
                     style={{
                         minHeight,
                         maxHeight,

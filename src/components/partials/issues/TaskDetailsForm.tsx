@@ -440,13 +440,16 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
                               onClick={() => setIsSubtasksOpen(!isSubtasksOpen)}
                               className={`w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors ${isSubtasksOpen ? 'bg-gray-50' : ''}`}
                            >
-                              <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-2">
                                  <div className={`transform transition-transform duration-200 ${isSubtasksOpen ? 'rotate-90' : ''}`}>
                                     <ChevronRightIcon size={20} stroke={2} />
                                  </div>
                                  <h3 className="text-lg font-semibold text-gray-900">
-                                    Subtareas ({filteredSubtasks.length})
+                                    Subtareas
                                  </h3>
+                                 <span className="bg-gray-100 text-gray-600 flex justify-center items-center text-xs font-bold rounded-full w-6 h-6">
+                                    {filteredSubtasks.length}
+                                 </span>
                               </div>
                               {selectedSubtasks.length > 0 && (
                                  <div
@@ -673,7 +676,7 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
 
                                                       {/* Título */}
                                                       <div className="col-span-5">
-                                                         <h6 className="font-medium text-gray-900 text-sm line-clamp-1" title={subtask.title}>
+                                                         <h6 className="font-medium text-gray-900 text-sm truncate" title={subtask.title}>
                                                             {subtask.title}
                                                          </h6>
                                                          {subtask.descriptions.length > 0 ? (

@@ -22,6 +22,8 @@ export const sanitizeHtml = (dirty: string): string => {
             'ul', 'ol', 'li',
             // Tags de encabezado
             'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+            // Enlaces (para issue badges)
+            'a',
             // Otros
             'blockquote', 'hr'
         ],
@@ -30,7 +32,11 @@ export const sanitizeHtml = (dirty: string): string => {
             'class', 
             'color',  // Para <font color="">
             'face',   // Para <font face="">
-            'size'    // Para <font size="">
+            'size',   // Para <font size="">
+            'contenteditable',  // Para issue badges no editables
+            'href',   // Para enlaces de issues
+            'target', // Para abrir en nueva pestaña
+            'rel'     // Para seguridad de enlaces (noopener noreferrer)
         ],
         ALLOWED_STYLES: {
             '*': {
