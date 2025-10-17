@@ -21,13 +21,13 @@ import { useModalStore } from '@/lib/hooks/ModalStore'
 const view = [
 	{
 		id: 1,
-		name: "Lista",
-		view: SprintList
+		name: "Tablero",
+		view: SprintBoard
 	},
 	{
 		id: 2,
-		name: "Tablero",
-		view: SprintBoard
+		name: "Lista",
+		view: SprintList
 	},
 	{
 		id: 3,
@@ -109,7 +109,7 @@ export default function TableroDetalle() {
 			children: <UpdateProjectForm onSubmit={handleUpdate} onCancel={() => closeModal()} projectObject={selectedBoard as ProjectProps} />,
 			closeOnBackdrop: false,
 			closeOnEscape: false,
-			
+
 			mode: "UPDATE"
 		})
 	}
@@ -123,7 +123,7 @@ export default function TableroDetalle() {
 			children: <ProjectConfigModal projectId={id as string} onClose={() => closeModal()} />,
 			closeOnBackdrop: false,
 			closeOnEscape: false,
-			
+
 		})
 	}
 

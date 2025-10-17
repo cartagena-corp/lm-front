@@ -309,7 +309,7 @@ function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onView
             <div className="flex items-center justify-between gap-1 overflow-hidden">
                 {/* Assigned user - clickable to reassign */}
                 <button
-                    className="flex w-full justify-start items-center gap-2 text-xs text-gray-600 hover:bg-gray-50 rounded-lg p-1 transition-colors group"
+                    className="flex w-full justify-start items-center gap-1 text-xs text-gray-600 hover:bg-gray-50 rounded-lg p-1 transition-colors group"
                     onPointerDown={e => e.stopPropagation()}
                     onClick={(e) => {
                         e.stopPropagation()
@@ -328,7 +328,7 @@ function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onView
                             <UsersIcon size={12} />
                         )}
                     </div>
-                    <p className="group-hover:text-blue-600 transition-colors text-start">
+                    <p className="group-hover:text-blue-600 transition-colors text-start whitespace-nowrap overflow-hidden text-ellipsis w-full">
                         {typeof issue.assignedId === 'object' && issue.assignedId
                             ? issue.assignedId.firstName === null && issue.assignedId.lastName === null
                                 ? issue.assignedId.email || 'Sin asignar'

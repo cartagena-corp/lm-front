@@ -5,20 +5,15 @@ import { restrictToWindowEdges } from '@dnd-kit/modifiers'
 import { MultiDragProvider } from '@/components/ui/dnd-kit/MultiDragContext'
 import { useSprintStore } from '@/lib/store/SprintStore'
 import { useBoardStore } from '@/lib/store/BoardStore'
-import { useIssueStore } from '@/lib/store/IssueStore'
-import CreateTaskForm from '../issues/CreateTaskForm'
 import { useAuthStore } from '@/lib/store/AuthStore'
-import { PlusIcon, AlertCircleIcon, ExpandIcon, CompressIcon } from '@/assets/Icon'
+import { AlertCircleIcon } from '@/assets/Icon'
 import SprintKanbanCard from './SprintKanbanCard'
 import { useState, useEffect } from 'react'
-import { useModalStore } from '@/lib/hooks/ModalStore'
 
 export default function SprintBoard() {
-   const { createIssue, assignIssueToSprint, removeIssueFromSprint } = useIssueStore()
    const { sprints, activeSprint, isLoading, getSprints, getIssuesBySprint } = useSprintStore()
    const { getValidAccessToken } = useAuthStore()
    const { selectedBoard } = useBoardStore()
-   const { openModal, closeModal } = useModalStore()
 
    const [selectedIds, setSelectedIds] = useState<string[]>([])
    const [activeId, setActiveId] = useState<string | null>(null)

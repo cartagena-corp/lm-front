@@ -82,8 +82,8 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
                                  {task.descriptions.map(desc => (
                                     <div key={desc.id} className="bg-white rounded-lg p-4 border border-gray-100 space-y-1">
                                        <h4 className="font-semibold text-gray-900 text-sm">{desc.title}</h4>
-                                       <SafeHtml 
-                                          html={desc.text} 
+                                       <SafeHtml
+                                          html={desc.text}
                                           className="text-xs text-gray-600 leading-relaxed [&_code]:font-mono [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs"
                                        />
 

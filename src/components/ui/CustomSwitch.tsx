@@ -20,13 +20,13 @@ export function CustomSwitch({ value, onChange, className = "" }: TabSwitchProps
    const views = [
       {
          id: 1,
-         name: "Lista",
-         view: SprintList
+         name: "Tablero",
+         view: SprintBoard
       },
       {
          id: 2,
-         name: "Tablero",
-         view: SprintBoard
+         name: "Lista",
+         view: SprintList
       },
       {
          id: 3,
