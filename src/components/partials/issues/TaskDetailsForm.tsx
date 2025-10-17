@@ -29,7 +29,7 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
    const { comments, getComments } = useCommentStore()
    const { getValidAccessToken } = useAuthStore()
    const { projectConfig } = useConfigStore()
-   const { updateIssue, getSpecificIssue } = useIssueStore()
+   const { updateIssue, getSpecificIssue, selectedIssue } = useIssueStore()
    const { openModal, closeModal } = useModalStore()
    const [isSidebarVisible, setIsSidebarVisible] = useState(true)
    const [isSubtasksOpen, setIsSubtasksOpen] = useState(false)
@@ -41,6 +41,9 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
    const [assignedFilter, setAssignedFilter] = useState<string | null>(null)
    const [subtasks, setSubtasks] = useState<TaskProps[]>([])
    const [loadingSubtasks, setLoadingSubtasks] = useState(false)
+
+   // Usar selectedIssue del store si está disponible, sino usar la prop task
+   const currentTask = (selectedIssue?.id === task.id ? selectedIssue : task)
 
    // Función para obtener subtareas desde el backend
    const fetchSubtasks = async (token: string, issueId: string) => {
@@ -72,13 +75,13 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
       const getCommentsByIssueId = async () => {
          const token = await getValidAccessToken()
          if (token) {
-            await getComments(token, task?.id as string)
-            await fetchSubtasks(token, task?.id as string)
+            await getComments(token, currentTask?.id as string)
+            await fetchSubtasks(token, currentTask?.id as string)
          }
       }
 
       getCommentsByIssueId()
-   }, [])
+   }, [currentTask?.id])
 
    const handleUpdate = async (formData: {
       descriptions: { id?: string, title: string, text: string }[],
@@ -89,9 +92,9 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
       type: number
    }, filesMap?: Map<string, File[]>) => {
       const token = await getValidAccessToken()
-      if (token) {
+      if (token && currentTask?.id) {
          await updateIssue(token, formData, filesMap)
-         await getSpecificIssue(token, task.id as string)
+         await getSpecificIssue(token, currentTask.id as string)
       }
       closeModal()
    }
@@ -102,7 +105,7 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
          title: "Editar Tarea",
          desc: "Modifica los detalles de la tarea",
          Icon: <EditIcon size={20} stroke={1.75} />,
-         children: <CreateTaskForm onSubmit={handleUpdate} onCancel={() => closeModal()} taskObject={task || undefined} isEdit={true} />,
+         children: <CreateTaskForm onSubmit={handleUpdate} onCancel={() => closeModal()} taskObject={currentTask || undefined} isEdit={true} />,
          closeOnBackdrop: false,
          closeOnEscape: false,
          mode: "UPDATE"
@@ -174,7 +177,7 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
    // Función para crear una subtarea
    const handleCreateSubtask = async (formData: TaskProps, filesMap?: Map<string, File[]>) => {
       const token = await getValidAccessToken()
-      if (!token || !task.id) return
+      if (!token || !currentTask?.id) return
 
       try {
          // Preparar el payload para crear la subtarea
@@ -191,7 +194,7 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
             ...(formData.endDate ? { endDate: formData.endDate } : {})
          }
 
-         const response = await fetch(API_ROUTES.CRUD_SUBTASKS(task.id as string), {
+         const response = await fetch(API_ROUTES.CRUD_SUBTASKS(currentTask.id), {
             method: 'POST',
             headers: {
                'Content-Type': 'application/json',
@@ -256,7 +259,7 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
             taskObject={{
                title: "",
                descriptions: [],
-               projectId: task?.projectId || "",
+               projectId: currentTask?.projectId || "",
                priority: projectConfig?.issuePriorities?.[0]?.id || 1,
                status: projectConfig?.issueStatuses?.[0]?.id || 1,
                type: projectConfig?.issueTypes?.[0]?.id || 1,
@@ -320,6 +323,11 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
    // Contar filtros activos
    const activeFiltersCount = [typeFilter, statusFilter, priorityFilter, assignedFilter].filter(f => f !== null).length
 
+   // Validación temprana - si no hay tarea, no renderizar nada
+   if (!currentTask) {
+      return null
+   }
+
    return (
       <div className="bg-white border-gray-100 rounded-xl shadow-sm border flex flex-col overflow-hidden h-full">
          {/* Header */}
@@ -327,12 +335,12 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
             <div className="flex items-center justify-between">
                <div className="flex items-center gap-2 flex-1 min-w-0">
                   <Link
-                     href={`/tableros/${task.projectId}/${task.id}`}
+                     href={`/tableros/${currentTask.projectId}/${currentTask.id}`}
                      className="text-gray-900 hover:text-blue-600 flex gap-2 pr-4 items-center text-lg font-semibold transition-colors min-w-0 flex-1"
                      onClick={() => onCancel()}
                      target="_blank"
                   >
-                     <span className="truncate">{task.title}</span>
+                     <span className="truncate">{currentTask.title}</span>
                      <span className="flex-shrink-0"><LinkRedirect size={18} stroke={2} /></span>
                   </Link>
                </div>
@@ -363,9 +371,9 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
                   <div className="flex flex-col space-y-4">
                      {/* Sección de descripción */}
                      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
-                        {task.descriptions.length > 0 ? (
+                        {currentTask.descriptions.length > 0 ? (
                            <div className="space-y-4">
-                              {task.descriptions.map((desc, id) => (
+                              {currentTask.descriptions.map((desc, id) => (
                                  <div key={id} className="space-y-1">
                                     <h4 className="font-semibold text-gray-900 text-sm">{desc.title}</h4>
                                     <SafeHtml
@@ -425,7 +433,7 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
                      </div>
 
                      {/* Sección de subtareas (Acordeón) - Solo mostrar si NO es una subtarea */}
-                     {!task.parent && (
+                     {!currentTask.parent && (
                         <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
                            {/* Header del acordeón */}
                            <button
@@ -631,7 +639,7 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
                                              filteredSubtasks.map((subtask) => (
                                                 <Link
                                                    key={subtask.id}
-                                                   href={`/tableros/${task.projectId}/${subtask.id}`}
+                                                   href={`/tableros/${currentTask.projectId}/${subtask.id}`}
                                                    target="_blank"
                                                    className="block"
                                                 >
@@ -828,7 +836,7 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
 
                      {/* Sección de comentarios */}
                      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
-                        <ShowComments arrayComments={comments} task={task} />
+                        <ShowComments arrayComments={comments} task={currentTask} />
                      </div>
                   </div>
                </div>
@@ -868,15 +876,15 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
                               <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
                                  <span className="text-sm text-gray-500">Asignado a:&nbsp;&nbsp;</span>
                                  <span className="text-sm font-medium text-gray-900">
-                                    {typeof task.assignedId === 'object'
-                                       ? `${task.assignedId.firstName ?? "Sin"} ${task.assignedId.lastName ?? "asignar"}`
-                                       : task.assignedId || 'No asignado'}
+                                    {typeof currentTask.assignedId === 'object'
+                                       ? `${currentTask.assignedId.firstName ?? "Sin"} ${currentTask.assignedId.lastName ?? "asignar"}`
+                                       : currentTask.assignedId || 'No asignado'}
                                  </span>
                               </div>
                               <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
                                  <span className="text-sm text-gray-500">Informador:&nbsp;&nbsp;</span>
                                  <span className="text-sm font-medium text-gray-900">
-                                    {task.reporterId ? `${task.reporterId.firstName} ${task.reporterId.lastName}` : 'No especificado'}
+                                    {currentTask.reporterId ? `${currentTask.reporterId.firstName} ${currentTask.reporterId.lastName}` : 'No especificado'}
                                  </span>
                               </div>
                            </div>
@@ -896,7 +904,7 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
                               <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
                                  <span className="text-sm text-gray-500">Estado:&nbsp;&nbsp;</span>
                                  {(() => {
-                                    const status = projectConfig?.issueStatuses?.find((s: { id: number }) => s.id === task.status)
+                                    const status = projectConfig?.issueStatuses?.find((s: { id: number }) => s.id === currentTask.status)
                                     return status ? (
                                        <span
                                           className="px-3 py-1 rounded-full text-xs font-medium"
@@ -916,7 +924,7 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
                               <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
                                  <span className="text-sm text-gray-500">Tipo:&nbsp;&nbsp;</span>
                                  {(() => {
-                                    const type = projectConfig?.issueTypes?.find((t: { id: number }) => t.id === task.type)
+                                    const type = projectConfig?.issueTypes?.find((t: { id: number }) => t.id === currentTask.type)
                                     return type ? (
                                        <span
                                           className="px-3 py-1 rounded-full text-xs font-medium"
@@ -936,7 +944,7 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
                               <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
                                  <span className="text-sm text-gray-500">Prioridad:&nbsp;&nbsp;</span>
                                  {(() => {
-                                    const priority = projectConfig?.issuePriorities?.find((p: { id: number }) => p.id === task.priority)
+                                    const priority = projectConfig?.issuePriorities?.find((p: { id: number }) => p.id === currentTask.priority)
                                     return priority ? (
                                        <span
                                           className="px-3 py-1 rounded-full text-xs font-medium"
@@ -968,26 +976,26 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
                               <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
                                  <span className="text-sm text-gray-500">Creación:&nbsp;&nbsp;</span>
                                  <span className="text-sm font-medium text-gray-900">
-                                    {formatDate(task.createdAt)}
+                                    {formatDate(currentTask.createdAt)}
                                  </span>
                               </div>
                               <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
                                  <span className="text-sm text-gray-500">Actualización:&nbsp;&nbsp;</span>
                                  <span className="text-sm font-medium text-gray-900">
-                                    {formatDate(task.updatedAt)}
+                                    {formatDate(currentTask.updatedAt)}
                                  </span>
                               </div>
                               <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
                                  <span className="text-sm text-gray-500">Fecha de inicio:&nbsp;&nbsp;</span>
-                                 <span className="text-sm font-medium text-gray-900">{formatDate(task.startDate, false, true)}</span>
+                                 <span className="text-sm font-medium text-gray-900">{formatDate(currentTask.startDate, false, true)}</span>
                               </div>
                               <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
                                  <span className="text-sm text-gray-500">Fecha de fin:&nbsp;&nbsp;</span>
-                                 <span className="text-sm font-medium text-gray-900">{formatDate(task.endDate, false, true)}</span>
+                                 <span className="text-sm font-medium text-gray-900">{formatDate(currentTask.endDate, false, true)}</span>
                               </div>
                               <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
                                  <span className="text-sm text-gray-500">Fecha real de finalización:&nbsp;&nbsp;</span>
-                                 <span className="text-sm font-medium text-gray-900">{formatDate(task.realDate, false, true)}</span>
+                                 <span className="text-sm font-medium text-gray-900">{formatDate(currentTask.realDate, false, true)}</span>
                               </div>
                            </div>
                         </div>
@@ -1004,7 +1012,7 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
                               <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
                                  <span className="text-sm text-gray-500">Estimado:&nbsp;&nbsp;</span>
                                  <span className="text-sm font-medium text-gray-900">
-                                    {task.estimatedTime ? `${task.estimatedTime} horas` : 'No especificado'}
+                                    {currentTask.estimatedTime ? `${currentTask.estimatedTime} horas` : 'No especificado'}
                                  </span>
                               </div>
                            </div>
