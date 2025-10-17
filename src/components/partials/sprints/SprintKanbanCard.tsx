@@ -969,7 +969,7 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
             const taskWithSprintAndStatus = {
                 ...newTask,
                 sprintId: spr.id, // Asignar la tarea al sprint actual
-                status: selectedStatusForNewTask // Asignar el estado específico de la columna
+                status: newTask.status || selectedStatusForNewTask // Usar el status del formulario, o el seleccionado como fallback
             }
             await createIssue(token, taskWithSprintAndStatus, filesMap)
         }
