@@ -78,17 +78,17 @@ export default function Modal() {
                         transition={{ duration: 0.2 }}
                     >
                         <motion.section
-                            className={`${sizeClasses[modalSize]} bg-button-secondary-background rounded-md flex flex-col w-full max-h-[95vh] overflow-hidden p-6`}
+                            className={`${sizeClasses[modalSize]} bg-button-secondary-background rounded-md flex flex-col w-full max-h-[95vh] p-6`}
                             initial={{ scale: 0.9, opacity: 0, y: 20 }}
                             animate={{ scale: 1, opacity: 1, y: 0 }}
                             exit={{ scale: 0.9, opacity: 0, y: 20 }}
                             transition={{ duration: 0.2, ease: "easeOut" }}
                             onClick={(e) => e.stopPropagation()}
                         >
-                            <article className="border-background-background rounded-xl shadow-sm border">
+                            <article className="border-background-background rounded-xl shadow-sm border flex flex-col h-full">
                                 {
                                     modal.title &&
-                                    <header className="border-background-background flex items-center justify-between border-b p-6">
+                                    <header className="border-background-background flex items-center justify-between border-b p-6 flex-shrink-0">
                                         <aside className="flex items-center gap-4">
                                             <span className={`${styleClasses[modal.mode ?? "CREATE"]} flex justify-center items-center rounded-md aspect-square p-2`}>
                                                 {modal.Icon ? modal.Icon : <PlusIcon size={20} stroke={1.75} />}
@@ -122,7 +122,7 @@ export default function Modal() {
                                 }
 
                                 {/* Content */}
-                                <main className="">{modal.children}</main>
+                                <main className="flex-1 min-h-0 overflow-y-auto">{modal.children}</main>
                             </article>
                         </motion.section>
                     </motion.main>

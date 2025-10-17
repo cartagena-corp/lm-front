@@ -49,6 +49,8 @@ interface DraggableIssueRowProps {
 function DraggableIssueRow({ task, selectedIds, toggleSelect, onViewDetails, onEdit, onReassign, onDelete, onHistory, onDashboard, getStatusStyle, getPriorityStyle, getTypeStyle, openItemId, setOpenItemId, wrapperRef }: DraggableIssueRowProps) {
    const id = task.id as string
    const isChecked = selectedIds.includes(id)
+   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 })
+   const buttonRef = useRef<HTMLButtonElement>(null)
 
    // Estado para manejar clicks y drag - MISMA LÓGICA QUE SprintKanbanCard
    const startPosition = useRef<{ x: number; y: number } | null>(null)
@@ -139,6 +141,22 @@ function DraggableIssueRow({ task, selectedIds, toggleSelect, onViewDetails, onE
       onPointerMove: handlePointerMove,
       onPointerUp: handlePointerUp
    }
+
+   // Cerrar menú al hacer scroll
+   useEffect(() => {
+      const handleScroll = () => {
+         if (openItemId === task.id) {
+            setOpenItemId(null)
+         }
+      }
+
+      // Agregar listener al scroll de la ventana y cualquier contenedor con scroll
+      window.addEventListener('scroll', handleScroll, true) // true para capturar en fase de captura
+
+      return () => {
+         window.removeEventListener('scroll', handleScroll, true)
+      }
+   }, [openItemId, task.id, setOpenItemId])
 
 
    const formatDate = (dateStr: string) => {
@@ -285,8 +303,19 @@ function DraggableIssueRow({ task, selectedIds, toggleSelect, onViewDetails, onE
          <div className="col-span-1 flex justify-center">
             <div ref={openItemId === task.id ? wrapperRef : null} className="relative">
                <button
+                  ref={buttonRef}
                   onClick={() => {
-                     setOpenItemId(openItemId === task.id ? null : task.id as string)
+                     const newOpenState = openItemId === task.id ? null : task.id as string
+                     setOpenItemId(newOpenState)
+                     
+                     // Calcular posición si se está abriendo
+                     if (newOpenState && buttonRef.current) {
+                        const rect = buttonRef.current.getBoundingClientRect()
+                        setMenuPosition({
+                           top: rect.bottom + window.scrollY + 8,
+                           left: rect.right + window.scrollX - 160 // 160px es el ancho del menú (w-40)
+                        })
+                     }
                   }}
                   onPointerDown={e => e.stopPropagation()}
                   className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
@@ -298,7 +327,11 @@ function DraggableIssueRow({ task, selectedIds, toggleSelect, onViewDetails, onE
 
                {openItemId === task.id && (
                   <div
-                     className="absolute top-full right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-[70] overflow-hidden"
+                     className="fixed w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-[99999] overflow-hidden"
+                     style={{
+                        top: `${menuPosition.top}px`,
+                        left: `${menuPosition.left}px`
+                     }}
                      onPointerDown={e => e.stopPropagation()}
                   >
                      <button

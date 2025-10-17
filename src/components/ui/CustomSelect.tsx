@@ -34,9 +34,22 @@ export default function CustomSelect({
     disabled = false
 }: CustomSelectProps) {
     const [isOpen, setIsOpen] = useState(false)
+    const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 })
     const selectRef = useRef<HTMLDivElement>(null)
 
     const selectedOption = options.find(opt => opt.value === value)
+
+    // Calcular posición del dropdown cuando se abre
+    useEffect(() => {
+        if (isOpen && selectRef.current) {
+            const rect = selectRef.current.getBoundingClientRect()
+            setDropdownPosition({
+                top: rect.bottom + window.scrollY + 8, // 8px gap (mt-2)
+                left: rect.left + window.scrollX,
+                width: rect.width
+            })
+        }
+    }, [isOpen])
 
     // Cerrar el select al hacer click fuera
     useEffect(() => {
@@ -285,7 +298,12 @@ export default function CustomSelect({
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -10, scale: 0.95 }}
                         transition={{ duration: 0.15, ease: 'easeOut' }}
-                        className="absolute z-[100] left-0 right-0 mt-2 bg-white border border-gray-200 rounded shadow-xl overflow-hidden"
+                        className="fixed z-[99999] bg-white border border-gray-200 rounded shadow-xl overflow-hidden"
+                        style={{
+                            top: `${dropdownPosition.top}px`,
+                            left: `${dropdownPosition.left}px`,
+                            width: `${dropdownPosition.width}px`
+                        }}
                     >
                         <div className="max-h-64 overflow-y-auto custom-scrollbar">
                             {/* Opción "Todos" o limpiar selección */}

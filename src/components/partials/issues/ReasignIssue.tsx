@@ -41,7 +41,20 @@ export default function ReasignIssue({ onSubmit, onCancel, taskObject }: Reasign
 
    const [userSelected, setUserSelected] = useState(allProjectUsers.find(user => typeof taskObject.assignedId !== 'string' && user.id === taskObject.assignedId?.id))
    const [isUserOpen, setIsUserOpen] = useState(false)
+   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 })
    const userRef = useRef(null)
+
+   // Calculate dropdown position when it opens
+   useEffect(() => {
+      if (isUserOpen && userRef.current) {
+         const rect = (userRef.current as HTMLElement).getBoundingClientRect()
+         setDropdownPosition({
+            top: rect.bottom + window.scrollY + 8, // 8px gap
+            left: rect.left + window.scrollX,
+            width: rect.width
+         })
+      }
+   }, [isUserOpen])
 
    // Effect to handle clicks outside of select
    useEffect(() => {
@@ -129,7 +142,14 @@ export default function ReasignIssue({ onSubmit, onCancel, taskObject }: Reasign
                      </button>
 
                      {isUserOpen && (
-                        <div className='absolute z-[9999] top-full mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto'>
+                        <div 
+                           className='fixed z-[99999] bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto'
+                           style={{
+                              top: `${dropdownPosition.top}px`,
+                              left: `${dropdownPosition.left}px`,
+                              width: `${dropdownPosition.width}px`
+                           }}
+                        >
                            {allProjectUsers.map((obj, i) => (
                               <button
                                  key={i}
