@@ -627,18 +627,72 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
         setSelectedIssue(null)
     }
 
-    const handleReasignIssue = async ({ newUserId, issueId }: { newUserId: string, issueId: string }) => {
+    const handleReasignIssue = async ({ newUserId, issueId, issue }: { newUserId: string, issueId: string, issue: TaskProps }) => {
         const token = await getValidAccessToken()
-        if (token) await assignIssue(token, issueId, newUserId, selectedIssue?.projectId as string)
-        closeModal()
-        setSelectedIssue(null)
+        if (!token) {
+            toast.error('No se pudo obtener el token de autenticación')
+            return
+        }
+        
+        const toastId = toast.loading('Reasignando tarea...')
+        
+        try {
+            await assignIssue(token, issueId, newUserId, issue.projectId as string)
+            
+            // Verificar si hubo un error en el store
+            const storeState = useIssueStore.getState()
+            if (storeState.error) {
+                throw new Error(storeState.error)
+            }
+            
+            toast.success('Tarea reasignada exitosamente', { id: toastId })
+            closeModal()
+            setSelectedIssue(null)
+        } catch (error) {
+            console.error('Error al reasignar tarea:', error)
+            const errorMessage = error instanceof Error ? error.message : 'Error al reasignar la tarea'
+            toast.error(errorMessage, { id: toastId })
+        }
     }
 
-    const handleDeleteIssue = async () => {
+    const handleDeleteIssue = async (gonnaDelete: boolean, issue?: TaskProps) => {
+        if (!gonnaDelete) {
+            closeModal()
+            setSelectedIssue(null)
+            return
+        }
+
+        if (!issue) {
+            toast.error('No se ha seleccionado ninguna tarea')
+            closeModal()
+            return
+        }
+
         const token = await getValidAccessToken()
-        if (token && selectedIssue) await deleteIssue(token, selectedIssue.id as string, selectedIssue.projectId as string)
-        closeModal()
-        setSelectedIssue(null)
+        if (!token) {
+            toast.error('No se pudo obtener el token de autenticación')
+            return
+        }
+
+        const toastId = toast.loading('Eliminando tarea...')
+        
+        try {
+            await deleteIssue(token, issue.id as string, issue.projectId as string)
+            
+            // Verificar si hubo un error en el store
+            const storeState = useIssueStore.getState()
+            if (storeState.error) {
+                throw new Error(storeState.error)
+            }
+            
+            toast.success('Tarea eliminada exitosamente', { id: toastId })
+            closeModal()
+            setSelectedIssue(null)
+        } catch (error) {
+            console.error('Error al eliminar tarea:', error)
+            const errorMessage = error instanceof Error ? error.message : 'Error al eliminar la tarea'
+            toast.error(errorMessage, { id: toastId })
+        }
     }
 
     const handleDragOver = (event: DragOverEvent) => {
@@ -1047,7 +1101,7 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
             children: (
                 <ReasignIssue
                     taskObject={issue}
-                    onSubmit={handleReasignIssue}
+                    onSubmit={({ newUserId, issueId }) => handleReasignIssue({ newUserId, issueId, issue })}
                     onCancel={() => closeModal()}
                 />
             ),
@@ -1085,7 +1139,7 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
             size: "md",
             children: (
                 <DeleteIssueForm
-                    onSubmit={handleDeleteIssue}
+                    onSubmit={(gonnaDelete) => handleDeleteIssue(gonnaDelete, issue)}
                     onCancel={() => closeModal()}
                     taskObject={issue}
                 />

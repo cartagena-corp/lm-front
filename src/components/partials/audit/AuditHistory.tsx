@@ -129,9 +129,9 @@ export default function AuditHistory({ projectId, issueId, currentIssue, onCance
    const loadInitialData = async (token: string) => {
       if (dataLoaded) return { loadedIssues: issues }
 
-      // Cargar issues del proyecto (solo si es historial de proyecto)
+      // Cargar issues del proyecto (solo si es historial de proyecto Y NO hay issueId específico)
       let loadedIssues: TaskProps[] = []
-      if (projectId) {
+      if (projectId && !issueId) {
          await getIssues(token, projectId, { page: 0, size: 999 })
          const issueStore = useIssueStore.getState()
          loadedIssues = issueStore.issues.content?.filter((item): item is TaskProps =>
@@ -166,11 +166,12 @@ export default function AuditHistory({ projectId, issueId, currentIssue, onCance
          const { loadedIssues } = await loadInitialData(token)
 
          // Cargar historial
+         // Priorizar issueId sobre projectId: si hay issueId, usar historial de issue específica
          let data: AuditPagination
-         if (projectId) {
-            data = await getProjectHistory(token, projectId, page, 10)
-         } else if (issueId) {
+         if (issueId) {
             data = await getIssueHistory(token, issueId, page, 10)
+         } else if (projectId) {
+            data = await getProjectHistory(token, projectId, page, 10)
          } else {
             setError('Se requiere un ID de proyecto o issue')
             return
