@@ -263,7 +263,7 @@ export default function Notifications() {
          {/* Botón flotante - Completamente independiente */}
          <button
             onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-            className={`fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full shadow-lg transition-all duration-300 ${unreadCount > 0
+            className={`fixed bottom-6 right-6 z-20 w-14 h-14 rounded-full shadow-lg transition-all duration-300 ${unreadCount > 0
                ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/25'
                : 'bg-white hover:bg-gray-50 text-gray-700 shadow-gray-900/10'
                } border ${unreadCount > 0 ? 'border-blue-600' : 'border-gray-200'}`}

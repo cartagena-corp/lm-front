@@ -12,10 +12,13 @@ export interface ProjectProps {
    createdAt: string
    updatedAt: string
    createdBy?: {
-      id: string,
+      createdAt?: string,
       firstName: string,
       lastName: string,
-      picture: string
+      picture: string,
+      email: string,
+      role: string,
+      id: string,
    }
 }
 
@@ -129,7 +132,7 @@ export interface FilterProjectProps {
    createdBy: string
    page: number
    size: number
-   sortBy: { id: string, sort: string }
+   sortBy: ConfigProjectStatusProps
    direction: string
 }
 

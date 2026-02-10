@@ -7,28 +7,8 @@ import { useIssueStore } from '@/lib/store/IssueStore'
 import { useSprintStore } from '@/lib/store/SprintStore'
 import { useAuthStore } from '@/lib/store/AuthStore'
 import { TaskProps, SprintProps, ConfigProjectStatusProps } from '@/lib/types/types.d'
-import {
-    DndContext,
-    closestCenter,
-    pointerWithin,
-    rectIntersection,
-    DragEndEvent,
-    DragStartEvent,
-    DragOverlay,
-    useDroppable,
-    DragOverEvent,
-    PointerSensor,
-    useSensor,
-    useSensors
-} from '@dnd-kit/core'
-import {
-    useSortable,
-    SortableContext,
-    verticalListSortingStrategy,
-    horizontalListSortingStrategy
-} from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
 import { toast } from 'react-hot-toast'
+
 import { CalendarIcon, MenuIcon, EditIcon, DeleteIcon, PlusIcon, ClockIcon, UsersIcon, EyeIcon } from '@/assets/Icon'
 import { useModalStore } from '@/lib/hooks/ModalStore'
 import CreateTaskForm from '../issues/CreateTaskForm'
@@ -45,38 +25,29 @@ import SafeHtml from '@/components/ui/SafeHtml'
 interface DraggableIssueProps {
     issue: TaskProps
     isOverlay?: boolean
-    isOverTarget?: boolean
     onViewDetails: (issue: TaskProps) => void
     onEdit: (issue: TaskProps) => void
     onReassign: (issue: TaskProps) => void
     onDelete: (issue: TaskProps) => void
     onHistory: (issue: TaskProps) => void
+    onPointerDown: (e: React.PointerEvent, issue: TaskProps) => void
+    isPlaceholder?: boolean
 }
 
-function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onViewDetails, onEdit, onReassign, onDelete, onHistory }: DraggableIssueProps) {
+function DraggableIssue({
+    issue,
+    isOverlay = false,
+    onViewDetails,
+    onEdit,
+    onReassign,
+    onDelete,
+    onHistory,
+    onPointerDown,
+    isPlaceholder = false
+}: DraggableIssueProps) {
     const { projectConfig } = useConfigStore()
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const menuRef = useRef<HTMLDivElement>(null)
-
-    // Estado para manejar clicks y drag
-    const startPosition = useRef<{ x: number; y: number } | null>(null)
-    const lastClickTime = useRef<number>(0)
-    const isPointerDown = useRef<boolean>(false)
-    const hasMoved = useRef<boolean>(false)
-
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isDragging,
-    } = useSortable({ id: issue.id || 'issue' })
-
-    const style = {
-        transform: CSS.Transform.toString(transform),
-        transition,
-    }
 
     // Close menu when clicking outside
     useEffect(() => {
@@ -88,78 +59,6 @@ function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onView
         document.addEventListener('pointerdown', handleClickOutside)
         return () => document.removeEventListener('pointerdown', handleClickOutside)
     }, [])
-
-    // Custom event handlers para detectar drag vs click
-    const handlePointerDown = useCallback((event: React.PointerEvent) => {
-        const currentTime = Date.now()
-        startPosition.current = { x: event.clientX, y: event.clientY }
-        isPointerDown.current = true
-        hasMoved.current = false
-
-        // Detectar doble click
-        if (currentTime - lastClickTime.current < 300) {
-            // Es un doble click
-            event.preventDefault()
-            event.stopPropagation()
-            onViewDetails(issue)
-            return
-        }
-
-        lastClickTime.current = currentTime
-
-        // Siempre llamar al listener original, el sensor se encarga de la distancia
-        if (listeners?.onPointerDown) {
-            listeners.onPointerDown(event)
-        }
-    }, [onViewDetails, issue, listeners])
-
-    const handlePointerMove = useCallback((event: React.PointerEvent) => {
-        if (startPosition.current && isPointerDown.current) {
-            const deltaX = Math.abs(event.clientX - startPosition.current.x)
-            const deltaY = Math.abs(event.clientY - startPosition.current.y)
-
-            // Si se mueve más de 3 píxeles, marcar como movimiento
-            if (deltaX > 3 || deltaY > 3) {
-                hasMoved.current = true
-            }
-        }
-
-        // Llamar al listener original del drag
-        if (listeners?.onPointerMove) {
-            listeners.onPointerMove(event)
-        }
-    }, [listeners])
-
-    const handlePointerUp = useCallback((event: React.PointerEvent) => {
-        // Si fue un click simple (sin movimiento) y no fue doble click
-        if (isPointerDown.current && !hasMoved.current) {
-            // Esperar un momento para ver si viene un segundo click
-            setTimeout(() => {
-                const timeSinceLastClick = Date.now() - lastClickTime.current
-                // Si han pasado más de 300ms desde el último click, es un click simple
-                if (timeSinceLastClick > 300) {
-                    onViewDetails(issue)
-                }
-            }, 350) // Esperar un poco más de 300ms para asegurar que no es doble click
-        }
-
-        startPosition.current = null
-        isPointerDown.current = false
-        hasMoved.current = false
-
-        // Llamar al listener original del drag
-        if (listeners?.onPointerUp) {
-            listeners.onPointerUp(event)
-        }
-    }, [onViewDetails, issue, listeners])
-
-    // Crear listeners personalizados
-    const customListeners = {
-        ...listeners,
-        onPointerDown: handlePointerDown,
-        onPointerMove: handlePointerMove,
-        onPointerUp: handlePointerUp
-    }
 
     const getPriorityInfo = (priorityId: number) => {
         const priority = projectConfig?.issuePriorities?.find(p => p.id === priorityId)
@@ -182,16 +81,14 @@ function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onView
 
     return (
         <div
-            ref={setNodeRef}
-            style={style}
-            {...attributes}
-            {...customListeners}
+            id={`issue-${issue.id}`}
+            onPointerDown={(e) => onPointerDown(e, issue)}
             className={`
-        bg-white rounded-lg border border-gray-200 p-4 shadow-sm hover:shadow-md transition-all duration-300 cursor-grab relative
-        ${isDragging ? 'opacity-50' : ''}
-        ${isOverlay ? 'rotate-3 shadow-lg' : ''}
-        ${isOverTarget ? 'transform translate-y-2 opacity-75 scale-95' : ''}
+        bg-white rounded-lg border border-gray-200 p-4 shadow-sm hover:shadow-md transition-all duration-300 cursor-grab relative select-none touch-none
+        ${isPlaceholder ? 'opacity-30 border-dashed border-gray-400 bg-gray-50' : ''}
+        ${isOverlay ? 'rotate-3 shadow-2xl scale-105 z-50 cursor-grabbing pointer-events-none' : ''}
       `}
+            style={isOverlay ? { width: '300px' } : undefined}
         >
             {/* Header with type and title */}
             <div className="flex items-start justify-between mb-3">
@@ -225,14 +122,17 @@ function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onView
                     </div>
                 </div>
 
-                {/* Actions menu */}
-                <div ref={menuRef} className="relative flex-shrink-0 ml-2">
+                {/* Actions menu - Prevent pointer down propagation to avoid dragging when clicking menu */}
+                <div
+                    ref={menuRef}
+                    className="relative flex-shrink-0 ml-2"
+                    onPointerDown={(e) => e.stopPropagation()}
+                >
                     <button
                         onClick={(e) => {
                             e.stopPropagation()
                             setIsMenuOpen(!isMenuOpen)
                         }}
-                        onPointerDown={e => e.stopPropagation()}
                         className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -243,7 +143,6 @@ function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onView
                     {isMenuOpen && (
                         <div
                             className="absolute top-full right-0 mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-[80] overflow-hidden"
-                            onPointerDown={e => e.stopPropagation()}
                         >
                             <button
                                 className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
@@ -301,8 +200,6 @@ function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onView
                     html={issue.descriptions?.[0]?.text || 'Sin descripción'}
                     className="text-xs text-gray-600 leading-relaxed [&_code]:font-mono [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs"
                 />
-                {/* <SafeHtml html={issue.descriptions?.[0]?.text || 'Sin descripción'} />
-                {issue.descriptions?.[0]?.text || 'Sin descripción'} */}
             </hgroup>
 
             {/* Footer with assigned user and date */}
@@ -351,58 +248,46 @@ interface StatusColumnProps {
     status: ConfigProjectStatusProps
     issues: TaskProps[]
     sprintId: string
-    activeId: string | null
-    overId: string | null
     onViewDetails: (issue: TaskProps) => void
     onEdit: (issue: TaskProps) => void
     onReassign: (issue: TaskProps) => void
     onDelete: (issue: TaskProps) => void
     onHistory: (issue: TaskProps) => void
     onCreateTaskInSprint: (statusId: number) => void
+    onIssuePointerDown: (e: React.PointerEvent, issue: TaskProps) => void
+    onColumnPointerDown: (e: React.PointerEvent, status: ConfigProjectStatusProps) => void
+    dropIndicator: { type: 'line' | 'rect'; position: any; targetId: string } | null
+    isDraggingIssue: boolean
+    draggingId: string | null
+    isColumnDropTarget?: boolean
 }
 
-function StatusColumn({ status, issues, sprintId, activeId, overId, onViewDetails, onEdit, onReassign, onDelete, onHistory, onCreateTaskInSprint }: StatusColumnProps) {
-    const {
-        attributes,
-        listeners,
-        setNodeRef: setSortableNodeRef,
-        transform,
-        transition,
-        isDragging,
-    } = useSortable({
-        id: `status-column-${status.id}`,
-        data: {
-            type: 'column',
-            status
-        }
-    })
-
-    const { setNodeRef: setDroppableNodeRef } = useDroppable({
-        id: `column-${sprintId}-${status.id}`,
-    })
-
-    const style = {
-        transform: CSS.Transform.toString(transform),
-        transition,
-    }
-
-    // Verificar si estamos arrastrando una columna sobre esta columna
-    const isColumnOverTarget = activeId?.startsWith('status-column-') &&
-        overId === `status-column-${status.id}` &&
-        activeId !== `status-column-${status.id}`
-
+function StatusColumn({
+    status,
+    issues,
+    sprintId,
+    onViewDetails,
+    onEdit,
+    onReassign,
+    onDelete,
+    onHistory,
+    onCreateTaskInSprint,
+    onIssuePointerDown,
+    onColumnPointerDown,
+    dropIndicator,
+    isDraggingIssue,
+    draggingId,
+    isColumnDropTarget = false
+}: StatusColumnProps) {
     return (
         <div
-            ref={setSortableNodeRef}
-            style={style}
-            className={`flex flex-col min-w-80 w-80 flex-shrink-0 transition-all duration-300 ${isDragging ? 'opacity-50' : ''
-                } ${isColumnOverTarget ? 'transform scale-95 opacity-75 bg-blue-50 rounded-lg' : ''
-                }`}
+            id={`column-${status.id}`}
+            className={`flex flex-col min-w-80 w-80 flex-shrink-0 transition-all duration-300 border-2 border-transparent ${isColumnDropTarget ? ' border-blue-500! rounded-xl bg-blue-50/50' : ''}`}
         >
             <div
-                className="flex items-center gap-2 mb-3 cursor-grab active:cursor-grabbing"
-                {...attributes}
-                {...listeners}
+                id={`status-column-${status.id}`}
+                className="flex items-center gap-2 mb-3 cursor-grab active:cursor-grabbing select-none hover:bg-gray-50 p-2 rounded-lg transition-colors border border-transparent hover:border-gray-200"
+                onPointerDown={(e) => onColumnPointerDown(e, status)}
             >
                 <div
                     className="w-3 h-3 rounded-full"
@@ -415,33 +300,48 @@ function StatusColumn({ status, issues, sprintId, activeId, overId, onViewDetail
             </div>
 
             <div
-                ref={setDroppableNodeRef}
-                className="min-h-[200px] bg-gray-50 rounded-lg p-3 space-y-3 h-full group"
+                id={`column-droppable-${status.id}`}
+                className={`min-h-[200px] bg-gray-50/50 rounded-lg p-3 space-y-3 flex-1 flex flex-col group transition-colors duration-200 border-2 ${isDraggingIssue && dropIndicator?.targetId === `column-${status.id}` ? 'border-blue-200 bg-blue-50/30' : 'border-transparent'
+                    }`}
             >
-                <SortableContext items={issues.filter(i => i.id).map(i => i.id!)} strategy={verticalListSortingStrategy}>
-                    {issues.map((issue) => {
-                        // Verificar si estamos arrastrando un issue sobre este issue
-                        const isIssueOverTarget = !!(activeId &&
-                            !activeId.startsWith('status-column-') &&
-                            overId === issue.id &&
-                            activeId !== issue.id)
+                {issues.map((issue) => {
+                    const isPlaceholder = draggingId === issue.id
 
-                        return (
+                    return (
+                        <div key={issue.id} className="relative">
+                            {/* Blue Line Indicator BEFORE issue */}
+                            {isDraggingIssue && dropIndicator && dropIndicator.targetId === issue.id && dropIndicator.position.y < (document.getElementById(`issue-${issue.id}`)?.getBoundingClientRect().top || 0) + (document.getElementById(`issue-${issue.id}`)?.getBoundingClientRect().height || 0) / 2 && (
+                                <div className="absolute -top-2 left-0 right-0 h-1 bg-blue-500 rounded-full z-10 pointer-events-none shadow-sm" />
+                            )}
+
                             <DraggableIssue
-                                key={issue.id}
                                 issue={issue}
-                                isOverTarget={isIssueOverTarget}
+                                isPlaceholder={isPlaceholder}
                                 onViewDetails={onViewDetails}
                                 onEdit={onEdit}
                                 onReassign={onReassign}
                                 onDelete={onDelete}
                                 onHistory={onHistory}
+                                onPointerDown={onIssuePointerDown}
                             />
-                        )
-                    })}
-                </SortableContext>
+
+                            {/* Blue Line Indicator AFTER issue */}
+                            {isDraggingIssue && dropIndicator && dropIndicator.targetId === issue.id && dropIndicator.position.y >= (document.getElementById(`issue-${issue.id}`)?.getBoundingClientRect().top || 0) + (document.getElementById(`issue-${issue.id}`)?.getBoundingClientRect().height || 0) / 2 && (
+                                <div className="absolute -bottom-2 left-0 right-0 h-1 bg-blue-500 rounded-full z-10 pointer-events-none shadow-sm" />
+                            )}
+                        </div>
+                    )
+                })}
+
+                {/* Empty State Drop Zone */}
+                {issues.length === 0 && isDraggingIssue && dropIndicator?.targetId === `column-${status.id}` && (
+                    <div className="h-20 border-2 border-dashed border-blue-300 rounded-lg bg-blue-50/50 flex items-center justify-center">
+                        <span className="text-blue-400 text-sm font-medium">Soltar aquí</span>
+                    </div>
+                )}
+
                 <button
-                    className='bg-blue-50 border-blue-200 hover:border-blue-400 text-blue-600 text-sm rounded-lg flex justify-start items-center gap-2 border w-full border-dashed py-2 px-4 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer relative opacity-0 group-hover:opacity-100'
+                    className='bg-white border-gray-200 hover:border-blue-400 hover:text-blue-600 text-gray-500 text-sm rounded-lg flex justify-start items-center gap-2 border w-full border-dashed py-2 px-4 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer opacity-70 hover:opacity-100'
                     onClick={() => onCreateTaskInSprint(status.id)}
                     title={`Crear nueva tarea en este sprint con estado "${status.name}"`}
                 >
@@ -461,6 +361,7 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
     const [userSelected, setUserSelected] = useState<any[]>([]);
     const [isUserOpen, setIsUserOpen] = useState(false);
     const userRef = useRef<HTMLDivElement>(null);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
     const { projectParticipants } = useConfigStore();
     const { selectedBoard } = useBoardStore();
     const { listUsers } = useAuthStore();
@@ -519,20 +420,207 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
     // Estado optimista para el orden de las columnas
     const [optimisticStatuses, setOptimisticStatuses] = useState<ConfigProjectStatusProps[] | null>(null)
 
+    // Native Drag and Drop State
+    const [dragState, setDragState] = useState<{
+        activeId: string
+        type: 'issue' | 'column'
+        offset: { x: number; y: number } // Offset from top-left of the dragged item
+        currentPos: { x: number; y: number } // Current pointer position
+        startPos: { x: number; y: number }
+        originalStatusId?: number // For issues
+        startHeight?: number
+        startWidth?: number
+    } | null>(null)
+
+    const [dropIndicator, setDropIndicator] = useState<{
+        type: 'line' | 'rect'
+        position: { x: number; y: number; width?: number; height?: number }
+        targetId: string
+    } | null>(null)
+
     // Refs para manejar el debounce de actualizaciones al servidor
     const pendingStatusUpdateRef = useRef<{
         timeoutId: NodeJS.Timeout | null,
         statuses: ConfigProjectStatusProps[] | null
     }>({ timeoutId: null, statuses: null })
 
-    // Configuración de sensores personalizados para el drag
-    const sensors = useSensors(
-        useSensor(PointerSensor, {
-            activationConstraint: {
-                distance: 3, // El drag se activa después de mover 3 píxeles
-            },
-        })
-    )
+    // Estado para manejar el inicio del drag (evitar overlay en clicks)
+    const [pendingDrag, setPendingDrag] = useState<{
+        startPos: { x: number; y: number }
+        item: TaskProps | ConfigProjectStatusProps
+        type: 'issue' | 'column'
+        target: HTMLElement
+    } | null>(null)
+
+    // Refs to avoid stale closures in event handlers (declared early for use in effects)
+    const issuesRef = useRef<TaskProps[]>([])
+    const statusesRef = useRef<ConfigProjectStatusProps[]>([])
+
+    // Handler global del Pointer Move
+    useEffect(() => {
+        const handleGlobalPointerMove = (e: PointerEvent) => {
+            // Verificar si debe iniciar el drag desde pending
+            if (pendingDrag) {
+                const dx = e.clientX - pendingDrag.startPos.x
+                const dy = e.clientY - pendingDrag.startPos.y
+                const distance = Math.sqrt(dx * dx + dy * dy)
+
+                // Umbral de movimiento de 5px para activar el drag
+                if (distance > 5) {
+                    const { item, type, target } = pendingDrag
+                    const rect = target.getBoundingClientRect()
+
+                    setDragState({
+                        activeId: type === 'issue'
+                            ? (item as TaskProps).id as string
+                            : `status-column-${(item as ConfigProjectStatusProps).id}`,
+                        type: type,
+                        offset: {
+                            x: e.clientX - rect.left,
+                            y: e.clientY - rect.top
+                        },
+                        currentPos: { x: e.clientX, y: e.clientY },
+                        startPos: pendingDrag.startPos,
+                        originalStatusId: type === 'issue' ? (item as TaskProps).status : undefined,
+                        startHeight: rect.height,
+                        startWidth: rect.width
+                    })
+
+                    setPendingDrag(null)
+                    document.body.style.userSelect = 'none'
+                }
+                return
+            }
+
+            if (!dragState) return
+
+            setDragState(prev => prev ? { ...prev, currentPos: { x: e.clientX, y: e.clientY } } : null)
+
+            // Logic to find drop target
+
+            const elements = document.elementsFromPoint(e.clientX, e.clientY)
+
+            if (dragState.type === 'issue') {
+                const hoveredIssue = elements.find(el => el.id.startsWith('issue-'))
+                const hoveredDroppable = elements.find(el => el.id.startsWith('column-droppable-'))
+
+                if (hoveredIssue) {
+                    const issueId = hoveredIssue.id.replace('issue-', '')
+                    const rect = hoveredIssue.getBoundingClientRect()
+                    const midY = rect.top + rect.height / 2
+
+                    setDropIndicator({
+                        type: 'line',
+                        targetId: issueId,
+                        position: {
+                            x: rect.left,
+                            y: e.clientY < midY ? rect.top : rect.bottom,
+                            width: rect.width
+                        }
+                    })
+                } else if (hoveredDroppable) {
+                    const columnId = hoveredDroppable.id.replace('column-droppable-', '')
+                    setDropIndicator({
+                        type: 'rect',
+                        targetId: `column-${columnId}`,
+                        position: { x: 0, y: 0 }
+                    })
+                } else {
+                    // No valid issue or column target - clear indicator
+                    setDropIndicator(null)
+                }
+            } else if (dragState.type === 'column') {
+                // Logic for column dragging
+                // Detect either the header specific ID or the general column container
+                const targetEl = elements.find(el =>
+                    el.id.startsWith('status-column-') ||
+                    el.id.startsWith('column-')
+                )
+
+                if (targetEl) {
+                    let targetStatusIdStr = ''
+                    if (targetEl.id.startsWith('status-column-')) {
+                        targetStatusIdStr = targetEl.id.replace('status-column-', '')
+                    } else if (targetEl.id.startsWith('column-droppable-')) {
+                        targetStatusIdStr = targetEl.id.replace('column-droppable-', '')
+                    } else if (targetEl.id.startsWith('column-')) {
+                        // Careful not to catch column-droppable if it was checked first? 
+                        // actually elements.find returns first match.
+                        // But 'column-' prefix might match 'column-droppable-' too if we are not careful with strict check or ordering?
+                        // startsWith('column-') matches 'column-droppable-...'
+                        // So we should handle droppable explicitly or just parse number.
+                        // simpler: extract the number from the end.
+                        const parts = targetEl.id.split('-')
+                        targetStatusIdStr = parts[parts.length - 1]
+                    }
+
+                    // Normalize to status-column-ID
+                    const targetColumnId = `status-column-${targetStatusIdStr}`
+
+                    // Don't drop on self
+                    if (targetColumnId !== dragState.activeId && !isNaN(parseInt(targetStatusIdStr))) {
+                        setDropIndicator({
+                            type: 'rect',
+                            targetId: targetColumnId,
+                            position: { x: 0, y: 0 }
+                        })
+                    } else {
+                        // Hovering over self or invalid target - clear indicator
+                        setDropIndicator(null)
+                    }
+                } else {
+                    // No valid column target - clear indicator
+                    setDropIndicator(null)
+                }
+            }
+        }
+
+        const handleGlobalPointerUp = (e: PointerEvent) => {
+            document.body.style.userSelect = ''
+
+            // Calculate distance moved to detect click
+            const dx = e.clientX - (dragState?.startPos?.x || 0)
+            const dy = e.clientY - (dragState?.startPos?.y || 0)
+            const distance = Math.sqrt(dx * dx + dy * dy)
+
+            // If distance is small, treat as click
+            if (distance < 5 && dragState?.type === 'issue') {
+                const issueId = dragState.activeId
+                const issue = issuesRef.current.find(i => i.id === issueId)
+                if (issue) {
+                    handleIssueClick(issue)
+                }
+                setDragState(null)
+                setDropIndicator(null)
+                return
+            }
+
+            // If pendingDrag exists on mouse up, it was a CLICK
+            if (pendingDrag) {
+                if (pendingDrag.type === 'issue') {
+                    handleIssueClick(pendingDrag.item as TaskProps)
+                }
+                setPendingDrag(null)
+                document.body.style.userSelect = ''
+                return
+            }
+
+            // Commit the drop
+            if (dropIndicator && dragState) {
+                handleNativeDrop(dragState.activeId, dropIndicator)
+            }
+            setDragState(null)
+            setDropIndicator(null)
+        }
+
+        window.addEventListener('pointermove', handleGlobalPointerMove)
+        window.addEventListener('pointerup', handleGlobalPointerUp)
+
+        return () => {
+            window.removeEventListener('pointermove', handleGlobalPointerMove)
+            window.removeEventListener('pointerup', handleGlobalPointerUp)
+        }
+    }, [dragState, dropIndicator, pendingDrag]) // Removed issues from deps - use issuesRef inside
 
     // Usar issues optimistas si existen, sino usar los del sprint
     let issues = optimisticIssues !== null ? optimisticIssues : (spr.tasks?.content || [])
@@ -563,9 +651,32 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
         })
 
     // Efecto para limpiar estado optimista cuando cambian los datos del sprint
+    // SOLUCIÓN BUG "SNAP BACK": Solo limpiar si los datos del servidor ya coinciden con los optimistas
     useEffect(() => {
-        setOptimisticIssues(null)
-    }, [spr.tasks?.content])
+        if (!optimisticIssues) return
+
+        const serverIssues = spr.tasks?.content || []
+
+        // Verificar si todos los issues optimistas modificados ya están sincronizados en el servidor
+        let allSynced = true
+
+        // Buscamos discrepancias. Si el servidor tiene un estado DIFERENTE al optimista
+        // para un issue que estamos mostrando optimísticamente, entonces NO debemos limpiar todavía
+        // (asumiendo que el optimista es la verdad más reciente).
+        for (const optIssue of optimisticIssues) {
+            const srvIssue = serverIssues.find(i => i.id === optIssue.id)
+            // Si el issue existe en el servidor y su estado es diferente al optimista,
+            // significa que el servidor aún tiene datos viejos (o alguien más cambió, pero priorizamos local flow)
+            if (srvIssue && srvIssue.status !== optIssue.status) {
+                allSynced = false
+                break
+            }
+        }
+
+        if (allSynced) {
+            setOptimisticIssues(null)
+        }
+    }, [spr.tasks?.content, optimisticIssues])
 
     // Efecto para limpiar estado optimista de columnas cuando cambian los estados del proyecto
     useEffect(() => {
@@ -581,6 +692,107 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
             }
         }
     }, [])
+
+    // --- Handlers para Native DnD ---
+    const handleIssuePointerDown = (e: React.PointerEvent, issue: TaskProps) => {
+        // Prevent default to avoid selection
+        e.preventDefault()
+        e.stopPropagation()
+
+        // Only left click
+        if (e.button !== 0) return
+
+        const target = e.currentTarget as HTMLElement
+        // No iniciar dragState aquí directamente. Guardar en pendingDrag.
+        setPendingDrag({
+            startPos: { x: e.clientX, y: e.clientY },
+            item: issue,
+            type: 'issue',
+            target
+        })
+    }
+
+    const handleColumnPointerDown = (e: React.PointerEvent, status: ConfigProjectStatusProps) => {
+        e.preventDefault()
+        e.stopPropagation()
+
+        if (e.button !== 0) return
+
+        const target = e.currentTarget as HTMLElement
+
+        // No iniciar dragState aquí directamente. Guardar en pendingDrag.
+        setPendingDrag({
+            startPos: { x: e.clientX, y: e.clientY },
+            item: status,
+            type: 'column',
+            target
+        })
+    }
+
+    // Update refs on every render
+    useEffect(() => {
+        issuesRef.current = issues
+        statusesRef.current = statuses
+    }, [issues, statuses])
+
+    const handleNativeDrop = async (activeId: string, indicator: NonNullable<typeof dropIndicator>) => {
+        document.body.style.userSelect = ''
+
+        const isColumn = activeId.startsWith('status-column-')
+
+        if (isColumn) {
+            // Column Reordering
+            const activeStatusId = parseInt(activeId.replace('status-column-', ''))
+            let targetStatusId = -1
+
+            if (indicator.targetId.startsWith('status-column-')) {
+                targetStatusId = parseInt(indicator.targetId.replace('status-column-', ''))
+            } else if (indicator.targetId.startsWith('column-')) {
+                // Fallback if normalized ID wasn't passed (shouldn' happen with latest move logic)
+                targetStatusId = parseInt(indicator.targetId.replace('column-', ''))
+            }
+
+            if (!isNaN(targetStatusId) && !isNaN(activeStatusId) && activeStatusId !== targetStatusId) {
+                await handleColumnReorder(activeId, indicator.targetId)
+            }
+            return
+        }
+
+        // Issue Drop
+        const issueId = activeId
+        // Find the issue being dragged using Ref to ensure freshness
+        const issue = issuesRef.current.find(i => i.id === issueId)
+        if (!issue) return
+
+        if (indicator.type === 'rect') {
+            // Dropped on a column (empty or not specific)
+            const targetColumnId = indicator.targetId // "column-STATUSID"
+            if (targetColumnId.startsWith('column-')) {
+                const statusId = parseInt(targetColumnId.replace('column-', ''))
+
+                // If status is different, move it
+                if (issue.status !== statusId) {
+                    await handleIssueMove(issueId, targetColumnId)
+                }
+            }
+        } else if (indicator.type === 'line') {
+            // Dropped relative to another issue
+            const targetIssueId = indicator.targetId
+            const targetIssue = issuesRef.current.find(i => i.id === targetIssueId)
+
+            if (targetIssue) {
+                // Check if same status
+                if (targetIssue.status !== issue.status) {
+                    const targetColumnId = `column-${spr.id}-${targetIssue.status}`
+                    await handleIssueMove(issueId, targetColumnId)
+                } else {
+                    // Same status reorder - suppressed
+                }
+            }
+        }
+    }
+
+
 
     // Group issues by status
     const issuesByStatus = statuses.reduce((acc, status) => {
@@ -633,18 +845,18 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
             toast.error('No se pudo obtener el token de autenticación')
             return
         }
-        
+
         const toastId = toast.loading('Reasignando tarea...')
-        
+
         try {
             await assignIssue(token, issueId, newUserId, issue.projectId as string)
-            
+
             // Verificar si hubo un error en el store
             const storeState = useIssueStore.getState()
             if (storeState.error) {
                 throw new Error(storeState.error)
             }
-            
+
             toast.success('Tarea reasignada exitosamente', { id: toastId })
             closeModal()
             setSelectedIssue(null)
@@ -675,16 +887,16 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
         }
 
         const toastId = toast.loading('Eliminando tarea...')
-        
+
         try {
             await deleteIssue(token, issue.id as string, issue.projectId as string)
-            
+
             // Verificar si hubo un error en el store
             const storeState = useIssueStore.getState()
             if (storeState.error) {
                 throw new Error(storeState.error)
             }
-            
+
             toast.success('Tarea eliminada exitosamente', { id: toastId })
             closeModal()
             setSelectedIssue(null)
@@ -695,127 +907,39 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
         }
     }
 
-    const handleDragOver = (event: DragOverEvent) => {
-        const { over } = event
-        setOverId(over?.id as string || null)
-    }
 
-    const handleDragStart = (event: DragStartEvent) => {
-        const { active } = event
-        const activeId = active.id as string
-        setActiveId(activeId)
-
-        // Verificar si es una columna o un issue
-        if (activeId.startsWith('status-column-')) {
-            // Es una columna
-            const statusId = parseInt(activeId.replace('status-column-', ''))
-            const status = statuses.find(s => s.id === statusId) as ConfigProjectStatusProps
-            if (status) {
-                setDraggedColumn(status)
-                toast.dismiss()
-                toast(
-                    `Reordenando columna "${status.name}"`,
-                    {
-                        icon: '📋',
-                        duration: 1500,
-                        position: 'bottom-center'
-                    }
-                )
-            }
-        } else {
-            // Es un issue
-            const issue = issues.find(i => i.id === activeId)
-            if (issue) {
-                setDraggedIssue(issue)
-
-                // Feedback visual opcional: toast de información sobre el drag
-                const statusInfo = statuses.find(s => s.id === issue.status)
-                toast.dismiss() // Limpiar toasts anteriores
-                toast(
-                    `Arrastrando tarea desde "${statusInfo?.name || 'Estado actual'}"`,
-                    {
-                        icon: '🤏',
-                        duration: 1500,
-                        position: 'bottom-center'
-                    }
-                )
-            }
-        }
-    }
-
-    const handleDragEnd = async (event: DragEndEvent) => {
-        const { active, over } = event
-        setActiveId(null)
-        setOverId(null)
-        setDraggedIssue(null)
-        setDraggedColumn(null)
-
-        // Limpiar toasts de drag
-        toast.dismiss()
-
-        if (!over) {
-            // Drag cancelado
-            toast('Movimiento cancelado', {
-                icon: '↩️',
-                duration: 1000,
-                position: 'bottom-center'
-            })
-            return
-        }
-
-        const overId = over.id as string
-        const activeId = active.id as string
-
-        // CASO 1: Reordenamiento de columnas
-        if (activeId.startsWith('status-column-') && overId.startsWith('status-column-')) {
-            await handleColumnReorder(activeId, overId)
-            return
-        }
-
-        // CASO 2: Movimiento de issue entre columnas o sobre otro issue
-        if (!activeId.startsWith('status-column-')) {
-            // Si se suelta sobre otro issue, usar la columna de ese issue
-            if (overId && !overId.startsWith('column-') && !overId.startsWith('status-column-')) {
-                const targetIssue = issues.find(i => i.id === overId)
-                if (targetIssue) {
-                    const targetColumnId = `column-${spr.id || 'unknown'}-${targetIssue.status}`
-                    await handleIssueMove(activeId, targetColumnId)
-                    return
-                }
-            }
-            // Si se suelta directamente sobre una columna
-            else if (overId && overId.startsWith('column-')) {
-                await handleIssueMove(activeId, overId)
-                return
-            }
-        }
-
-        // CASO 3: Otros casos no manejados
-        console.warn('Drag operation not handled:', { activeId, overId })
-    }
 
     const handleColumnReorder = async (activeId: string, overId: string) => {
         const activeStatusId = parseInt(activeId.replace('status-column-', ''))
-        const overStatusId = parseInt(overId.replace('status-column-', ''))
+        const activeStatusIdClean = !isNaN(activeStatusId) ? activeStatusId : -1
 
-        if (activeStatusId === overStatusId) {
-            // No hay cambio de posición
+        // Handle overId potentially being column-ID or status-column-ID
+        let overStatusId = -1
+        if (overId.startsWith('status-column-')) {
+            overStatusId = parseInt(overId.replace('status-column-', ''))
+        } else if (overId.startsWith('column-')) {
+            overStatusId = parseInt(overId.replace('column-', ''))
+        }
+
+        if (activeStatusIdClean === -1 || overStatusId === -1 || activeStatusIdClean === overStatusId) {
             return
         }
 
+        // Use Ref for statuses to ensure we have the latest list
+        const currentStatuses = statusesRef.current
+
         // Reordenar columnas
-        const activeIndex = statuses.findIndex(s => s.id === activeStatusId)
-        const overIndex = statuses.findIndex(s => s.id === overStatusId)
+        const activeIndex = currentStatuses.findIndex(s => s.id === activeStatusIdClean)
+        const overIndex = currentStatuses.findIndex(s => s.id === overStatusId)
 
         if (activeIndex === -1 || overIndex === -1) {
-            console.error('Status not found for reordering:', { activeStatusId, overStatusId })
-            toast.error('Error: Estado no encontrado')
+            // console.error('Status not found for reordering in ref:', { activeStatusIdClean, overStatusId, currentStatuses })
             return
         }
 
         // --- OPTIMISTIC UPDATE INSTANTÁNEO ---
         // Crear nueva lista reordenada
-        const reorderedStatuses = [...statuses]
+        const reorderedStatuses = [...currentStatuses]
         const [movedStatus] = reorderedStatuses.splice(activeIndex, 1)
         reorderedStatuses.splice(overIndex, 0, movedStatus)
 
@@ -970,7 +1094,6 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
 
         } catch (error) {
             // Error: revertir cambios optimistas y mostrar toast de error
-            setOptimisticIssues(prevIssues)
             console.error('Error updating issue status:', error)
 
             const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
@@ -978,8 +1101,8 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
                 `Error al mover la tarea: ${errorMessage}`,
                 { id: toastId }
             )
-            // Limpiar el estado optimista después de un tiempo para evitar loops
-            setTimeout(() => setOptimisticIssues(null), 2000)
+            // Error real: revertir a los issues previos
+            setOptimisticIssues(prevIssues)
         }
     }
 
@@ -1036,7 +1159,7 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
         handleCreateTaskInSprintModal(statusId)
     }
 
-    const handleIssueClick = (issue: TaskProps) => {
+    function handleIssueClick(issue: TaskProps) {
         handleTaskDetailsModal(issue)
     }
 
@@ -1052,7 +1175,7 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
     }
 
     // Modal handlers
-    const handleTaskDetailsModal = (issue: TaskProps) => {
+    function handleTaskDetailsModal(issue: TaskProps) {
         setSelectedIssue(issue)
         openModal({
             size: "full",
@@ -1074,28 +1197,21 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
     const handleTaskUpdateModal = (issue: TaskProps) => {
         setSelectedIssue(issue)
         openModal({
-            size: "xl",
-            title: "Editar Tarea",
+            children: <CreateTaskForm onSubmit={handleUpdateIssue} onCancel={() => closeModal()} taskObject={issue} isEdit={true} />,
             desc: "Modifica la información de la tarea",
-            children: (
-                <CreateTaskForm
-                    onSubmit={handleUpdateIssue}
-                    onCancel={() => closeModal()}
-                    taskObject={issue}
-                    isEdit={true}
-                />
-            ),
             Icon: <EditIcon size={20} stroke={1.75} />,
             closeOnBackdrop: false,
-            closeOnEscape: true,
-            mode: "UPDATE"
+            title: "Editar Tarea",
+            closeOnEscape: false,
+            mode: "UPDATE",
+            size: "md"
         })
     }
 
     const handleReasignModal = (issue: TaskProps) => {
         setSelectedIssue(issue)
         openModal({
-            size: "lg",
+            size: "md",
             title: "Reasignar Tarea",
             desc: "Asigna la tarea a otro miembro del equipo",
             children: (
@@ -1152,7 +1268,7 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
 
     const handleCreateTaskModal = () => {
         openModal({
-            size: "lg",
+            size: "md",
             title: "Crear Nueva Tarea",
             desc: "Agrega una nueva tarea al proyecto",
             children: (
@@ -1243,7 +1359,7 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
 
     const handleCreateStatusModal = () => {
         openModal({
-            size: "lg",
+            size: "md",
             title: "Crear Nuevo Estado",
             desc: "Define un nuevo estado para las tareas del proyecto",
             children: (
@@ -1261,48 +1377,29 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
     }
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
             {/* Sprint Header */}
-            <div className="px-6 pt-4">
-                <div className="flex flex-col">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                            <div className="flex items-center gap-2">
-                                <CalendarIcon size={20} />
-                                <h3 className="text-lg font-semibold text-gray-900">{spr.title}</h3>
-                            </div>
-                            {/* <div className="flex items-center gap-2">
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${spr.status === 1
-                                    ? 'bg-green-100 text-green-800'
-                                    : spr.status === 2
-                                        ? 'bg-blue-100 text-blue-800'
-                                        : 'bg-gray-100 text-gray-800'
-                                    }`}>
-                                    {spr.status === 1 ? 'Activo' : spr.status === 2 ? 'Completado' : 'Planificado'}
-                                </span>
-                                <span className="text-sm text-gray-500">
-                                    {issues.length} {issues.length === 1 ? 'tarea' : 'tareas'}
-                                </span>
-                            </div> */}
-                        </div>
-                        <div className="flex items-center gap-2">
-                            {spr.id === 'null' ? (
-                                // Backlog - solo mostrar botón crear tarea
-                                <button
-                                    onClick={handleCreateTask}
-                                    className="flex items-center gap-2 px-4 py-2 text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium"
-                                >
-                                    <PlusIcon size={18} stroke={2.5} />
-                                    Crear Tarea
-                                </button>
-                            ) : (
-                                // Sprint normal - mostrar menú de opciones
-                                <div className="relative group">
-                                    <button className="p-2 hover:bg-gray-100 rounded-md transition-colors duration-200">
-                                        <MenuIcon size={16} />
+            <div className="p-4 pb-0">
+                <div className="flex flex-col items-center justify-between gap-2">
+                    <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                                {spr.id === 'null' ? (
+                                    // Backlog - solo mostrar botón crear tarea
+                                    <button
+                                        onClick={handleCreateTask}
+                                        className="flex items-center gap-2 px-4 py-2 text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium"
+                                    >
+                                        <PlusIcon size={18} stroke={2.5} />
+                                        Crear Tarea
                                     </button>
-                                    <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-                                        <div className="py-1">
+                                ) : (
+                                    // Sprint normal - mostrar menú de opciones
+                                    <div className="relative group">
+                                        <button className="p-2 hover:bg-gray-50 rounded-md transition-colors duration-200">
+                                            <MenuIcon size={16} />
+                                        </button>
+                                        <div className="absolute left-0 top-full mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
                                             <button
                                                 onClick={handleEditSprint}
                                                 className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
@@ -1319,17 +1416,16 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
                                             </button>
                                         </div>
                                     </div>
-                                </div>
-                            )}
+                                )}
+                            </div>
+                            <h3 className="text-base font-medium text-gray-900 truncate" title={spr.title}>{spr.title}</h3>
                         </div>
-                    </div>
-                    {/* Filtro de participantes */}
-                    <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-500">Asignado a:</span>
+                        {/* Filtro de participantes */}
+                        {/* <span className="text-xs text-gray-500 whitespace-nowrap">Asignado a:</span> */}
                         <div className="relative" ref={userRef} style={{ minWidth: 180 }}>
                             <button
                                 type="button"
-                                className="bg-black/5 hover:bg-black/10 rounded-full pr-2 flex items-center gap-2 w-full group"
+                                className="bg-black/5 hover:bg-black/10 rounded-full px-2 flex items-center gap-2 w-full group py-2"
                                 onClick={() => setIsUserOpen(!isUserOpen)}
                             >
                                 {/* Avatar/Count */}
@@ -1402,7 +1498,7 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
                                 </svg>
                             </button>
                             {isUserOpen && (
-                                <div className="absolute z-[9999] top-full left-0 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-xl max-h-48 overflow-y-auto overscroll-none min-w-md">
+                                <div className="absolute z-[9999] top-full right-0 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-xl max-h-48 overflow-y-auto overscroll-none min-w-md">
                                     <button
                                         type="button"
                                         onClick={() => {
@@ -1476,160 +1572,111 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
                             )}
                         </div>
                     </div>
-                </div>
-                {/* <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
-                    <div className="flex items-center gap-1">
-                        <ClockIcon size={14} />
-                        <span>{getStatusDates()}</span>
+                    {/* Controles de desplazamiento horizontal */}
+                    <div className="flex items-center justify-between w-full">
+                        <button
+                            onClick={() => {
+                                if (scrollContainerRef.current) scrollContainerRef.current.scrollBy({ left: -320, behavior: 'smooth' })
+                            }}
+                            className="p-1 rounded-full bg-white border border-gray-200 text-gray-500 hover:text-blue-600 hover:border-blue-300 shadow-sm transition-all"
+                            title="Desplazar a la izquierda"
+                        >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M15 18l-6-6 6-6" />
+                            </svg>
+                        </button>
+                        <button
+                            onClick={() => {
+                                if (scrollContainerRef.current) scrollContainerRef.current.scrollBy({ left: 320, behavior: 'smooth' })
+                            }}
+                            className="p-1 rounded-full bg-white border border-gray-200 text-gray-500 hover:text-blue-600 hover:border-blue-300 shadow-sm transition-all"
+                            title="Desplazar a la derecha"
+                        >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M9 18l6-6-6-6" />
+                            </svg>
+                        </button>
                     </div>
-                    {spr.startDate && (
-                        <span>
-                            <b>Inicio:</b> {spr.startDate ? (() => {
-                                const [year, month, day] = spr.startDate.split('-').map(num => parseInt(num, 10))
-                                const date = new Date(year, month - 1, day)
-                                return date.toLocaleDateString('es-ES', {
-                                    day: '2-digit',
-                                    month: 'short',
-                                    year: 'numeric'
-                                })
-                            })() : 'No definida'}
-                        </span>
-                    )}
-                    {spr.endDate && (
-                        <span>
-                            <b>Fin:</b> {spr.endDate ? (() => {
-                                const [year, month, day] = spr.endDate.split('-').map(num => parseInt(num, 10))
-                                const date = new Date(year, month - 1, day)
-                                return date.toLocaleDateString('es-ES', {
-                                    day: '2-digit',
-                                    month: 'short',
-                                    year: 'numeric'
-                                })
-                            })() : 'No definida'}
-                        </span>
-                    )}
-                </div> */}
+                </div>
             </div>
 
             {/* Kanban Columns */}
-            <div className="p-6">
-                <DndContext
-                    sensors={sensors}
-                    onDragStart={handleDragStart}
-                    onDragEnd={handleDragEnd}
-                    onDragOver={handleDragOver}
-                    collisionDetection={pointerWithin}
+            <div className="p-4 pt-2 relative">
+                <div
+                    ref={scrollContainerRef}
+                    className="flex gap-4 pb-4 overflow-x-auto min-h-[calc(100vh-12rem)] snap-x scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent"
                 >
-                    <div className="flex flex-col">
-                        <div className="flex justify-between items-center gap-2 mb-4">
-                            <button
-                                type="button"
-                                aria-label="Desplazar a la izquierda"
-                                className="p-2 rounded-full bg-white border border-gray-200 shadow hover:bg-gray-100 transition disabled:opacity-50"
-                                onClick={() => {
-                                    const container = document.getElementById('kanban-scroll-container');
-                                    if (container) container.scrollBy({ left: -320, behavior: 'smooth' });
-                                }}
-                            >
-                                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-                                </svg>
-                            </button>
-                            <button
-                                type="button"
-                                aria-label="Desplazar a la derecha"
-                                className="p-2 rounded-full bg-white border border-gray-200 shadow hover:bg-gray-100 transition disabled:opacity-50"
-                                onClick={() => {
-                                    const container = document.getElementById('kanban-scroll-container');
-                                    if (container) container.scrollBy({ left: 320, behavior: 'smooth' });
-                                }}
-                            >
-                                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                                </svg>
-                            </button>
-                        </div>
 
-                        {/* Contenido principal */}
-                        <div className="overflow-x-auto" id="kanban-scroll-container">
-                            <div className="flex gap-4 min-h-[300px]">
-                                <SortableContext items={statuses.map(s => `status-column-${s.id}`)} strategy={horizontalListSortingStrategy}>
-                                    {statuses.map((status) => (
-                                        <StatusColumn
-                                            key={status.id}
-                                            status={status}
-                                            issues={issuesByStatus[status.id] || []}
-                                            sprintId={spr.id || 'unknown'}
-                                            activeId={activeId}
-                                            overId={overId}
-                                            onViewDetails={handleViewDetails}
-                                            onEdit={handleEdit}
-                                            onReassign={handleReassign}
-                                            onDelete={handleDelete}
-                                            onHistory={handleHistory}
-                                            onCreateTaskInSprint={handleOpenCreateTaskInSprint}
-                                        />
-                                    ))}
-                                </SortableContext>
+                    {statuses.map((status) => (
+                        <StatusColumn
+                            key={status.id}
+                            status={status}
+                            issues={issuesByStatus[status.id] || []}
+                            sprintId={spr.id as string}
+                            onViewDetails={handleViewDetails}
+                            onEdit={handleEdit}
+                            onReassign={handleReassign}
+                            onDelete={handleDelete}
+                            onHistory={handleHistory}
+                            onCreateTaskInSprint={(statusId) => {
+                                setSelectedStatusForNewTask(statusId)
+                                handleCreateTaskModal()
+                            }}
+                            onIssuePointerDown={handleIssuePointerDown}
+                            onColumnPointerDown={handleColumnPointerDown}
+                            dropIndicator={dropIndicator}
+                            isDraggingIssue={dragState?.type === 'issue'}
+                            draggingId={dragState?.activeId || null}
+                            isColumnDropTarget={dragState?.type === 'column' && dropIndicator?.targetId === `status-column-${status.id}`}
+                        />
+                    ))}
 
-                                {/* Columna para crear nuevo estado */}
-                                <div className="flex flex-col min-w-80 w-80 flex-shrink-0">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <div className="w-3 h-3 rounded-full bg-gray-300" />
-                                        <h4 className="font-medium text-gray-500">Nuevo Estado</h4>
-                                    </div>
-
-                                    <div className="min-h-[200px] bg-gray-50 rounded-lg flex items-center justify-center h-full">
-                                        <button
-                                            onClick={handleCreateStatusModal}
-                                            className="flex flex-col justify-center items-center gap-2 w-full h-full border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 group"
-                                        >
-                                            <div className="text-gray-400 group-hover:text-blue-500">
-                                                <PlusIcon size={24} />
-                                            </div>
-                                            <span className="text-sm text-gray-500 group-hover:text-blue-600 font-medium">
-                                                Crear Estado
-                                            </span>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    {/* Add new status button */}
+                    <div className="min-w-[300px] flex-shrink-0 flex items-start justify-center pt-2">
+                        <button
+                            onClick={() => {
+                                handleCreateStatusModal()
+                            }}
+                            className="flex items-center gap-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-4 py-2 rounded-lg transition-colors"
+                        >
+                            <PlusIcon size={20} />
+                            <span>Añadir estado</span>
+                        </button>
                     </div>
+                </div>
 
-                    <DragOverlay>
-                        {activeId && draggedIssue && !activeId.startsWith('status-column-') && (
-                            <DraggableIssue
-                                issue={draggedIssue}
-                                isOverlay
-                                onViewDetails={handleViewDetails}
-                                onEdit={handleEdit}
-                                onReassign={handleReassign}
-                                onDelete={handleDelete}
-                                onHistory={handleHistory}
-                            />
-                        )}
-                        {activeId && draggedColumn && activeId.startsWith('status-column-') && (
-                            <div className="flex flex-col min-w-80 w-80 flex-shrink-0 bg-white rounded-lg shadow-lg border-2 border-blue-400 opacity-90 rotate-3">
-                                <div className="flex items-center gap-2 mb-3 p-4">
-                                    <div
-                                        className="w-3 h-3 rounded-full"
-                                        style={{ backgroundColor: draggedColumn.color }}
-                                    />
-                                    <h4 className="font-medium text-gray-900">{draggedColumn.name}</h4>
-                                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                                        {issuesByStatus[draggedColumn.id]?.length || 0}
-                                    </span>
-                                </div>
-                                <div className="min-h-[200px] bg-gray-50 rounded-lg p-3 m-4 mt-0">
-                                    <div className="text-center text-gray-400 text-sm py-8">
-                                        Reordenando columna...
-                                    </div>
-                                </div>
+                {/* Native Drag Overlay */}
+                {dragState && (
+                    <div
+                        style={{
+                            position: 'fixed',
+                            top: 0,
+                            left: 0,
+                            width: dragState.startWidth,
+                            height: dragState.startHeight,
+                            transform: `translate(${dragState.currentPos.x - dragState.offset.x}px, ${dragState.currentPos.y - dragState.offset.y}px)`,
+                            pointerEvents: 'none',
+                            zIndex: 9999,
+                            opacity: 0.9,
+                            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                            transformOrigin: 'top left',
+                        }}
+                        className="bg-white rounded-lg p-2 border border-blue-200 rotate-3 cursor-grabbing shadow-xl"
+                    >
+                        {dragState.type === 'issue' && (
+                            <div className="text-sm font-medium text-blue-900 truncate flex items-center gap-2 px-2 py-1">
+                                <span className="w-3 h-3 rounded-full bg-blue-400"></span>
+                                <span>Moviendo tarea</span>
                             </div>
                         )}
-                    </DragOverlay>
-                </DndContext>
+                        {dragState.type === 'column' && (
+                            <div className="text-sm font-medium text-blue-900 truncate flex items-center gap-2 px-2 py-1 -translate-y-0.5">
+                                <span className="w-3 h-3 rounded-full bg-blue-400"></span>
+                                <span>Moviendo columna</span>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     )
