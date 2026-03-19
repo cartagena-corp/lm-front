@@ -2,12 +2,11 @@
 
 import { XIcon, AttachIcon, BoldIcon, ItalicIcon, StrikethroughIcon, CodeIcon, UnderlineIcon, PaletteIcon, HighlighterIcon, PlusIcon } from '@/assets/Icon'
 import { TextAreaProps, TooltipPosition, TaskProps } from '@/lib/types/types'
-import React, { useState, useRef, useEffect, useCallback, useLayoutEffect } from 'react'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
 import SelectionTooltip from './SelectionTooltip'
 import { useIssueStore } from '@/lib/store/IssueStore'
 import { useAuthStore } from '@/lib/store/AuthStore'
 import { useConfigStore } from '@/lib/store/ConfigStore'
-import { createPortal } from 'react-dom'
 import DOMPurify from 'dompurify'
 
 export default function TextArea({ title, value, onChange, files = [], onRemoveFile, onFilesChange,
@@ -28,7 +27,6 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
     const [, setForceUpdate] = useState(0) // Force re-render to update button states
     const [showIssueTooltip, setShowIssueTooltip] = useState(false)
     const [issueSearchQuery, setIssueSearchQuery] = useState('')
-    const [issueTooltipPosition, setIssueTooltipPosition] = useState<TooltipPosition>({ top: 0, left: 0 })
     const [currentPage, setCurrentPage] = useState(0)
     const editorRef = useRef<HTMLDivElement>(null)
     const containerRef = useRef<HTMLDivElement>(null)
@@ -186,10 +184,10 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
         const rect = range.getBoundingClientRect()
         const containerRect = containerRef.current?.getBoundingClientRect()
 
-        if (rect.width > 0) {
+        if (containerRect && rect.width > 0) {
             setTooltipPosition({
-                top: rect.top - 50,
-                left: rect.left + (rect.width / 2)
+                top: rect.top - containerRect.top - 50,
+                left: rect.left - containerRect.left + (rect.width / 2)
             })
             setShowTooltip(true)
         }
@@ -351,7 +349,7 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
         // Check if Backspace or Delete is pressed
         if (e.key === 'Backspace' || e.key === 'Delete') {
             const selection = window.getSelection()
-
+            
             // Handle deletion of issue badge (contenteditable="false" spans)
             if (selection && selection.rangeCount > 0) {
                 const range = selection.getRangeAt(0)
@@ -549,16 +547,6 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
         if (newShowState) {
             setCurrentPage(0)
             setIssueSearchQuery('')
-
-            // Calculate position relative to button
-            if (issueTooltipRef.current) {
-                const rect = issueTooltipRef.current.getBoundingClientRect()
-                setIssueTooltipPosition({
-                    top: rect.top,
-                    left: rect.left + rect.width
-                })
-            }
-
             try {
                 const token = await getValidAccessToken()
                 await getIssues(token, projectId, { page: 0, size: 10 })
@@ -583,7 +571,7 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
         // Set new timeout for API call (1 second debounce)
         searchDebounceRef.current = setTimeout(async () => {
             setCurrentPage(0)
-
+            
             try {
                 const token = await getValidAccessToken()
                 await getIssues(token, projectId, {
@@ -652,7 +640,7 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
             if (!id) return false
             return /^[a-zA-Z0-9-_]+$/.test(String(id))
         }
-
+        
         if (!isValidId(projectId) || !isValidId(issue.id)) {
             console.error('Invalid projectId or issueId')
             return
@@ -719,12 +707,12 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
     return (
         <div className="flex flex-col">
             {/* Title */}
-            <label className="font-medium text-sm block">
+            <label className="text-gray-900 text-sm font-semibold block mb-2">
                 {title}
             </label>
 
             {/* Toolbar */}
-            <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-t-lg px-2 py-1">
+            <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-t-lg px-3 py-2">
                 <div className="flex items-center gap-1">
                     {/* Format buttons */}
                     {formatButtons.map((btn, index) => (
@@ -732,11 +720,11 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
                             key={index}
                             type="button"
                             onClick={() => handleFormatClick(btn.type)}
-                            className={`p-1 hover:bg-gray-200 rounded transition-colors ${isButtonActive(btn.type, btn.command) ? 'bg-gray-300 text-blue-600' : ''
+                            className={`p-2 hover:bg-gray-200 rounded transition-colors ${isButtonActive(btn.type, btn.command) ? 'bg-gray-300 text-blue-600' : ''
                                 }`}
                             title={btn.label}
                         >
-                            <btn.icon size={14} />
+                            <btn.icon size={16} />
                         </button>
                     ))}
 
@@ -748,16 +736,16 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
                                 setShowColorPicker(!showColorPicker)
                                 setShowHighlightPicker(false)
                             }}
-                            className="p-1 hover:bg-gray-200 rounded transition-colors relative flex items-center justify-center"
+                            className="p-2 hover:bg-gray-200 rounded transition-colors relative flex items-center justify-center"
                             title="Color de texto"
                         >
                             {activeTextColor ? (
                                 <div
-                                    className="w-3.5 h-3.5 rounded-full border border-black"
+                                    className="w-4 h-4 rounded-full border border-black"
                                     style={{ backgroundColor: activeTextColor }}
                                 />
                             ) : (
-                                <PaletteIcon size={14} />
+                                <PaletteIcon size={16} />
                             )}
                         </button>
                         {showColorPicker && (
@@ -784,23 +772,23 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
                                 setShowHighlightPicker(!showHighlightPicker)
                                 setShowColorPicker(false)
                             }}
-                            className="p-1 hover:bg-gray-200 rounded transition-colors relative translate-y-[1px]"
+                            className="p-2 hover:bg-gray-200 rounded transition-colors relative"
                             title="Resaltado"
                         >
-                            <HighlighterIcon size={14} />
+                            <HighlighterIcon size={16} />
                             {activeHighlightColor && (
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
                                     viewBox="0 0 24 24"
-                                    width={14}
-                                    height={14}
-                                    className="absolute top-1 left-1"
+                                    width={16}
+                                    height={16}
+                                    className="absolute top-2 left-2"
                                 >
                                     <path
                                         d="m9 11-6 6v3h9l3-3"
                                         fill={activeHighlightColor}
                                         stroke="#000000"
-                                        strokeWidth="2"
+                                        strokeWidth="2.5"
                                         strokeLinecap="round"
                                         strokeLinejoin="round"
                                     />
@@ -827,10 +815,10 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
                     <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="p-1 hover:bg-gray-200 rounded transition-colors"
+                        className="p-2 hover:bg-gray-200 rounded transition-colors"
                         title="Adjuntar imagen"
                     >
-                        <AttachIcon size={14} stroke={1.5} />
+                        <AttachIcon size={16} stroke={1.5} />
                     </button>
                     <input
                         ref={fileInputRef}
@@ -847,84 +835,78 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
                             <button
                                 type="button"
                                 onClick={handleIssueTooltipToggle}
-                                className="p-1 hover:bg-gray-200 rounded transition-colors text-blue-600 translate-y-[1px]"
+                                className="p-2 hover:bg-gray-200 rounded transition-colors text-blue-600"
                                 title="Referenciar tarea"
                             >
-                                <PlusIcon size={14} stroke={1.5} />
+                                <PlusIcon size={16} stroke={1.5} />
                             </button>
 
                             {/* Issue search tooltip */}
-                            {showIssueTooltip && typeof document !== 'undefined' && createPortal(
-                                <IssueTooltipWrapper
-                                    position={issueTooltipPosition}
-                                    onClose={() => setShowIssueTooltip(false)}
-                                >
-                                    <div className="w-80 bg-white border border-gray-200 rounded-lg shadow-xl overflow-hidden">
-                                        <div
-                                            ref={issueScrollRef}
-                                            onScroll={handleIssueScroll}
-                                            className="max-h-80 overflow-y-auto border-b border-gray-200"
-                                        >
-                                            {isLoading && currentPage === 0 ? (
-                                                <div className="p-4 text-center text-sm text-gray-500">
-                                                    Cargando issues...
-                                                </div>
-                                            ) : issues.content.length === 0 ? (
-                                                <div className="p-4 text-center text-sm text-gray-500">
-                                                    No se encontraron issues
-                                                </div>
-                                            ) : (
-                                                <>
-                                                    {(issues.content as TaskProps[]).map((issue) => {
-                                                        const issueType = projectConfig?.issueTypes?.find((t: any) => t.id === issue.type)
-                                                        const typeColor = issueType?.color || '#6B7280'
-                                                        const typeName = issueType?.name || 'N/A'
+                            {showIssueTooltip && (
+                                <div className="absolute bottom-full right-0 mb-2 w-80 bg-white border border-gray-200 rounded-lg shadow-xl z-20">
+                                    <div
+                                        ref={issueScrollRef}
+                                        onScroll={handleIssueScroll}
+                                        className="max-h-80 overflow-y-auto border-b border-gray-200"
+                                    >
+                                        {isLoading && currentPage === 0 ? (
+                                            <div className="p-4 text-center text-sm text-gray-500">
+                                                Cargando issues...
+                                            </div>
+                                        ) : issues.content.length === 0 ? (
+                                            <div className="p-4 text-center text-sm text-gray-500">
+                                                No se encontraron issues
+                                            </div>
+                                        ) : (
+                                            <>
+                                                {(issues.content as TaskProps[]).map((issue) => {
+                                                    const issueType = projectConfig?.issueTypes?.find((t: any) => t.id === issue.type)
+                                                    const typeColor = issueType?.color || '#6B7280'
+                                                    const typeName = issueType?.name || 'N/A'
 
-                                                        return (
-                                                            <button
-                                                                key={issue.id}
-                                                                type="button"
-                                                                onClick={() => handleIssueSelect(issue)}
-                                                                className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 transition-colors"
-                                                            >
-                                                                <div className="flex items-center gap-3" title={typeName}>
-                                                                    <span className="w-1 h-10 rounded-full flex-shrink-0" style={{ backgroundColor: typeColor }} />
-                                                                    <div className="flex-1 min-w-0">
-                                                                        <p className="text-sm font-medium text-gray-900 truncate">
-                                                                            {issue.title}
+                                                    return (
+                                                        <button
+                                                            key={issue.id}
+                                                            type="button"
+                                                            onClick={() => handleIssueSelect(issue)}
+                                                            className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 transition-colors"
+                                                        >
+                                                            <div className="flex items-center gap-3" title={typeName}>
+                                                                <span className="w-1 h-10 rounded-full flex-shrink-0" style={{ backgroundColor: typeColor }} />
+                                                                <div className="flex-1 min-w-0">
+                                                                    <p className="text-sm font-medium text-gray-900 truncate">
+                                                                        {issue.title}
+                                                                    </p>
+                                                                    {issue.descriptions && issue.descriptions[0] && (
+                                                                        <p className="text-xs text-gray-500 truncate mt-1">
+                                                                            {issue.descriptions[0].title}
                                                                         </p>
-                                                                        {issue.descriptions && issue.descriptions[0] && (
-                                                                            <p className="text-xs text-gray-500 truncate mt-1">
-                                                                                {issue.descriptions[0].title}
-                                                                            </p>
-                                                                        )}
-                                                                    </div>
+                                                                    )}
                                                                 </div>
-                                                            </button>
-                                                        )
-                                                    })}
+                                                            </div>
+                                                        </button>
+                                                    )
+                                                })}
 
-                                                    {isLoadingMore && (
-                                                        <div className="p-3 text-center text-sm text-gray-500">
-                                                            Cargando más...
-                                                        </div>
-                                                    )}
-                                                </>
-                                            )}
-                                        </div>
-
-                                        <div className="p-3">
-                                            <input
-                                                type="search"
-                                                placeholder="Buscar issues..."
-                                                value={issueSearchQuery}
-                                                onChange={(e) => handleIssueSearch(e.target.value)}
-                                                className="w-full px-1 text-sm rounded-lg outline-none"
-                                            />
-                                        </div>
+                                                {isLoadingMore && (
+                                                    <div className="p-3 text-center text-sm text-gray-500">
+                                                        Cargando más...
+                                                    </div>
+                                                )}
+                                            </>
+                                        )}
                                     </div>
-                                </IssueTooltipWrapper>,
-                                document.body
+
+                                    <div className="p-3">
+                                        <input
+                                            type="search"
+                                            placeholder="Buscar issues..."
+                                            value={issueSearchQuery}
+                                            onChange={(e) => handleIssueSearch(e.target.value)}
+                                            className="w-full px-1 text-sm rounded-lg outline-none"
+                                        />
+                                    </div>
+                                </div>
                             )}
                         </div>
                     )}
@@ -948,7 +930,7 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
                 onDrop={handleDrop}
             >
                 {/* Selection Tooltip */}
-                {showTooltip && typeof document !== 'undefined' && createPortal(
+                {showTooltip && (
                     <div ref={tooltipRef}>
                         <SelectionTooltip
                             position={tooltipPosition}
@@ -960,8 +942,7 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
                             activeTextColor={activeTextColor}
                             activeHighlightColor={activeHighlightColor}
                         />
-                    </div>,
-                    document.body
+                    </div>
                 )}
 
                 <div
@@ -1026,66 +1007,6 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
                     </div>
                 </div>
             )}
-        </div>
-    )
-}
-
-function IssueTooltipWrapper({ children, position, onClose }: { children: React.ReactNode, position: TooltipPosition, onClose: () => void }) {
-    const wrapperRef = useRef<HTMLDivElement>(null)
-    const [adjustedPosition, setAdjustedPosition] = useState(position)
-
-    useLayoutEffect(() => {
-        if (!wrapperRef.current) return
-
-        const rect = wrapperRef.current.getBoundingClientRect()
-        const padding = 20
-        let { top, left } = position
-
-        // Prefer showing above the button
-        top = top - rect.height - 10
-        left = left - rect.width
-
-        // Check horizontal bounds
-        if (left < padding) {
-            left = padding
-        } else if (left + rect.width > window.innerWidth - padding) {
-            left = window.innerWidth - rect.width - padding
-        }
-
-        // Check vertical bounds
-        if (top < padding) {
-            // Show below instead
-            top = position.top + 30
-        }
-
-        if (top + rect.height > window.innerHeight - padding) {
-            top = window.innerHeight - rect.height - padding
-        }
-
-        setAdjustedPosition({ top, left })
-    }, [position])
-
-    // Close when clicking outside
-    useEffect(() => {
-        const handleClick = (e: MouseEvent) => {
-            if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
-                onClose()
-            }
-        }
-        document.addEventListener('mousedown', handleClick)
-        return () => document.removeEventListener('mousedown', handleClick)
-    }, [onClose])
-
-    return (
-        <div
-            ref={wrapperRef}
-            className="fixed z-[10000] transform-gpu transition-all duration-200"
-            style={{
-                top: `${adjustedPosition.top}px`,
-                left: `${adjustedPosition.left}px`
-            }}
-        >
-            {children}
         </div>
     )
 }

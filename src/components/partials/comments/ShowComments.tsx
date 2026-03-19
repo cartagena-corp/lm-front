@@ -4,17 +4,15 @@ import Comment from "@/components/ui/Comment"
 import { useAuthStore } from "@/lib/store/AuthStore"
 import { useCommentStore } from "@/lib/store/CommentStore"
 import { GlobalPagination, CommentProps, TaskProps } from "@/lib/types/types"
-import { API_ROUTES } from "@/lib/routes/issues.routes"
 import Image from "next/image"
 import { useEffect, useState, useCallback, DragEvent, useRef } from "react"
 
 interface ShowCommentsProps {
    arrayComments: GlobalPagination
    task: TaskProps
-   onRelationsUpdated?: () => void
 }
 
-export default function ShowComments({ arrayComments, task, onRelationsUpdated }: ShowCommentsProps) {
+export default function ShowComments({ arrayComments, task }: ShowCommentsProps) {
    const { getValidAccessToken } = useAuthStore()
    const { addComment, loadMoreComments, isLoading, isLoadingMore, hasMoreComments, comments: storeComments } = useCommentStore()
 
@@ -63,75 +61,12 @@ export default function ShowComments({ arrayComments, task, onRelationsUpdated }
       }
    }
 
-   // Extraer IDs de las tareas referenciadas en el HTML del comentario
-   const extractReferencedIssueIds = (html: string): string[] => {
-      if (typeof window === 'undefined') return []
-      
-      const tempDiv = document.createElement('div')
-      tempDiv.innerHTML = html
-      
-      const issueLinks = tempDiv.querySelectorAll('.issue-badge a')
-      const issueIds: string[] = []
-      
-      issueLinks.forEach((link) => {
-         const href = link.getAttribute('href')
-         if (href) {
-            // Extraer el ID de la tarea desde la URL: /tableros/{projectId}/{issueId}
-            const parts = href.split('/')
-            const issueId = parts[parts.length - 1]
-            if (issueId && issueId !== task.id) { // No incluir la tarea actual
-               issueIds.push(issueId)
-            }
-         }
-      })
-      
-      return [...new Set(issueIds)] // Eliminar duplicados
-   }
-
-   // Guardar relaciones de tareas
-   const saveRelatedIssues = async (token: string, issueIds: string[]) => {
-      if (issueIds.length === 0 || !task.id) return
-
-      try {
-         const response = await fetch(API_ROUTES.CRUD_RELATE_ISSUE(task.id as string), {
-            method: 'POST',
-            headers: {
-               'Content-Type': 'application/json',
-               'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(issueIds)
-         })
-
-         if (!response.ok) {
-            throw new Error('Error al guardar las relaciones')
-         }
-
-         console.log('Relaciones guardadas exitosamente')
-      } catch (error) {
-         console.error('Error al guardar relaciones:', error)
-      }
-   }
-
    const handleAddComment = async () => {
       if (!newComment.trim() && files.length === 0) return
       const token = await getValidAccessToken()
       if (!token) return
 
-      // Extraer IDs de tareas referenciadas
-      const referencedIssueIds = extractReferencedIssueIds(newComment)
-
-      // Guardar el comentario
       await addComment(token, task.id as string, newComment, files)
-
-      // Si hay tareas referenciadas, guardar las relaciones
-      if (referencedIssueIds.length > 0) {
-         await saveRelatedIssues(token, referencedIssueIds)
-         // Notificar al componente padre que las relaciones se han actualizado
-         if (onRelationsUpdated) {
-            onRelationsUpdated()
-         }
-      }
-
       setNewComment("")
       setFiles([])
    }
@@ -209,7 +144,7 @@ export default function ShowComments({ arrayComments, task, onRelationsUpdated }
                onChange={setNewComment}
                placeholder="Escribe tu comentario..."
                maxLength={5000}
-               minHeight='40px'
+               minHeight='100px'
                maxHeight='200px'
                files={files}
                onFilesChange={setFiles}

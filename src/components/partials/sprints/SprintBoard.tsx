@@ -1,5 +1,8 @@
 'use client'
 
+import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, pointerWithin, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
+import { restrictToWindowEdges } from '@dnd-kit/modifiers'
+import { MultiDragProvider } from '@/components/ui/dnd-kit/MultiDragContext'
 import { useSprintStore } from '@/lib/store/SprintStore'
 import { useBoardStore } from '@/lib/store/BoardStore'
 import { useAuthStore } from '@/lib/store/AuthStore'
@@ -12,9 +15,20 @@ export default function SprintBoard() {
    const { getValidAccessToken } = useAuthStore()
    const { selectedBoard } = useBoardStore()
 
+   const [selectedIds, setSelectedIds] = useState<string[]>([])
+   const [activeId, setActiveId] = useState<string | null>(null)
    const [activeSprintWithIssues, setActiveSprintWithIssues] = useState<any>(null)
 
-   // Obtener solo el sprint activo de los s disponibles
+   // Configuración de sensores personalizados para el drag
+   const sensors = useSensors(
+      useSensor(PointerSensor, {
+         activationConstraint: {
+            distance: 3, // El drag se activa después de mover 3 píxeles
+         },
+      })
+   )
+
+   // Obtener solo el sprint activo de los sprints disponibles
    const activeSprintData = activeSprint || sprints.find(sprint => sprint.active && sprint.id !== 'null')
 
    // Refrescar datos cuando cambie el proyecto
@@ -64,6 +78,71 @@ export default function SprintBoard() {
       }
    }, [sprints, activeSprintData])
 
+   // const handleCreateTask = async (newTask: any, filesMap?: Map<string, File[]>) => {
+   //    const token = await getValidAccessToken()
+   //    if (token) {
+   //       await createIssue(token, newTask, filesMap)
+   //       // Refrescar las issues del sprint activo después de crear una nueva tarea
+   //       await refreshActiveSprintIssues()
+   //    }
+   //    closeModal()
+   // }
+
+   // Modal handlers
+   // const handleCreateTaskModal = () => {
+   //    openModal({
+   //       size: "lg",
+   //       title: "Crear Nueva Tarea",
+   //       desc: "Agrega una nueva tarea al sprint activo",
+   //       children: <CreateTaskForm onSubmit={handleCreateTask} onCancel={() => closeModal()} />,
+   //       Icon: <PlusIcon size={20} stroke={1.75} />,
+   //       closeOnBackdrop: false,
+   //       closeOnEscape: true,
+   //       mode: "CREATE"
+   //    })
+   // }
+
+   const handleDragStart = (event: DragStartEvent) => {
+      const { active, activatorEvent } = event
+      const id = active.id as string
+      const shiftKey = (activatorEvent as PointerEvent).shiftKey
+      const metaKey = (activatorEvent as PointerEvent).metaKey
+
+      if (shiftKey || metaKey) {
+         setSelectedIds(prev =>
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+         )
+      } else if (!selectedIds.includes(id)) {
+         setSelectedIds([id])
+      }
+      setActiveId(id)
+   }
+
+   const handleDragEnd = async (event: DragEndEvent) => {
+      const { over } = event
+      if (!over) {
+         setSelectedIds([])
+         setActiveId(null)
+         return
+      }
+
+      const targetSprintId = over.id as string
+      if (!selectedIds.length) {
+         setActiveId(null)
+         return
+      }
+
+      // Para el tablero del sprint activo, solo permitimos mover dentro del mismo sprint
+      // No permitimos mover tareas fuera del sprint activo en esta vista
+      if (targetSprintId !== activeSprintData?.id) {
+         setSelectedIds([])
+         setActiveId(null)
+         return
+      }
+
+      setSelectedIds([])
+      setActiveId(null)
+   }
 
    if (isLoading && !sprints.length) {
       return (
@@ -130,9 +209,34 @@ export default function SprintBoard() {
 
    return (
       <div className="space-y-6">
-         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <SprintKanbanCard key={activeSprintWithIssues.id} spr={activeSprintWithIssues} />
-         </div>
+         <MultiDragProvider value={{ selectedIds, setSelectedIds }}>
+            <DndContext
+               sensors={sensors}
+               collisionDetection={pointerWithin}
+               onDragStart={handleDragStart}
+               onDragEnd={handleDragEnd}
+               modifiers={[restrictToWindowEdges]}
+            >
+               <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                  <SprintKanbanCard key={activeSprintWithIssues.id} spr={activeSprintWithIssues} />
+               </div>
+
+               <DragOverlay dropAnimation={null}>
+                  {activeId && (
+                     <div className="bg-blue-50 border-2 border-blue-200 border-dashed text-blue-700 cursor-grabbing flex items-center justify-center rounded-xl shadow-lg w-64 h-20 transition-all duration-200">
+                        <div className="flex items-center gap-2">
+                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                           </svg>
+                           <span className="font-medium text-sm">
+                              {selectedIds.length === 1 ? `${selectedIds.length} tarea seleccionada` : `${selectedIds.length} tareas seleccionadas`}
+                           </span>
+                        </div>
+                     </div>
+                  )}
+               </DragOverlay>
+            </DndContext>
+         </MultiDragProvider>
       </div>
    )
 }

@@ -5,17 +5,17 @@ import { useEffect, useCallback } from "react"
 
 const sizeClasses = {
     full: "max-w-[95vw] h-[95vh]",
-    xxl: "max-w-[1280px] h-[95vh]",
-    xl: "max-w-[960px] h-[95vh]",
-    lg: "max-w-[720px] h-[95vh]",
+    xxl: "max-w-[1280px]",
+    xl: "max-w-[960px]",
+    lg: "max-w-[720px]",
     md: "max-w-[600px]",
     sm: "max-w-[500px]",
 }
 
 const styleClasses = {
-    CREATE: "bg-blue-100 text-blue-600",
-    UPDATE: "bg-purple-100 text-purple-600",
-    DELETE: "bg-red-100 text-red-600",
+    CREATE: "bg-blue-50 text-blue-600",
+    UPDATE: "bg-purple-50 text-purple-600",
+    DELETE: "bg-red-50 text-red-600",
 }
 
 type ModalSize = keyof typeof sizeClasses
@@ -62,8 +62,11 @@ export default function Modal() {
                 return (
                     <motion.main
                         key={modal.id}
-                        className="backdrop-blur-sm flex items-center justify-center fixed inset-0"
-                        style={{ zIndex, backgroundColor: `rgba(0, 0, 0, ${0.4 + (index * 0.1)})` }}
+                        className="backdrop-blur-sm flex items-center justify-center fixed inset-0 p-4"
+                        style={{
+                            zIndex,
+                            backgroundColor: `rgba(0, 0, 0, ${0.4 + (index * 0.1)})` // Oscurecer más cada capa
+                        }}
                         onClick={handleBackdropClick}
                         aria-describedby={modal.desc ? `modal-desc-${modal.id}` : undefined}
                         aria-labelledby={`modal-title-${modal.id}`}
@@ -75,32 +78,52 @@ export default function Modal() {
                         transition={{ duration: 0.2 }}
                     >
                         <motion.section
-                            className={`${sizeClasses[modalSize]} bg-button-secondary-background rounded-md flex flex-col w-full max-h-[95vh] overflow-hidden`}
-                            initial={{ scale: 0.8, opacity: 0, y: 20 }}
+                            className={`${sizeClasses[modalSize]} bg-button-secondary-background rounded-md flex flex-col w-full max-h-[95vh] p-6`}
+                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
                             animate={{ scale: 1, opacity: 1, y: 0 }}
-                            exit={{ scale: 0.7, opacity: 0, y: 20 }}
-                            transition={{ duration: 0.3, ease: "easeOut" }}
+                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                            transition={{ duration: 0.2, ease: "easeOut" }}
                             onClick={(e) => e.stopPropagation()}
                         >
-                            {
-                                modal.title &&
-                                <header className="border-black/15 flex items-center justify-between gap-4 p-5 pb-0">
-                                    <aside className="flex items-center gap-4 min-w-0 flex-1">
-                                        <span className={`${styleClasses[modal.mode ?? "CREATE"]} flex justify-center items-center aspect-square rounded-md p-2 flex-shrink-0`}>
-                                            {modal.Icon ? modal.Icon : <PlusIcon size={20} stroke={2} />}
-                                        </span>
-                                        <hgroup className="flex flex-col min-w-0 flex-1">
-                                            <h2 className="text-black font-semibold text-lg/tight truncate" id={`modal-title-${modal.id}`} title={modal.title}>{modal.title}</h2>
-                                            {modal.desc && <p className="text-black/50 line-clamp-2 text-sm" id={`modal-desc-${modal.id}`} title={modal.desc}>{modal.desc}</p>}
-                                        </hgroup>
-                                    </aside>
-                                    <button className="hover:bg-black/5 text-black/50 transition-colors aspect-square rounded-md p-2 flex-shrink-0" onClick={() => closeModal(modal.id)}>
-                                        <XIcon size={20} stroke={2} />
-                                    </button>
-                                </header>
-                            }
+                            <article className="border-background-background rounded-xl shadow-sm border flex flex-col h-full">
+                                {
+                                    modal.title &&
+                                    <header className="border-background-background flex items-center justify-between border-b p-6 flex-shrink-0">
+                                        <aside className="flex items-center gap-4">
+                                            <span className={`${styleClasses[modal.mode ?? "CREATE"]} flex justify-center items-center rounded-md aspect-square p-2`}>
+                                                {modal.Icon ? modal.Icon : <PlusIcon size={20} stroke={1.75} />}
+                                            </span>
+                                            <hgroup className="flex flex-col">
+                                                <h2
+                                                    className="text-primary font-semibold line-clamp-1 text-lg"
+                                                    id={`modal-title-${modal.id}`}
+                                                    title={modal.title}
+                                                >
+                                                    {modal.title}
+                                                </h2>
+                                                {modal.desc && (
+                                                    <p
+                                                        className="text-sm text-gray-600 line-clamp-2"
+                                                        id={`modal-desc-${modal.id}`}
+                                                        title={modal.desc}
+                                                    >
+                                                        {modal.desc}
+                                                    </p>
+                                                )}
+                                            </hgroup>
+                                        </aside>
+                                        <button
+                                            onClick={() => closeModal(modal.id)}
+                                            className="hover:bg-background-background text-button-secondary-text/50 transition-colors aspect-square p-2 rounded"
+                                        >
+                                            <XIcon size={20} stroke={2} />
+                                        </button>
+                                    </header>
+                                }
 
-                            <main className="flex-1 min-h-0 overflow-y-auto p-5">{modal.children}</main>
+                                {/* Content */}
+                                <main className="flex-1 min-h-0 overflow-y-auto">{modal.children}</main>
+                            </article>
                         </motion.section>
                     </motion.main>
                 )

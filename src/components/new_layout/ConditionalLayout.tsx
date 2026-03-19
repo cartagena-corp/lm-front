@@ -12,9 +12,9 @@ export default function ConditionalLayout({ children }: { children: ReactNode })
     const shouldExcludeLayout = EXCLUDED_ROUTES.some(route => pathname.startsWith(route))
     if (shouldExcludeLayout) return <>{children}</>
     return (
-        <main className="bg-black/5 min-h-screen flex h-screen w-screen overflow-hidden">
+        <main className="bg-background min-h-screen flex h-screen w-screen overflow-hidden">
             <Sidebar />
-            <aside className="flex-1 px-6 py-4 overflow-auto h-screen min-w-0">
+            <aside className="flex-1 p-6 overflow-auto h-screen min-w-0">
                 {children}
             </aside>
             <Modal />

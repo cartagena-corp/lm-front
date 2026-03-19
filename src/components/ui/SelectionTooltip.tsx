@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useRef, useLayoutEffect } from 'react'
+import React, { useState } from 'react'
 import {
     BoldIcon,
     ItalicIcon,
@@ -24,10 +24,10 @@ interface SelectionTooltipProps {
     activeHighlightColor: string | null
 }
 
-export default function SelectionTooltip({
-    position,
-    onFormatClick,
-    onColorSelect,
+export default function SelectionTooltip({ 
+    position, 
+    onFormatClick, 
+    onColorSelect, 
     onHighlightSelect,
     onRemoveFormat,
     colors,
@@ -36,8 +36,6 @@ export default function SelectionTooltip({
 }: SelectionTooltipProps) {
     const [showColorPicker, setShowColorPicker] = useState(false)
     const [showHighlightPicker, setShowHighlightPicker] = useState(false)
-    const [adjustedPosition, setAdjustedPosition] = useState(position)
-    const tooltipRef = useRef<HTMLDivElement>(null)
 
     const formatButtons = [
         { icon: BoldIcon, type: 'bold', label: 'Negrita', command: 'bold' },
@@ -62,7 +60,7 @@ export default function SelectionTooltip({
         if (typeof window === 'undefined') return false
         const selection = window.getSelection()
         if (!selection || selection.rangeCount === 0) return false
-
+        
         let node = selection.anchorNode
         while (node) {
             if (node.nodeType === Node.ELEMENT_NODE && (node as Element).tagName === 'CODE') {
@@ -83,40 +81,12 @@ export default function SelectionTooltip({
         return false
     }
 
-    useLayoutEffect(() => {
-        if (!tooltipRef.current) return
-
-        const tooltipRect = tooltipRef.current.getBoundingClientRect()
-        const padding = 10
-        let newTop = position.top
-        let newLeft = position.left
-
-        // Horizontal adjustment (centerX is position.left)
-        const halfWidth = tooltipRect.width / 2
-        if (newLeft - halfWidth < padding) {
-            newLeft = halfWidth + padding
-        } else if (newLeft + halfWidth > window.innerWidth - padding) {
-            newLeft = window.innerWidth - halfWidth - padding
-        }
-
-        // Vertical adjustment
-        if (newTop < padding) {
-            newTop = padding
-        } else if (newTop + tooltipRect.height > window.innerHeight - padding) {
-            newTop = window.innerHeight - tooltipRect.height - padding
-        }
-
-        setAdjustedPosition({ top: newTop, left: newLeft })
-    }, [position])
-
     return (
         <div
-            ref={tooltipRef}
-            className="fixed z-[9999] bg-white border border-gray-200 rounded-lg shadow-lg p-1 flex items-center gap-1 transform-gpu"
+            className="absolute z-50 bg-white border border-gray-200 rounded-lg shadow-lg p-1 flex items-center gap-1"
             style={{
-                top: `${adjustedPosition.top}px`,
-                left: `${adjustedPosition.left}px`,
-                transform: 'translateX(-50%)'
+                top: `${position.top}px`,
+                left: `${position.left}px`
             }}
         >
             {formatButtons.map((btn, index) => (
@@ -124,14 +94,14 @@ export default function SelectionTooltip({
                     key={index}
                     type="button"
                     onClick={() => onFormatClick(btn.type)}
-                    className={`p-1.5 hover:bg-gray-100 rounded transition-colors ${isButtonActive(btn.type, btn.command) ? 'bg-gray-200 text-blue-600' : ''
-                        }`}
+                    className={`p-1.5 hover:bg-gray-100 rounded transition-colors ${
+                        isButtonActive(btn.type, btn.command) ? 'bg-gray-200 text-blue-600' : ''
+                    }`}
                     title={btn.label}
                 >
                     <btn.icon size={14} />
                 </button>
             ))}
-
 
             {/* Color picker */}
             <div className="relative">
@@ -145,7 +115,7 @@ export default function SelectionTooltip({
                     title="Color"
                 >
                     {activeTextColor ? (
-                        <div
+                        <div 
                             className="w-3.5 h-3.5 rounded-full border border-black"
                             style={{ backgroundColor: activeTextColor }}
                         />
@@ -185,15 +155,15 @@ export default function SelectionTooltip({
                 >
                     <HighlighterIcon size={14} />
                     {activeHighlightColor && (
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            width={14}
-                            height={14}
+                        <svg 
+                            xmlns="http://www.w3.org/2000/svg" 
+                            viewBox="0 0 24 24" 
+                            width={14} 
+                            height={14} 
                             className="absolute top-1.5 left-1.5"
                         >
-                            <path
-                                d="m9 11-6 6v3h9l3-3"
+                            <path 
+                                d="m9 11-6 6v3h9l3-3" 
                                 fill={activeHighlightColor}
                                 stroke="#000000"
                                 strokeWidth="2.5"

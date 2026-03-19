@@ -641,7 +641,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
    // Modal handlers
    const handleImportModal = () => {
       openModal({
-         size: "xl",
+         size: "xxl",
          title: "Importar Tareas",
          desc: "Importa tareas desde un archivo CSV o Excel al sprint actual",
          children: <ImportIssuesModal onCancel={() => closeModal()} sprintId={spr.id} />,
@@ -784,7 +784,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
 
    const handleCreateTaskInSprintModal = () => {
       openModal({
-         size: "xl",
+         size: "xxl",
          title: "Crear Tarea en Sprint",
          desc: `Crea una nueva tarea en el sprint ${spr.title}`,
          children: <CreateTaskForm onSubmit={handleCreateTaskInSprint} onCancel={() => closeModal()} />,

@@ -94,15 +94,15 @@ export function ColorPicker({ id, label, value = "#000000", inputRef, onChange }
 
    return (
       <div className="relative flex flex-col gap-1 text-sm" ref={pickerRef}>
-         {label && <label htmlFor={id} className="font-medium text-sm">{label} <b className='text-red-500'>*</b></label> }
+         {label && <label htmlFor={id} className="font-semibold text-sm">{label}</label>}
          <button
             id={id}
             type="button"
             onClick={() => setIsColorPickerOpen(!isColorPickerOpen)}
-            className="border-black/15 cursor-pointer w-full justify-start text-left duration-200 border rounded-md py-2 px-3"
+            className="border-black/15 cursor-pointer w-full justify-start text-left duration-200 border rounded-md py-2 px-4"
          >
             <span className="flex items-center gap-2">
-               <div className="border-black/15 rounded-full border h-3 w-3" style={{ backgroundColor: value }} />
+               <div className="border-black/15 rounded-full border h-5 w-5" style={{ backgroundColor: value }} />
                {value}
             </span>
          </button>

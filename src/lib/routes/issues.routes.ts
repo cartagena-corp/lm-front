@@ -19,7 +19,4 @@ export const API_ROUTES = {
     GEMINI_HISTORY: `${INTEGRATION_URL}/api/gemini-usage/logs`,
     GEMINI_HISTORY_FILTERS: `${INTEGRATION_URL}/api/gemini-usage/filters`,
     CRUD_SUBTASKS: (issueId: string) => `${BACKEND_URL}/api/issues/relations/${issueId}/subtasks`,
-    CRUD_RELATE_ISSUE: (issueId: string) => `${BACKEND_URL}/api/issues/relations/${issueId}/related`,
-    UNRELATE_ISSUE: (issueId: string) => `${BACKEND_URL}/api/issues/relations/${issueId}/unrelate`,
-    GET_RELATE_TO_ISSUE: (issueId: string) => `${BACKEND_URL}/api/issues/relations/${issueId}/related-to`,
 }

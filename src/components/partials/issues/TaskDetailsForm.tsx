@@ -1,12 +1,12 @@
 'use client'
 
-import { TaskProps, ConfigProjectStatusProps } from '@/lib/types/types'
-import { useEffect, useState, useMemo } from 'react'
+import { TaskProps } from '@/lib/types/types'
+import { useEffect, useState } from 'react'
 import { useConfigStore } from '@/lib/store/ConfigStore'
 import ShowComments from '../comments/ShowComments'
 import { useCommentStore } from '@/lib/store/CommentStore'
 import { useAuthStore } from '@/lib/store/AuthStore'
-import { CalendarIcon, ClockIcon, UsersIcon, XIcon, ChevronRightIcon, EditIcon, DownloadIcon, EyeIcon, DeleteIcon, FilterIcon, PlusIcon, LinkRedirect, BoardIcon, AuditIcon } from '@/assets/Icon'
+import { CalendarIcon, ClockIcon, UsersIcon, XIcon, ChevronRightIcon, EditIcon, DownloadIcon, EyeIcon, DeleteIcon, FilterIcon, PlusIcon, LinkRedirect } from '@/assets/Icon'
 import Link from 'next/link'
 import Image from 'next/image'
 import SafeHtml from '@/components/ui/SafeHtml'
@@ -14,18 +14,10 @@ import { useModalStore } from '@/lib/hooks/ModalStore'
 import CreateTaskForm from './CreateTaskForm'
 import { getUserAvatar } from '@/lib/utils/avatar.utils'
 import AuditHistory from '../audit/AuditHistory'
+import CustomSelect, { SelectOption } from '@/components/ui/CustomSelect'
 import { motion, AnimatePresence } from 'framer-motion'
 import { API_ROUTES } from '@/lib/routes/issues.routes'
 import { useIssueStore } from '@/lib/store/IssueStore'
-import { Button, DataSelect, TextInput } from '@/components/ui/FormUI'
-
-interface RelatedIssue {
-   id: number
-   targetId: string
-   targetTitle: string
-   type: number
-   status: number
-}
 
 interface TaskDetailsFormProps {
    onSubmit: () => void
@@ -39,7 +31,7 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
    const { projectConfig } = useConfigStore()
    const { updateIssue, getSpecificIssue, selectedIssue } = useIssueStore()
    const { openModal, closeModal } = useModalStore()
-   const [isSidebarVisible, setIsSidebarVisible] = useState(false)
+   const [isSidebarVisible, setIsSidebarVisible] = useState(true)
    const [isSubtasksOpen, setIsSubtasksOpen] = useState(false)
    const [selectedSubtasks, setSelectedSubtasks] = useState<string[]>([])
    const [showFilters, setShowFilters] = useState(false)
@@ -49,14 +41,6 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
    const [assignedFilter, setAssignedFilter] = useState<string | null>(null)
    const [subtasks, setSubtasks] = useState<TaskProps[]>([])
    const [loadingSubtasks, setLoadingSubtasks] = useState(false)
-
-   // Estados para la sección de Relaciones
-   const [isRelationsOpen, setIsRelationsOpen] = useState(false)
-   const [activeRelationTab, setActiveRelationTab] = useState<'related' | 'related-to'>('related')
-   const [relatedIssues, setRelatedIssues] = useState<RelatedIssue[]>([])
-   const [relatedToIssues, setRelatedToIssues] = useState<RelatedIssue[]>([])
-   const [loadingRelations, setLoadingRelations] = useState(false)
-   const [selectedRelations, setSelectedRelations] = useState<string[]>([])
 
    // Usar selectedIssue del store si está disponible, sino usar la prop task
    const currentTask = (selectedIssue?.id === task.id ? selectedIssue : task)
@@ -87,80 +71,17 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
       }
    }
 
-   // Función para obtener las tareas relacionadas desde esta tarea
-   const fetchRelatedIssues = async (token: string, issueId: string) => {
-      setLoadingRelations(true)
-      try {
-         const response = await fetch(API_ROUTES.CRUD_RELATE_ISSUE(issueId), {
-            method: 'GET',
-            headers: {
-               'Content-Type': 'application/json',
-               'Authorization': `Bearer ${token}`
-            }
-         })
-
-         if (!response.ok) {
-            throw new Error('Error al obtener las tareas relacionadas')
-         }
-
-         const data: RelatedIssue[] = await response.json()
-         setRelatedIssues(data)
-      } catch (error) {
-         console.error('Error al cargar tareas relacionadas:', error)
-         setRelatedIssues([])
-      } finally {
-         setLoadingRelations(false)
-      }
-   }
-
-   // Función para obtener las tareas que han relacionado a esta tarea
-   const fetchRelatedToIssues = async (token: string, issueId: string) => {
-      setLoadingRelations(true)
-      try {
-         const response = await fetch(API_ROUTES.GET_RELATE_TO_ISSUE(issueId), {
-            method: 'GET',
-            headers: {
-               'Content-Type': 'application/json',
-               'Authorization': `Bearer ${token}`
-            }
-         })
-
-         if (!response.ok) {
-            throw new Error('Error al obtener las tareas que relacionan a esta')
-         }
-
-         const data: RelatedIssue[] = await response.json()
-         setRelatedToIssues(data)
-      } catch (error) {
-         console.error('Error al cargar tareas que relacionan a esta:', error)
-         setRelatedToIssues([])
-      } finally {
-         setLoadingRelations(false)
-      }
-   }
-
    useEffect(() => {
       const getCommentsByIssueId = async () => {
          const token = await getValidAccessToken()
          if (token) {
             await getComments(token, currentTask?.id as string)
             await fetchSubtasks(token, currentTask?.id as string)
-            await fetchRelatedIssues(token, currentTask?.id as string)
-            await fetchRelatedToIssues(token, currentTask?.id as string)
          }
       }
 
       getCommentsByIssueId()
    }, [currentTask?.id])
-
-   // Función para recargar las relaciones cuando se actualicen
-   const handleRelationsUpdated = async () => {
-      const token = await getValidAccessToken()
-      if (token && currentTask?.id) {
-         await fetchRelatedIssues(token, currentTask.id as string)
-         await fetchRelatedToIssues(token, currentTask.id as string)
-      }
-   }
 
    const handleUpdate = async (formData: {
       descriptions: { id?: string, title: string, text: string }[],
@@ -253,49 +174,6 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
       console.log('Eliminar subtareas seleccionadas:', selectedSubtasks)
    }
 
-   // Función para eliminar relaciones seleccionadas
-   const handleDeleteRelations = async (relationIds: number[]) => {
-      const token = await getValidAccessToken()
-      if (!token || !currentTask?.id || relationIds.length === 0) return
-
-      try {
-         const response = await fetch(API_ROUTES.UNRELATE_ISSUE(currentTask.id), {
-            method: 'DELETE',
-            headers: {
-               'Content-Type': 'application/json',
-               'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(relationIds)
-         })
-
-         if (!response.ok) {
-            throw new Error('Error al eliminar las relaciones')
-         }
-
-         // Limpiar selección
-         setSelectedRelations([])
-
-         // Recargar las relaciones
-         await fetchRelatedIssues(token, currentTask.id)
-         await fetchRelatedToIssues(token, currentTask.id)
-
-         console.log('Relaciones eliminadas exitosamente')
-      } catch (error) {
-         console.error('Error al eliminar relaciones:', error)
-      }
-   }
-
-   // Función para eliminar una relación individual
-   const handleDeleteSingleRelation = async (relationId: number) => {
-      await handleDeleteRelations([relationId])
-   }
-
-   // Función para eliminar las relaciones seleccionadas
-   const handleDeleteSelectedRelations = async () => {
-      const relationIds = selectedRelations.map(id => parseInt(id))
-      await handleDeleteRelations(relationIds)
-   }
-
    // Función para crear una subtarea
    const handleCreateSubtask = async (formData: TaskProps, filesMap?: Map<string, File[]>) => {
       const token = await getValidAccessToken()
@@ -371,7 +249,7 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
    // Función para abrir el modal de crear subtarea
    const handleOpenCreateSubtaskModal = () => {
       openModal({
-         size: "md",
+         size: "xl",
          title: "Crear Subtarea",
          desc: "Crea una nueva subtarea para esta tarea",
          Icon: <PlusIcon size={20} stroke={1.75} />,
@@ -396,17 +274,51 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
       })
    }
 
-   // Opciones para los filtros (Memoizadas)
-   const typeOptions = useMemo(() => projectConfig?.issueTypes?.map(t => ({ id: t.id, name: t.name, color: t.color })) || [], [projectConfig?.issueTypes])
-   const statusOptions = useMemo(() => projectConfig?.issueStatuses?.map(s => ({ id: s.id, name: s.name, color: s.color })) || [], [projectConfig?.issueStatuses])
-   const priorityOptions = useMemo(() => projectConfig?.issuePriorities?.map(p => ({ id: p.id, name: p.name, color: p.color })) || [], [projectConfig?.issuePriorities])
-   const assignedOptions = useMemo(() => {
-      const uniqueUsers = Array.from(new Set(subtasks.map(s => typeof s.assignedId === 'object' ? s.assignedId?.id : null).filter(Boolean)))
-      return uniqueUsers.map(userId => {
-         const user = subtasks.find(s => typeof s.assignedId === 'object' && s.assignedId?.id === userId)?.assignedId as any
-         return { id: user.id as any, name: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || user.email, color: '#3b82f6' }
-      })
-   }, [subtasks])
+   // Generar opciones para los selects
+   const getTypeOptions = (): SelectOption[] => {
+      if (!projectConfig?.issueTypes) return []
+      return projectConfig.issueTypes.map((type: any) => ({
+         value: type.id,
+         label: type.name,
+         color: type.color
+      }))
+   }
+
+   const getStatusOptions = (): SelectOption[] => {
+      if (!projectConfig?.issueStatuses) return []
+      return projectConfig.issueStatuses.map((status: any) => ({
+         value: status.id,
+         label: status.name,
+         color: status.color
+      }))
+   }
+
+   const getPriorityOptions = (): SelectOption[] => {
+      if (!projectConfig?.issuePriorities) return []
+      return projectConfig.issuePriorities.map((priority: any) => ({
+         value: priority.id,
+         label: priority.name,
+         color: priority.color
+      }))
+   }
+
+   const getAssignedOptions = (): SelectOption[] => {
+      const uniqueUsers = Array.from(
+         new Set(subtasks.map(s => typeof s.assignedId === 'object' ? s.assignedId?.id : null).filter(Boolean))
+      )
+
+      return uniqueUsers.map((userId) => {
+         const user = subtasks.find(s => typeof s.assignedId === 'object' && s.assignedId?.id === userId)?.assignedId
+         if (!user || typeof user !== 'object') return null
+
+         return {
+            value: user.id,
+            label: user.firstName || user.lastName ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() : user.email || 'Sin nombre',
+            image: user.picture || undefined,
+            subtitle: user.email
+         }
+      }).filter(Boolean) as SelectOption[]
+   }
 
    // Contar filtros activos
    const activeFiltersCount = [typeFilter, statusFilter, priorityFilter, assignedFilter].filter(f => f !== null).length
@@ -417,7 +329,7 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
    }
 
    return (
-      <div className=" border-gray-100 rounded-xl shadow-sm border flex flex-col overflow-hidden h-full">
+      <div className="bg-white border-gray-100 rounded-xl shadow-sm border flex flex-col overflow-hidden h-full">
          {/* Header */}
          <div className="px-6 py-4 flex-shrink-0 border-b border-gray-100">
             <div className="flex items-center justify-between">
@@ -432,13 +344,21 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
                      <span className="flex-shrink-0"><LinkRedirect size={18} stroke={2} /></span>
                   </Link>
                </div>
-               <div className="flex items-center gap-1 flex-shrink-0">
-                  <Button onClick={handleUpdateBoardModal} variant="purple_outline" size="sm" className="w-8 h-8 p-0" title="Editar tarea">
-                     <EditIcon size={18} />
-                  </Button>
-                  <Button onClick={onCancel} variant="gray_outline" size="sm" className="w-8 h-8 p-0">
-                     <XIcon size={18} />
-                  </Button>
+               <div className="flex items-center gap-2 flex-shrink-0">
+                  <button
+                     onClick={() => handleUpdateBoardModal()}
+                     className="flex items-center justify-center w-8 h-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                     title="Editar tarea"
+                  >
+                     <EditIcon size={20} />
+                  </button>
+                  <button
+                     type="button"
+                     onClick={onCancel}
+                     className="flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                  >
+                     <XIcon size={20} />
+                  </button>
                </div>
             </div>
          </div>
@@ -555,34 +475,141 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
                                  ) : (
                                     <>
                                        {/* Botón de filtros con expansión horizontal */}
-                                       <div className="mb-3 flex items-center gap-2">
-                                          <Button onClick={handleOpenCreateSubtaskModal} size="sm" variant="purple" className="shrink-0 h-8">
-                                             <PlusIcon size={14} stroke={2} />
-                                             <span className="font-semibold">Crear Subtarea</span>
-                                          </Button>
-                                          <Button onClick={() => setShowFilters(!showFilters)} size="sm" variant="purple_outline" className="shrink-0 h-8">
-                                             <FilterIcon size={14} stroke={2} />
-                                             <span className="font-semibold">Filtros</span>
-                                             {activeFiltersCount > 0 && <span className="bg-purple-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px]">{activeFiltersCount}</span>}
-                                             <motion.div animate={{ rotate: showFilters ? 90 : 0 }} transition={{ duration: 0.2 }}>
-                                                <ChevronRightIcon size={12} stroke={2.5} />
-                                             </motion.div>
-                                          </Button>
-
-                                          {/* Panel de filtros inline con animación de barrido */}
-                                          <AnimatePresence>
-                                             {showFilters && (
-                                                <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="flex-1 flex items-center gap-2">
-                                                   <DataSelect label="" value={typeOptions.find(o => o.id === typeFilter) || null} onChange={(o) => setTypeFilter(o.id)} options={typeOptions} placeholder="Tipo" variant="purple" isRequired={false} fullWidth />
-                                                   <DataSelect label="" value={statusOptions.find(o => o.id === statusFilter) || null} onChange={(o) => setStatusFilter(o.id)} options={statusOptions} placeholder="Estado" variant="purple" isRequired={false} fullWidth />
-                                                   <DataSelect label="" value={priorityOptions.find(o => o.id === priorityFilter) || null} onChange={(o) => setPriorityFilter(o.id)} options={priorityOptions} placeholder="Prioridad" variant="purple" isRequired={false} fullWidth />
-                                                   <DataSelect label="" value={assignedOptions.find(o => o.id === assignedFilter) || null} onChange={(o) => setAssignedFilter(o.id as any)} options={assignedOptions} placeholder="Asignado" variant="purple" isRequired={false} fullWidth />
-                                                   {activeFiltersCount > 0 && (
-                                                      <Button onClick={() => { setTypeFilter(null); setStatusFilter(null); setPriorityFilter(null); setAssignedFilter(null); }} variant="red_outline" size="sm" className="h-8 shrink-0">Limpiar</Button>
-                                                   )}
+                                       <div className="mb-3">
+                                          <motion.div
+                                             initial={false}
+                                             animate={{
+                                                width: showFilters ? '100%' : 'auto'
+                                             }}
+                                             transition={{ duration: 0.3, ease: 'easeInOut' }}
+                                             className="flex items-center gap-2"
+                                          >
+                                             <button type='button'
+                                                onClick={() => handleOpenCreateSubtaskModal()}
+                                                className="hover:bg-blue-700 bg-blue-600 border-blue-600 text-white flex items-center gap-1.5 px-2.5 py-1.5 border rounded-md transition-all shadow-sm hover:shadow text-xs flex-shrink-0"
+                                             >
+                                                <PlusIcon size={14} stroke={2} />
+                                                <span className="font-semibold">Crear Subtarea</span>
+                                             </button>
+                                             <button type='button'
+                                                onClick={() => setShowFilters(!showFilters)}
+                                                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-blue-500 text-blue-600 rounded-md hover:bg-blue-50 transition-all shadow-sm hover:shadow text-xs flex-shrink-0"
+                                             >
+                                                <FilterIcon size={14} stroke={2} />
+                                                <span className="font-semibold">Filtros</span>
+                                                {activeFiltersCount > 0 && (
+                                                   <motion.span
+                                                      initial={{ scale: 0 }}
+                                                      animate={{ scale: 1 }}
+                                                      className="bg-blue-500 text-white flex justify-center items-center text-center rounded-full leading-0 text-[10px] aspect-square font-bold min-w-4 p-1"
+                                                   >
+                                                      {activeFiltersCount}
+                                                   </motion.span>
+                                                )}
+                                                <motion.div
+                                                   animate={{ rotate: showFilters ? 90 : 0 }}
+                                                   transition={{ duration: 0.2 }}
+                                                >
+                                                   <ChevronRightIcon size={12} stroke={2.5} />
                                                 </motion.div>
-                                             )}
-                                          </AnimatePresence>
+                                             </button>
+
+                                             {/* Panel de filtros inline con animación de barrido */}
+                                             <AnimatePresence>
+                                                {showFilters && (
+                                                   <motion.div
+                                                      initial={{ x: -20, opacity: 0 }}
+                                                      animate={{ x: 0, opacity: 1 }}
+                                                      exit={{ x: -20, opacity: 0 }}
+                                                      transition={{
+                                                         duration: 0.4,
+                                                         ease: [0.4, 0, 0.2, 1],
+                                                         opacity: { duration: 0.3 }
+                                                      }}
+                                                      className="flex-1 flex items-center gap-2"
+                                                   >
+                                                      {/* Filtro por tipo */}
+                                                      <motion.div
+                                                         initial={{ opacity: 0, x: -10 }}
+                                                         animate={{ opacity: 1, x: 0 }}
+                                                         transition={{ delay: 0.1 }}
+                                                         className="flex-1"
+                                                      >
+                                                         <CustomSelect
+                                                            value={typeFilter}
+                                                            onChange={(value) => setTypeFilter(value as number | null)}
+                                                            options={getTypeOptions()}
+                                                            placeholder="Tipo"
+                                                            variant="colored"
+                                                         />
+                                                      </motion.div>
+
+                                                      {/* Filtro por estado */}
+                                                      <motion.div
+                                                         initial={{ opacity: 0, x: -10 }}
+                                                         animate={{ opacity: 1, x: 0 }}
+                                                         transition={{ delay: 0.15 }}
+                                                         className="flex-1"
+                                                      >
+                                                         <CustomSelect
+                                                            value={statusFilter}
+                                                            onChange={(value) => setStatusFilter(value as number | null)}
+                                                            options={getStatusOptions()}
+                                                            placeholder="Estado"
+                                                            variant="colored"
+                                                         />
+                                                      </motion.div>
+
+                                                      {/* Filtro por prioridad */}
+                                                      <motion.div
+                                                         initial={{ opacity: 0, x: -10 }}
+                                                         animate={{ opacity: 1, x: 0 }}
+                                                         transition={{ delay: 0.2 }}
+                                                         className="flex-1"
+                                                      >
+                                                         <CustomSelect
+                                                            value={priorityFilter}
+                                                            onChange={(value) => setPriorityFilter(value as number | null)}
+                                                            options={getPriorityOptions()}
+                                                            placeholder="Prioridad"
+                                                            variant="colored"
+                                                         />
+                                                      </motion.div>
+
+                                                      {/* Filtro por asignado */}
+                                                      <motion.div
+                                                         initial={{ opacity: 0, x: -10 }}
+                                                         animate={{ opacity: 1, x: 0 }}
+                                                         transition={{ delay: 0.25 }}
+                                                         className="flex-1"
+                                                      >
+                                                         <CustomSelect
+                                                            value={assignedFilter}
+                                                            onChange={(value) => setAssignedFilter(value as string | null)}
+                                                            options={getAssignedOptions()}
+                                                            placeholder="Asignado"
+                                                            variant="user"
+                                                         />
+                                                      </motion.div>
+
+                                                      {/* Botón limpiar filtros */}
+                                                      {activeFiltersCount > 0 && (
+                                                         <button
+                                                            onClick={() => {
+                                                               setTypeFilter(null)
+                                                               setStatusFilter(null)
+                                                               setPriorityFilter(null)
+                                                               setAssignedFilter(null)
+                                                            }}
+                                                            className="px-2.5 py-1.5 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded transition-colors border border-red-200 flex-shrink-0"
+                                                         >
+                                                            Limpiar
+                                                         </button>
+                                                      )}
+                                                   </motion.div>
+                                                )}
+                                             </AnimatePresence>
+                                          </motion.div>
                                        </div>
 
                                        {/* Header de columnas */}
@@ -810,228 +837,18 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
                         </div>
                      )}
 
-                     {/* Sección de Relaciones (Acordeón con Tabs) */}
-                     <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-                        {/* Header del acordeón */}
-                        <button
-                           onClick={() => setIsRelationsOpen(!isRelationsOpen)}
-                           className={`w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors ${isRelationsOpen ? 'bg-gray-50' : ''}`}
-                        >
-                           <div className="flex items-center gap-2">
-                              <div className={`transform transition-transform duration-200 ${isRelationsOpen ? 'rotate-90' : ''}`}>
-                                 <ChevronRightIcon size={20} stroke={2} />
-                              </div>
-                              <h3 className="text-lg font-semibold text-gray-900">
-                                 Relaciones
-                              </h3>
-                              {/* <span className="bg-gray-100 text-gray-600 flex justify-center items-center text-xs font-bold rounded-full w-6 h-6">
-                                 {activeRelationTab === 'related' ? relatedIssues.length : relatedToIssues.length}
-                              </span> */}
-                           </div>
-                           {selectedRelations.length > 0 && (
-                              <div
-                                 onClick={(e) => {
-                                    e.preventDefault()
-                                    e.stopPropagation()
-                                    handleDeleteSelectedRelations()
-                                 }}
-                                 className="flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-sm"
-                              >
-                                 <DeleteIcon size={16} />
-                                 Eliminar ({selectedRelations.length})
-                              </div>
-                           )}
-                        </button>
-
-                        {/* Contenido del acordeón */}
-                        {isRelationsOpen && (
-                           <div className="border-t border-gray-200 p-4">
-                              {loadingRelations ? (
-                                 <div className="flex items-center justify-center py-8">
-                                    <div className="text-gray-500">Cargando relaciones...</div>
-                                 </div>
-                              ) : (
-                                 <>
-                                    {/* Tabs */}
-                                    <div className="flex gap-1 mb-4 p-1 bg-gray-50 rounded-lg border border-gray-100">
-                                       <button
-                                          onClick={() => setActiveRelationTab('related')}
-                                          className={`flex-1 px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${activeRelationTab === 'related'
-                                             ? 'bg-white text-purple-600 shadow-sm'
-                                             : 'text-gray-500 hover:text-gray-700'}`}
-                                       >
-                                          Relaciona a
-                                       </button>
-                                       <button
-                                          onClick={() => setActiveRelationTab('related-to')}
-                                          className={`flex-1 px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${activeRelationTab === 'related-to'
-                                             ? 'bg-white text-purple-600 shadow-sm'
-                                             : 'text-gray-500 hover:text-gray-700'}`}
-                                       >
-                                          Relacionada por
-                                       </button>
-                                    </div>
-
-                                    {/* Header de columnas */}
-                                    <div className="grid grid-cols-12 items-center gap-4 p-2 text-xs/tight font-semibold text-gray-600 border border-gray-200 bg-gray-50 rounded-t">
-                                       <div className="col-span-1 flex justify-center">
-                                          <input
-                                             type="checkbox"
-                                             onChange={(e) => {
-                                                const currentList = activeRelationTab === 'related' ? relatedIssues : relatedToIssues
-                                                if (e.target.checked) {
-                                                   setSelectedRelations(currentList.map(r => String(r.id)))
-                                                } else {
-                                                   setSelectedRelations([])
-                                                }
-                                             }}
-                                             checked={
-                                                selectedRelations.length > 0 &&
-                                                selectedRelations.length === (activeRelationTab === 'related' ? relatedIssues.length : relatedToIssues.length)
-                                             }
-                                             className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                          />
-                                       </div>
-                                       <div className="col-span-6">Título</div>
-                                       <div className="col-span-2">Tipo</div>
-                                       <div className="col-span-2">Estado</div>
-                                       <div className="col-span-1 text-center">Acciones</div>
-                                    </div>
-
-                                    {/* Lista de relaciones */}
-                                    <div className="space-y-2 mt-2">
-                                       {(activeRelationTab === 'related' ? relatedIssues : relatedToIssues).length > 0 ? (
-                                          (activeRelationTab === 'related' ? relatedIssues : relatedToIssues).map((relation) => {
-                                             const typeStyle = getTypeStyle(relation.type)
-                                             const statusStyle = getStatusStyle(relation.status)
-                                             const isSelected = selectedRelations.includes(String(relation.id))
-
-                                             return (
-                                                <div
-                                                   key={relation.id}
-                                                   className={`grid grid-cols-12 items-center gap-4 p-2 border rounded transition-colors text-xs/tight cursor-pointer ${isSelected
-                                                      ? 'border-blue-300 bg-blue-50'
-                                                      : 'border-gray-200 hover:bg-gray-50 hover:border-gray-300'
-                                                      }`}
-                                                   onClick={() => {
-                                                      const relationId = String(relation.id)
-                                                      setSelectedRelations(prev =>
-                                                         prev.includes(relationId)
-                                                            ? prev.filter(id => id !== relationId)
-                                                            : [...prev, relationId]
-                                                      )
-                                                   }}
-                                                >
-                                                   {/* Checkbox */}
-                                                   <div className="col-span-1 flex justify-center">
-                                                      <input
-                                                         type="checkbox"
-                                                         checked={isSelected}
-                                                         onChange={() => { }} // Manejado por el onClick del div padre
-                                                         className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
-                                                      />
-                                                   </div>
-
-                                                   {/* Título */}
-                                                   <Link
-                                                      href={`/tableros/${currentTask.projectId}/${relation.targetId}`}
-                                                      target="_blank"
-                                                      onClick={(e) => e.stopPropagation()}
-                                                      className={`col-span-6 truncate font-medium transition-colors ${isSelected ? 'text-blue-600' : 'text-gray-900 hover:text-blue-600'
-                                                         }`}
-                                                   >
-                                                      {relation.targetTitle}
-                                                   </Link>
-
-                                                   {/* Tipo */}
-                                                   <div className="col-span-2">
-                                                      {typeStyle ? (
-                                                         <span
-                                                            className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
-                                                            style={{
-                                                               backgroundColor: typeStyle.color + '20',
-                                                               color: typeStyle.color
-                                                            }}
-                                                         >
-                                                            {typeStyle.name}
-                                                         </span>
-                                                      ) : (
-                                                         <span className="text-gray-400">-</span>
-                                                      )}
-                                                   </div>
-
-                                                   {/* Estado */}
-                                                   <div className="col-span-2">
-                                                      {statusStyle ? (
-                                                         <span
-                                                            className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
-                                                            style={{
-                                                               backgroundColor: statusStyle.color + '20',
-                                                               color: statusStyle.color
-                                                            }}
-                                                         >
-                                                            {statusStyle.name}
-                                                         </span>
-                                                      ) : (
-                                                         <span className="text-gray-400">-</span>
-                                                      )}
-                                                   </div>
-
-                                                   {/* Acciones */}
-                                                   <div className="col-span-1 flex justify-center gap-1">
-                                                      <button
-                                                         onClick={(e) => {
-                                                            e.stopPropagation()
-                                                            handleHistorySubtask(relation.targetId)
-                                                         }}
-                                                         className="p-1.5 text-purple-600 hover:bg-purple-50 rounded transition-colors"
-                                                         title="Historial"
-                                                      >
-                                                         <ClockIcon size={16} />
-                                                      </button>
-                                                      <button
-                                                         onClick={(e) => {
-                                                            e.stopPropagation()
-                                                            handleDeleteSingleRelation(relation.id)
-                                                         }}
-                                                         className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
-                                                         title="Eliminar relación"
-                                                      >
-                                                         <DeleteIcon size={16} />
-                                                      </button>
-                                                   </div>
-                                                </div>
-                                             )
-                                          })
-                                       ) : (
-                                          <div className="flex items-center justify-center text-gray-500 py-8">
-                                             <p className="text-sm">
-                                                {activeRelationTab === 'related'
-                                                   ? 'Esta tarea no relaciona a ninguna otra'
-                                                   : 'Ninguna tarea relaciona a esta'}
-                                             </p>
-                                          </div>
-                                       )}
-                                    </div>
-                                 </>
-                              )}
-                           </div>
-                        )}
-                     </div>
-
                      {/* Sección de comentarios */}
                      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
-                        <ShowComments
-                           arrayComments={comments}
-                           task={currentTask}
-                           onRelationsUpdated={handleRelationsUpdated}
-                        />
+                        <ShowComments arrayComments={comments} task={currentTask} />
                      </div>
                   </div>
                </div>
 
                {/* Divider Line with Toggle Button */}
-               <div className="relative flex items-start justify-center group cursor-pointer flex-shrink-0 py-4" onClick={() => setIsSidebarVisible(!isSidebarVisible)} >
+               <div
+                  className="relative flex items-start justify-center group cursor-pointer flex-shrink-0 py-4"
+                  onClick={() => setIsSidebarVisible(!isSidebarVisible)}
+               >
                   <div className="w-px bg-gray-200 h-full absolute top-0" />
                   <div className="sticky top-8 flex items-center justify-center w-6 h-8 bg-white border border-gray-200 rounded-md shadow-sm group-hover:bg-gray-50 group-hover:border-gray-300 transition-all duration-200">
                      <div className={`text-gray-400 group-hover:text-gray-600 transition-all duration-300 ${isSidebarVisible ? 'transform' : 'transform rotate-180'}`}>
@@ -1050,66 +867,158 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
                <div className={`transition-all duration-300 ease-in-out flex-shrink-0 ${isSidebarVisible ? 'w-80 opacity-100' : 'w-0 opacity-0 overflow-hidden'}`}>
                   <div className={`h-full overflow-y-auto py-4 ${isSidebarVisible ? 'pl-2' : 'pl-0'}`}>
                      <div className="space-y-4">
-                        <div className="space-y-3">
-                           <section className="bg-white rounded-lg border border-gray-100 p-3 shadow-sm flex flex-col gap-2">
-                              <hgroup className="flex items-center gap-2 mb-1 text-blue-600">
-                                 <UsersIcon size={16} /> <h3 className="text-xs font-semibold text-gray-900 uppercase tracking-wider">Personas</h3>
-                              </hgroup>
-                              <article className="flex flex-col gap-1.5 text-xs">
-                                 <div className="flex justify-between items-center"><span className="text-gray-500">Asignado a:</span> <span className="font-medium">{typeof currentTask.assignedId === 'object' ? `${currentTask.assignedId.firstName ?? "Sin"} ${currentTask.assignedId.lastName ?? "asignar"}` : currentTask.assignedId || 'No asignado'}</span></div>
-                                 <div className="flex justify-between items-center"><span className="text-gray-500">Informador:</span> <span className="font-medium">{currentTask.reporterId ? `${currentTask.reporterId.firstName} ${currentTask.reporterId.lastName}` : 'No especificado'}</span></div>
-                              </article>
-                           </section>
+                        {/* Sección de personas */}
+                        <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                           <div className="flex items-center gap-2 mb-2">
+                              <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+                                 <UsersIcon size={18} />
+                              </div>
+                              <h3 className="font-semibold text-gray-900">Personas</h3>
+                           </div>
+                           <div className="space-y-1">
+                              <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                                 <span className="text-sm text-gray-500">Asignado a:&nbsp;&nbsp;</span>
+                                 <span className="text-sm font-medium text-gray-900">
+                                    {typeof currentTask.assignedId === 'object'
+                                       ? `${currentTask.assignedId.firstName ?? "Sin"} ${currentTask.assignedId.lastName ?? "asignar"}`
+                                       : currentTask.assignedId || 'No asignado'}
+                                 </span>
+                              </div>
+                              <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                                 <span className="text-sm text-gray-500">Informador:&nbsp;&nbsp;</span>
+                                 <span className="text-sm font-medium text-gray-900">
+                                    {currentTask.reporterId ? `${currentTask.reporterId.firstName} ${currentTask.reporterId.lastName}` : 'No especificado'}
+                                 </span>
+                              </div>
+                           </div>
+                        </div>
 
-                           <section className="bg-white rounded-lg border border-gray-100 p-3 shadow-sm flex flex-col gap-2">
-                              <hgroup className="flex items-center gap-2 mb-1 text-orange-600">
-                                 <BoardIcon size={16} /> <h3 className="text-xs font-semibold text-gray-900 uppercase tracking-wider">Detalles</h3>
-                              </hgroup>
-                              <article className="flex flex-col gap-2 text-xs">
-                                 <div className="flex justify-between items-center">
-                                    <span className="text-gray-500">Estado:</span>
-                                    {(() => {
-                                       const status = projectConfig?.issueStatuses?.find((s: { id: number }) => s.id === currentTask.status)
-                                       return status ? <span className="px-2 py-0.5 rounded-full text-[10px] font-medium border" style={{ backgroundColor: `${status.color}15`, color: status.color, borderColor: `${status.color}30` }}>{status.name}</span> : <span className="text-gray-400">N/A</span>
-                                    })()}
-                                 </div>
-                                 <div className="flex justify-between items-center">
-                                    <span className="text-gray-500">Tipo:</span>
-                                    {(() => {
-                                       const type = projectConfig?.issueTypes?.find((t: { id: number }) => t.id === currentTask.type)
-                                       return type ? <span className="px-2 py-0.5 rounded-full text-[10px] font-medium border" style={{ backgroundColor: `${type.color}15`, color: type.color, borderColor: `${type.color}30` }}>{type.name}</span> : <span className="text-gray-400">N/A</span>
-                                    })()}
-                                 </div>
-                                 <div className="flex justify-between items-center">
-                                    <span className="text-gray-500">Prioridad:</span>
-                                    {(() => {
-                                       const priority = projectConfig?.issuePriorities?.find((p: { id: number }) => p.id === currentTask.priority)
-                                       return priority ? <span className="px-2 py-0.5 rounded-full text-[10px] font-medium border" style={{ backgroundColor: `${priority.color}15`, color: priority.color, borderColor: `${priority.color}30` }}>{priority.name}</span> : <span className="text-gray-400">N/A</span>
-                                    })()}
-                                 </div>
-                              </article>
-                           </section>
+                        {/* Sección de detalles */}
+                        <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                           <div className="flex items-center gap-2 mb-2">
+                              <div className="p-2 bg-orange-100 rounded-lg text-orange-600">
+                                 <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                 </svg>
+                              </div>
+                              <h3 className="font-semibold text-gray-900">Detalles</h3>
+                           </div>
+                           <div className="space-y-1">
+                              <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                                 <span className="text-sm text-gray-500">Estado:&nbsp;&nbsp;</span>
+                                 {(() => {
+                                    const status = projectConfig?.issueStatuses?.find((s: { id: number }) => s.id === currentTask.status)
+                                    return status ? (
+                                       <span
+                                          className="px-3 py-1 rounded-full text-xs font-medium"
+                                          style={{
+                                             backgroundColor: `${status.color}20`,
+                                             color: status.color,
+                                             border: `1px solid ${status.color}40`
+                                          }}
+                                       >
+                                          {status.name}
+                                       </span>
+                                    ) : (
+                                       <span className="text-sm font-medium text-gray-400">No especificado</span>
+                                    )
+                                 })()}
+                              </div>
+                              <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                                 <span className="text-sm text-gray-500">Tipo:&nbsp;&nbsp;</span>
+                                 {(() => {
+                                    const type = projectConfig?.issueTypes?.find((t: { id: number }) => t.id === currentTask.type)
+                                    return type ? (
+                                       <span
+                                          className="px-3 py-1 rounded-full text-xs font-medium"
+                                          style={{
+                                             backgroundColor: `${type.color}20`,
+                                             color: type.color,
+                                             border: `1px solid ${type.color}40`
+                                          }}
+                                       >
+                                          {type.name}
+                                       </span>
+                                    ) : (
+                                       <span className="text-sm font-medium text-gray-400">No especificado</span>
+                                    )
+                                 })()}
+                              </div>
+                              <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                                 <span className="text-sm text-gray-500">Prioridad:&nbsp;&nbsp;</span>
+                                 {(() => {
+                                    const priority = projectConfig?.issuePriorities?.find((p: { id: number }) => p.id === currentTask.priority)
+                                    return priority ? (
+                                       <span
+                                          className="px-3 py-1 rounded-full text-xs font-medium"
+                                          style={{
+                                             backgroundColor: `${priority.color}20`,
+                                             color: priority.color,
+                                             border: `1px solid ${priority.color}40`
+                                          }}
+                                       >
+                                          {priority.name}
+                                       </span>
+                                    ) : (
+                                       <span className="text-sm font-medium text-gray-400">No especificado</span>
+                                    )
+                                 })()}
+                              </div>
+                           </div>
+                        </div>
 
-                           <section className="bg-white rounded-lg border border-gray-100 p-3 shadow-sm flex flex-col gap-2">
-                              <hgroup className="flex items-center gap-2 mb-1 text-green-600">
-                                 <CalendarIcon size={16} /> <h3 className="text-xs font-semibold text-gray-900 uppercase tracking-wider">Fechas</h3>
-                              </hgroup>
-                              <article className="flex flex-col gap-1.5 text-xs">
-                                 <div className="flex justify-between items-center"><span className="text-gray-500">Creación:</span> <span className="font-medium">{formatDate(currentTask.createdAt)}</span></div>
-                                 <div className="flex justify-between items-center"><span className="text-gray-500">Actualización:</span> <span className="font-medium">{formatDate(currentTask.updatedAt)}</span></div>
-                                 <div className="flex justify-between items-center"><span className="text-gray-500">Inicio:</span> <span className="font-medium">{formatDate(currentTask.startDate, false, true)}</span></div>
-                                 <div className="flex justify-between items-center"><span className="text-gray-500">Vencimiento:</span> <span className="font-medium">{formatDate(currentTask.endDate, false, true)}</span></div>
-                              </article>
-                           </section>
+                        {/* Sección de fechas */}
+                        <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                           <div className="flex items-center gap-2 mb-2">
+                              <div className="p-2 bg-green-100 rounded-lg text-green-600">
+                                 <CalendarIcon size={18} />
+                              </div>
+                              <h3 className="font-semibold text-gray-900">Fechas</h3>
+                           </div>
+                           <div className="space-y-1">
+                              <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                                 <span className="text-sm text-gray-500">Creación:&nbsp;&nbsp;</span>
+                                 <span className="text-sm font-medium text-gray-900">
+                                    {formatDate(currentTask.createdAt)}
+                                 </span>
+                              </div>
+                              <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                                 <span className="text-sm text-gray-500">Actualización:&nbsp;&nbsp;</span>
+                                 <span className="text-sm font-medium text-gray-900">
+                                    {formatDate(currentTask.updatedAt)}
+                                 </span>
+                              </div>
+                              <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                                 <span className="text-sm text-gray-500">Fecha de inicio:&nbsp;&nbsp;</span>
+                                 <span className="text-sm font-medium text-gray-900">{formatDate(currentTask.startDate, false, true)}</span>
+                              </div>
+                              <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                                 <span className="text-sm text-gray-500">Fecha de fin:&nbsp;&nbsp;</span>
+                                 <span className="text-sm font-medium text-gray-900">{formatDate(currentTask.endDate, false, true)}</span>
+                              </div>
+                              <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                                 <span className="text-sm text-gray-500">Fecha real de finalización:&nbsp;&nbsp;</span>
+                                 <span className="text-sm font-medium text-gray-900">{formatDate(currentTask.realDate, false, true)}</span>
+                              </div>
+                           </div>
+                        </div>
 
-                           <section className="bg-white rounded-lg border border-gray-100 p-3 shadow-sm flex flex-col gap-2">
-                              <hgroup className="flex items-center gap-2 mb-1 text-purple-600">
-                                 <ClockIcon size={16} /> <h3 className="text-xs font-semibold text-gray-900 uppercase tracking-wider">Tiempo</h3>
-                              </hgroup>
-                              <article className="flex flex-col gap-1.5 text-xs">
-                                 <div className="flex justify-between items-center"><span className="text-gray-500">Estimado:</span> <span className="font-medium text-purple-600">{currentTask.estimatedTime ? `${currentTask.estimatedTime}h` : 'N/A'}</span></div>
-                              </article>
-                           </section>
+                        {/* Sección de tiempo */}
+                        <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                           <div className="flex items-center gap-2 mb-2">
+                              <div className="p-2 bg-purple-100 rounded-lg text-purple-600">
+                                 <ClockIcon size={18} />
+                              </div>
+                              <h3 className="font-semibold text-gray-900">Tiempo</h3>
+                           </div>
+                           <div className="space-y-1">
+                              <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                                 <span className="text-sm text-gray-500">Estimado:&nbsp;&nbsp;</span>
+                                 <span className="text-sm font-medium text-gray-900">
+                                    {currentTask.estimatedTime ? `${currentTask.estimatedTime} horas` : 'No especificado'}
+                                 </span>
+                              </div>
+                           </div>
                         </div>
                      </div>
                   </div>
@@ -1118,34 +1027,32 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
          </div>
       </div>
    )
+
 }
 
 // Formatea fechas a formato legible
 function formatDate(dateStr?: string, includeTime = false, onlyDate = false): string {
-   if (!dateStr) return 'No especificado'
-
+   if (!dateStr) return 'No especificado';
    let date: Date;
-   // Attempt to parse as ISO string first, then as YYYY-MM-DD
    if (dateStr.includes('T')) {
-      date = new Date(dateStr)
+      date = new Date(dateStr);
    } else {
-      const [year, month, day] = dateStr.split('-').map(num => parseInt(num, 10))
-      date = new Date(year, month - 1, day)
+      const [year, month, day] = dateStr.split('-').map(num => parseInt(num, 10));
+      date = new Date(year, month - 1, day);
    }
-
-   if (isNaN(date.getTime())) return 'Fecha inválida'
-
-   const options: Intl.DateTimeFormatOptions = {
+   if (onlyDate) {
+      return date.toLocaleDateString('es-ES', {
+         day: '2-digit',
+         month: 'long',
+         year: 'numeric',
+      });
+   }
+   return date.toLocaleDateString('es-ES', {
       day: '2-digit',
       month: 'long',
-      year: 'numeric'
-   }
-
-   if (includeTime) {
-      options.hour = '2-digit'
-      options.minute = '2-digit'
-      options.hour12 = true
-   }
-
-   return date.toLocaleDateString('es-ES', options)
+      year: 'numeric',
+      hour: includeTime ? '2-digit' : undefined,
+      minute: includeTime ? '2-digit' : undefined,
+      hour12: includeTime ? true : undefined
+   });
 }

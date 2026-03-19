@@ -255,14 +255,6 @@ export const CheckmarkIcon = ({ size = 24, stroke = 1.5 }: IconProps) => {
    )
 }
 
-export const CheckIcon = ({ size = 24, stroke = 1.5 }: IconProps) => {
-   return (
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill={"none"}>
-         <path d="M20 6 9 17l-5-5" stroke="currentColor" strokeWidth={stroke} />
-      </svg>
-   )
-}
-
 export const SidebarCollapseIcon = ({ size = 24, stroke = 1.5 }: IconProps) => {
    return (
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill="none">
@@ -498,34 +490,3 @@ export const DashboardIcon = ({ size = 16 }: { size?: number }) => (
       <rect width="7" height="5" x="3" y="16" rx="1" />
    </svg>
 )
-
-export const LoaderIcon = ({ size = 16 }: { size?: number }) => (
-   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin">
-      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-   </svg>
-)
-
-export const VerticalEllipsisIcon = ({ size = 24, stroke = 1.5 }: IconProps) => (
-   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="1" />
-      <circle cx="12" cy="5" r="1" />
-      <circle cx="12" cy="19" r="1" />
-   </svg>
-)
-
-export const KanbanIcon = ({ size = 24, stroke = 1.5 }: IconProps) => (
-   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round">
-      <rect width="18" height="18" x="3" y="3" rx="2" />
-      <path d="M9 3v18" />
-      <path d="M15 3v18" />
-   </svg>
-)
-
-export const GanttIcon = ({ size = 24, stroke = 1.5 }: IconProps) => (
-   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M6 5h12" />
-      <path d="M4 12h10" />
-      <path d="M12 19h8" />
-   </svg>
-)
-
