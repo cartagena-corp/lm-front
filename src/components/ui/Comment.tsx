@@ -276,8 +276,8 @@ export default function Comment({ comment }: Props) {
                      onChange={setNewReply}
                      placeholder="Escribe tu respuesta..."
                      maxLength={2000}
-                     minHeight='60px'
-                     maxHeight='150px'
+                     minHeight='40px'
+                     maxHeight='200px'
                      files={replyFiles}
                      onFilesChange={setReplyFiles}
                      onRemoveFile={(index) => {

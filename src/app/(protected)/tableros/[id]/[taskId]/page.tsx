@@ -356,7 +356,7 @@ export default function TaskDetailsPage() {
     // Función para abrir el modal de crear subtarea
     const handleOpenCreateSubtaskModal = () => {
         openModal({
-            size: "xl",
+            size: "md",
             title: "Crear Subtarea",
             desc: "Crea una nueva subtarea para esta tarea",
             Icon: <PlusIcon size={20} stroke={1.75} />,
