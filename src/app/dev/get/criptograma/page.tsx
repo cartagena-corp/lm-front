@@ -20,6 +20,7 @@ interface FormState {
   docNum: string;
   docType: string;
   account: string;
+  udid: string;
 }
 
 interface Result {
@@ -40,6 +41,7 @@ interface FormErrors {
   docNum?: string;
   docType?: string;
   account?: string;
+  udid?: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -112,6 +114,9 @@ function validateForm(form: FormState): FormErrors {
   if (!form.account) errors.account = "El número de cuenta es requerido";
   else if (!hexPattern.test(form.account)) errors.account = "Debe ser hexadecimal válido";
   else if (form.account.length !== 8) errors.account = "Debe tener exactamente 8 caracteres (hex)";
+
+  if (!form.udid) errors.udid = "El UDID es requerido";
+  else if (!hexPattern.test(form.udid)) errors.udid = "Debe ser hexadecimal válido";
 
   return errors;
 }
@@ -346,6 +351,7 @@ const INITIAL_FORM: FormState = {
   docNum:  "",
   docType: "",
   account: "",
+  udid:    "",
 };
 
 export default function CriptogramaPage() {
@@ -398,6 +404,7 @@ export default function CriptogramaPage() {
           docNum:  form.docNum,
           docType: form.docType,
           account: form.account.toLowerCase(),
+          udid:    form.udid.toLowerCase(),
         }),
       });
 
@@ -431,9 +438,9 @@ export default function CriptogramaPage() {
 
   const isComplete = form.otp.every(Boolean);
   const completedFields = [
-    form.bdk, form.ksn, form.ipek, isComplete ? "ok" : "", form.docNum, form.docType, form.account,
+    form.bdk, form.ksn, form.ipek, isComplete ? "ok" : "", form.docNum, form.docType, form.account, form.udid,
   ].filter(Boolean).length;
-  const progress = Math.round((completedFields / 7) * 100);
+  const progress = Math.round((completedFields / 8) * 100);
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
@@ -579,6 +586,17 @@ export default function CriptogramaPage() {
                 placeholder="1026590349"
                 type="text"
                 maxLength={15}
+              />
+
+              <InputField
+                id="udid"
+                label="UDID del Dispositivo"
+                hint="hex"
+                value={form.udid}
+                onChange={(v) => setField("udid", v.toLowerCase())}
+                error={errors.udid}
+                placeholder="4a7f2c096c6f25fb"
+                monospace
               />
 
               <InputField

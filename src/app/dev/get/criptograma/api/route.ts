@@ -79,7 +79,7 @@ function generatePinBlock(pin: string, pan: string, docType: string): string {
   return dataToHexstring(output);
 }
 
-function decryptForKey(plain: string): string {
+function decryptForKey(plain: string, udidParam: string): string {
   const options = {
     inputEncoding: "hex",
     outputEncoding: "hex",
@@ -87,7 +87,7 @@ function decryptForKey(plain: string): string {
   };
 
   let encryptionBDK = "11111111111111111111111111111111";
-  let udid = "4a7f2c096c6f25fb";
+  let udid = udidParam;
 
   if (udid.length > encryptionBDK.length) {
     udid = udid.substring(0, encryptionBDK.length);
@@ -109,7 +109,8 @@ function encryptForPinBlock(
   account: string,
   bdkData: string,
   ksnData: string,
-  ipekData: string
+  ipekData: string,
+  udid: string
 ): string {
   const options = {
     inputEncoding: "hex",
@@ -119,8 +120,8 @@ function encryptForPinBlock(
   };
 
   // Paso 12-13: Descifrar BDK y KSN
-  const encryptionBDK = decryptForKey(bdkData);
-  let ksn = decryptForKey(ksnData);
+  const encryptionBDK = decryptForKey(bdkData, udid);
+  let ksn = decryptForKey(ksnData, udid);
 
   // Paso 14: Remover últimos 4 del KSN
   ksn = ksn.substring(0, ksn.length - 4);
@@ -130,7 +131,7 @@ function encryptForPinBlock(
   ksn = ksn.toUpperCase();
 
   // Paso 16: Descifrar IPEK
-  const ipek = decryptForKey(ipekData);
+  const ipek = decryptForKey(ipekData, udid);
 
   // Paso 17-18: Inicializar motor DUKPT y derivar clave de sesión
   const dukpt = new Dukpt(encryptionBDK, ksn);
@@ -152,6 +153,7 @@ export interface DukptRequestBody {
   docNum: string;
   docType: string;
   account: string;
+  udid: string;
 }
 
 export interface DukptResponseBody {
@@ -163,9 +165,9 @@ export interface DukptResponseBody {
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const body: DukptRequestBody = await request.json();
-    const { bdk, ksn, ipek, pin, docNum, docType, account } = body;
+    const { bdk, ksn, ipek, pin, docNum, docType, account, udid } = body;
 
-    if (!bdk || !ksn || !ipek || !pin || !docNum || !docType || !account) {
+    if (!bdk || !ksn || !ipek || !pin || !docNum || !docType || !account || !udid) {
       return NextResponse.json(
         { error: "Todos los campos son requeridos" },
         { status: 400 }
@@ -178,7 +180,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       account,
       bdk,
       ksn,
-      ipek
+      ipek,
+      udid
     );
 
     return NextResponse.json<DukptResponseBody>({
