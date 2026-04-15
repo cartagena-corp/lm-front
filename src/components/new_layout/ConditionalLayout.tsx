@@ -5,7 +5,7 @@ import { ReactNode } from "react"
 import Sidebar from "./Sidebar"
 import Modal from "./Modal"
 
-const EXCLUDED_ROUTES = ["/login", "/login/callback"] as const
+const EXCLUDED_ROUTES = ["/login", "/login/callback", "/dev/get/criptograma"] as const
 
 export default function ConditionalLayout({ children }: { children: ReactNode }) {
     const pathname = usePathname()
