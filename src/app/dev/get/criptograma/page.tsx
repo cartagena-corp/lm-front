@@ -303,6 +303,7 @@ function ResultCard({ label, value, accent }: ResultCardProps) {
       </p>
       {value && (
         <button
+          type="button"
           onClick={handleCopy}
           title="Copiar"
           className={[
