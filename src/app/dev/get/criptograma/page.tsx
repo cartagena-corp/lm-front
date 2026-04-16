@@ -26,6 +26,9 @@ interface FormState {
 interface Result {
   pinBlock: string;
   encryptedPinBlock: string;
+  encryptedBdk?: string;
+  encryptedKsn?: string;
+  encryptedIpek?: string;
 }
 
 interface StepLog {
@@ -72,11 +75,11 @@ const PROCESS_STEPS: StepLog[] = [
   { label: "Paso 9",  description: "Longitudes igualadas con bytes nulos" },
   { label: "Paso 10", description: "XOR aplicado: Bloque₁ ⊕ Bloque₂" },
   { label: "Paso 11", description: "Resultado XOR → hexadecimal = PIN Block" },
-  { label: "Paso 12", description: "BDK descifrado con motor DUKPT" },
-  { label: "Paso 13", description: "KSN descifrado con motor DUKPT" },
+  { label: "Paso 12", description: "BDK recibida directamente" },
+  { label: "Paso 13", description: "KSN recibida directamente" },
   { label: "Paso 14", description: "Últimos 4 bytes del KSN removidos" },
   { label: "Paso 15", description: "4 últimos dígitos de cuenta → KSN" },
-  { label: "Paso 16", description: "IPEK descifrado con motor DUKPT" },
+  { label: "Paso 16", description: "IPEK recibida directamente" },
   { label: "Paso 17", description: "Motor DUKPT inicializado con BDK + KSN" },
   { label: "Paso 18", description: "Clave de sesión DUKPT derivada" },
   { label: "Paso 19", description: "PIN Block cifrado con clave DUKPT" },
@@ -417,7 +420,13 @@ export default function CriptogramaPage() {
         throw new Error(data.error ?? "Error desconocido del servidor");
       }
 
-      setResult({ pinBlock: data.pinBlock, encryptedPinBlock: data.encryptedPinBlock });
+      setResult({ 
+        pinBlock: data.pinBlock, 
+        encryptedPinBlock: data.encryptedPinBlock,
+        encryptedBdk: data.encryptedBdk,
+        encryptedKsn: data.encryptedKsn,
+        encryptedIpek: data.encryptedIpek,
+      });
     } catch (err: unknown) {
       clearInterval(stepInterval);
       setActiveSteps(0);
@@ -668,15 +677,37 @@ export default function CriptogramaPage() {
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {/* {result?.encryptedBdk && ( */}
+                  <ResultCard
+                    label="Llave BDK encriptada"
+                    value={result?.encryptedBdk ?? ""}
+                  />
+                {/* )} */}
+                {/* {result?.encryptedKsn && ( */}
+                  <ResultCard
+                    label="Llave KSN encriptada"
+                    value={result?.encryptedKsn ?? ""}
+                  />
+                {/* )} */}
+                
+                {/* {result?.encryptedIpek && ( */}
+                  <ResultCard
+                    label="Llave IPEK encriptada"
+                    value={result?.encryptedIpek ?? ""}
+                  />
+                {/* )} */}
                 <ResultCard
                   label="PIN Block generado (hex)"
                   value={result?.pinBlock ?? ""}
                 />
-                <ResultCard
-                  label="PIN Block cifrado con DUKPT (hex)"
-                  value={result?.encryptedPinBlock ?? ""}
-                  accent
-                />
+                
+                <div className="md:col-span-2">
+                  <ResultCard
+                    label="PIN Block cifrado con DUKPT (hex)"
+                    value={result?.encryptedPinBlock ?? ""}
+                    accent
+                  />
+                </div>
               </div>
 
               {!result && !apiError && (

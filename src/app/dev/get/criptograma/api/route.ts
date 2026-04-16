@@ -6,6 +6,22 @@ import Dukpt from "@atmira/dukpt3des";
 // ─────────────────────────────────────────────
 //  Helpers replicados de test-dukpt.js
 // ─────────────────────────────────────────────
+function getPaddedUdid(udid: string): string {
+  let encryptionBDK = "11111111111111111111111111111111"; // Longitud 32
+  let res = udid;
+  for (var i = 0; i < encryptionBDK.length - res.length; i++) {
+    res = "0" + res;
+  }
+  return res;
+}
+
+function tripleDesLibrary(plainHex: string, paddedUdidHex: string): string {
+  const key = hexstringToData(paddedUdidHex);
+  const data = hexstringToData(plainHex);
+  const resultBin = Dukpt._des(key, data, true, 0, null, 0);
+  return dataToHexstring(resultBin);
+}
+
 
 function hexstringToData(hexString: string): string {
   const hex = hexString.replace(/\s/g, "");
@@ -79,37 +95,13 @@ function generatePinBlock(pin: string, pan: string, docType: string): string {
   return dataToHexstring(output);
 }
 
-function decryptForKey(plain: string, udidParam: string): string {
-  const options = {
-    inputEncoding: "hex",
-    outputEncoding: "hex",
-    decryptionMode: "3DES",
-  };
-
-  let encryptionBDK = "11111111111111111111111111111111";
-  let udid = udidParam;
-
-  if (udid.length > encryptionBDK.length) {
-    udid = udid.substring(0, encryptionBDK.length);
-  } else if (udid.length < encryptionBDK.length) {
-    for (let i = 0; i < encryptionBDK.length - udid.length; i++) {
-      udid = "0" + udid;
-    }
-  }
-
-  encryptionBDK = udid;
-  const ksn = "9876543210E00000";
-
-  const dukpt = new Dukpt(encryptionBDK, ksn);
-  return dukpt.dukptDecrypt(plain, options) as string;
-}
 
 function encryptForPinBlock(
   plain: string,
   account: string,
-  bdkData: string,
-  ksnData: string,
-  ipekData: string,
+  bdk: string,
+  ksnParam: string,
+  ipek: string,
   udid: string
 ): string {
   const options = {
@@ -119,23 +111,24 @@ function encryptForPinBlock(
     forPinBlock: true,
   };
 
-  // Paso 12-13: Descifrar BDK y KSN
-  const encryptionBDK = decryptForKey(bdkData, udid);
-  let ksn = decryptForKey(ksnData, udid);
+  // Paso 13: Descifrar IPEK
+  const dukptServer = new Dukpt(bdk, ksnParam);
+  const ipekClaro = dukptServer.dukptDecrypt(ipek, {
+    inputEncoding: "hex",
+    outputEncoding: "hex",
+    decryptionMode: "3DES",
+  }) as string;
 
   // Paso 14: Remover últimos 4 del KSN
-  ksn = ksn.substring(0, ksn.length - 4);
+  let ksn = ksnParam.substring(0, ksnParam.length - 4);
 
   // Paso 15: Agregar últimos 4 del número de cuenta al final del KSN
   ksn = ksn + account.substring(account.length - 4, account.length);
   ksn = ksn.toUpperCase();
 
-  // Paso 16: Descifrar IPEK
-  const ipek = decryptForKey(ipekData, udid);
-
   // Paso 17-18: Inicializar motor DUKPT y derivar clave de sesión
-  const dukpt = new Dukpt(encryptionBDK, ksn);
-  dukpt._deriveDukptSessionKeyForPinBlock(ipek);
+  const dukpt = new Dukpt(bdk, ksn);
+  dukpt._deriveDukptSessionKeyForPinBlock(ipekClaro.toUpperCase());
 
   // Paso 19: Cifrar con la clave de sesión DUKPT
   return dukpt.dukptEncrypt(plain, options) as string;
@@ -159,6 +152,9 @@ export interface DukptRequestBody {
 export interface DukptResponseBody {
   pinBlock: string;
   encryptedPinBlock: string;
+  encryptedBdk: string;
+  encryptedKsn: string;
+  encryptedIpek: string;
   steps: Record<string, string>;
 }
 
@@ -184,9 +180,26 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       udid
     );
 
+    const paddedKey = getPaddedUdid(udid);
+
+    // Desciframos la IPEK aquí también para guardarla limpia en Storage
+    const dukptServer = new Dukpt(bdk, ksn);
+    const ipekClaro = dukptServer.dukptDecrypt(ipek, {
+      inputEncoding: "hex",
+      outputEncoding: "hex",
+      decryptionMode: "3DES",
+    }) as string;
+
+    const encryptedBdk = tripleDesLibrary(bdk, paddedKey);
+    const encryptedKsn = tripleDesLibrary(ksn.substring(0, 16), paddedKey);
+    const encryptedIpek = tripleDesLibrary(ipekClaro.toUpperCase(), paddedKey);
+
     return NextResponse.json<DukptResponseBody>({
       pinBlock,
       encryptedPinBlock,
+      encryptedBdk,
+      encryptedKsn,
+      encryptedIpek,
       steps: {
         step1: "Bloque1 construido: 0 + pin.length + pin",
         step2: "Bloque2 = número de documento",
@@ -199,11 +212,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         step9: "Longitudes igualadas con bytes nulos",
         step10: "XOR aplicado entre bloque1 y bloque2",
         step11: "Resultado XOR convertido a hexadecimal",
-        step12: "BDK descifrado con motor DUKPT",
-        step13: "KSN descifrado con motor DUKPT",
+        step12: "BDK recibida directamente",
+        step13: "KSN recibida directamente",
         step14: "Últimos 4 bytes del KSN removidos",
         step15: "Últimos 4 de cuenta agregados al KSN",
-        step16: "IPEK descifrado con motor DUKPT",
+        step16: "IPEK recibida directamente",
         step17: "Motor DUKPT inicializado con BDK y KSN",
         step18: "Clave de sesión DUKPT derivada para PIN Block",
         step19: "PIN Block cifrado con clave de sesión DUKPT",
