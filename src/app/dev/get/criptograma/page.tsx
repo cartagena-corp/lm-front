@@ -488,7 +488,7 @@ export default function CriptogramaPage() {
             <section className="col-span-12 lg:col-span-7 rounded-2xl border border-gray-200 bg-white p-6 flex flex-col gap-5">
               <div className="flex items-center gap-2 pb-1 border-b border-gray-100">
                 <div className="size-2 rounded-full bg-amber-400" />
-                <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Claves de Cifrado</h2>
+                <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Sembrado de Llaves (SIN ENCRIPTAR)</h2>
               </div>
               <InputField
                 id="bdk"
@@ -549,7 +549,7 @@ export default function CriptogramaPage() {
             <section className="col-span-12 lg:col-span-5 rounded-2xl border border-gray-200 bg-white p-6 flex flex-col gap-5">
               <div className="flex items-center gap-2 pb-1 border-b border-gray-100">
                 <div className="size-2 rounded-full bg-emerald-400" />
-                <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Documento</h2>
+                <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">INFORMACIÓN DEL USUARIO</h2>
               </div>
 
               {/* Tipo de documento */}
