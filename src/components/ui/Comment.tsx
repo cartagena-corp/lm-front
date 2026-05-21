@@ -3,8 +3,8 @@ import TextArea from "./TextArea"
 import SafeHtml from "./SafeHtml"
 import { CommentProps } from "@/lib/types/types"
 import Image from "next/image"
-import { DeleteIcon, DownloadIcon } from "@/assets/Icon"
-import Link from "next/link"
+import { DeleteIcon } from "@/assets/Icon"
+import CommentAttachments from "./CommentAttachments"
 import { useCommentStore } from "@/lib/store/CommentStore"
 import { useAuthStore } from "@/lib/store/AuthStore"
 import { useModalStore } from "@/lib/hooks/ModalStore"
@@ -199,46 +199,8 @@ export default function Comment({ comment }: Props) {
                      />
 
                      {/* Archivos adjuntos */}
-                     {comment.attachments.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                           {comment.attachments.map((file, idx) => {
-                              const fileSplitted = file.fileName.split(".")
-                              const extension = fileSplitted[fileSplitted.length - 1]
-                              const isImage = ["jpg", "png", "jpeg", "gif", "bmp", "webp"].includes(extension.toLowerCase())
-                              const url = file.fileUrl
-
-                              return (
-                                 <div key={idx} className="border border-gray-200 rounded-lg overflow-hidden hover:border-blue-300 hover:shadow-sm transition-all">
-                                    {isImage && url ? (
-                                       <Link href={url} target="_blank">
-                                          <div className="w-16 h-16 relative">
-                                             <Image
-                                                src={url}
-                                                alt={file.fileName}
-                                                fill
-                                                className="object-cover hover:scale-105 transition-transform"
-                                                unoptimized
-                                             />
-                                          </div>
-                                       </Link>
-                                    ) : (
-                                       <Link
-                                          href={url}
-                                          target="_blank"
-                                          className="flex items-center gap-2 p-3 min-w-0 hover:bg-gray-50 transition-colors"
-                                       >
-                                          <div className="flex-shrink-0">
-                                             <DownloadIcon size={16} stroke={2} />
-                                          </div>
-                                          <span className="text-xs text-gray-600 truncate">
-                                             {file.fileName}
-                                          </span>
-                                       </Link>
-                                    )}
-                                 </div>
-                              )
-                           })}
-                        </div>
+                     {comment.attachments && comment.attachments.length > 0 && (
+                        <CommentAttachments attachments={comment.attachments} />
                      )}
                   </div>
 
@@ -348,10 +310,15 @@ export default function Comment({ comment }: Props) {
                                        </button>
                                     )}
                                  </div>
-                                 <SafeHtml 
-                                    html={reply.text} 
+                                 <SafeHtml
+                                    html={reply.text}
                                     className="text-xs/tight text-gray-700 [&_code]:font-mono [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs"
                                  />
+                                 {reply.attachments && reply.attachments.length > 0 && (
+                                    <div className="mt-2">
+                                       <CommentAttachments attachments={reply.attachments} />
+                                    </div>
+                                 )}
                               </div>
                            </div>
                         </div>

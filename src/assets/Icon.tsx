@@ -490,3 +490,32 @@ export const DashboardIcon = ({ size = 16 }: { size?: number }) => (
       <rect width="7" height="5" x="3" y="16" rx="1" />
    </svg>
 )
+
+export const ZoomInIcon = ({ size = 24, stroke = 1.5 }: IconProps) => (
+   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill="none">
+      <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth={stroke} />
+      <path d="M20 20L17 17" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M11 8V14M8 11H14" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+   </svg>
+)
+
+export const ZoomOutIcon = ({ size = 24, stroke = 1.5 }: IconProps) => (
+   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill="none">
+      <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth={stroke} />
+      <path d="M20 20L17 17" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M8 11H14" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+   </svg>
+)
+
+export const ZoomResetIcon = ({ size = 24, stroke = 1.5 }: IconProps) => (
+   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill="none">
+      <path d="M4 9C4.81404 6.06796 7.7574 4 12 4C16.9706 4 21 8.02944 21 13C21 17.9706 16.9706 22 12 22C7.02944 22 3 17.9706 3 13" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M4 4V9H9" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+   </svg>
+)
+
+export const PlayIcon = ({ size = 24, stroke = 1.5 }: IconProps) => (
+   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill="none">
+      <path d="M18.8906 12.846C18.5371 14.189 16.8667 15.138 13.5257 17.0361C10.296 18.8709 8.6812 19.7884 7.37983 19.4196C6.8418 19.2671 6.35159 18.9776 5.95624 18.5787C5 17.6139 5 15.7426 5 12C5 8.2574 5 6.3861 5.95624 5.42132C6.35159 5.02245 6.8418 4.73288 7.37983 4.58042C8.6812 4.21165 10.296 5.12907 13.5257 6.96393C16.8667 8.86197 18.5371 9.811 18.8906 11.154C19.0365 11.7084 19.0365 12.2916 18.8906 12.846Z" fill="currentColor" stroke="currentColor" strokeWidth={stroke} strokeLinejoin="round" />
+   </svg>
+)
