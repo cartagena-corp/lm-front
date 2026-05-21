@@ -200,8 +200,8 @@ export const useCommentStore = create<CommentState>((set, get) => ({
                   throw new Error(`El archivo "${file.name}" está vacío`)
                }
                
-               if (file.size > 10 * 1024 * 1024) { // 10MB limit
-                  throw new Error(`El archivo "${file.name}" es demasiado grande (máximo 10MB)`)
+               if (file.size > 512 * 1024 * 1024) { // 512MB limit
+                  throw new Error(`El archivo "${file.name}" es demasiado grande (máximo 512MB)`)
                }
                
                formData.append('files', file, file.name)

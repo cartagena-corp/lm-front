@@ -33,9 +33,9 @@ export default function ImportUsersForm({ onSubmit, onCancel, isLoading = false 
             newErrors.file = 'Solo se permiten archivos .xls, .xlsx o .csv'
         }
 
-        // Validar tamaño (máximo 10MB)
-        if (file.size > 10 * 1024 * 1024) {
-            newErrors.file = 'El archivo no debe superar los 10MB'
+        // Validar tamaño (máximo 512MB)
+        if (file.size > 512 * 1024 * 1024) {
+            newErrors.file = 'El archivo no debe superar los 512MB'
         }
 
         setErrors(newErrors)
@@ -172,7 +172,7 @@ export default function ImportUsersForm({ onSubmit, onCancel, isLoading = false 
                                 </div>
                                 
                                 <div className="text-xs text-gray-400">
-                                    Formatos soportados: .xls, .xlsx, .csv (máximo 10MB)
+                                    Formatos soportados: .xls, .xlsx, .csv (máximo 512MB)
                                 </div>
                             </div>
                         </div>
