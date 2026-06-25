@@ -1001,8 +1001,8 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
                                  <span className="text-sm text-gray-500">Fecha real de finalización:&nbsp;&nbsp;</span>
                                  <span className="text-sm font-medium text-gray-900">{formatDate(currentTask.realDate, false, true)}</span>
                               </div>
-                              <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
-                                 <span className="text-sm text-gray-500">Tiempo en estado actual:&nbsp;&nbsp;</span>
+                              <div className="flex items-center justify-between gap-2 py-2 border-b border-gray-100 last:border-b-0">
+                                 <span className="text-sm text-gray-500">Tiempo en estado:</span>
                                  <StatusTimer lastStatusUpdate={currentTask.lastStatusUpdate} variant="detail" />
                               </div>
                            </div>
