@@ -18,6 +18,7 @@ import CustomSelect, { SelectOption } from '@/components/ui/CustomSelect'
 import { motion, AnimatePresence } from 'framer-motion'
 import { API_ROUTES } from '@/lib/routes/issues.routes'
 import { useIssueStore } from '@/lib/store/IssueStore'
+import StatusTimer from '@/components/ui/StatusTimer'
 
 interface TaskDetailsFormProps {
    onSubmit: () => void
@@ -999,6 +1000,10 @@ export default function TaskDetailsForm({ onSubmit, onCancel, task }: TaskDetail
                               <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
                                  <span className="text-sm text-gray-500">Fecha real de finalización:&nbsp;&nbsp;</span>
                                  <span className="text-sm font-medium text-gray-900">{formatDate(currentTask.realDate, false, true)}</span>
+                              </div>
+                              <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                                 <span className="text-sm text-gray-500">Tiempo en estado actual:&nbsp;&nbsp;</span>
+                                 <StatusTimer lastStatusUpdate={currentTask.lastStatusUpdate} variant="detail" />
                               </div>
                            </div>
                         </div>

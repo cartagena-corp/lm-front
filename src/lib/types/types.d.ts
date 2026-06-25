@@ -53,6 +53,7 @@ export interface TaskProps {
    }
    createdAt?: string                                  /* DD/MM/YYYY (T) HH:MM:SS  */
    updatedAt?: string                                  /* DD/MM/YYYY (T) HH:MM:SS */
+   lastStatusUpdate?: string                           /* yyyy/MM/ddThh:mm:ss - Último cambio de estado */
    type: number
    estimatedTime: number
    sprintId?: string

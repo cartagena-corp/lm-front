@@ -41,6 +41,7 @@ import AuditHistory from '../audit/AuditHistory'
 import CreateEditStatus from '../config/CreateEditStatus'
 import { getUserAvatar } from '@/lib/utils/avatar.utils'
 import SafeHtml from '@/components/ui/SafeHtml'
+import StatusTimer from '@/components/ui/StatusTimer'
 
 interface DraggableIssueProps {
     issue: TaskProps
@@ -305,11 +306,11 @@ function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onView
                 {issue.descriptions?.[0]?.text || 'Sin descripción'} */}
             </hgroup>
 
-            {/* Footer with assigned user and date */}
-            <div className="flex items-center justify-between gap-1 overflow-hidden">
+            {/* Footer with assigned user and status timer */}
+            <div className="flex items-center justify-between gap-1">
                 {/* Assigned user - clickable to reassign */}
                 <button
-                    className="flex w-full justify-start items-center gap-1 text-xs text-gray-600 hover:bg-gray-50 rounded-lg p-1 transition-colors group"
+                    className="flex min-w-0 flex-1 justify-start items-center gap-1 text-xs text-gray-600 hover:bg-gray-50 rounded-lg p-1 transition-colors group"
                     onPointerDown={e => e.stopPropagation()}
                     onClick={(e) => {
                         e.stopPropagation()
@@ -328,7 +329,7 @@ function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onView
                             <UsersIcon size={12} />
                         )}
                     </div>
-                    <p className="group-hover:text-blue-600 transition-colors text-start whitespace-nowrap overflow-hidden text-ellipsis w-full">
+                    <p className="group-hover:text-blue-600 transition-colors text-start whitespace-nowrap overflow-hidden text-ellipsis">
                         {typeof issue.assignedId === 'object' && issue.assignedId
                             ? issue.assignedId.firstName === null && issue.assignedId.lastName === null
                                 ? issue.assignedId.email || 'Sin asignar'
@@ -336,12 +337,7 @@ function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onView
                             : 'Sin asignar'}
                     </p>
                 </button>
-                <div className="flex items-center gap-1">
-                    <ClockIcon size={14} />
-                    <span className="text-xs text-gray-500">
-                        {issue.createdAt ? new Date(issue.createdAt).toLocaleDateString('es-ES') : 'Sin fecha'}
-                    </span>
-                </div>
+                <StatusTimer lastStatusUpdate={issue.lastStatusUpdate} variant="card" />
             </div>
         </div>
     )
