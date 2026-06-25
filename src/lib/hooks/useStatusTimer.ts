@@ -19,12 +19,12 @@ export function useStatusTimer(lastStatusUpdate?: string): TimerResult {
    const parseDate = useCallback((dateStr: string): Date => {
       // Soportar formato yyyy/MM/ddThh:mm:ss y también yyyy-MM-ddThh:mm:ss
       let normalized = dateStr.replace(/\//g, '-')
-      // El backend envía la fecha en hora de Colombia (UTC-5, sin horario de verano).
-      // Si la cadena no trae zona horaria, anclamos el offset de Colombia explícitamente
-      // para que el cronómetro sea correcto sin importar la zona del navegador del cliente.
+      // El backend envía la fecha en UTC sin sufijo de zona. Si la cadena no trae
+      // zona horaria, la interpretamos como UTC ('Z') para que `now - start` dé el
+      // tiempo transcurrido real, sin importar la zona del navegador del cliente.
       const hasTimezone = /([zZ]|[+-]\d{2}:?\d{2})$/.test(normalized)
       if (!hasTimezone) {
-         normalized += '-05:00'
+         normalized += 'Z'
       }
       return new Date(normalized)
    }, [])
