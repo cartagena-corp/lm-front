@@ -16,7 +16,7 @@ interface StatusTimerProps {
  * - variant="detail": texto completo con todas las unidades para el panel de detalles
  */
 export default function StatusTimer({ lastStatusUpdate, variant = 'detail' }: StatusTimerProps) {
-   const { formatted, compactFormatted } = useStatusTimer(lastStatusUpdate)
+   const { formatted } = useStatusTimer(lastStatusUpdate)
 
    if (!lastStatusUpdate) {
       return <span className="text-sm font-medium text-gray-400">—</span>
@@ -30,7 +30,7 @@ export default function StatusTimer({ lastStatusUpdate, variant = 'detail' }: St
          >
             <ClockIcon size={12} />
             <span className="whitespace-nowrap text-[11px] font-medium tabular-nums">
-               {compactFormatted}
+               {formatted}
             </span>
          </div>
       )

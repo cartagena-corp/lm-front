@@ -329,7 +329,7 @@ function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onView
                             <UsersIcon size={12} />
                         )}
                     </div>
-                    <p className="group-hover:text-blue-600 transition-colors text-start whitespace-nowrap overflow-hidden text-ellipsis">
+                    <p className="min-w-0 flex-1 group-hover:text-blue-600 transition-colors text-start truncate">
                         {typeof issue.assignedId === 'object' && issue.assignedId
                             ? issue.assignedId.firstName === null && issue.assignedId.lastName === null
                                 ? issue.assignedId.email || 'Sin asignar'
