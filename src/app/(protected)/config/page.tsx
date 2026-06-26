@@ -52,63 +52,62 @@ export default function Config() {
    const hasPermissionUser = userRole?.permissions.some((p: PermissionProps) => p.name === "USER_READ") ?? false
    const hasPermissionNotifications = userRole?.permissions.some((p: PermissionProps) => p.name === "NOTIFICATION_CRUD") ?? false
 
-   const viewTint = (id: number): React.CSSProperties =>
-      id === 1 ? { background: "var(--blue-200)", color: "var(--blue-900)" }
-         : id === 2 ? { background: "var(--green-200)", color: "var(--green-900)" }
-            : { background: "var(--purple-200)", color: "var(--purple-900)" }
-
    return (
       <>
-         <div className="mx-auto space-y-6" style={{ maxWidth: 900 }}>
+         <div className="mx-auto space-y-8">
             {/* Header */}
-            <div className="p-5" style={{ background: "var(--ds-card)", borderRadius: "var(--radius-xl)", boxShadow: "var(--shadow-border)" }}>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                <div className="flex items-center gap-4">
-                  <div className="flex items-center justify-center" style={{ width: 44, height: 44, borderRadius: 10, background: "var(--gray-alpha-100)", color: "var(--ds-text-secondary)" }}>
-                     <ConfigIcon size={24} />
+                  <div className="p-3 bg-gray-100 rounded-xl">
+                     <ConfigIcon size={28} />
                   </div>
                   <div>
-                     <h1 className="font-semibold" style={{ fontSize: 24, letterSpacing: "-0.96px", color: "var(--ds-text)" }}>Panel de Configuración</h1>
-                     <p style={{ fontSize: 13, color: "var(--ds-text-secondary)", marginTop: 2 }}>Gestiona los estados y configuraciones de tu proyecto</p>
+                     <h1 className="text-2xl font-bold text-gray-900">Panel de Configuración</h1>
+                     <p className="text-gray-600 mt-1">Gestiona los estados y configuraciones de tu proyecto</p>
                   </div>
                </div>
             </div>
 
             {/* Navigation Tabs */}
-            <nav className="flex flex-wrap gap-2">
-               {listView.map((tab) => {
-                  const Icon = tab.icon
-                  if (tab.id === 1 && !hasPermissionConfig) return null
-                  if (tab.id === 2 && !hasPermissionUser) return null
-                  if (tab.id === 3 && !hasPermissionNotifications) return null
-                  const active = view.id === tab.id
-                  return (
-                     <button
-                        key={tab.id}
-                        onClick={() => setView(tab)}
-                        className={`flex items-center gap-2 px-[14px] transition-colors text-sm font-medium ${active ? '' : 'hover:bg-[var(--gray-alpha-100)]'}`}
-                        style={active
-                           ? { height: 34, borderRadius: "var(--radius-md)", background: "var(--ds-text)", color: "var(--ds-contrast-inverse)", border: "1px solid var(--ds-text)" }
-                           : { height: 34, borderRadius: "var(--radius-md)", background: "transparent", color: "var(--ds-text-secondary)", border: "1px solid var(--ds-border-strong)" }}
-                     >
-                        <Icon size={16} />
-                        <span className="hidden sm:inline">{tab.name}</span>
-                        <span className="sm:hidden">{tab.name.split(' ')[0]}</span>
-                     </button>
-                  )
-               })}
-            </nav>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-2">
+               <nav className="flex space-x-2">
+                  {listView.map((tab) => {
+                     const Icon = tab.icon
+                     if (tab.id === 1 && !hasPermissionConfig) return null
+                     if (tab.id === 2 && !hasPermissionUser) return null
+                     if (tab.id === 3 && !hasPermissionNotifications) return null
+                     return (
+                        <button
+                           key={tab.id}
+                           onClick={() => setView(tab)}
+                           className={`flex-1 flex items-center justify-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm font-medium ${view.id === tab.id
+                              ? 'bg-blue-600 text-white shadow-sm'
+                              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                              }`}
+                        >
+                           <Icon size={18} />
+                           <span className="hidden sm:inline">{tab.name}</span>
+                           <span className="sm:hidden">{tab.name.split(' ')[0]}</span>
+                        </button>
+                     )
+                  })}
+               </nav>
+            </div>
 
             {/* Content Area */}
             <div className="space-y-6">
                {/* Current View Description */}
-               <div className="p-5" style={{ background: "var(--ds-card)", borderRadius: "var(--radius-xl)", boxShadow: "var(--shadow-border)" }}>
+               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                   <div className="flex items-center gap-3">
-                     <div className="p-2 flex" style={{ borderRadius: "var(--radius-md)", ...viewTint(view.id) }}>
+                     <div className={`p-2 rounded-lg ${view.id === 1 ? 'bg-blue-50 text-blue-600' :
+                        view.id === 2 ? 'bg-green-50 text-green-600' :
+                           'bg-purple-50 text-purple-600'
+                        }`}>
                         <view.icon size={20} />
                      </div>
                      <div>
-                        <h2 className="font-semibold" style={{ fontSize: 16, color: "var(--ds-text)" }}>{view.name}</h2>
-                        <p className="text-sm" style={{ color: "var(--ds-text-secondary)" }}>{view.description}</p>
+                        <h2 className="text-lg font-semibold text-gray-900">{view.name}</h2>
+                        <p className="text-sm text-gray-600">{view.description}</p>
                      </div>
                   </div>
                </div>

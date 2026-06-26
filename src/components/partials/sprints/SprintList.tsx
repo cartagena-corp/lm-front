@@ -286,18 +286,18 @@ export default function SprintList() {
       return (
          <div className="space-y-6">
             {Array.from({ length: 3 }).map((_, i) => (
-               <div key={i} className="p-6 animate-pulse" style={{ background: "var(--ds-card)", borderRadius: "var(--radius-xl)", boxShadow: "var(--shadow-border)" }}>
+               <div key={i} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 animate-pulse">
                   <div className="flex justify-between items-center mb-4">
                      <div className="flex items-center gap-4">
-                        <div className="h-6 rounded w-32" style={{ background: "var(--gray-alpha-200)" }}></div>
-                        <div className="h-5 rounded w-20" style={{ background: "var(--gray-alpha-200)" }}></div>
+                        <div className="h-6 bg-gray-300 rounded w-32"></div>
+                        <div className="h-5 bg-gray-300 rounded w-20"></div>
                      </div>
-                     <div className="h-8 rounded w-24" style={{ background: "var(--gray-alpha-200)" }}></div>
+                     <div className="h-8 bg-gray-300 rounded w-24"></div>
                   </div>
-                  <div className="h-4 rounded w-3/4 mb-4" style={{ background: "var(--gray-alpha-200)" }}></div>
+                  <div className="h-4 bg-gray-300 rounded w-3/4 mb-4"></div>
                   <div className="space-y-3">
                      {Array.from({ length: 2 }).map((_, j) => (
-                        <div key={j} className="h-12 rounded" style={{ background: "var(--gray-alpha-200)" }}></div>
+                        <div key={j} className="h-12 bg-gray-300 rounded"></div>
                      ))}
                   </div>
                </div>
@@ -331,7 +331,7 @@ export default function SprintList() {
 
                <DragOverlay dropAnimation={null}>
                   {activeId && (
-                     <div className="cursor-grabbing flex items-center justify-center w-full h-20 transition-all duration-200" style={{ background: "var(--blue-100)", border: "2px dashed var(--blue-600)", color: "var(--blue-900)", borderRadius: "var(--radius-xl)", boxShadow: "var(--shadow-lg)" }}>
+                     <div className="bg-blue-50 border-2 border-blue-200 border-dashed text-blue-700 cursor-grabbing flex items-center justify-center rounded-xl shadow-lg w-full h-20 transition-all duration-200">
                         <div className="flex items-center gap-2">
                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
@@ -347,22 +347,21 @@ export default function SprintList() {
          </MultiDragProvider>
 
          {/* Create Sprint Button */}
-         <div className="overflow-hidden rounded-xl">
+         <div className="bg-white rounded-xl shadow-sm  overflow-hidden">
             <button
                onClick={handleCreateSprintModal}
                disabled={isLoading}
-               className="w-full p-8 transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[var(--gray-alpha-100)]"
-               style={{ border: "2px dashed var(--ds-border-strong)", borderRadius: "var(--radius-xl)" }}
+               className="w-full p-8 border-2 border-dashed border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 rounded-xl group disabled:opacity-50 disabled:cursor-not-allowed"
             >
                <div className="flex flex-col items-center gap-3">
-                  <div className="p-3 rounded-xl transition-colors duration-200" style={{ background: "var(--gray-alpha-100)", color: "var(--ds-text-muted)" }}>
+                  <div className="p-3 bg-gray-100 group-hover:bg-blue-100 rounded-xl transition-colors duration-200 text-gray-400 group-hover:text-blue-600">
                      <CalendarIcon size={24} />
                   </div>
                   <div className="text-center">
-                     <h3 className="font-semibold transition-colors duration-200" style={{ color: "var(--ds-text)" }}>
+                     <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors duration-200">
                         {isLoading ? 'Creando...' : 'Crear Nuevo Sprint'}
                      </h3>
-                     <p className="text-sm mt-1" style={{ color: "var(--ds-text-muted)" }}>
+                     <p className="text-sm text-gray-500 mt-1">
                         Organiza tus tareas en un nuevo sprint
                      </p>
                   </div>
