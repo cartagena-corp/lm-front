@@ -124,19 +124,15 @@ export default function OTPForm({
   }
 
   return (
-    <div className='w-full space-y-4'>
+    <div className='w-full'>
       <div className='text-center'>
-        <h3 className='font-bold text-xl md:text-2xl'>Verificación OTP</h3>
-        <p className='text-black/50 text-sm'>
-          Ingresa el código de 6 dígitos enviado a tu email
-        </p>
-        <p className='text-black/70 text-sm font-medium break-all'>
-          {email}
-        </p>
+        <h2 className='font-semibold' style={{ fontSize: 24, letterSpacing: '-0.96px', margin: '0 0 6px' }}>Verificación OTP</h2>
+        <p style={{ fontSize: 14, color: 'var(--ds-text-secondary)', margin: 0 }}>Ingresa el código de 6 dígitos enviado a tu email.</p>
+        <p style={{ fontSize: 14, color: 'var(--ds-text)', fontWeight: 500, marginTop: 4, wordBreak: 'break-all' }}>{email}</p>
       </div>
 
-      <form onSubmit={handleSubmit} className='space-y-4'>
-        <div className='flex justify-center gap-1 md:gap-2'>
+      <form onSubmit={handleSubmit} style={{ marginTop: 24 }}>
+        <div className='flex justify-center gap-2'>
           {[0, 1, 2, 3, 4, 5].map((index) => (
             <input
               key={index}
@@ -148,48 +144,39 @@ export default function OTPForm({
               onKeyDown={(e) => handleOtpKeyDown(index, e)}
               onPaste={handleOtpPaste}
               disabled={isLoading}
-              className='w-10 h-10 md:w-12 md:h-12 border border-black/15 rounded-md outline-none focus:ring-2 focus:ring-blue-500 text-center text-lg md:text-xl font-semibold disabled:bg-gray-100 disabled:cursor-not-allowed'
+              className='disabled:opacity-50 disabled:cursor-not-allowed'
+              style={{ width: 44, height: 48, textAlign: 'center', fontSize: 20, fontWeight: 600, fontFamily: 'var(--font-mono)', color: 'var(--ds-text)', background: 'var(--ds-background)', border: '1px solid var(--ds-border)', borderRadius: 'var(--radius-md)', outline: 'none' }}
               autoComplete='off'
             />
           ))}
         </div>
 
         {/* Timer */}
-        <div className='text-center'>
+        <div className='text-center' style={{ margin: '16px 0' }}>
           {isTimerActive ? (
-            <p className='text-black/50 text-sm'>
-              El código expira en: <span className='font-mono font-semibold'>{formatTime(timeLeft)}</span>
+            <p style={{ fontSize: 14, color: 'var(--ds-text-secondary)' }}>
+              El código expira en: <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--ds-text)' }}>{formatTime(timeLeft)}</span>
             </p>
           ) : (
-            <p className='text-red-500 text-sm'>
-              El código ha expirado
-            </p>
+            <p style={{ fontSize: 14, color: 'var(--red-700)' }}>El código ha expirado</p>
           )}
         </div>
 
         <div className='flex flex-col sm:flex-row gap-2'>
-          <button
-            type='button'
-            onClick={onCancel}
-            disabled={isLoading}
-            className='flex-1 px-4 py-2 border border-black/15 rounded-md hover:bg-black/5 duration-150 disabled:opacity-50 disabled:cursor-not-allowed'>
+          <button type='button' onClick={onCancel} disabled={isLoading} className='flex-1 disabled:opacity-50 disabled:cursor-not-allowed'
+            style={{ height: 40, borderRadius: 'var(--radius-md)', background: 'var(--ds-background)', color: 'var(--ds-text)', border: '1px solid var(--ds-border-strong)', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>
             Cancelar
           </button>
 
           {canResend ? (
-            <button
-              type='button'
-              onClick={handleResend}
-              disabled={isLoading}
-              className='flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 duration-150 disabled:opacity-50 disabled:cursor-not-allowed'>
-              {isLoading ? 'Reenviando...' : 'Reenviar OTP'}
+            <button type='button' onClick={handleResend} disabled={isLoading} className='flex-1 disabled:opacity-50 disabled:cursor-not-allowed'
+              style={{ height: 40, borderRadius: 'var(--radius-md)', background: 'var(--red-700)', color: '#fff', border: '1px solid var(--red-700)', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>
+              {isLoading ? 'Reenviando…' : 'Reenviar OTP'}
             </button>
           ) : (
-            <button
-              type='submit'
-              disabled={otp.length !== 6 || isLoading}
-              className='flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 duration-150 disabled:opacity-50 disabled:cursor-not-allowed'>
-              {isLoading ? 'Validando...' : 'Validar OTP'}
+            <button type='submit' disabled={otp.length !== 6 || isLoading} className='flex-1 disabled:opacity-50 disabled:cursor-not-allowed'
+              style={{ height: 40, borderRadius: 'var(--radius-md)', background: 'var(--ds-text)', color: 'var(--ds-contrast-inverse)', border: '1px solid var(--ds-text)', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>
+              {isLoading ? 'Validando…' : 'Validar OTP'}
             </button>
           )}
         </div>

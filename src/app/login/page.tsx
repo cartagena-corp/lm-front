@@ -8,12 +8,8 @@ import Link from 'next/link'
 import LoginForm from '@/components/partials/login/LoginForm'
 import OTPForm from '@/components/partials/login/OTPForm'
 import RegisterForm from '@/components/partials/login/RegisterForm'
-import Image from 'next/image'
-import logoImage from '@/assets/favicon-light.jpg'
-import { Roboto_Condensed } from 'next/font/google'
+import TypingHeadline from '@/components/partials/login/TypingHeadline'
 import toast from 'react-hot-toast'
-
-const robotoCondensed = Roboto_Condensed({ subsets: ['latin'] })
 
 export default function LoginPage() {
   const { isAuthenticated, getGoogleLoginUrl, loginPassword, generateOtp, verifyOtp, clearOtpPhrase } = useAuthStore()
@@ -266,20 +262,36 @@ export default function LoginPage() {
   if (!canRender) return null
 
   return (
-    <main className='bg-gray-900 min-h-screen flex justify-center items-center p-4'>
-      {/* Container principal con max-width y responsive */}
-      <div className='w-full max-w-4xl mx-auto flex flex-col lg:flex-row shadow-2xl rounded-lg overflow-hidden lg:min-h-[500px]'>
-        {/* Sección izquierda - Información */}
-        <section className='bg-blue-900 text-white flex flex-col justify-center items-center lg:rounded-l-md p-8 lg:p-14 lg:w-1/2 space-y-2'>
-          <Image src={logoImage} width={100} alt='logo' />
-          <hgroup className={`text-center text-sm md:text-base ${robotoCondensed.className}`}>
-            <h5 className='font-semibold text-2xl md:text-3xl lg:text-4xl'>LA MURALLA</h5>
-            <p className='text-white/60 text-xs'>CARTAGENACORPORATION.COM</p>
-          </hgroup>
-        </section>
+    <main className='min-h-screen grid lg:grid-cols-[1.05fr_1fr]' style={{ background: 'var(--ds-background)', color: 'var(--ds-text)', fontFamily: 'var(--font-sans)' }}>
+      {/* Brand panel */}
+      <div
+        className='hidden lg:flex flex-col justify-between relative overflow-hidden'
+        style={{
+          background: '#0a0a0a', color: '#ededed', padding: 56,
+          backgroundImage: 'linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)',
+          backgroundSize: '32px 32px',
+        }}
+      >
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(120% 80% at 80% 0%, rgba(0,112,243,0.18), transparent 60%)' }} />
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <img src='/favicon-light.ico' alt='La Muralla' style={{ width: 34, height: 34, objectFit: 'contain', display: 'block' }} />
+          <span style={{ fontSize: 15, fontWeight: 600, letterSpacing: '-0.02em' }}>La Muralla</span>
+        </div>
+        <div style={{ position: 'relative' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, letterSpacing: '0.04em', color: 'var(--blue-600)', textTransform: 'uppercase', marginBottom: 20 }}>Gestión de proyectos</div>
+          <TypingHeadline />
+          <p style={{ fontSize: 16, lineHeight: '26px', color: 'rgba(237,237,237,0.62)', maxWidth: 420, margin: 0 }}>Tableros, sprints y seguimiento de tu equipo en un solo lugar. Diseñado para moverse a la velocidad de la ingeniería.</p>
+        </div>
+        <div style={{ position: 'relative', display: 'flex', gap: 28, fontSize: 13, color: 'rgba(237,237,237,0.5)' }}>
+          <span><b style={{ color: '#ededed', fontWeight: 600 }}>12</b> tableros activos</span>
+          <span><b style={{ color: '#ededed', fontWeight: 600 }}>340</b> tareas</span>
+          <span><b style={{ color: '#ededed', fontWeight: 600 }}>99.9%</b> uptime</span>
+        </div>
+      </div>
 
-        {/* Sección derecha - Formulario */}
-        <section className='bg-white text-black flex flex-col justify-center items-center lg:rounded-r-md p-8 lg:p-14 space-y-2.5 lg:w-1/2'>
+      {/* Form panel */}
+      <div className='flex items-center justify-center' style={{ padding: 40 }}>
+        <div style={{ width: '100%', maxWidth: 360 }}>
           {/* Formulario de Login - Vista inicial */}
           {!showRegisterForm && !showOtpForm && (
             <>
@@ -289,18 +301,24 @@ export default function LoginPage() {
               />
 
               {/* Separador */}
-              <div className='flex items-center w-full'>
-                <hr className='flex-1 border-black/15' />
-                <span className='px-3 text-black/50 text-sm'>o</span>
-                <hr className='flex-1 border-black/15' />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '20px 0' }}>
+                <div style={{ flex: 1, height: 1, background: 'var(--ds-border)' }} />
+                <span style={{ fontSize: 12, color: 'var(--ds-text-muted)' }}>o</span>
+                <div style={{ flex: 1, height: 1, background: 'var(--ds-border)' }} />
               </div>
 
               {/* Botón de Google */}
               <Link href={getGoogleLoginUrl()}
-                className='border-black/15 hover:bg-black/5 duration-150 border rounded-md py-2 w-full flex justify-center items-center gap-4'>
-                <GoogleButton size={18} />
-                Iniciar Sesión con Google
+                className='w-full flex justify-center items-center'
+                style={{ height: 40, borderRadius: 'var(--radius-md)', background: 'var(--ds-background)', color: 'var(--ds-text)', border: '1px solid var(--ds-border-strong)', fontSize: 14, fontWeight: 500, gap: 10 }}>
+                <GoogleButton size={16} />
+                Continuar con Google
               </Link>
+
+              <p style={{ fontSize: 13, color: 'var(--ds-text-secondary)', textAlign: 'center', margin: '24px 0 0' }}>
+                ¿Ya tienes una cuenta asociada con Google y deseas completar tu registro?{' '}
+                <button onClick={handleShowRegisterForm} style={{ color: 'var(--accent)', fontWeight: 500, cursor: 'pointer', background: 'transparent', border: 'none' }}>Regístrate</button>
+              </p>
             </>
           )}
 
@@ -324,14 +342,7 @@ export default function LoginPage() {
               isLoading={isLoading}
             />
           )}
-
-          {/* Términos de servicio - Solo en vista inicial */}
-          {!showRegisterForm && !showOtpForm && (
-            <span className='text-black/70 text-xs text-center'>
-              ¿Ya tienes una cuenta asociada con Google y deseas completar tu registro? <button onClick={handleShowRegisterForm} className='font-bold hover:underline cursor-pointer'>Ingresa aquí</button>
-            </span>
-          )}
-        </section>
+        </div>
       </div>
     </main>
   )

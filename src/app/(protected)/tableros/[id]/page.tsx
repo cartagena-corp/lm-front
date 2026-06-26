@@ -127,18 +127,21 @@ export default function TableroDetalle() {
 		})
 	}
 
+	const cardStyle: React.CSSProperties = { background: "var(--ds-card)", borderRadius: "var(--radius-xl)", boxShadow: "var(--shadow-border)" }
+	const metaChip = (bg: string, fg: string): React.CSSProperties => ({ padding: 8, borderRadius: "var(--radius-md)", background: bg, color: fg, display: "flex" })
+
 	return (
-		<div className=" mx-auto space-y-8">
+		<div className="mx-auto space-y-6" style={{ maxWidth: 1320 }}>
 			{/* Header */}
-			<div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-				<div className="flex items-center justify-between">
-					<div className="flex items-center gap-4">
-						<div className="p-3 bg-blue-50 rounded-xl">
-							<BoardIcon size={28} />
+			<div className="p-5" style={cardStyle}>
+				<div className="flex items-center justify-between gap-4 flex-wrap">
+					<div className="flex items-center gap-[14px]">
+						<div className="flex items-center justify-center" style={{ width: 44, height: 44, borderRadius: 10, background: "var(--blue-200)", color: "var(--blue-900)" }}>
+							<BoardIcon size={24} />
 						</div>
 						<div>
-							<h1 className="text-2xl font-bold text-gray-900">Detalles del Tablero</h1>
-							<p className="text-gray-600 mt-1">Gestiona tu proyecto y sus sprints</p>
+							<h1 className="font-semibold" style={{ fontSize: 24, letterSpacing: "-0.96px", color: "var(--ds-text)" }}>Detalles del Tablero</h1>
+							<p style={{ fontSize: 13, color: "var(--ds-text-secondary)", marginTop: 2 }}>Gestiona tu proyecto y sus sprints</p>
 						</div>
 					</div>
 					<CustomSwitch value={sprintMode} onChange={(value) => setSprintMode(value)} />
@@ -149,39 +152,41 @@ export default function TableroDetalle() {
 			{sprintMode.name !== "Tablero" && (
 				<>
 					{isLoading && !selectedBoard ? (
-						<div className='bg-white rounded-xl shadow-sm border border-gray-100 p-6 animate-pulse'>
+						<div className='p-6 animate-pulse' style={cardStyle}>
 							<div className='flex justify-between items-start gap-4 mb-6'>
 								<div className='flex items-center gap-4 flex-1'>
-									<div className='h-8 bg-gray-300 rounded w-64'></div>
-									<div className='h-6 bg-gray-300 rounded w-24'></div>
+									<div className='h-8 rounded w-64' style={{ background: "var(--gray-alpha-200)" }}></div>
+									<div className='h-6 rounded w-24' style={{ background: "var(--gray-alpha-200)" }}></div>
 								</div>
-								<div className='h-10 bg-gray-300 rounded w-32'></div>
+								<div className='h-10 rounded w-32' style={{ background: "var(--gray-alpha-200)" }}></div>
 							</div>
-							<div className='h-4 bg-gray-300 rounded w-full mb-6'></div>
+							<div className='h-4 rounded w-full mb-6' style={{ background: "var(--gray-alpha-200)" }}></div>
 							<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
 								{Array.from({ length: 4 }).map((_, i) => (
 									<div key={i} className='space-y-2'>
-										<div className='h-4 bg-gray-300 rounded w-20'></div>
-										<div className='h-6 bg-gray-300 rounded w-32'></div>
+										<div className='h-4 rounded w-20' style={{ background: "var(--gray-alpha-200)" }}></div>
+										<div className='h-6 rounded w-32' style={{ background: "var(--gray-alpha-200)" }}></div>
 									</div>
 								))}
 							</div>
 						</div>
 					) : (
-						<div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+						<div className="overflow-hidden" style={cardStyle}>
 							{/* Project Header */}
-							<div className="p-6 border-b border-gray-100">
+							<div className="p-6" style={{ borderBottom: "1px solid var(--ds-border)" }}>
 								<div className='flex justify-between items-start gap-4'>
 									<div className='flex flex-col'>
-										<h2 className='text-2xl font-bold text-gray-900 mb-2'>{selectedBoard?.name}</h2>
+										<h2 className='font-semibold mb-2' style={{ fontSize: 22, letterSpacing: "-0.5px", color: "var(--ds-text)" }}>{selectedBoard?.name}</h2>
 										{selectedBoard && (
-											<div className="rounded-full text-xs font-medium px-3 py-1 whitespace-nowrap flex-shrink-0 w-fit"
+											<div className="inline-flex items-center gap-[5px] whitespace-nowrap flex-shrink-0 w-fit"
 												style={{
-													backgroundColor: `${getStatusColor(Number(selectedBoard.status))}20`,
+													height: 22, padding: "0 8px", borderRadius: 9999,
+													background: `${getStatusColor(Number(selectedBoard.status))}1f`,
 													color: getStatusColor(Number(selectedBoard.status)),
-													border: `1px solid ${getStatusColor(Number(selectedBoard.status))}40`
+													fontSize: 11, fontWeight: 500
 												}}
 											>
+												<span style={{ width: 6, height: 6, borderRadius: 9999, background: getStatusColor(Number(selectedBoard.status)) }} />
 												{getStatusName(Number(selectedBoard.status)).charAt(0).toUpperCase() + getStatusName(Number(selectedBoard.status)).slice(1).toLowerCase()}
 											</div>
 										)}
@@ -191,9 +196,10 @@ export default function TableroDetalle() {
 										<button
 											onClick={() => handleConfigBoardModal()}
 											disabled={isLoading}
-											className="flex items-center gap-2 px-4 py-2 text-blue-700 bg-blue-50 border border-blue-300 rounded-lg hover:bg-blue-100 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+											className="flex items-center gap-2 transition-colors text-sm font-medium hover:bg-[var(--gray-alpha-100)] disabled:opacity-50 disabled:cursor-not-allowed"
+											style={{ height: 34, padding: "0 11px", color: "var(--ds-text)", background: "var(--ds-background)", border: "1px solid var(--ds-border-strong)", borderRadius: "var(--radius-md)" }}
 										>
-											<ConfigIcon size={16} />
+											<ConfigIcon size={15} />
 											<span className="hidden sm:inline">Configuración</span>
 											<span className="sm:hidden">Config</span>
 										</button>
@@ -201,9 +207,10 @@ export default function TableroDetalle() {
 										<button
 											onClick={() => handleUpdateBoardModal()}
 											disabled={isLoading}
-											className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+											className="flex items-center gap-2 transition-colors text-sm font-medium hover:bg-[var(--gray-alpha-100)] disabled:opacity-50 disabled:cursor-not-allowed"
+											style={{ height: 34, padding: "0 11px", color: "var(--ds-text)", background: "var(--ds-background)", border: "1px solid var(--ds-border-strong)", borderRadius: "var(--radius-md)" }}
 										>
-											<EditIcon size={16} />
+											<EditIcon size={15} />
 											<span className="hidden sm:inline">{isLoading ? 'Cargando...' : 'Editar Proyecto'}</span>
 											<span className="sm:hidden">Editar</span>
 										</button>
@@ -211,7 +218,7 @@ export default function TableroDetalle() {
 								</div>
 
 								{selectedBoard?.description && (
-									<p className='text-gray-600 mt-4 leading-relaxed'>{selectedBoard.description}</p>
+									<p className='mt-4 leading-relaxed' style={{ fontSize: 14, color: "var(--ds-text-secondary)" }}>{selectedBoard.description}</p>
 								)}
 							</div>
 
@@ -220,12 +227,12 @@ export default function TableroDetalle() {
 								<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
 									{/* Start Date */}
 									<div className='flex items-center gap-3'>
-										<div className='p-2 bg-blue-50 text-blue-600 rounded-lg'>
+										<div style={metaChip("var(--blue-200)", "var(--blue-900)")}>
 											<CalendarIcon size={20} />
 										</div>
 										<div>
-											<h6 className='text-sm font-bold text-gray-900'>Fecha de inicio</h6>
-											<p className='text-sm text-gray-600'>
+											<h6 className='text-sm font-semibold' style={{ color: "var(--ds-text)" }}>Fecha de inicio</h6>
+											<p className='text-sm' style={{ color: "var(--ds-text-secondary)" }}>
 												{selectedBoard?.startDate ? (() => {
 													const [year, month, day] = selectedBoard.startDate.split('-').map(num => parseInt(num, 10))
 													const date = new Date(year, month - 1, day)
@@ -241,12 +248,12 @@ export default function TableroDetalle() {
 
 									{/* End Date */}
 									<div className='flex items-center gap-3'>
-										<div className='p-2 bg-green-50 text-green-600 rounded-lg'>
+										<div style={metaChip("var(--green-200)", "var(--green-900)")}>
 											<CalendarIcon size={20} />
 										</div>
 										<div>
-											<h6 className='text-sm font-bold text-gray-900'>Fecha de fin</h6>
-											<p className='text-sm text-gray-600'>
+											<h6 className='text-sm font-semibold' style={{ color: "var(--ds-text)" }}>Fecha de fin</h6>
+											<p className='text-sm' style={{ color: "var(--ds-text-secondary)" }}>
 												{selectedBoard?.endDate ? (() => {
 													const [year, month, day] = selectedBoard.endDate.split('-').map(num => parseInt(num, 10))
 													const date = new Date(year, month - 1, day)
@@ -262,12 +269,12 @@ export default function TableroDetalle() {
 
 									{/* Created Date */}
 									<div className='flex items-center gap-3'>
-										<div className='p-2 bg-purple-50 text-purple-600 rounded-lg'>
+										<div style={metaChip("var(--purple-200)", "var(--purple-900)")}>
 											<ClockIcon size={20} />
 										</div>
 										<div>
-											<h6 className='text-sm font-bold text-gray-900'>Creado</h6>
-											<p className='text-sm text-gray-600'>
+											<h6 className='text-sm font-semibold' style={{ color: "var(--ds-text)" }}>Creado</h6>
+											<p className='text-sm' style={{ color: "var(--ds-text-secondary)" }}>
 												{selectedBoard?.createdAt ? (() => {
 													let date
 													if (selectedBoard.createdAt.includes('T')) {
@@ -288,12 +295,12 @@ export default function TableroDetalle() {
 
 									{/* Updated Date */}
 									<div className='flex items-center gap-3'>
-										<div className='p-2 bg-orange-50 text-orange-600 rounded-lg'>
+										<div style={metaChip("var(--amber-200)", "var(--amber-900)")}>
 											<ClockIcon size={20} />
 										</div>
 										<div>
-											<h6 className='text-sm font-bold text-gray-900'>Actualizado</h6>
-											<p className='text-sm text-gray-600'>
+											<h6 className='text-sm font-semibold' style={{ color: "var(--ds-text)" }}>Actualizado</h6>
+											<p className='text-sm' style={{ color: "var(--ds-text-secondary)" }}>
 												{selectedBoard?.updatedAt ? (() => {
 													let date
 													if (selectedBoard.updatedAt.includes('T')) {
@@ -315,15 +322,15 @@ export default function TableroDetalle() {
 
 								{/* Created By Section */}
 								{selectedBoard?.createdBy && (
-									<div className="mt-6 pt-6 border-t border-gray-100">
+									<div className="mt-6 pt-6" style={{ borderTop: "1px solid var(--ds-border)" }}>
 										<div className='flex items-center gap-4'>
-											<div className='p-2 bg-indigo-50 text-indigo-600 rounded-lg'>
+											<div style={metaChip("var(--purple-200)", "var(--purple-900)")}>
 												<UsersIcon size={20} />
 											</div>
 											<div>
-												<h6 className='text-sm font-bold text-gray-900'>Creado por</h6>
+												<h6 className='text-sm font-semibold' style={{ color: "var(--ds-text)" }}>Creado por</h6>
 												<div className='flex items-center gap-2'>
-													<div className='w-8 h-8 bg-gray-100 rounded-full overflow-hidden'>
+													<div className='w-8 h-8 rounded-full overflow-hidden' style={{ background: "var(--gray-alpha-100)" }}>
 														<Image
 															src={selectedBoard.createdBy.picture}
 															alt={`${selectedBoard.createdBy.firstName} ${selectedBoard.createdBy.lastName}`}
@@ -332,7 +339,7 @@ export default function TableroDetalle() {
 															className="w-full h-full object-cover"
 														/>
 													</div>
-													<span className='text-sm text-gray-600'>
+													<span className='text-sm' style={{ color: "var(--ds-text-secondary)" }}>
 														{selectedBoard.createdBy.firstName} {selectedBoard.createdBy.lastName}
 													</span>
 												</div>
@@ -350,4 +357,4 @@ export default function TableroDetalle() {
 			<sprintMode.view />
 		</div>
 	)
-} 
+}

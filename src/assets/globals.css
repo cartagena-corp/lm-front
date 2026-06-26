@@ -1,5 +1,15 @@
 @import "tailwindcss";
 
+/* ---- Geist Design System tokens (plain CSS custom properties) ----
+   The ds, space, radius, shadow and font token namespaces do not collide with
+   Tailwind's @theme color- vars, so existing utilities keep working.
+   base.css owns body color/background, so they flip with dark mode. */
+@import "./geist/colors.css";
+@import "./geist/typography.css";
+@import "./geist/spacing.css";
+@import "./geist/materials.css";
+@import "./geist/base.css";
+
 @theme {
   /* Colores personalizados para el sidebar */
   --color-primary: #1e293b;
@@ -13,13 +23,9 @@
 }
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-rgb: 255, 255, 255;
-}
-
-body {
-  color: rgb(var(--foreground-rgb));
-  background: rgb(var(--background-rgb));
+  /* Bridge Geist's type tokens to the next/font CSS variables (set on <html>). */
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", "Roboto Mono", Menlo, Monaco, "Liberation Mono", "Courier New", monospace;
 }
 
 button,
@@ -161,6 +167,21 @@ input[type=number] {
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 #f1f5f9;
 }
+
+/* Geist hover elevations / row hover (box-shadow & token bg can't be set inline on :hover) */
+.lm-board-card:hover { box-shadow: var(--shadow-md); }
+.lm-card:hover { box-shadow: var(--shadow-md); }
+.lm-row:hover { background: var(--gray-alpha-100); }
+
+/* Blinking caret for the login typewriter headline */
+.lm-caret { display: inline-block; margin-left: 2px; animation: lm-blink 1s steps(1) infinite; }
+@keyframes lm-blink { 50% { opacity: 0; } }
+
+/* Geist token helper utilities (for restyling large legacy screens in bulk) */
+.lm-surface { background: var(--ds-card); box-shadow: var(--shadow-border); }
+.lm-t1 { color: var(--ds-text); }
+.lm-t2 { color: var(--ds-text-secondary); }
+.lm-t3 { color: var(--ds-text-muted); }
 
 /* Issue badge styles */
 .issue-badge {

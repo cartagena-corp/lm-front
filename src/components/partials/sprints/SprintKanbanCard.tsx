@@ -184,45 +184,41 @@ function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onView
     return (
         <div
             ref={setNodeRef}
-            style={style}
+            style={{ ...style, background: "var(--ds-card)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-border)" }}
             {...attributes}
             {...customListeners}
-            className={`
-        bg-white rounded-lg border border-gray-200 p-4 shadow-sm hover:shadow-md transition-all duration-300 cursor-grab relative
+            className={`lm-card p-3 transition-shadow duration-150 cursor-grab relative
         ${isDragging ? 'opacity-50' : ''}
-        ${isOverlay ? 'rotate-3 shadow-lg' : ''}
+        ${isOverlay ? 'rotate-3' : ''}
         ${isOverTarget ? 'transform translate-y-2 opacity-75 scale-95' : ''}
       `}
         >
             {/* Header with type and title */}
             <div className="flex items-start justify-between mb-3">
-                <div className="flex flex-col gap-1 flex-1 min-w-0">
+                <div className="flex flex-col gap-[6px] flex-1 min-w-0">
                     <span
-                        className="text-sm font-semibold text-gray-900 truncate"
+                        className="font-medium truncate"
+                        style={{ fontSize: 13.5, lineHeight: "19px", color: "var(--ds-text)" }}
                         title={issue.title}
                     >
                         {issue.title}
                     </span>
                     <div className="flex items-center gap-2">
-                        <div
-                            className="rounded-full text-[10px] border px-2 whitespace-nowrap w-fit"
-                            style={{
-                                backgroundColor: `${typeInfo.color}0f`,
-                                color: typeInfo.color
-                            }}
+                        <span
+                            className="inline-flex items-center gap-[5px] whitespace-nowrap w-fit"
+                            style={{ height: 20, padding: "0 7px", borderRadius: "var(--radius-sm)", backgroundColor: `${typeInfo.color}1f`, color: typeInfo.color, fontSize: 11, fontWeight: 500 }}
                         >
+                            <span style={{ width: 5, height: 5, borderRadius: 9999, background: typeInfo.color }} />
                             {typeInfo.name}
-                        </div>
-                        <div
-                            className="rounded-full text-[10px] border px-2 whitespace-nowrap w-fit"
-                            style={{
-                                backgroundColor: `${priorityInfo.color}15`,
-                                color: priorityInfo.color,
-                            }}
+                        </span>
+                        <span
+                            className="inline-flex items-center gap-[5px] whitespace-nowrap w-fit"
+                            style={{ height: 20, padding: "0 7px", borderRadius: "var(--radius-sm)", backgroundColor: `${priorityInfo.color}1f`, color: priorityInfo.color, fontSize: 11, fontWeight: 500 }}
                             title={priorityInfo.name}
                         >
+                            <span style={{ width: 5, height: 5, borderRadius: 2, background: priorityInfo.color }} />
                             {priorityInfo.name}
-                        </div>
+                        </span>
                     </div>
                 </div>
 
@@ -234,7 +230,8 @@ function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onView
                             setIsMenuOpen(!isMenuOpen)
                         }}
                         onPointerDown={e => e.stopPropagation()}
-                        className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                        className="p-1 rounded transition-colors hover:bg-[var(--gray-alpha-100)]"
+                        style={{ color: "var(--ds-text-muted)" }}
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
@@ -243,11 +240,13 @@ function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onView
 
                     {isMenuOpen && (
                         <div
-                            className="absolute top-full right-0 mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-[80] overflow-hidden"
+                            className="absolute top-full right-0 mt-1 w-40 z-[80] overflow-hidden"
+                            style={{ background: "var(--ds-card)", border: "1px solid var(--ds-border)", borderRadius: "var(--radius-lg)", boxShadow: "var(--shadow-lg)" }}
                             onPointerDown={e => e.stopPropagation()}
                         >
                             <button
-                                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
+                                className="w-full px-3 py-2 text-left text-sm transition-colors flex items-center gap-2 hover:bg-[var(--gray-alpha-100)]"
+                                style={{ color: "var(--ds-text)" }}
                                 onClick={(e) => {
                                     e.stopPropagation()
                                     onViewDetails(issue)
@@ -258,7 +257,8 @@ function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onView
                                 Ver detalles
                             </button>
                             <button
-                                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
+                                className="w-full px-3 py-2 text-left text-sm transition-colors flex items-center gap-2 hover:bg-[var(--gray-alpha-100)]"
+                                style={{ color: "var(--ds-text)" }}
                                 onClick={(e) => {
                                     e.stopPropagation()
                                     onEdit(issue)
@@ -269,7 +269,8 @@ function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onView
                                 Editar
                             </button>
                             <button
-                                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
+                                className="w-full px-3 py-2 text-left text-sm transition-colors flex items-center gap-2 hover:bg-[var(--gray-alpha-100)]"
+                                style={{ color: "var(--ds-text)" }}
                                 onClick={(e) => {
                                     e.stopPropagation()
                                     onHistory(issue)
@@ -279,9 +280,10 @@ function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onView
                                 <ClockIcon size={14} />
                                 Historial
                             </button>
-                            <div className="border-t border-gray-100"></div>
+                            <div style={{ borderTop: "1px solid var(--ds-border)" }}></div>
                             <button
-                                className="w-full px-3 py-2 text-left text-sm hover:bg-red-50 transition-colors flex items-center gap-2 text-red-600"
+                                className="w-full px-3 py-2 text-left text-sm transition-colors flex items-center gap-2 hover:bg-red-50"
+                                style={{ color: "var(--red-700)" }}
                                 onClick={(e) => {
                                     e.stopPropagation()
                                     onDelete(issue)
@@ -297,20 +299,19 @@ function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onView
             </div>
 
             {/* Description */}
-            <hgroup className="text-xs text-gray-600 mb-3 line-clamp-4">
+            <hgroup className="mb-3 line-clamp-4" style={{ fontSize: 12, color: "var(--ds-text-secondary)" }}>
                 <SafeHtml
                     html={issue.descriptions?.[0]?.text || 'Sin descripción'}
-                    className="text-xs text-gray-600 leading-relaxed [&_code]:font-mono [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs"
+                    className="leading-relaxed [&_code]:font-mono [&_code]:bg-[var(--gray-alpha-100)] [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs"
                 />
-                {/* <SafeHtml html={issue.descriptions?.[0]?.text || 'Sin descripción'} />
-                {issue.descriptions?.[0]?.text || 'Sin descripción'} */}
             </hgroup>
 
             {/* Footer with assigned user and status timer */}
             <div className="flex items-center justify-between gap-1">
                 {/* Assigned user - clickable to reassign */}
                 <button
-                    className="flex min-w-0 flex-1 justify-start items-center gap-1 text-xs text-gray-600 hover:bg-gray-50 rounded-lg p-1 transition-colors group"
+                    className="flex min-w-0 flex-1 justify-start items-center gap-1 text-xs rounded-md p-1 transition-colors group hover:bg-[var(--gray-alpha-100)]"
+                    style={{ color: "var(--ds-text-secondary)" }}
                     onPointerDown={e => e.stopPropagation()}
                     onClick={(e) => {
                         e.stopPropagation()
@@ -318,7 +319,7 @@ function DraggableIssue({ issue, isOverlay = false, isOverTarget = false, onView
                     }}
                     title="Clic para reasignar"
                 >
-                    <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
+                    <div className="w-5 h-5 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0" style={{ background: "var(--gray-alpha-200)" }}>
                         {typeof issue.assignedId === 'object' && issue.assignedId ? (
                             <img
                                 src={getUserAvatar(issue.assignedId, 20)}
@@ -392,27 +393,28 @@ function StatusColumn({ status, issues, sprintId, activeId, overId, onViewDetail
             ref={setSortableNodeRef}
             style={style}
             className={`flex flex-col min-w-80 w-80 flex-shrink-0 transition-all duration-300 ${isDragging ? 'opacity-50' : ''
-                } ${isColumnOverTarget ? 'transform scale-95 opacity-75 bg-blue-50 rounded-lg' : ''
+                } ${isColumnOverTarget ? 'transform scale-95 opacity-75' : ''
                 }`}
         >
             <div
-                className="flex items-center gap-2 mb-3 cursor-grab active:cursor-grabbing"
+                className="flex items-center gap-2 mb-3 cursor-grab active:cursor-grabbing px-1"
                 {...attributes}
                 {...listeners}
             >
                 <div
-                    className="w-3 h-3 rounded-full"
+                    className="w-2 h-2 rounded-full"
                     style={{ backgroundColor: status.color }}
                 />
-                <h4 className="font-medium text-gray-900">{status.name}</h4>
-                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                <h4 className="font-semibold" style={{ fontSize: 13, color: "var(--ds-text)" }}>{status.name}</h4>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--ds-text-muted)" }}>
                     {issues.length}
                 </span>
             </div>
 
             <div
                 ref={setDroppableNodeRef}
-                className="min-h-[200px] bg-gray-50 rounded-lg p-3 space-y-3 h-full group"
+                className="min-h-[200px] rounded-lg p-2 space-y-2 h-full group"
+                style={{ background: isColumnOverTarget ? "var(--blue-100)" : "var(--gray-alpha-100)", border: isColumnOverTarget ? "1px dashed var(--blue-600)" : "1px solid transparent" }}
             >
                 <SortableContext items={issues.filter(i => i.id).map(i => i.id!)} strategy={verticalListSortingStrategy}>
                     {issues.map((issue) => {
@@ -437,7 +439,8 @@ function StatusColumn({ status, issues, sprintId, activeId, overId, onViewDetail
                     })}
                 </SortableContext>
                 <button
-                    className='bg-blue-50 border-blue-200 hover:border-blue-400 text-blue-600 text-sm rounded-lg flex justify-start items-center gap-2 border w-full border-dashed py-2 px-4 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer relative opacity-0 group-hover:opacity-100'
+                    className='text-sm rounded-md flex justify-start items-center gap-2 w-full py-2 px-3 transition-all duration-150 cursor-pointer relative opacity-0 group-hover:opacity-100'
+                    style={{ background: "var(--ds-card)", color: "var(--ds-text-secondary)", border: "1px dashed var(--ds-border-strong)" }}
                     onClick={() => onCreateTaskInSprint(status.id)}
                     title={`Crear nueva tarea en este sprint con estado "${status.name}"`}
                 >
@@ -1257,15 +1260,15 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
     }
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="overflow-hidden" style={{ background: "var(--ds-card)", borderRadius: "var(--radius-xl)", boxShadow: "var(--shadow-border)" }}>
             {/* Sprint Header */}
             <div className="px-6 pt-4">
                 <div className="flex flex-col">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2" style={{ color: "var(--ds-text)" }}>
                                 <CalendarIcon size={20} />
-                                <h3 className="text-lg font-semibold text-gray-900">{spr.title}</h3>
+                                <h3 className="font-semibold" style={{ fontSize: 18, letterSpacing: "-0.3px", color: "var(--ds-text)" }}>{spr.title}</h3>
                             </div>
                             {/* <div className="flex items-center gap-2">
                                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${spr.status === 1
@@ -1286,18 +1289,19 @@ export default function SprintKanbanCard({ spr }: { spr: SprintProps }) {
                                 // Backlog - solo mostrar botón crear tarea
                                 <button
                                     onClick={handleCreateTask}
-                                    className="flex items-center gap-2 px-4 py-2 text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium"
+                                    className="flex items-center gap-2 px-[14px] transition-opacity hover:opacity-90 text-sm font-medium"
+                                    style={{ height: 34, color: "var(--ds-contrast-inverse)", background: "var(--ds-text)", border: "1px solid var(--ds-text)", borderRadius: "var(--radius-md)" }}
                                 >
-                                    <PlusIcon size={18} stroke={2.5} />
+                                    <PlusIcon size={16} stroke={2.5} />
                                     Crear Tarea
                                 </button>
                             ) : (
                                 // Sprint normal - mostrar menú de opciones
                                 <div className="relative group">
-                                    <button className="p-2 hover:bg-gray-100 rounded-md transition-colors duration-200">
+                                    <button className="p-2 rounded-md transition-colors duration-200 hover:bg-[var(--gray-alpha-100)]" style={{ color: "var(--ds-text-muted)" }}>
                                         <MenuIcon size={16} />
                                     </button>
-                                    <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                                    <div className="absolute right-0 top-full mt-1 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 overflow-hidden" style={{ background: "var(--ds-card)", borderRadius: "var(--radius-lg)", boxShadow: "var(--shadow-lg)", border: "1px solid var(--ds-border)" }}>
                                         <div className="py-1">
                                             <button
                                                 onClick={handleEditSprint}

@@ -433,7 +433,7 @@ export default function TaskDetailsPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
-                <div className="text-gray-500">Cargando tarea...</div>
+                <div className="lm-t3">Cargando tarea...</div>
             </div>
         )
     }
@@ -441,19 +441,19 @@ export default function TaskDetailsPage() {
     if (!selectedIssue) {
         return (
             <div className="flex items-center justify-center min-h-screen">
-                <div className="text-gray-500">Tarea no encontrada</div>
+                <div className="lm-t3">Tarea no encontrada</div>
             </div>
         )
     }
 
     return (
-        <div className="bg-gray-50 flex flex-col overflow-hidden h-[94vh]">
+        <div className="flex flex-col overflow-hidden h-[94vh]" style={{ background: "var(--ds-background)", color: "var(--ds-text)" }}>
             <div className="mx-auto w-full px-4 flex-shrink-0">
                 {/* Header con botón de regreso */}
                 <div className="flex justify-between items-center">
                     <Link
                         href={selectedIssue?.parent?.id ? `/tableros/${boardId}/${selectedIssue.parent.id}` : `/tableros/${boardId}`}
-                        className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors duration-200 mb-4 text-sm"
+                        className="flex items-center gap-2 lm-t2 hover:opacity-80 transition-opacity duration-200 mb-4 text-sm"
                     >
                         <div className="transform rotate-180">
                             <ChevronRightIcon size={20} />
@@ -478,18 +478,18 @@ export default function TaskDetailsPage() {
                     <div className={`flex-1 transition-all duration-300 ease-in-out pr-4 h-full overflow-y-auto ${!isSidebarVisible ? 'pr-0' : ''}`}>
                         <div className="flex flex-col space-y-4">
                             {/* Sección de descripción */}
-                            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                            <h3 className="text-lg font-semibold lm-t1 flex items-center gap-2">
                                 {selectedIssue.title}
                             </h3>
-                            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+                            <div className="lm-surface rounded-xl p-4">
                                 {selectedIssue.descriptions.length > 0 ? (
                                     <div className="space-y-4">
                                         {selectedIssue.descriptions.map((desc, id) => (
                                             <div key={id} className="space-y-1">
-                                                <h4 className="font-semibold text-gray-900 text-sm">{desc.title}</h4>
+                                                <h4 className="font-semibold lm-t1 text-sm">{desc.title}</h4>
                                                 <SafeHtml
                                                     html={desc.text}
-                                                    className="text-xs text-gray-600 leading-relaxed [&_code]:font-mono [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs"
+                                                    className="text-xs lm-t2 leading-relaxed [&_code]:font-mono [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs"
                                                 />
                                                 {/* Mostrar imágenes si existen */}
                                                 {desc.attachments && desc.attachments.length > 0 && (
@@ -501,7 +501,7 @@ export default function TaskDetailsPage() {
                                                             const url = file.fileUrl
 
                                                             return (
-                                                                <div key={file.id} className="border border-gray-200 rounded-lg overflow-hidden hover:border-blue-300 hover:shadow-sm transition-all">
+                                                                <div key={file.id} className="border border-[var(--ds-border)] rounded-lg overflow-hidden hover:border-blue-300 hover:shadow-sm transition-all">
                                                                     {isImage && url ? (
                                                                         <Link href={url} target="_blank">
                                                                             <div className="w-16 h-16 relative">
@@ -523,7 +523,7 @@ export default function TaskDetailsPage() {
                                                                             <div className="flex-shrink-0">
                                                                                 <DownloadIcon size={16} stroke={2} />
                                                                             </div>
-                                                                            <span className="text-xs text-gray-600 truncate">
+                                                                            <span className="text-xs lm-t2 truncate">
                                                                                 {file.fileName}
                                                                             </span>
                                                                         </Link>
@@ -537,7 +537,7 @@ export default function TaskDetailsPage() {
                                         ))}
                                     </div>
                                 ) : (
-                                    <div className="flex items-center justify-center text-gray-500 py-8">
+                                    <div className="flex items-center justify-center lm-t3 py-8">
                                         <p className="text-sm">No hay descripción disponible</p>
                                     </div>
                                 )}
@@ -545,7 +545,7 @@ export default function TaskDetailsPage() {
 
                             {/* Sección de subtareas (Acordeón) - Solo mostrar si NO es una subtarea */}
                             {!selectedIssue.parent && (
-                                <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+                                <div className="lm-surface rounded-xl">
                                     {/* Header del acordeón */}
                                     <button
                                     onClick={() => setIsSubtasksOpen(!isSubtasksOpen)}
@@ -555,7 +555,7 @@ export default function TaskDetailsPage() {
                                         <div className={`transform transition-transform duration-200 ${isSubtasksOpen ? 'rotate-90' : ''}`}>
                                             <ChevronRightIcon size={20} stroke={2} />
                                         </div>
-                                        <h3 className="text-lg font-semibold text-gray-900">
+                                        <h3 className="text-lg font-semibold lm-t1">
                                             Subtareas ({filteredSubtasks.length})
                                         </h3>
                                     </div>
@@ -575,10 +575,10 @@ export default function TaskDetailsPage() {
 
                                 {/* Contenido del acordeón */}
                                 {isSubtasksOpen && (
-                                    <div className="border-t border-gray-200 p-4">
+                                    <div className="border-t border-[var(--ds-border)] p-4">
                                         {loadingSubtasks ? (
                                             <div className="flex items-center justify-center py-8">
-                                                <div className="text-gray-500">Cargando subtareas...</div>
+                                                <div className="lm-t3">Cargando subtareas...</div>
                                             </div>
                                         ) : (
                                             <>
@@ -601,7 +601,7 @@ export default function TaskDetailsPage() {
                                                         </button>
                                                         <button type='button'
                                                             onClick={() => setShowFilters(!showFilters)}
-                                                            className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-blue-500 text-blue-600 rounded-md hover:bg-blue-50 transition-all shadow-sm hover:shadow text-xs flex-shrink-0"
+                                                            className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[var(--ds-card)] border border-blue-500 text-blue-600 rounded-md hover:bg-blue-50 transition-all shadow-sm hover:shadow text-xs flex-shrink-0"
                                                         >
                                                             <FilterIcon size={14} stroke={2} />
                                                             <span className="font-semibold">Filtros</span>
@@ -721,7 +721,7 @@ export default function TaskDetailsPage() {
                                                 </div>
 
                                                 {/* Header de columnas */}
-                                                <div className="grid grid-cols-18 items-center gap-4 p-2 text-xs/tight font-semibold text-gray-600 border border-gray-200 bg-gray-50 rounded-t">
+                                                <div className="grid grid-cols-18 items-center gap-4 p-2 text-xs/tight font-semibold lm-t2 border border-[var(--ds-border)] bg-gray-50 rounded-t">
                                                     <div className="col-span-1 text-center">
                                                         <input
                                                             type="checkbox"
@@ -754,7 +754,7 @@ export default function TaskDetailsPage() {
                                                                 target="_blank"
                                                                 className="block"
                                                             >
-                                                                <div className="grid grid-cols-18 gap-4 p-2 items-center hover:bg-blue-50/30 rounded-lg border border-gray-100 hover:border-blue-200 transition-all bg-white shadow-sm hover:shadow-md">
+                                                                <div className="grid grid-cols-18 gap-4 p-2 items-center hover:bg-blue-50/30 rounded-lg border border-[var(--ds-border)] hover:border-blue-200 transition-all bg-[var(--ds-card)] shadow-sm hover:shadow-md">
                                                                     {/* Checkbox */}
                                                                     <div className="col-span-1 flex justify-center">
                                                                         <input
@@ -784,16 +784,16 @@ export default function TaskDetailsPage() {
 
                                                                     {/* Título */}
                                                                     <div className="col-span-5">
-                                                                        <h6 className="font-medium text-gray-900 text-sm line-clamp-1" title={subtask.title}>
+                                                                        <h6 className="font-medium lm-t1 text-sm line-clamp-1" title={subtask.title}>
                                                                             {subtask.title}
                                                                         </h6>
                                                                         {subtask.descriptions.length > 0 ? (
                                                                             <SafeHtml
                                                                                 html={subtask.descriptions[0].text}
-                                                                                className="line-clamp-1 text-xs text-gray-600 leading-relaxed"
+                                                                                className="line-clamp-1 text-xs lm-t2 leading-relaxed"
                                                                             />
                                                                         ) : (
-                                                                            <p className="text-xs text-gray-500 line-clamp-1">Sin descripción</p>
+                                                                            <p className="text-xs lm-t3 line-clamp-1">Sin descripción</p>
                                                                         )}
                                                                     </div>
 
@@ -858,7 +858,7 @@ export default function TaskDetailsPage() {
                                                                                         className="w-full h-full object-cover rounded-full"
                                                                                     />
                                                                                 ) : (
-                                                                                    <span className="text-xs text-gray-500">N/A</span>
+                                                                                    <span className="text-xs lm-t3">N/A</span>
                                                                                 )}
                                                                             </div>
                                                                             <span className="text-xs text-gray-700 line-clamp-1">
@@ -897,7 +897,7 @@ export default function TaskDetailsPage() {
                                                                                     handleEditSubtask(subtask.id)
                                                                                 }
                                                                             }}
-                                                                            className="p-1.5 text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                                                                            className="p-1.5 lm-t2 hover:bg-gray-100 rounded transition-colors"
                                                                             title="Editar"
                                                                         >
                                                                             <EditIcon size={16} />
@@ -933,7 +933,7 @@ export default function TaskDetailsPage() {
                                                             </Link>
                                                         ))
                                                     ) : (
-                                                        <div className="flex items-center justify-center text-gray-500 py-8">
+                                                        <div className="flex items-center justify-center lm-t3 py-8">
                                                             <p className="text-sm">No hay subtareas que coincidan con los filtros</p>
                                                         </div>
                                                     )}
@@ -946,7 +946,7 @@ export default function TaskDetailsPage() {
                             )}
 
                             {/* Sección de comentarios */}
-                            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+                            <div className="lm-surface rounded-xl p-4">
                                 <ShowComments arrayComments={comments} task={selectedIssue} />
                             </div>
                         </div>
@@ -957,8 +957,8 @@ export default function TaskDetailsPage() {
                         onClick={() => setIsSidebarVisible(!isSidebarVisible)}
                     >
                         <div className="w-px bg-gray-200 h-full absolute top-0" />
-                        <div className="relative flex items-center justify-center w-6 h-8 bg-white border border-gray-200 rounded-md shadow-sm group-hover:bg-gray-50 group-hover:border-gray-300 transition-all duration-200">
-                            <div className={`text-gray-400 group-hover:text-gray-600 transition-all duration-300 ${isSidebarVisible ? 'transform' : 'transform rotate-180'}`}>
+                        <div className="relative flex items-center justify-center w-6 h-8 bg-[var(--ds-card)] border border-[var(--ds-border)] rounded-md shadow-sm group-hover:bg-gray-50 group-hover:border-gray-300 transition-all duration-200">
+                            <div className={`lm-t3 transition-all duration-300 ${isSidebarVisible ? 'transform' : 'transform rotate-180'}`}>
                                 <ChevronRightIcon
                                     size={14}
                                     stroke={2}
@@ -975,25 +975,25 @@ export default function TaskDetailsPage() {
                         <div className={`pl-4 h-full ${isSidebarVisible ? 'block' : 'hidden'}`}>
                             <div className="h-full overflow-y-auto space-y-4 min-w-80">
                                 {/* Sección de personas */}
-                                <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                                <div className="lm-surface rounded-xl p-4">
                                     <div className="flex items-center gap-2 mb-2">
                                         <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
                                             <UsersIcon size={18} />
                                         </div>
-                                        <h3 className="font-semibold text-gray-900">Personas</h3>
+                                        <h3 className="font-semibold lm-t1">Personas</h3>
                                     </div>
                                     <div className="space-y-1">
-                                        <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
-                                            <span className="text-sm text-gray-500">Asignado a:&nbsp;&nbsp;</span>
-                                            <span className="text-sm font-medium text-gray-900">
+                                        <div className="flex items-center justify-between py-2 border-b border-[var(--ds-border)] last:border-b-0">
+                                            <span className="text-sm lm-t3">Asignado a:&nbsp;&nbsp;</span>
+                                            <span className="text-sm font-medium lm-t1">
                                                 {typeof selectedIssue.assignedId === 'object'
                                                     ? `${selectedIssue.assignedId.firstName ?? "Sin"} ${selectedIssue.assignedId.lastName ?? "asignar"}`
                                                     : selectedIssue.assignedId || 'No asignado'}
                                             </span>
                                         </div>
-                                        <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
-                                            <span className="text-sm text-gray-500">Informador:&nbsp;&nbsp;</span>
-                                            <span className="text-sm font-medium text-gray-900">
+                                        <div className="flex items-center justify-between py-2 border-b border-[var(--ds-border)] last:border-b-0">
+                                            <span className="text-sm lm-t3">Informador:&nbsp;&nbsp;</span>
+                                            <span className="text-sm font-medium lm-t1">
                                                 {selectedIssue.reporterId ? `${selectedIssue.reporterId.firstName} ${selectedIssue.reporterId.lastName}` : 'No especificado'}
                                             </span>
                                         </div>
@@ -1001,18 +1001,18 @@ export default function TaskDetailsPage() {
                                 </div>
 
                                 {/* Sección de detalles */}
-                                <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                                <div className="lm-surface rounded-xl p-4">
                                     <div className="flex items-center gap-2 mb-2">
                                         <div className="p-2 bg-orange-100 rounded-lg text-orange-600">
                                             <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                                             </svg>
                                         </div>
-                                        <h3 className="font-semibold text-gray-900">Detalles</h3>
+                                        <h3 className="font-semibold lm-t1">Detalles</h3>
                                     </div>
                                     <div className="space-y-1">
-                                        <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
-                                            <span className="text-sm text-gray-500">Estado:&nbsp;&nbsp;</span>
+                                        <div className="flex items-center justify-between py-2 border-b border-[var(--ds-border)] last:border-b-0">
+                                            <span className="text-sm lm-t3">Estado:&nbsp;&nbsp;</span>
                                             {(() => {
                                                 const status = projectConfig?.issueStatuses?.find((s: { id: number }) => s.id === selectedIssue.status)
                                                 return status ? (
@@ -1027,12 +1027,12 @@ export default function TaskDetailsPage() {
                                                         {status.name}
                                                     </span>
                                                 ) : (
-                                                    <span className="text-sm font-medium text-gray-400">No especificado</span>
+                                                    <span className="text-sm font-medium lm-t3">No especificado</span>
                                                 )
                                             })()}
                                         </div>
-                                        <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
-                                            <span className="text-sm text-gray-500">Tipo:&nbsp;&nbsp;</span>
+                                        <div className="flex items-center justify-between py-2 border-b border-[var(--ds-border)] last:border-b-0">
+                                            <span className="text-sm lm-t3">Tipo:&nbsp;&nbsp;</span>
                                             {(() => {
                                                 const type = projectConfig?.issueTypes?.find((t: { id: number }) => t.id === selectedIssue.type)
                                                 return type ? (
@@ -1047,12 +1047,12 @@ export default function TaskDetailsPage() {
                                                         {type.name}
                                                     </span>
                                                 ) : (
-                                                    <span className="text-sm font-medium text-gray-400">No especificado</span>
+                                                    <span className="text-sm font-medium lm-t3">No especificado</span>
                                                 )
                                             })()}
                                         </div>
-                                        <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
-                                            <span className="text-sm text-gray-500">Prioridad:&nbsp;&nbsp;</span>
+                                        <div className="flex items-center justify-between py-2 border-b border-[var(--ds-border)] last:border-b-0">
+                                            <span className="text-sm lm-t3">Prioridad:&nbsp;&nbsp;</span>
                                             {(() => {
                                                 const priority = projectConfig?.issuePriorities?.find((p: { id: number }) => p.id === selectedIssue.priority)
                                                 return priority ? (
@@ -1067,7 +1067,7 @@ export default function TaskDetailsPage() {
                                                         {priority.name}
                                                     </span>
                                                 ) : (
-                                                    <span className="text-sm font-medium text-gray-400">No especificado</span>
+                                                    <span className="text-sm font-medium lm-t3">No especificado</span>
                                                 )
                                             })()}
                                         </div>
@@ -1075,53 +1075,53 @@ export default function TaskDetailsPage() {
                                 </div>
 
                                 {/* Sección de fechas */}
-                                <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                                <div className="lm-surface rounded-xl p-4">
                                     <div className="flex items-center gap-2 mb-2">
                                         <div className="p-2 bg-green-100 rounded-lg text-green-600">
                                             <CalendarIcon size={18} />
                                         </div>
-                                        <h3 className="font-semibold text-gray-900">Fechas</h3>
+                                        <h3 className="font-semibold lm-t1">Fechas</h3>
                                     </div>
                                     <div className="space-y-1">
-                                        <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
-                                            <span className="text-sm text-gray-500">Creación:&nbsp;&nbsp;</span>
-                                            <span className="text-sm font-medium text-gray-900">
+                                        <div className="flex items-center justify-between py-2 border-b border-[var(--ds-border)] last:border-b-0">
+                                            <span className="text-sm lm-t3">Creación:&nbsp;&nbsp;</span>
+                                            <span className="text-sm font-medium lm-t1">
                                                 {formatDate(selectedIssue.createdAt)}
                                             </span>
                                         </div>
-                                        <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
-                                            <span className="text-sm text-gray-500">Actualización:&nbsp;&nbsp;</span>
-                                            <span className="text-sm font-medium text-gray-900">
+                                        <div className="flex items-center justify-between py-2 border-b border-[var(--ds-border)] last:border-b-0">
+                                            <span className="text-sm lm-t3">Actualización:&nbsp;&nbsp;</span>
+                                            <span className="text-sm font-medium lm-t1">
                                                 {formatDate(selectedIssue.updatedAt)}
                                             </span>
                                         </div>
-                                        <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
-                                            <span className="text-sm text-gray-500">Fecha de inicio:&nbsp;&nbsp;</span>
-                                            <span className="text-sm font-medium text-gray-900">{formatDate(selectedIssue.startDate, false, true)}</span>
+                                        <div className="flex items-center justify-between py-2 border-b border-[var(--ds-border)] last:border-b-0">
+                                            <span className="text-sm lm-t3">Fecha de inicio:&nbsp;&nbsp;</span>
+                                            <span className="text-sm font-medium lm-t1">{formatDate(selectedIssue.startDate, false, true)}</span>
                                         </div>
-                                        <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
-                                            <span className="text-sm text-gray-500">Fecha de fin:&nbsp;&nbsp;</span>
-                                            <span className="text-sm font-medium text-gray-900">{formatDate(selectedIssue.endDate, false, true)}</span>
+                                        <div className="flex items-center justify-between py-2 border-b border-[var(--ds-border)] last:border-b-0">
+                                            <span className="text-sm lm-t3">Fecha de fin:&nbsp;&nbsp;</span>
+                                            <span className="text-sm font-medium lm-t1">{formatDate(selectedIssue.endDate, false, true)}</span>
                                         </div>
-                                        <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
-                                            <span className="text-sm text-gray-500">Fecha real de finalización:&nbsp;&nbsp;</span>
-                                            <span className="text-sm font-medium text-gray-900">{formatDate(selectedIssue.realDate, false, true)}</span>
+                                        <div className="flex items-center justify-between py-2 border-b border-[var(--ds-border)] last:border-b-0">
+                                            <span className="text-sm lm-t3">Fecha real de finalización:&nbsp;&nbsp;</span>
+                                            <span className="text-sm font-medium lm-t1">{formatDate(selectedIssue.realDate, false, true)}</span>
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Sección de tiempo */}
-                                <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                                <div className="lm-surface rounded-xl p-4">
                                     <div className="flex items-center gap-2 mb-2">
                                         <div className="p-2 bg-purple-100 rounded-lg text-purple-600">
                                             <ClockIcon size={18} />
                                         </div>
-                                        <h3 className="font-semibold text-gray-900">Tiempo</h3>
+                                        <h3 className="font-semibold lm-t1">Tiempo</h3>
                                     </div>
                                     <div className="space-y-1">
-                                        <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
-                                            <span className="text-sm text-gray-500">Estimado:&nbsp;&nbsp;</span>
-                                            <span className="text-sm font-medium text-gray-900">
+                                        <div className="flex items-center justify-between py-2 border-b border-[var(--ds-border)] last:border-b-0">
+                                            <span className="text-sm lm-t3">Estimado:&nbsp;&nbsp;</span>
+                                            <span className="text-sm font-medium lm-t1">
                                                 {selectedIssue.estimatedTime ? `${selectedIssue.estimatedTime} horas` : 'No especificado'}
                                             </span>
                                         </div>

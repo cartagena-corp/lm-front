@@ -66,6 +66,15 @@ export default function BoardCard({ board }: { board: ProjectProps }) {
    const isOverdue = board.endDate && new Date(board.endDate) < new Date()
    const daysRemaining = board.endDate ? Math.ceil((new Date(board.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null
 
+   // Derive a short mono "key" from the board name (e.g. "Plataforma de Pagos" -> "PP").
+   const boardKey = (board.name || "")
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 3)
+      .map(w => w[0])
+      .join("")
+      .toUpperCase() || (board.name || "?").slice(0, 2).toUpperCase()
+
    const { openModal, closeModal } = useModalStore()
 
    const handleShowHistoryModal = () => {
@@ -111,50 +120,63 @@ export default function BoardCard({ board }: { board: ProjectProps }) {
       })
    }
 
+   const statusColor = getStatusColor(Number(board.status))
+   const statusName = getStatusName(Number(board.status))
+   const statusLabel = statusName.charAt(0).toUpperCase() + statusName.slice(1).toLowerCase()
+
    return (
-      <div className="bg-white flex flex-col shadow-md hover:shadow-lg transition-all duration-200 rounded-xl border border-gray-100 h-96 p-6 group hover:border-gray-200">
-         <section className='flex flex-col gap-4 flex-1'>
-            <article className='flex justify-between items-start gap-3'>
-               <div className="flex-1 min-w-0">
-                  <h3 className="text-gray-900 text-xl font-semibold line-clamp-2 group-hover:text-blue-600 transition-colors duration-200">
-                     {board.name}
-                  </h3>
-               </div>
-               <div className="flex items-center gap-2">
+      <div
+         className="lm-board-card flex flex-col group transition-shadow duration-150 p-[18px]"
+         style={{ background: "var(--ds-card)", borderRadius: "var(--radius-xl)", boxShadow: "var(--shadow-border)", minHeight: 220 }}
+      >
+         <section className='flex flex-col gap-[14px] flex-1'>
+            <article className='flex justify-between items-start gap-[10px]'>
+               <div className="flex items-center gap-[10px] min-w-0">
                   <div
-                     className="rounded-full text-xs font-medium px-3 py-1 whitespace-nowrap flex-shrink-0"
-                     style={{
-                        backgroundColor: `${getStatusColor(Number(board.status))}20`,
-                        color: getStatusColor(Number(board.status)),
-                        border: `1px solid ${getStatusColor(Number(board.status))}40`
-                     }}
+                     className="flex items-center justify-center flex-shrink-0"
+                     style={{ width: 36, height: 36, borderRadius: 8, background: "var(--gray-alpha-100)", color: "var(--ds-text-secondary)", fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 600 }}
                   >
-                     {getStatusName(Number(board.status)).charAt(0).toUpperCase() + getStatusName(Number(board.status)).slice(1).toLowerCase()}
+                     {boardKey}
                   </div>
+                  <div className="min-w-0">
+                     <h3 className="font-semibold line-clamp-1 transition-colors duration-150" style={{ fontSize: 15, letterSpacing: "-0.01em", color: "var(--ds-text)" }}>
+                        {board.name}
+                     </h3>
+                     <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--ds-text-muted)" }}>{boardKey}</div>
+                  </div>
+               </div>
+               <div className="flex items-center gap-1 flex-shrink-0">
+                  <span
+                     className="inline-flex items-center gap-[5px] whitespace-nowrap"
+                     style={{ height: 22, padding: "0 8px", borderRadius: 9999, background: `${statusColor}1f`, color: statusColor, fontSize: 11, fontWeight: 500 }}
+                  >
+                     <span style={{ width: 6, height: 6, borderRadius: 9999, background: statusColor }} />
+                     {statusLabel}
+                  </span>
                   <div className="relative" ref={menuRef}>
                      <button
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
-                        className="p-1 text-gray-900 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                        className="p-1 rounded-md transition-colors hover:bg-[var(--gray-alpha-100)]"
+                        style={{ color: "var(--ds-text-muted)" }}
                      >
                         <MenuIcon size={16} />
                      </button>
                      {isMenuOpen && (
-                        <div className="absolute top-full right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-xl z-50">
+                        <div
+                           className="absolute top-full right-0 mt-2 w-40 z-50 overflow-hidden"
+                           style={{ background: "var(--ds-card)", border: "1px solid var(--ds-border)", borderRadius: "var(--radius-lg)", boxShadow: "var(--shadow-lg)" }}
+                        >
                            <button
-                              className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors"
-                              onClick={() => {
-                                 handleShowHistoryModal()
-                                 setIsMenuOpen(false)
-                              }}
+                              className="w-full px-4 py-2 text-left text-sm transition-colors hover:bg-[var(--gray-alpha-100)]"
+                              style={{ color: "var(--ds-text)" }}
+                              onClick={() => { handleShowHistoryModal(); setIsMenuOpen(false) }}
                            >
                               Ver historial
                            </button>
                            <button
-                              className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors border-t border-gray-100"
-                              onClick={() => {
-                                 handleShowDashboardModal()
-                                 setIsMenuOpen(false)
-                              }}
+                              className="w-full px-4 py-2 text-left text-sm transition-colors hover:bg-[var(--gray-alpha-100)]"
+                              style={{ color: "var(--ds-text)", borderTop: "1px solid var(--ds-border)" }}
+                              onClick={() => { handleShowDashboardModal(); setIsMenuOpen(false) }}
                            >
                               Ver dashboard
                            </button>
@@ -164,22 +186,22 @@ export default function BoardCard({ board }: { board: ProjectProps }) {
                </div>
             </article>
 
-            <p className="text-gray-600 text-sm line-clamp-3 leading-relaxed">
+            <p className="line-clamp-2" style={{ fontSize: 13, lineHeight: "19px", color: "var(--ds-text-secondary)", minHeight: 38 }}>
                {board.description}
             </p>
 
-            <div className="space-y-2 mt-auto">
-               <article className="text-gray-500 flex justify-start items-center text-xs gap-2">
+            <div className="flex flex-col gap-2 mt-auto">
+               <article className="flex justify-start items-center text-xs gap-2" style={{ color: "var(--ds-text-muted)" }}>
                   <CalendarIcon size={14} />
-                  <div className="flex justify-center items-center gap-1">
+                  <div className="flex items-center gap-1">
                      <span className="font-medium">Período:</span>
                      <span>{formatDate(board.startDate)}</span>
-                     <span className="text-gray-400">-</span>
+                     <span style={{ color: "var(--ds-text-muted)" }}>-</span>
                      <span>{formatDate(board.endDate)}</span>
                   </div>
                </article>
 
-               <article className="text-gray-400 flex justify-start items-center text-xs gap-2">
+               <article className="flex justify-start items-center text-xs gap-2" style={{ color: "var(--ds-text-muted)" }}>
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -188,28 +210,30 @@ export default function BoardCard({ board }: { board: ProjectProps }) {
             </div>
 
             {daysRemaining !== null && (
-               <div className="text-xs flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${isOverdue ? 'bg-red-500' : daysRemaining <= 7 ? 'bg-orange-500' : 'bg-green-500'}`} />
-                  <span className={`font-medium ${isOverdue ? 'text-red-600' : daysRemaining <= 7 ? 'text-orange-600' : 'text-green-600'}`}>
+               <div className="text-xs flex items-center gap-2" style={{ paddingTop: 4, borderTop: "1px solid var(--ds-border)" }}>
+                  <span className="rounded-full" style={{ width: 6, height: 6, background: isOverdue ? "var(--red-700)" : daysRemaining <= 7 ? "var(--amber-700)" : "var(--green-700)" }} />
+                  <span className="font-medium" style={{ color: isOverdue ? "var(--red-700)" : daysRemaining <= 7 ? "var(--amber-700)" : "var(--green-700)" }}>
                      {isOverdue ? 'Vencido' : daysRemaining <= 0 ? 'Vence hoy' : `${daysRemaining} días restantes`}
                   </span>
                </div>
             )}
          </section>
 
-         <section className="flex items-center gap-3 mt-4 flex-shrink-0">
+         <section className="flex items-center gap-2 mt-4 flex-shrink-0">
             {user && board.createdBy && user.id === board.createdBy.id && (
                <button
                   onClick={() => handleDeleteBoardModal()}
                   type="button"
-                  className="bg-white hover:bg-red-50 hover:border-red-200 hover:text-red-600 border-gray-200 border flex-1 duration-200 rounded-lg text-center text-sm py-2.5 px-4 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                  className="flex-1 transition-colors text-center text-sm font-medium hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+                  style={{ height: 36, borderRadius: "var(--radius-md)", background: "var(--ds-background)", color: "var(--ds-text)", border: "1px solid var(--ds-border-strong)" }}
                >
                   Eliminar
                </button>
             )}
             <Link
                href={`/tableros/${board.id}`}
-               className={`bg-blue-600 hover:bg-blue-700 text-white border-transparent border hover:shadow-md ${user && board.createdBy && user.id === board.createdBy.id ? 'flex-1' : 'w-full'} duration-200 rounded-lg text-center text-sm py-2.5 px-4 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+               className={`${user && board.createdBy && user.id === board.createdBy.id ? 'flex-1' : 'w-full'} flex items-center justify-center text-center text-sm font-medium transition-opacity hover:opacity-90`}
+               style={{ height: 36, borderRadius: "var(--radius-md)", background: "var(--ds-text)", color: "var(--ds-contrast-inverse)", border: "1px solid var(--ds-text)" }}
             >
                Ver detalles
             </Link>
@@ -219,26 +243,30 @@ export default function BoardCard({ board }: { board: ProjectProps }) {
 }
 
 export function BoardCardSkeleton(): JSX.Element {
+   const bar = (w: string, h = 14): JSX.Element => (
+      <div className="animate-pulse rounded" style={{ width: w, height: h, background: "var(--gray-alpha-200)" }} />
+   )
    return (
-      <div className="bg-gray-100 animate-pulse h-[320px] shadow-md rounded-xl border border-gray-200 p-6">
-         <div className="space-y-3">
-            <div className="flex justify-between items-start gap-4">
-               <div className="h-6 bg-gray-300 rounded w-2/3"></div>
-               <div className="h-6 bg-gray-300 rounded-full w-20"></div>
+      <div className="flex flex-col p-[18px]" style={{ background: "var(--ds-card)", borderRadius: "var(--radius-xl)", boxShadow: "var(--shadow-border)", minHeight: 220 }}>
+         <div className="flex items-start gap-[10px]">
+            <div className="animate-pulse flex-shrink-0" style={{ width: 36, height: 36, borderRadius: 8, background: "var(--gray-alpha-200)" }} />
+            <div className="flex flex-col gap-2 flex-1">
+               {bar("60%", 15)}
+               {bar("30%", 11)}
             </div>
-            <div className="space-y-2">
-               <div className="h-4 bg-gray-300 rounded w-full"></div>
-               <div className="h-4 bg-gray-300 rounded w-4/5"></div>
-               <div className="h-4 bg-gray-300 rounded w-3/5"></div>
-            </div>
-            <div className="space-y-2">
-               <div className="h-3 bg-gray-300 rounded w-3/4"></div>
-               <div className="h-3 bg-gray-300 rounded w-2/3"></div>
-            </div>
+            <div className="animate-pulse" style={{ width: 70, height: 22, borderRadius: 9999, background: "var(--gray-alpha-200)" }} />
          </div>
-         <div className="flex gap-3 mt-6">
-            <div className="h-10 bg-gray-300 rounded-lg flex-1"></div>
-            <div className="h-10 bg-gray-300 rounded-lg flex-1"></div>
+         <div className="flex flex-col gap-2 mt-4">
+            {bar("100%")}
+            {bar("80%")}
+         </div>
+         <div className="flex flex-col gap-2 mt-auto pt-4">
+            {bar("70%", 11)}
+            {bar("55%", 11)}
+         </div>
+         <div className="flex gap-2 mt-4">
+            <div className="animate-pulse flex-1" style={{ height: 36, borderRadius: "var(--radius-md)", background: "var(--gray-alpha-200)" }} />
+            <div className="animate-pulse flex-1" style={{ height: 36, borderRadius: "var(--radius-md)", background: "var(--gray-alpha-200)" }} />
          </div>
       </div>
    )

@@ -115,129 +115,83 @@ export default function RegisterForm({ onSubmit, onBack, isLoading = false }: Re
         }
     }
 
-    return (
-        <>
-            <div className='text-start w-full'>
-                <h6 className='font-bold text-xl md:text-2xl'>Asociar cuenta</h6>
-                <p className='text-black/50 text-sm md:text-base'>
-                    Establece una contraseña para tu cuenta
-                </p>
-            </div>
+    const inputStyle = (hasError: boolean): React.CSSProperties => ({
+        width: '100%', height: 40, padding: '0 12px',
+        background: 'var(--ds-background)', color: 'var(--ds-text)',
+        border: `1px solid ${hasError ? 'var(--red-700)' : 'var(--ds-border)'}`,
+        borderRadius: 'var(--radius-md)', outline: 'none',
+        fontFamily: 'var(--font-sans)', fontSize: 14,
+    })
+    const errStyle: React.CSSProperties = { color: 'var(--red-700)', fontSize: 12, marginTop: 6 }
+    const labelStyle: React.CSSProperties = { display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6 }
 
-            <form onSubmit={handleSubmit} className='w-full space-y-4'>
+    return (
+        <div className='w-full'>
+            <h2 className='font-semibold' style={{ fontSize: 24, letterSpacing: '-0.96px', margin: '0 0 6px' }}>Asociar cuenta</h2>
+            <p style={{ fontSize: 14, color: 'var(--ds-text-secondary)', margin: '0 0 24px' }}>Establece una contraseña para tu cuenta.</p>
+
+            <form onSubmit={handleSubmit} className='w-full'>
                 {/* Nombre y Apellido en una fila */}
                 <div className='flex flex-col sm:flex-row gap-4'>
                     <div className='flex-1'>
-                        <input
-                            type='text'
-                            placeholder='Nombre'
-                            value={firstName}
-                            onChange={(e) => setFirstName(e.target.value)}
-                            disabled={isLoading}
-                            className={`w-full px-3 py-2 border rounded-md outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed ${firstNameError ? 'border-red-500' : 'border-black/15'
-                                }`}
-                        />
-                        {firstNameError && <p className='text-red-500 text-xs mt-1'>{firstNameError}</p>}
+                        <label style={labelStyle}>Nombre</label>
+                        <input type='text' placeholder='Nombre' value={firstName} onChange={(e) => setFirstName(e.target.value)} disabled={isLoading} style={inputStyle(!!firstNameError)} />
+                        {firstNameError && <p style={errStyle}>{firstNameError}</p>}
                     </div>
-
                     <div className='flex-1'>
-                        <input
-                            type='text'
-                            placeholder='Apellido'
-                            value={lastName}
-                            onChange={(e) => setLastName(e.target.value)}
-                            disabled={isLoading}
-                            className={`w-full px-3 py-2 border rounded-md outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed ${lastNameError ? 'border-red-500' : 'border-black/15'
-                                }`}
-                        />
-                        {lastNameError && <p className='text-red-500 text-xs mt-1'>{lastNameError}</p>}
+                        <label style={labelStyle}>Apellido</label>
+                        <input type='text' placeholder='Apellido' value={lastName} onChange={(e) => setLastName(e.target.value)} disabled={isLoading} style={inputStyle(!!lastNameError)} />
+                        {lastNameError && <p style={errStyle}>{lastNameError}</p>}
                     </div>
                 </div>
 
                 {/* Email */}
-                <div>
-                    <input
-                        type='email'
-                        placeholder='Correo electrónico'
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        disabled={isLoading}
-                        className={`w-full px-3 py-2 border rounded-md outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed ${emailError ? 'border-red-500' : 'border-black/15'
-                            }`}
-                    />
-                    {emailError && <p className='text-red-500 text-xs mt-1'>{emailError}</p>}
+                <div style={{ marginTop: 16 }}>
+                    <label style={labelStyle}>Correo electrónico</label>
+                    <input type='email' placeholder='tucorreo@empresa.com' value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading} style={inputStyle(!!emailError)} />
+                    {emailError && <p style={errStyle}>{emailError}</p>}
                 </div>
 
                 {/* Contraseña */}
-                <div>
-                    <div className="relative">
-                        <input
-                            type={showPassword ? 'text' : 'password'}
-                            placeholder='Nueva contraseña'
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            disabled={isLoading}
-                            className={`w-full px-3 py-2 ${password ? 'pr-10' : 'pr-3'} border rounded-md outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed ${passwordError ? 'border-red-500' : 'border-black/15'
-                                }`}
-                        />
+                <div style={{ marginTop: 16 }}>
+                    <label style={labelStyle}>Nueva contraseña</label>
+                    <div style={{ position: 'relative' }}>
+                        <input type={showPassword ? 'text' : 'password'} placeholder='••••••••' value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading} style={{ ...inputStyle(!!passwordError), paddingRight: password ? 40 : 12 }} />
                         {password && (
-                            <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                disabled={isLoading}
-                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 disabled:opacity-50"
-                            >
-                                {showPassword ? <EyeOffIcon size={20} /> : <EyeIcon size={20} />}
+                            <button type='button' onClick={() => setShowPassword(!showPassword)} disabled={isLoading} className='absolute right-3 top-1/2 -translate-y-1/2 flex' style={{ color: 'var(--ds-text-muted)', background: 'transparent', border: 'none', cursor: 'pointer' }}>
+                                {showPassword ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}
                             </button>
                         )}
                     </div>
-                    {passwordError && <p className='text-red-500 text-xs mt-1'>{passwordError}</p>}
+                    {passwordError && <p style={errStyle}>{passwordError}</p>}
                 </div>
 
                 {/* Confirmar contraseña */}
-                <div>
-                    <div className="relative">
-                        <input
-                            type={showConfirmPassword ? 'text' : 'password'}
-                            placeholder='Confirmar contraseña'
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            disabled={isLoading}
-                            className={`w-full px-3 py-2 ${confirmPassword ? 'pr-10' : 'pr-3'} border rounded-md outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed ${confirmPasswordError ? 'border-red-500' : 'border-black/15'
-                                }`}
-                        />
+                <div style={{ marginTop: 16 }}>
+                    <label style={labelStyle}>Confirmar contraseña</label>
+                    <div style={{ position: 'relative' }}>
+                        <input type={showConfirmPassword ? 'text' : 'password'} placeholder='••••••••' value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} disabled={isLoading} style={{ ...inputStyle(!!confirmPasswordError), paddingRight: confirmPassword ? 40 : 12 }} />
                         {confirmPassword && (
-                            <button
-                                type="button"
-                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                disabled={isLoading}
-                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 disabled:opacity-50"
-                            >
-                                {showConfirmPassword ? <EyeOffIcon size={20} /> : <EyeIcon size={20} />}
+                            <button type='button' onClick={() => setShowConfirmPassword(!showConfirmPassword)} disabled={isLoading} className='absolute right-3 top-1/2 -translate-y-1/2 flex' style={{ color: 'var(--ds-text-muted)', background: 'transparent', border: 'none', cursor: 'pointer' }}>
+                                {showConfirmPassword ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}
                             </button>
                         )}
                     </div>
-                    {confirmPasswordError && <p className='text-red-500 text-xs mt-1'>{confirmPasswordError}</p>}
+                    {confirmPasswordError && <p style={errStyle}>{confirmPasswordError}</p>}
                 </div>
 
                 {/* Botones */}
-                <div className='flex flex-col sm:flex-row gap-2'>
-                    <button
-                        type='button'
-                        onClick={onBack}
-                        disabled={isLoading}
-                        className='flex-1 px-4 py-2 border border-black/15 rounded-md hover:bg-black/5 duration-150 disabled:opacity-50 disabled:cursor-not-allowed'>
+                <div className='flex flex-col sm:flex-row gap-2' style={{ marginTop: 24 }}>
+                    <button type='button' onClick={onBack} disabled={isLoading} className='flex-1 disabled:opacity-50 disabled:cursor-not-allowed'
+                        style={{ height: 40, borderRadius: 'var(--radius-md)', background: 'var(--ds-background)', color: 'var(--ds-text)', border: '1px solid var(--ds-border-strong)', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>
                         Volver
                     </button>
-
-                    <button
-                        type='submit'
-                        disabled={isLoading}
-                        className='flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 duration-150 disabled:opacity-50 disabled:cursor-not-allowed'>
-                        {isLoading ? 'Registrando...' : 'Registrarse'}
+                    <button type='submit' disabled={isLoading} className='flex-1 disabled:opacity-50 disabled:cursor-not-allowed'
+                        style={{ height: 40, borderRadius: 'var(--radius-md)', background: 'var(--ds-text)', color: 'var(--ds-contrast-inverse)', border: '1px solid var(--ds-text)', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>
+                        {isLoading ? 'Registrando…' : 'Registrarse'}
                     </button>
                 </div>
             </form>
-        </>
+        </div>
     )
 }

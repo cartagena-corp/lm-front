@@ -132,6 +132,7 @@ function TablerosContent() {
                ])
             } else {
                // Ejecutar configuración inicial y carga de tableros sin filtros en paralelo
+               setCurrentFilters(null)
                await Promise.all([
                   getBoards(token),
                   setConfig(token)
@@ -143,7 +144,8 @@ function TablerosContent() {
       }
 
       initializeData()
-   }, [isAuthenticated, getBoards, getValidAccessToken, setConfig])
+      // Re-ejecuta cuando cambia la URL (p. ej. búsqueda desde la barra superior: /tableros?name=...)
+   }, [isAuthenticated, getBoards, getValidAccessToken, setConfig, searchParams])
 
    const handleFilter = async (filters: FilterProjectProps) => {
       try {
@@ -275,9 +277,15 @@ function TablerosContent() {
 
          {JSON.stringify(mensajePrueba)} 
          */}
-         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 md:mb-8 gap-4">
-            <h1 className="text-2xl font-bold text-gray-900">Tableros</h1>
-            <div className="flex flex-col sm:flex-row gap-3">
+         <div className="mx-auto" style={{ maxWidth: 1180 }}>
+         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end mb-6 gap-4">
+            <div>
+               <h1 className="font-semibold" style={{ fontSize: 28, letterSpacing: "-1.1px", color: "var(--ds-text)", margin: "0 0 4px" }}>Tableros</h1>
+               <p style={{ fontSize: 14, color: "var(--ds-text-secondary)", margin: 0 }}>
+                  {boards.totalElements ?? boards.content?.length ?? 0} proyectos · organiza tu trabajo en sprints
+               </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2">
                {currentFilters && (
                   <button
                      onClick={async () => {
@@ -288,7 +296,8 @@ function TablerosContent() {
                            await getBoards(token)
                         }
                      }}
-                     className="flex items-center justify-center gap-2 px-4 py-2.5 text-red-600 bg-white border border-red-300 rounded-lg hover:bg-red-50 hover:border-red-400 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium shadow-sm"
+                     className="flex items-center justify-center gap-2 transition-colors text-sm font-medium hover:bg-red-50"
+                     style={{ height: 36, padding: "0 12px", color: "var(--red-700)", background: "var(--ds-background)", border: "1px solid var(--red-400)", borderRadius: "var(--radius-md)" }}
                   >
                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
@@ -299,18 +308,20 @@ function TablerosContent() {
                )}
                <button
                   onClick={() => handleFilterBoardModal()}
-                  className="flex items-center justify-center gap-2 px-4 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium shadow-sm"
+                  className="flex items-center justify-center gap-[7px] transition-colors text-sm font-medium hover:bg-[var(--gray-alpha-100)]"
+                  style={{ height: 36, padding: "0 12px", color: "var(--ds-text)", background: "var(--ds-background)", border: "1px solid var(--ds-border-strong)", borderRadius: "var(--radius-md)" }}
                >
-                  <FilterIcon size={16} stroke={2} />
-                  <span className="hidden sm:inline">Filtrar tableros</span>
+                  <FilterIcon size={15} stroke={2} />
+                  <span className="hidden sm:inline">Filtrar</span>
                   <span className="sm:hidden">Filtrar</span>
                </button>
                <button
                   onClick={() => handleCreateBoardModal()}
                   disabled={isLoading}
-                  className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600"
+                  className="flex items-center justify-center gap-[7px] transition-opacity text-sm font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ height: 36, padding: "0 14px", color: "var(--ds-contrast-inverse)", background: "var(--ds-text)", border: "1px solid var(--ds-text)", borderRadius: "var(--radius-md)" }}
                >
-                  <PlusIcon size={16} stroke={2.5} />
+                  <PlusIcon size={15} stroke={2.5} />
                   <span className="hidden sm:inline">{isLoading ? 'Creando tablero...' : 'Crear tablero'}</span>
                   <span className="sm:hidden">{isLoading ? 'Creando...' : 'Crear'}</span>
                </button>
@@ -319,12 +330,12 @@ function TablerosContent() {
 
          {/* Información de paginación */}
          {boards.content && boards.content.length > 0 && (
-            <div className="mb-4 text-sm text-gray-600">
+            <div className="mb-4 text-sm" style={{ color: "var(--ds-text-muted)" }}>
                Mostrando {boards.content.length} de {boards.totalElements} tableros
             </div>
          )}
 
-         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-3 gap-4 md:gap-6 min-h-[60vh]">
+         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-3 gap-4 min-h-[60vh]">
             {
                isLoading ? (
                   Array.from({ length: 8 }).map((_, i) => <BoardCardSkeleton key={i} />)
@@ -362,6 +373,7 @@ function TablerosContent() {
                isLoading={isLoading}
             />
          )}
+         </div>
       </>
    )
 }
@@ -369,11 +381,11 @@ function TablerosContent() {
 export default function TablerosPage() {
    return (
       <Suspense fallback={
-         <div>
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 md:mb-8 gap-4">
-               <h1 className="text-2xl font-bold text-gray-900">Tableros</h1>
+         <div className="mx-auto" style={{ maxWidth: 1180 }}>
+            <div className="mb-6">
+               <h1 className="font-semibold" style={{ fontSize: 28, letterSpacing: "-1.1px", color: "var(--ds-text)" }}>Tableros</h1>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-3 gap-4 md:gap-6 min-h-[60vh]">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-3 gap-4 min-h-[60vh]">
                {Array.from({ length: 8 }).map((_, i) => <BoardCardSkeleton key={i} />)}
             </div>
          </div>

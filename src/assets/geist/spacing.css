@@ -1,0 +1,39 @@
+/* ============================================================
+   Geist Spacing & Layout
+   4px base grid. Generous whitespace; section gaps step large
+   (80–192px) to counterbalance compressed display headings.
+   ============================================================ */
+
+:root {
+  --space-0: 0px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+  --space-32: 128px;
+  --space-40: 160px;
+  --space-48: 192px;
+
+  /* Control heights — Geist sizing scale */
+  --control-height-small: 32px;   /* button-small / input-small */
+  --control-height-medium: 40px;  /* default */
+  --control-height-large: 48px;   /* button-large / input-large */
+
+  /* Container widths */
+  --container-sm: 640px;
+  --container-md: 768px;
+  --container-lg: 1024px;
+  --container-xl: 1200px;
+  --container-2xl: 1400px;
+
+  /* Page gutter */
+  --gutter: 24px;
+}
