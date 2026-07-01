@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useGeminiStore } from '@/lib/store/GeminiStore'
 import { useAuthStore } from '@/lib/store/AuthStore'
-import { EyeIcon, KeyIcon } from '@/assets/Icon'
+import { EyeIcon, KeyIcon, PlusIcon, DeleteIcon } from '@/assets/Icon'
 import Switch from '@/components/ui/Switch'
 import toast from 'react-hot-toast'
 
@@ -11,7 +11,12 @@ export default function GeminiKeyManager() {
     const [showSaved, setShowSaved] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [showApiKey, setShowApiKey] = useState(false)
-    const { updateConfig, getConfig, apiKey, models, organizationName, setApiKey, updateModelEnabled, updateModelMethod } = useGeminiStore()
+    const [newModelName, setNewModelName] = useState('')
+    const [newModelDisplayName, setNewModelDisplayName] = useState('')
+    const {
+        updateConfig, getConfig, apiKey, models, organizationName, setApiKey,
+        addModel, removeModel, updateModelField, updateModelEnabled, updateModelMethod
+    } = useGeminiStore()
     const { getValidAccessToken } = useAuthStore()
 
     // Cargar configuración inicial de Gemini
@@ -54,6 +59,22 @@ export default function GeminiKeyManager() {
 
     const toggleApiKeyVisibility = () => {
         setShowApiKey(!showApiKey)
+    }
+
+    const handleAddModel = () => {
+        const added = addModel({ name: newModelName, displayName: newModelDisplayName })
+        if (!added) {
+            toast.error(newModelName.trim() ? 'Ya existe un modelo con ese ID técnico' : 'Ingresa el ID técnico del modelo')
+            return
+        }
+        setNewModelName('')
+        setNewModelDisplayName('')
+        toast.success('Modelo agregado. Recuerda guardar la configuración.')
+    }
+
+    const handleRemoveModel = (modelId: string, displayName: string) => {
+        removeModel(modelId)
+        toast.success(`"${displayName}" eliminado. Recuerda guardar la configuración.`)
     }
 
     return (
@@ -126,30 +147,54 @@ export default function GeminiKeyManager() {
                     <div className="space-y-4">
                         <div className="pb-2">
                             <h4 className="text-sm font-medium text-gray-700 mb-1">Modelos de Gemini</h4>
-                            <p className="text-xs text-gray-600">Selecciona el modelo que deseas usar </p>
+                            <p className="text-xs text-gray-600">Agrega, edita o elimina los modelos disponibles y selecciona el que deseas usar. No es necesario modificar código cuando Google cambie o renombre un modelo.</p>
                         </div>
 
                         <div className="space-y-4">
+                            {models.length === 0 && (
+                                <div className="text-center text-sm text-gray-500 bg-gray-50 border border-dashed border-gray-300 rounded-lg py-6">
+                                    Aún no hay modelos configurados. Agrega uno abajo con su ID técnico.
+                                </div>
+                            )}
                             {models.map((model) => (
                                 <div key={model.id} className="bg-gray-50 rounded-lg p-4 space-y-3">
                                     {/* Model Toggle */}
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div className={`w-3 h-3 rounded-full ${model.enabled ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                                            <div>
-                                                <h5 className="text-sm font-medium text-gray-900">{model.displayName}</h5>
-                                                <p className="text-xs text-gray-500">{model.name}</p>
-                                                {/* {model.desc && (
-                                                    <p className="text-xs text-gray-600 mt-1 max-w-md">{model.desc}</p>
-                                                )} */}
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                                            <div className={`w-3 h-3 rounded-full flex-shrink-0 ${model.enabled ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                                            <div className="flex-1 min-w-0 space-y-1">
+                                                <input
+                                                    type="text"
+                                                    value={model.displayName}
+                                                    onChange={(e) => updateModelField(model.id, 'displayName', e.target.value)}
+                                                    className="w-full text-sm font-medium text-gray-900 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none transition-colors px-0.5"
+                                                    placeholder="Nombre para mostrar"
+                                                />
+                                                <input
+                                                    type="text"
+                                                    value={model.name}
+                                                    onChange={(e) => updateModelField(model.id, 'name', e.target.value)}
+                                                    className="w-full text-xs text-gray-500 font-mono bg-transparent border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none transition-colors px-0.5"
+                                                    placeholder="id-tecnico-del-modelo"
+                                                />
                                             </div>
                                         </div>
-                                        <Switch
-                                            id={`model-${model.id}`}
-                                            checked={model.enabled}
-                                            onChange={(enabled) => updateModelEnabled(model.id, enabled)}
-                                            size="md"
-                                        />
+                                        <div className="flex items-center gap-3 flex-shrink-0">
+                                            <Switch
+                                                id={`model-${model.id}`}
+                                                checked={model.enabled}
+                                                onChange={(enabled) => updateModelEnabled(model.id, enabled)}
+                                                size="md"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemoveModel(model.id, model.displayName)}
+                                                className="text-gray-400 hover:text-red-600 transition-colors"
+                                                title="Eliminar modelo"
+                                            >
+                                                <DeleteIcon size={18} />
+                                            </button>
+                                        </div>
                                     </div>
 
                                     {/* Methods Configuration */}
@@ -206,6 +251,35 @@ export default function GeminiKeyManager() {
                                     )}
                                 </div>
                             ))}
+                        </div>
+
+                        {/* Add new model */}
+                        <div className="border border-dashed border-gray-300 rounded-lg p-4 space-y-3">
+                            <p className="text-xs font-medium text-gray-700">Agregar nuevo modelo</p>
+                            <div className="flex flex-col sm:flex-row gap-2">
+                                <input
+                                    type="text"
+                                    value={newModelName}
+                                    onChange={(e) => setNewModelName(e.target.value)}
+                                    placeholder="ID técnico (ej. gemini-3.5-flash)"
+                                    className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                />
+                                <input
+                                    type="text"
+                                    value={newModelDisplayName}
+                                    onChange={(e) => setNewModelDisplayName(e.target.value)}
+                                    placeholder="Nombre para mostrar (opcional)"
+                                    className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={handleAddModel}
+                                    className="flex items-center justify-center gap-1.5 px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors flex-shrink-0"
+                                >
+                                    <PlusIcon size={16} />
+                                    Agregar
+                                </button>
+                            </div>
                         </div>
                     </div>
 

@@ -78,6 +78,9 @@ interface GeminiState {
   setApiKey: (key: string) => void
   setApiUrl: (url: string) => void
   setModels: (models: GeminiModel[]) => void
+  addModel: (model: { name: string, displayName: string, desc?: string }) => boolean
+  removeModel: (modelId: string) => void
+  updateModelField: (modelId: string, field: 'name' | 'displayName' | 'desc', value: string) => void
   updateModelEnabled: (modelId: string, enabled: boolean) => void
   updateModelMethod: (modelId: string, method: 'generateContent' | 'embedContent', enabled: boolean) => void
   getEnabledModelsUrls: () => { model: GeminiModel, urls: { generateContent?: string, embedContent?: string } }[]
@@ -96,10 +99,10 @@ export const useGeminiStore = create<GeminiState>()((set, get) => ({
   organizationName: undefined,
   models: [
     {
-      id: 'gemini-2.5-pro',
-      name: 'gemini-2.5-pro',
-      displayName: 'Gemini 2.5 Pro',
-      desc: "Este es el modelo más potente, ideal para tareas complejas que requieren razonamiento avanzado y comprensión multimodal.",
+      id: 'gemini-3.1-pro-preview',
+      name: 'gemini-3.1-pro-preview',
+      displayName: 'Gemini 3.1 Pro',
+      desc: "Modelo más potente de la familia, con el razonamiento más avanzado. Ideal para análisis complejos de documentos legales y extracción de datos precisa. Actualmente en preview.",
       enabled: true,
       methods: {
         generateContent: true,
@@ -107,10 +110,10 @@ export const useGeminiStore = create<GeminiState>()((set, get) => ({
       }
     },
     {
-      id: 'gemini-2.5-flash',
-      name: 'gemini-2.5-flash',
-      displayName: 'Gemini 2.5 Flash',
-      desc: "Este modelo está optimizado para la velocidad y la eficiencia, ofreciendo un buen equilibrio entre precio y rendimiento.",
+      id: 'gemini-3.5-flash',
+      name: 'gemini-3.5-flash',
+      displayName: 'Gemini 3.5 Flash',
+      desc: "Modelo estable con el mejor equilibrio entre inteligencia, velocidad y costo. Buen rendimiento sostenido en tareas agénticas y de razonamiento.",
       enabled: false,
       methods: {
         generateContent: true,
@@ -118,10 +121,10 @@ export const useGeminiStore = create<GeminiState>()((set, get) => ({
       }
     },
     {
-      id: 'gemini-2.5-flash-lite',
-      name: 'gemini-2.5-flash-lite',
-      displayName: 'Gemini 2.5 Flash Lite',
-      desc: "Este modelo es el más rentable y rápido de la familia, diseñado para casos de uso de alta capacidad y baja latencia.",
+      id: 'gemini-3.1-flash-lite',
+      name: 'gemini-3.1-flash-lite',
+      displayName: 'Gemini 3.1 Flash Lite',
+      desc: "El modelo más rápido y económico de la familia, pensado para casos de alto volumen y baja latencia.",
       enabled: false,
       methods: {
         generateContent: true,
@@ -142,6 +145,36 @@ export const useGeminiStore = create<GeminiState>()((set, get) => ({
   setApiKey: (key) => set({ apiKey: key }),
   setApiUrl: (url) => set({ apiUrl: url }),
   setModels: (models) => set({ models }),
+  addModel: (model) => {
+    const name = model.name.trim()
+    if (!name) return false
+
+    const { models } = get()
+    if (models.some(m => m.name === name)) return false
+
+    const newModel: GeminiModel = {
+      id: `model-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      name,
+      displayName: model.displayName.trim() || name,
+      desc: model.desc?.trim() || undefined,
+      enabled: false,
+      methods: {
+        generateContent: true,
+        embedContent: false
+      }
+    }
+
+    set({ models: [...models, newModel] })
+    return true
+  },
+  removeModel: (modelId) => set((state) => ({
+    models: state.models.filter(model => model.id !== modelId)
+  })),
+  updateModelField: (modelId, field, value) => set((state) => ({
+    models: state.models.map(model =>
+      model.id === modelId ? { ...model, [field]: value } : model
+    )
+  })),
   updateModelEnabled: (modelId, enabled) => set((state) => {
     // Si se quiere deshabilitar un modelo, verificar que no sea el único activo
     if (!enabled) {
@@ -243,11 +276,11 @@ export const useGeminiStore = create<GeminiState>()((set, get) => ({
         }
       } else {
         // Si no hay URL válida, usar configuración por defecto
-        // Asegurar que al menos un modelo esté habilitado (Gemini 2.5 Pro por defecto)
+        // Asegurar que al menos un modelo esté habilitado (Gemini 3.1 Pro por defecto)
         const enabledModels = modelsToUse.filter(model => model.enabled)
         if (enabledModels.length === 0 && modelsToUse.length > 0) {
           modelsToUse = modelsToUse.map(model => {
-            if (model.name === 'gemini-2.5-pro') {
+            if (model.name === 'gemini-3.1-pro-preview') {
               return {
                 ...model,
                 enabled: true,

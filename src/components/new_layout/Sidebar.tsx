@@ -82,7 +82,7 @@ export default function Sidebar() {
     ]
 
     const sidebarButtons: SidebarButtonProps[] = hasGeminiChatAccess ? [
-        { title: "Chatea con IA", key: "chat", Icon: IAChatIcon },
+        { title: "Analista de Pólizas", key: "chat", Icon: IAChatIcon },
     ] : []
 
     const handleMouseLeave = () => setHovered(null)
@@ -104,8 +104,8 @@ export default function Sidebar() {
 
     const handleChatButtonClick = () => {
         openModal({
-            title: "Chatea con IA",
-            desc: "Chatea con nuestro asistente de IA para que te ayude a solucionar tus dudas.",
+            title: "Analista de Pólizas de Cumplimiento",
+            desc: "Analiza contratos, resoluciones y otrosí para la expedición de pólizas: clasifica el documento, extrae los datos y calcula valores y vigencias.",
             size: "full",
             children: <ChatWithIA onCancel={() => {
                 closeModal()

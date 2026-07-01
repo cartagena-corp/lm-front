@@ -417,6 +417,29 @@ export const ChangeIcon = ({ size = 24, stroke = 1.5 }: IconProps) => (
    </svg>
 )
 
+export const CopyIcon = ({ size = 24, stroke = 1.5 }: IconProps) => (
+   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill="none">
+      <path d="M9 15C9 12.1716 9 10.7574 9.87868 9.87868C10.7574 9 12.1716 9 15 9L16 9C18.8284 9 20.2426 9 21.1213 9.87868C22 10.7574 22 12.1716 22 15V16C22 18.8284 22 20.2426 21.1213 21.1213C20.2426 22 18.8284 22 16 22H15C12.1716 22 10.7574 22 9.87868 21.1213C9 20.2426 9 18.8284 9 16L9 15Z" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M16.9999 9C16.9975 6.04291 16.9528 4.51121 16.092 3.46243C15.9258 3.25989 15.7401 3.07418 15.5376 2.90796C14.4312 2 12.7875 2 9.5 2C6.21252 2 4.56878 2 3.46243 2.90796C3.25989 3.07417 3.07418 3.25989 2.90796 3.46243C2 4.56878 2 6.21252 2 9.5C2 12.7875 2 14.4312 2.90796 15.5376C3.07417 15.7401 3.25989 15.9258 3.46243 16.092C4.51121 16.9528 6.04291 16.9975 9 16.9999" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+   </svg>
+)
+
+export const DocumentIcon = ({ size = 24, stroke = 1.5 }: IconProps) => (
+   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill="none">
+      <path d="M20 12V16.5C20 18.8346 20 20.0019 19.4046 20.8856C19.1428 21.2743 18.8054 21.6094 18.4142 21.8696C17.5245 22.4611 16.3496 22.4611 14 22.4611H10C7.65041 22.4611 6.47562 22.4611 5.58579 21.8696C5.19461 21.6094 4.85722 21.2743 4.59545 20.8856C4 20.0019 4 18.8346 4 16.5V7.5C4 5.16543 4 3.99814 4.59545 3.11443C4.85722 2.72579 5.19461 2.39068 5.58579 2.13046C6.47562 1.53906 7.65041 1.53906 10 1.53906H13.5" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M13.5 1.5V4.5C13.5 6.38562 13.5 7.32843 14.0858 7.91421C14.6716 8.5 15.6144 8.5 17.5 8.5H20" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M8 13H14M8 17H12" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+   </svg>
+)
+
+export const RefreshIcon = ({ size = 24, stroke = 1.5 }: IconProps) => (
+   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill="none">
+      <path d="M20.5 5.5V9.5H16.5" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M3.5 18.5V14.5H7.5" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M19.9 9.5C19.0844 6.6 16.5 4.5 13.5 4.5C10.5 4.5 8.5 6 7 8M4.1 14.5C4.91564 17.4 7.5 19.5 10.5 19.5C13.5 19.5 15.5 18 17 16" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" />
+   </svg>
+)
+
 // Text formatting icons
 export const BoldIcon = ({ size = 16 }: { size?: number }) => (
    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
