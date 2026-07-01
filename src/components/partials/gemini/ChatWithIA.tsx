@@ -154,6 +154,7 @@ function renderAnalysisText(text: string) {
 
 export default function ChatWithIA() {
     const [isDragActive, setIsDragActive] = useState(false)
+    const [dragCounter, setDragCounter] = useState(0) // Contador para manejar drag events anidados
     const [files, setFiles] = useState<File[]>([])
     const [messages, setMessages] = useState<Message[]>([])
     const [inputText, setInputText] = useState("")
@@ -247,6 +248,7 @@ export default function ChatWithIA() {
         e.preventDefault()
         e.stopPropagation()
         setIsDragActive(false)
+        setDragCounter(0)
         if (isProcessing) return
         if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
             addFiles(Array.from(e.dataTransfer.files))
@@ -261,13 +263,21 @@ export default function ChatWithIA() {
     const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault()
         e.stopPropagation()
+        setDragCounter(prev => prev + 1)
         if (!isProcessing) setIsDragActive(true)
     }
 
     const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault()
         e.stopPropagation()
-        setIsDragActive(false)
+        setDragCounter(prev => {
+            const newCounter = prev - 1
+            if (newCounter <= 0) {
+                setIsDragActive(false)
+                return 0
+            }
+            return newCounter
+        })
     }
 
     const hasMessages = messages.length > 0
