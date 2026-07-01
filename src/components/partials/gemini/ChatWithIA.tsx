@@ -290,13 +290,15 @@ export default function ChatWithIA() {
                 </div>
             )}
 
-            {/* Barra superior (solo cuando ya hay un análisis en curso) */}
-            {hasMessages && (
-                <div className="flex items-center justify-between gap-3 border-b border-gray-200 px-6 py-2.5">
-                    <div className="flex items-center gap-2 text-xs font-medium text-gray-500">
-                        <DocumentIcon size={15} stroke={1.75} />
-                        Análisis de documentos jurídicos
-                    </div>
+            {/* Barra superior: identidad del asistente + acción de reinicio */}
+            <div className="flex flex-shrink-0 items-center justify-between gap-3 border-b border-gray-200 px-6 py-3">
+                <div className="flex items-center gap-2.5">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white">
+                        <IAIcon size={16} stroke={1.75} />
+                    </span>
+                    <span className="text-sm font-semibold text-gray-800">Analista de Pólizas de Cumplimiento</span>
+                </div>
+                {hasMessages && (
                     <button
                         onClick={resetAnalysis}
                         disabled={isProcessing}
@@ -306,8 +308,8 @@ export default function ChatWithIA() {
                         <RefreshIcon size={15} stroke={2} />
                         Nuevo análisis
                     </button>
-                </div>
-            )}
+                )}
+            </div>
 
             {/* Contenido */}
             <section ref={scrollRef} className="flex-1 overflow-y-auto custom-scrollbar p-6">
@@ -422,8 +424,8 @@ export default function ChatWithIA() {
             </section>
 
             {/* Zona de carga e instrucciones */}
-            <div className="border-t border-gray-200">
-                <div className="flex flex-col items-stretch gap-2 p-6">
+            <div className="flex-shrink-0 border-t border-gray-200 p-6">
+                <div className="mx-auto flex w-full max-w-3xl flex-col items-stretch gap-2">
                     {files.length > 0 && !isProcessing && (
                         <div className="flex flex-wrap gap-2 rounded-md bg-gray-50 p-2">
                             {files.map((file, index) => (
