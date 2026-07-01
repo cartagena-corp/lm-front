@@ -152,8 +152,7 @@ function renderAnalysisText(text: string) {
     return <div className="flex flex-col gap-2">{blocks}</div>
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export default function ChatWithIA({ onCancel }: { onCancel: () => void }) {
+export default function ChatWithIA() {
     const [isDragActive, setIsDragActive] = useState(false)
     const [files, setFiles] = useState<File[]>([])
     const [messages, setMessages] = useState<Message[]>([])
@@ -275,7 +274,7 @@ export default function ChatWithIA({ onCancel }: { onCancel: () => void }) {
 
     return (
         <div
-            className={`bg-white rounded-xl shadow-sm flex flex-col relative overflow-hidden min-h-[80vh] max-h-[80vh] border-2 transition-colors
+            className={`bg-white rounded-xl shadow-sm flex flex-col relative overflow-hidden h-full border-2 transition-colors
                 ${isDragActive ? "border-blue-500 border-dashed" : "border-gray-200"}`}
             onDragOver={handleDragOver}
             onDrop={handleDrop}
@@ -311,7 +310,7 @@ export default function ChatWithIA({ onCancel }: { onCancel: () => void }) {
             )}
 
             {/* Contenido */}
-            <section ref={scrollRef} className="flex-1 overflow-y-auto custom-scrollbar p-6 flex flex-col gap-4">
+            <section ref={scrollRef} className="flex-1 overflow-y-auto custom-scrollbar p-6">
                 {!hasMessages ? (
                     // Estado inicial: presentación del experto y capacidades.
                     <div className="flex h-full flex-col items-center justify-center text-center">
@@ -341,7 +340,8 @@ export default function ChatWithIA({ onCancel }: { onCancel: () => void }) {
                         </p>
                     </div>
                 ) : (
-                    messages.map((message, index) => (
+                    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
+                        {messages.map((message, index) => (
                         message.isUser ? (
                             // Solicitud del usuario: documentos e instrucciones enviadas.
                             <div key={index} className="flex justify-end">
@@ -399,23 +399,24 @@ export default function ChatWithIA({ onCancel }: { onCancel: () => void }) {
                                 </div>
                             </div>
                         )
-                    ))
-                )}
+                        ))}
 
-                {/* Loader mientras se procesa el análisis */}
-                {isProcessing && (
-                    <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-                        <div className="flex items-center gap-2 border-b border-gray-100 px-4 py-2.5 text-sm font-semibold text-gray-700">
-                            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-50 text-blue-600">
-                                <IAIcon size={15} stroke={1.75} />
-                            </span>
-                            Analizando documentos…
-                        </div>
-                        <div className="flex items-center gap-1.5 p-4">
-                            <span className="inline-block h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: "0ms" }}></span>
-                            <span className="inline-block h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: "200ms" }}></span>
-                            <span className="inline-block h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: "400ms" }}></span>
-                        </div>
+                        {/* Loader mientras se procesa el análisis */}
+                        {isProcessing && (
+                            <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+                                <div className="flex items-center gap-2 border-b border-gray-100 px-4 py-2.5 text-sm font-semibold text-gray-700">
+                                    <span className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-50 text-blue-600">
+                                        <IAIcon size={15} stroke={1.75} />
+                                    </span>
+                                    Analizando documentos…
+                                </div>
+                                <div className="flex items-center gap-1.5 p-4">
+                                    <span className="inline-block h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: "0ms" }}></span>
+                                    <span className="inline-block h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: "200ms" }}></span>
+                                    <span className="inline-block h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: "400ms" }}></span>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
             </section>

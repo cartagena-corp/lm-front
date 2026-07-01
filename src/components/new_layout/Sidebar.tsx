@@ -4,13 +4,11 @@ import { BoardIcon, ConfigIcon, IAChatIcon, IAConfigIcon, LaMurallaIcon, LogoutI
 import { usePathname, useRouter } from "next/navigation"
 import { useSidebarStore } from "@/lib/store/SidebarStore"
 import { useAuthStore } from "@/lib/store/AuthStore"
-import { useModalStore } from "@/lib/hooks/ModalStore"
 import SidebarTooltip from "./SidebarTooltip"
 import { useState, MouseEvent, useEffect } from "react"
 import { motion } from "motion/react"
 import { getUserAvatar } from "@/lib/utils/avatar.utils"
 import { hasPermission } from "@/lib/utils/user.utils"
-import ChatWithIA from "../partials/gemini/ChatWithIA"
 import { Roboto_Condensed } from 'next/font/google'
 import Link from "next/link"
 
@@ -24,19 +22,11 @@ interface SidebarLinkProps {
     isAvailable: boolean
 }
 
-interface SidebarButtonProps {
-    title: string
-    key: string
-    Icon: ({ size, stroke }: { size: number; stroke: number }) => JSX.Element
-}
-
 export default function Sidebar() {
     const { isCollapsed, toggleSidebar } = useSidebarStore()
     const { user, logout } = useAuthStore()
-    const { openModal, closeModal } = useModalStore()
 
     const [hovered, setHovered] = useState<{ key: string, position: { top: number, left: number } } | null>(null)
-    const [activeSidebarButton, setActiveSidebarButton] = useState<string | null>(null)
     const [sidebarAnimationDone, setSidebarAnimationDone] = useState(false)
     const [isSidebarHovered, setIsSidebarHovered] = useState(false)
     const [imageError, setImageError] = useState(false)
@@ -75,15 +65,12 @@ export default function Sidebar() {
     }
 
     const sidebarLinks: SidebarLinkProps[] = [
-        { title: "Tableros", href: "/tableros", Icon: BoardIcon, isActive: (pathname === "/tableros" && !activeSidebarButton), isAvailable: true },
-        { title: "Organizaciones", href: "/factory", Icon: FactoryIcon, isActive: (pathname.startsWith("/factory") && !activeSidebarButton), isAvailable: hasOrganizationControl },
-        { title: "Configuración", href: "/config", Icon: ConfigIcon, isActive: (pathname === "/config" && !activeSidebarButton), isAvailable: true },
-        { title: "Configurar Gemini", href: "/gemini", Icon: IAConfigIcon, isActive: (pathname === "/gemini" && !activeSidebarButton), isAvailable: hasGeminiConfigAccess },
+        { title: "Tableros", href: "/tableros", Icon: BoardIcon, isActive: pathname === "/tableros", isAvailable: true },
+        { title: "Organizaciones", href: "/factory", Icon: FactoryIcon, isActive: pathname.startsWith("/factory"), isAvailable: hasOrganizationControl },
+        { title: "Analista de Pólizas", href: "/gemini/chat", Icon: IAChatIcon, isActive: pathname === "/gemini/chat", isAvailable: hasGeminiChatAccess },
+        { title: "Configuración", href: "/config", Icon: ConfigIcon, isActive: pathname === "/config", isAvailable: true },
+        { title: "Configurar Gemini", href: "/gemini", Icon: IAConfigIcon, isActive: pathname === "/gemini", isAvailable: hasGeminiConfigAccess },
     ]
-
-    const sidebarButtons: SidebarButtonProps[] = hasGeminiChatAccess ? [
-        { title: "Analista de Pólizas", key: "chat", Icon: IAChatIcon },
-    ] : []
 
     const handleMouseLeave = () => setHovered(null)
     const handleMouseEnter = (e: MouseEvent, key: string) => {
@@ -100,21 +87,6 @@ export default function Sidebar() {
             console.error('Error durante el logout:', error)
             router.push('/login')
         }
-    }
-
-    const handleChatButtonClick = () => {
-        openModal({
-            title: "Analista de Pólizas de Cumplimiento",
-            desc: "Analiza contratos, resoluciones y otrosí para la expedición de pólizas: clasifica el documento, extrae los datos y calcula valores y vigencias.",
-            size: "full",
-            children: <ChatWithIA onCancel={() => {
-                closeModal()
-                setActiveSidebarButton(null)
-            }} />,
-            closeOnBackdrop: false,
-            closeOnEscape: false,
-            Icon: <IAChatIcon size={20} stroke={1.75} />,
-        })
     }
 
     return (
@@ -135,9 +107,9 @@ export default function Sidebar() {
                 <nav className="flex flex-col gap-2 w-full px-[11px] py-4">
                     {sidebarLinks.map(item =>
                         item.isAvailable && (
-                            <Link key={item.title} href={item.href} onClick={() => setActiveSidebarButton(null)}
+                            <Link key={item.title} href={item.href}
                                 onMouseEnter={e => handleMouseEnter(e, item.title)} onMouseLeave={handleMouseLeave}
-                                className={`hover:bg-gray-800 border-gray-600 transition-colors duration-300 rounded-md flex items-center border-l-4 text-sm p-2 
+                                className={`hover:bg-gray-800 border-gray-600 transition-colors duration-300 rounded-md flex items-center border-l-4 text-sm p-2
                                 ${item.isActive ? "hover:bg-gray-700 bg-gray-800" : "border-transparent"}`}>
                                 <item.Icon size={22} stroke={1.75} />
                                 <motion.span className="whitespace-nowrap overflow-hidden" initial={{ opacity: 0, width: 0, marginLeft: 0 }} transition={{ duration: 0.5, ease: "easeInOut" }}
@@ -145,23 +117,6 @@ export default function Sidebar() {
                                 {(isCollapsed && hovered?.key === item.title) && <SidebarTooltip text={item.title} position={hovered.position} show={sidebarAnimationDone} />}
                             </Link>
                         )
-                    )}
-
-                    {sidebarButtons.length > 0 && (
-                        <div className="flex flex-col w-full gap-2">
-                            {sidebarButtons.map(item =>
-                                <button key={item.title} onClick={handleChatButtonClick}
-                                    onMouseEnter={e => handleMouseEnter(e, item.title)} onMouseLeave={handleMouseLeave}
-                                    className="hover:bg-gray-800 transition-colors duration-300 rounded-md flex items-center border-l-4 text-sm p-2 border-transparent cursor-pointer">
-                                    <item.Icon size={22} stroke={1.75} />
-                                    <motion.span className="whitespace-nowrap overflow-hidden text-start" initial={{ opacity: 0, width: 0, marginLeft: 0 }} transition={{ duration: 0.5, ease: "easeInOut" }}
-                                        animate={{ opacity: isCollapsed ? 0 : 1, width: isCollapsed ? 0 : 120, marginLeft: isCollapsed ? 0 : 10 }}>
-                                        {item.title}
-                                    </motion.span>
-                                    {(isCollapsed && hovered?.key === item.title) && <SidebarTooltip text={item.title} position={hovered.position} show={sidebarAnimationDone} />}
-                                </button>
-                            )}
-                        </div>
                     )}
                 </nav>
 
