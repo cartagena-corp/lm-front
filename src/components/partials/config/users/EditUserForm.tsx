@@ -1,8 +1,13 @@
 "use client"
 import { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useAuthStore } from '@/lib/store/AuthStore'
 import { UserProps } from '@/lib/types/types'
 import { getUserAvatar } from '@/lib/utils/avatar.utils'
+import { ChevronDown, Check } from 'lucide-react'
+import { computeDropdownPosition } from '@/lib/utils/dropdown.utils'
+
+const ROLE_DROPDOWN_MAX_HEIGHT = 160 // px, debe coincidir con max-h-40 del panel
 
 interface EditUserFormProps {
     user: UserProps
@@ -19,16 +24,46 @@ export default function EditUserForm({ user, onSubmit, onCancel }: EditUserFormP
     const [errors, setErrors] = useState<{ [key: string]: string }>({})
 
     const roleSelectRef = useRef<HTMLDivElement>(null)
+    const roleDropdownRef = useRef<HTMLDivElement>(null)
+    const [mounted, setMounted] = useState(false)
+    const [dropdownPosition, setDropdownPosition] = useState<{ top?: number, bottom?: number, left: number, width: number, openUpward: boolean }>({ left: 0, width: 0, openUpward: false })
+
+    // Necesario para el portal del dropdown: document solo existe en el cliente
+    useEffect(() => {
+        setMounted(true)
+    }, [])
 
     useEffect(() => {
         loadRoles()
     }, [])
 
+    // El dropdown se porta a document.body para no quedar recortado por el overflow-y-auto
+    // del contenido de la modal (Modal.tsx), que además rompe position:fixed al animar con
+    // un transform en framer-motion.
+    useEffect(() => {
+        if (isRoleSelectOpen && roleSelectRef.current) {
+            const rect = roleSelectRef.current.getBoundingClientRect()
+            setDropdownPosition(computeDropdownPosition(rect, { maxHeight: ROLE_DROPDOWN_MAX_HEIGHT, gap: 4 }))
+        }
+    }, [isRoleSelectOpen])
+
+    useEffect(() => {
+        if (!isRoleSelectOpen) return
+        const handleScroll = (event: Event) => {
+            const target = event.target as Node
+            if (roleDropdownRef.current?.contains(target)) return
+            setIsRoleSelectOpen(false)
+        }
+        window.addEventListener('scroll', handleScroll, true)
+        return () => window.removeEventListener('scroll', handleScroll, true)
+    }, [isRoleSelectOpen])
+
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (roleSelectRef.current && !roleSelectRef.current.contains(event.target as Node)) {
-                setIsRoleSelectOpen(false)
-            }
+            const target = event.target as Node
+            if (roleSelectRef.current?.contains(target)) return
+            if (roleDropdownRef.current?.contains(target)) return
+            setIsRoleSelectOpen(false)
         }
 
         document.addEventListener('mousedown', handleClickOutside)
@@ -61,21 +96,21 @@ export default function EditUserForm({ user, onSubmit, onCancel }: EditUserFormP
     }
 
     return (
-        <div className="space-y-6 p-6">
+        <div className="p-6 space-y-6">
             {/* Información del usuario */}
-            <div className="bg-gray-50 rounded-lg p-4">
+            <div className="rounded-md p-4" style={{ background: "var(--gray-alpha-100)" }}>
                 <div className="flex items-center gap-4">
                     <img
                         src={getUserAvatar(user)}
                         alt={`${user.firstName} ${user.lastName}`}
-                        className="w-12 h-12 rounded-full object-cover"
+                        className="w-12 h-12 rounded-full object-cover flex-shrink-0"
                     />
-                    <div>
-                        <h4 className="font-medium text-gray-900">
+                    <div className="min-w-0">
+                        <h4 className="font-medium truncate" style={{ color: "var(--ds-text)" }}>
                             {user.firstName} {user.lastName}
                         </h4>
-                        <p className="text-sm text-gray-500">{user.email}</p>
-                        <p className="text-xs text-gray-400">
+                        <p className="text-sm truncate" style={{ color: "var(--ds-text-muted)" }}>{user.email}</p>
+                        <p className="text-xs truncate" style={{ color: "var(--ds-text-muted)" }}>
                             Rol actual: {typeof user.role === 'string' ? user.role : user.role?.name}
                         </p>
                     </div>
@@ -85,34 +120,37 @@ export default function EditUserForm({ user, onSubmit, onCancel }: EditUserFormP
             <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Role Select */}
                 <div className="space-y-2 relative" ref={roleSelectRef}>
-                    <label htmlFor="role" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="role" className="block text-[13px] font-medium" style={{ color: "var(--ds-text-secondary)" }}>
                         Nuevo rol del usuario
                     </label>
                     <button
                         onClick={() => setIsRoleSelectOpen(!isRoleSelectOpen)}
                         type="button"
-                        className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 flex items-center justify-between ${errors.role
-                            ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                            : 'border-gray-300 hover:border-gray-400'
-                            }`}
+                        className="w-full flex items-center justify-between h-9 px-3 rounded-md text-sm transition-colors duration-150 hover:bg-[var(--gray-alpha-100)] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2"
+                        style={{ background: "var(--ds-card)", boxShadow: errors.role ? "0 0 0 1px var(--red-700)" : "var(--shadow-border)" }}
                     >
-                        <span className="text-sm text-gray-700">
+                        <span className="truncate" style={{ color: selectedRole ? "var(--ds-text)" : "var(--ds-text-muted)" }}>
                             {selectedRole || 'Seleccionar rol'}
                         </span>
-                        <svg
-                            className={`text-gray-400 w-4 h-4 transition-transform duration-200 ${isRoleSelectOpen ? "rotate-180" : ""}`}
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
+                        <ChevronDown
+                            size={16}
                             strokeWidth={2}
-                            stroke="currentColor"
-                        >
-                            <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-                        </svg>
+                            className={`flex-shrink-0 transition-transform duration-200 ${isRoleSelectOpen ? "rotate-180" : ""}`}
+                            style={{ color: "var(--ds-text-muted)" }}
+                        />
                     </button>
 
-                    {isRoleSelectOpen && (
-                        <div className="border-gray-200 bg-white shadow-lg absolute z-10 top-full mt-1 flex flex-col rounded-lg border text-sm w-full max-h-40 overflow-y-auto">
+                    {isRoleSelectOpen && mounted && createPortal(
+                        <div
+                            ref={roleDropdownRef}
+                            className="fixed z-[9999] rounded-md text-sm max-h-40 overflow-y-auto"
+                            style={{
+                                ...(dropdownPosition.openUpward ? { bottom: dropdownPosition.bottom } : { top: dropdownPosition.top }),
+                                left: dropdownPosition.left,
+                                width: dropdownPosition.width,
+                                background: "var(--ds-card)", border: "1px solid var(--ds-border)", boxShadow: "var(--shadow-lg)"
+                            }}
+                        >
                             {roles.map((role) => (
                                 <button
                                     key={role.name}
@@ -122,27 +160,35 @@ export default function EditUserForm({ user, onSubmit, onCancel }: EditUserFormP
                                         setIsRoleSelectOpen(false)
                                         if (errors.role) setErrors(prev => ({ ...prev, role: '' }))
                                     }}
-                                    className={`px-4 py-2 text-left hover:bg-gray-50 ${selectedRole === role.name ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
-                                        }`}
+                                    className="w-full flex items-center justify-between gap-2 px-4 py-2 text-left truncate transition-colors duration-150 hover:bg-[var(--gray-alpha-100)]"
+                                    style={{ color: "var(--ds-text-secondary)" }}
                                 >
-                                    {role.name}
+                                    <span className="truncate">{role.name}</span>
+                                    {selectedRole === role.name && (
+                                        <Check size={16} strokeWidth={2} className="flex-shrink-0" style={{ color: "var(--blue-700)" }} />
+                                    )}
                                 </button>
                             ))}
-                        </div>
+                        </div>,
+                        document.body
                     )}
 
                     {errors.role && (
-                        <p className="text-sm text-red-600">{errors.role}</p>
+                        <p className="text-sm" style={{ color: "var(--red-700)" }}>{errors.role}</p>
                     )}
                 </div>
 
 
                 <div className="flex justify-end gap-3 mt-4">
-                    <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 transition-all duration-200 text-sm font-medium" type="button"
+                    <button className="h-9 px-4 rounded-md text-sm font-medium transition-colors duration-150 bg-[var(--ds-card)] hover:bg-[var(--gray-alpha-100)] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2"
+                        style={{ color: "var(--ds-text)", boxShadow: "var(--shadow-border)" }}
+                        type="button"
                         onClick={() => onCancel()}>
                         Cancelar
                     </button>
-                    <button className={`bg-purple-600 hover:bg-purple-700 focus:ring-purple-500 text-white focus:ring-2 rounded-md focus:ring-offset-2 transition-all duration-200 text-sm font-medium px-4 py-2`} type="submit">
+                    <button className="h-9 px-4 rounded-md text-sm font-medium transition-colors duration-150 bg-[var(--primary-700)] hover:bg-[var(--primary-800)] focus-visible:outline-2 focus-visible:outline-[var(--primary-900)] focus-visible:outline-offset-2"
+                        style={{ color: "var(--primary-contrast-fg)" }}
+                        type="submit">
                         Actualizar Rol
                     </button>
                 </div>

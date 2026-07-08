@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { BellIcon, PlusIcon, EditIcon } from "@/assets/Icon"
+import { Plus, Pencil } from "lucide-react"
 
 interface CreateEditNotificationTypeProps {
    onSubmit: (data: { name: string }) => void
@@ -34,14 +34,14 @@ export default function CreateEditNotificationType({ onSubmit, onCancel, current
    return (
       <div className="p-6 max-w-md mx-auto">
          <div className="flex items-center gap-4 mb-6">
-            <div className="p-3 bg-blue-50 rounded-full text-blue-600">
-               {isEdit ? <EditIcon size={24} /> : <PlusIcon size={24} />}
+            <div className="p-3" style={{ borderRadius: "var(--radius-md)", background: "var(--blue-200)", color: "var(--blue-900)" }}>
+               {isEdit ? <Pencil size={24} strokeWidth={1.5} /> : <Plus size={24} strokeWidth={1.5} />}
             </div>
             <div>
-               <h3 className="text-lg font-semibold text-gray-900">
+               <h3 className="text-lg font-semibold" style={{ color: "var(--ds-text)" }}>
                   {isEdit ? "Editar Tipo de Notificación" : "Crear Tipo de Notificación"}
                </h3>
-               <p className="text-sm text-gray-600">
+               <p className="text-sm" style={{ color: "var(--ds-text-secondary)" }}>
                   {isEdit ? "Actualiza la información del tipo" : "Crea un nuevo tipo de notificación"}
                </p>
             </div>
@@ -49,7 +49,7 @@ export default function CreateEditNotificationType({ onSubmit, onCancel, current
 
          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+               <label htmlFor="name" className="block text-sm font-medium mb-2" style={{ color: "var(--ds-text-secondary)" }}>
                   Nombre del Tipo *
                </label>
                <input
@@ -60,14 +60,13 @@ export default function CreateEditNotificationType({ onSubmit, onCancel, current
                      setName(e.target.value)
                      if (errors.name) setErrors(prev => ({ ...prev, name: undefined }))
                   }}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors ${
-                     errors.name ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className="w-full h-10 px-3 rounded-md text-sm bg-[var(--ds-card)] outline-none transition-shadow duration-150 placeholder:text-[var(--ds-text-muted)] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2"
+                  style={{ color: "var(--ds-text)", boxShadow: errors.name ? "0 0 0 1px var(--red-700)" : "var(--shadow-border)" }}
                   placeholder="Ej: Tareas, Recordatorios, Alertas..."
                   maxLength={50}
                />
                {errors.name && (
-                  <p className="text-red-500 text-xs mt-1">{errors.name}</p>
+                  <p className="text-xs mt-1" style={{ color: "var(--red-700)" }}>{errors.name}</p>
                )}
             </div>
 
@@ -75,15 +74,17 @@ export default function CreateEditNotificationType({ onSubmit, onCancel, current
                <button
                   type="button"
                   onClick={onCancel}
-                  className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200 font-medium"
+                  className="flex-1 h-9 px-4 rounded-md text-sm font-medium transition-colors duration-150 bg-[var(--ds-card)] hover:bg-[var(--gray-alpha-100)] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2"
+                  style={{ color: "var(--ds-text)", boxShadow: "var(--shadow-border)" }}
                >
                   Cancelar
                </button>
                <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors duration-200 font-medium flex items-center justify-center gap-2"
+                  className="flex-1 h-9 px-4 rounded-md text-sm font-medium transition-opacity duration-150 hover:opacity-90 flex items-center justify-center gap-2 focus-visible:outline-2 focus-visible:outline-[var(--primary-900)] focus-visible:outline-offset-2"
+                  style={{ background: "var(--primary-700)", color: "var(--primary-contrast-fg)" }}
                >
-                  {isEdit ? <EditIcon size={16} /> : <PlusIcon size={16} />}
+                  {isEdit ? <Pencil size={16} strokeWidth={1.5} /> : <Plus size={16} strokeWidth={1.5} />}
                   {isEdit ? "Actualizar" : "Crear"}
                </button>
             </div>

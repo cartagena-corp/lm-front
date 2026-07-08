@@ -1,11 +1,16 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
+import { createPortal } from "react-dom"
 import { useOrganizationStore } from "@/lib/store/OrganizationStore"
 import { useAuthStore } from "@/lib/store/AuthStore"
 import { UserProps } from "@/lib/types/types"
 import { getUserAvatar } from "@/lib/utils/avatar.utils"
-import { ChevronRightIcon } from "@/assets/Icon"
+import { ArrowRight } from "lucide-react"
+import { computeDropdownPosition } from "@/lib/utils/dropdown.utils"
+
+const DROPDOWN_MAX_HEIGHT = 240 // px, debe coincidir con max-h-60 de los paneles
+
 interface ChangeUserOrganizationModalProps {
     user: UserProps
     currentOrganization: { organizationId: string; organizationName: string }
@@ -20,6 +25,20 @@ export default function ChangeUserOrganizationModal({ user, currentOrganization,
     const [selectedOrganization, setSelectedOrganization] = useState("")
     const [selectedRole, setSelectedRole] = useState("")
     const [isLoadingRoles, setIsLoadingRoles] = useState(false)
+    const [isOrgSelectOpen, setIsOrgSelectOpen] = useState(false)
+    const [isRoleSelectOpen, setIsRoleSelectOpen] = useState(false)
+    const orgSelectRef = useRef<HTMLDivElement>(null)
+    const orgPanelRef = useRef<HTMLDivElement>(null)
+    const roleSelectRef = useRef<HTMLDivElement>(null)
+    const rolePanelRef = useRef<HTMLDivElement>(null)
+    const [orgPosition, setOrgPosition] = useState<{ top?: number, bottom?: number, left: number, width: number, openUpward: boolean }>({ left: 0, width: 0, openUpward: false })
+    const [rolePosition, setRolePosition] = useState<{ top?: number, bottom?: number, left: number, width: number, openUpward: boolean }>({ left: 0, width: 0, openUpward: false })
+    const [mounted, setMounted] = useState(false)
+
+    // Necesario para portar los dropdowns a document.body: document solo existe en el cliente
+    useEffect(() => {
+        setMounted(true)
+    }, [])
 
     // Cargar organizaciones al montar el componente
     useEffect(() => {
@@ -49,6 +68,61 @@ export default function ChangeUserOrganizationModal({ user, currentOrganization,
         loadRoles()
     }, [selectedOrganization, getValidAccessToken, getOrganizationRoles])
 
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as Node
+            if (
+                orgSelectRef.current &&
+                !orgSelectRef.current.contains(target) &&
+                !(orgPanelRef.current && orgPanelRef.current.contains(target))
+            ) {
+                setIsOrgSelectOpen(false)
+            }
+            if (
+                roleSelectRef.current &&
+                !roleSelectRef.current.contains(target) &&
+                !(rolePanelRef.current && rolePanelRef.current.contains(target))
+            ) {
+                setIsRoleSelectOpen(false)
+            }
+        }
+
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
+
+    // Los paneles se portan a document.body para no quedar recortados por el overflow-y-auto
+    // del contenido de la modal (Modal.tsx). Si no caben debajo antes del borde inferior del
+    // viewport, se abren hacia arriba (ver dropdown.utils.ts)
+    useEffect(() => {
+        if (isOrgSelectOpen && orgSelectRef.current) {
+            const rect = orgSelectRef.current.getBoundingClientRect()
+            setOrgPosition(computeDropdownPosition(rect, { maxHeight: DROPDOWN_MAX_HEIGHT, gap: 4 }))
+        }
+    }, [isOrgSelectOpen])
+
+    useEffect(() => {
+        if (isRoleSelectOpen && roleSelectRef.current) {
+            const rect = roleSelectRef.current.getBoundingClientRect()
+            setRolePosition(computeDropdownPosition(rect, { maxHeight: DROPDOWN_MAX_HEIGHT, gap: 4 }))
+        }
+    }, [isRoleSelectOpen])
+
+    useEffect(() => {
+        if (!isOrgSelectOpen && !isRoleSelectOpen) return
+        const handleScroll = (event: Event) => {
+            const target = event.target as Node
+            if (!(orgPanelRef.current?.contains(target))) {
+                setIsOrgSelectOpen(false)
+            }
+            if (!(rolePanelRef.current?.contains(target))) {
+                setIsRoleSelectOpen(false)
+            }
+        }
+        window.addEventListener('scroll', handleScroll, true)
+        return () => window.removeEventListener('scroll', handleScroll, true)
+    }, [isOrgSelectOpen, isRoleSelectOpen])
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
         if (selectedOrganization && selectedRole) {
@@ -65,97 +139,160 @@ export default function ChangeUserOrganizationModal({ user, currentOrganization,
     )
 
     return (
-        <div className="space-y-6 p-6">
+        <div className="p-6">
             {/* User Info */}
-            <div className="flex flex-col justify-center items-center gap-1 p-4 bg-purple-50 rounded-lg">
+            <div className="flex flex-col items-center gap-1 p-4 rounded-md mb-6" style={{ background: "var(--gray-alpha-100)" }}>
                 <img src={getUserAvatar(user, 40)} alt={`${user.firstName} ${user.lastName}`} className="w-10 h-10 rounded-full object-cover" />
                 <div className="flex flex-col items-center">
-                    <h4 className="font-medium text-purple-600">{user.firstName} {user.lastName}</h4>
-                    <p className="text-sm text-gray-600">{user.email}</p>
+                    <h4 className="font-medium text-sm" style={{ color: "var(--ds-text)" }}>{user.firstName} {user.lastName}</h4>
+                    <p className="text-sm" style={{ color: "var(--ds-text-secondary)" }}>{user.email}</p>
                 </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-6">
                 {/* Organization Select */}
-                <div className="space-y-2">
-                    <label htmlFor="organization" className="block text-sm font-medium text-gray-700">
+                <div className="space-y-1 relative" ref={orgSelectRef}>
+                    <label htmlFor="organization" className="text-sm font-medium" style={{ color: "var(--ds-text)" }}>
                         Nueva Organización
                     </label>
-                    <select
+                    <button
                         id="organization"
-                        value={selectedOrganization}
-                        onChange={(e) => setSelectedOrganization(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                        required
+                        type="button"
+                        onClick={() => { setIsOrgSelectOpen(!isOrgSelectOpen); setIsRoleSelectOpen(false) }}
+                        className="w-full h-9 px-3 rounded-md text-sm flex items-center justify-between transition-colors duration-150 hover:bg-[var(--gray-alpha-100)] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2"
+                        style={{ background: "var(--ds-card)", boxShadow: "var(--shadow-border)" }}
                     >
-                        <option value="">Seleccionar organización</option>
-                        {availableOrganizations.map(org => (
-                            <option key={org.organizationId} value={org.organizationId}>
-                                {org.organizationName}
-                            </option>
-                        ))}
-                    </select>
+                        <span className="truncate" style={{ color: selectedOrganization ? "var(--ds-text)" : "var(--ds-text-muted)" }}>
+                            {availableOrganizations.find(org => org.organizationId === selectedOrganization)?.organizationName || "Seleccionar organización"}
+                        </span>
+                        <svg className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 ${isOrgSelectOpen ? "rotate-180" : ""}`}
+                            style={{ color: "var(--ds-text-muted)" }}
+                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                        </svg>
+                    </button>
+
+                    {isOrgSelectOpen && mounted && createPortal(
+                        <div
+                            ref={orgPanelRef}
+                            className="fixed z-[9999] flex flex-col rounded-md text-sm max-h-60 overflow-y-auto"
+                            style={{
+                                ...(orgPosition.openUpward ? { bottom: orgPosition.bottom } : { top: orgPosition.top }),
+                                left: orgPosition.left,
+                                width: orgPosition.width,
+                                background: "var(--ds-card)", border: "1px solid var(--ds-border)", boxShadow: "var(--shadow-lg)"
+                            }}
+                        >
+                            {availableOrganizations.map(org => (
+                                <div
+                                    key={org.organizationId}
+                                    onClick={() => { setSelectedOrganization(org.organizationId); setIsOrgSelectOpen(false) }}
+                                    className="hover:bg-[var(--gray-alpha-100)] transition-colors duration-150 w-full text-start py-2.5 px-3 flex items-center gap-3 cursor-pointer"
+                                >
+                                    <span className="flex-1 truncate" style={{ color: "var(--ds-text)" }}>{org.organizationName}</span>
+                                    {org.organizationId === selectedOrganization && (
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 flex-shrink-0" style={{ color: "var(--blue-700)" }}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                                        </svg>
+                                    )}
+                                </div>
+                            ))}
+                        </div>,
+                        document.body
+                    )}
                 </div>
 
                 {/* Role Select */}
-                <div className="space-y-2">
-                    <label htmlFor="role" className="block text-sm font-medium text-gray-700">
+                <div className="space-y-1 relative" ref={roleSelectRef}>
+                    <label htmlFor="role" className="text-sm font-medium" style={{ color: "var(--ds-text)" }}>
                         Rol en la nueva organización
                     </label>
-                    <select
+                    <button
                         id="role"
-                        value={selectedRole}
-                        onChange={(e) => setSelectedRole(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                        type="button"
                         disabled={!selectedOrganization || isLoadingRoles}
-                        required
+                        onClick={() => { setIsRoleSelectOpen(!isRoleSelectOpen); setIsOrgSelectOpen(false) }}
+                        className="w-full h-9 px-3 rounded-md text-sm flex items-center justify-between transition-colors duration-150 hover:bg-[var(--gray-alpha-100)] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{ background: "var(--ds-card)", boxShadow: "var(--shadow-border)" }}
                     >
-                        {isLoadingRoles ? (
-                            <option>Cargando roles...</option>
-                        ) : (
-                            <>
-                                <option value="">Seleccionar rol</option>
-                                {organizationRoles.map(role => (
-                                    <option key={role.name} value={role.name}>
-                                        {role.name}
-                                    </option>
-                                ))}
-                            </>
-                        )}
-                    </select>
+                        <span className="truncate" style={{ color: selectedRole ? "var(--ds-text)" : "var(--ds-text-muted)" }}>
+                            {isLoadingRoles ? "Cargando roles..." : (selectedRole || "Seleccionar rol")}
+                        </span>
+                        <svg className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 ${isRoleSelectOpen ? "rotate-180" : ""}`}
+                            style={{ color: "var(--ds-text-muted)" }}
+                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                        </svg>
+                    </button>
+
+                    {isRoleSelectOpen && mounted && createPortal(
+                        <div
+                            ref={rolePanelRef}
+                            className="fixed z-[9999] flex flex-col rounded-md text-sm max-h-60 overflow-y-auto"
+                            style={{
+                                ...(rolePosition.openUpward ? { bottom: rolePosition.bottom } : { top: rolePosition.top }),
+                                left: rolePosition.left,
+                                width: rolePosition.width,
+                                background: "var(--ds-card)", border: "1px solid var(--ds-border)", boxShadow: "var(--shadow-lg)"
+                            }}
+                        >
+                            {organizationRoles.map(role => (
+                                <div
+                                    key={role.name}
+                                    onClick={() => { setSelectedRole(role.name); setIsRoleSelectOpen(false) }}
+                                    className="hover:bg-[var(--gray-alpha-100)] transition-colors duration-150 w-full text-start py-2.5 px-3 flex items-center gap-3 cursor-pointer"
+                                >
+                                    <span className="flex-1 truncate" style={{ color: "var(--ds-text)" }}>{role.name}</span>
+                                    {role.name === selectedRole && (
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 flex-shrink-0" style={{ color: "var(--blue-700)" }}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                                        </svg>
+                                    )}
+                                </div>
+                            ))}
+                        </div>,
+                        document.body
+                    )}
                 </div>
 
                 {/* Visual Representation */}
                 {selectedOrganization && selectedRole && (
-                    <div className="p-4 bg-purple-50 rounded-lg">
-                        <div className="flex items-center justify-between">
-                            <div className="flex-1 text-center">
-                                <div className="text-sm font-medium text-gray-500 mb-1">Organización Actual</div>
-                                <div className="text-purple-600 font-medium">{currentOrganization.organizationName}</div>
+                    <div className="p-4 rounded-md" style={{ background: "var(--blue-100)", border: "1px solid var(--blue-400)" }}>
+                        <p className="text-xs font-medium mb-3" style={{ color: "var(--blue-900)" }}>Vista Previa del Cambio</p>
+                        <div className="flex items-center justify-between gap-4">
+                            <div className="flex-1 min-w-0 text-center">
+                                <p className="text-sm font-medium truncate" style={{ color: "var(--ds-text-muted)" }}>{currentOrganization.organizationName}</p>
                             </div>
-                            <div className="text-purple-500 mx-4">
-                                <ChevronRightIcon size={24} />
+                            <div className="flex-shrink-0" style={{ color: "var(--blue-900)" }}>
+                                <ArrowRight size={20} strokeWidth={2} />
                             </div>
-                            <div className="flex-1 text-center">
-                                <div className="text-sm font-medium text-gray-500 mb-1">Nueva Organización</div>
-                                <div className="text-purple-600 font-medium">
+                            <div className="flex-1 min-w-0 text-center">
+                                <p className="text-sm font-medium truncate" style={{ color: "var(--blue-900)" }}>
                                     {organizations.find(org => org.organizationId === selectedOrganization)?.organizationName}
-                                </div>
-                                <div className="text-sm text-purple-500 mt-1">
+                                </p>
+                                <p className="text-xs mt-1 truncate" style={{ color: "var(--blue-700)" }}>
                                     Rol: {selectedRole}
-                                </div>
+                                </p>
                             </div>
                         </div>
                     </div>
                 )}
 
-
-                <div className="flex justify-end gap-3 mt-4">
-                    <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 transition-all duration-200 text-sm font-medium" type="button"
-                        onClick={() => onCancel()}>
+                <div className="flex justify-end gap-3">
+                    <button
+                        type="button"
+                        onClick={() => onCancel()}
+                        className="h-9 px-4 rounded-md text-sm font-medium transition-colors duration-150 hover:bg-[var(--gray-alpha-100)] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2"
+                        style={{ background: "var(--ds-card)", color: "var(--ds-text)", boxShadow: "var(--shadow-border)" }}
+                    >
                         Cancelar
                     </button>
-                    <button disabled={!selectedOrganization || !selectedRole} className={`bg-purple-600 hover:bg-purple-700 focus:ring-purple-500 text-white focus:ring-2 rounded-md focus:ring-offset-2 transition-all duration-200 text-sm font-medium px-4 py-2`} type="submit">
+                    <button
+                        type="submit"
+                        disabled={!selectedOrganization || !selectedRole}
+                        className="h-9 px-4 rounded-md text-sm font-medium transition-colors duration-150 bg-[var(--primary-700)] hover:bg-[var(--primary-800)] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-[var(--primary-900)] focus-visible:outline-offset-2"
+                        style={{ color: "var(--primary-contrast-fg)" }}
+                    >
                         Confirmar Cambio
                     </button>
                 </div>

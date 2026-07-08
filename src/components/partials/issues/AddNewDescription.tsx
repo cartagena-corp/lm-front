@@ -25,11 +25,12 @@ export default function AddNewDescription({ onSubmit, onCancel, desc = { id: "",
       <form onSubmit={handleSubmit} className="text-sm py-2">
          <span className="flex flex-col gap-2 mt-4 mb-8">
             <div className="flex flex-col gap-1">
-               <label htmlFor="title" className="text-gray-700 text-sm font-medium">
+               <label htmlFor="title" className="block text-[13px] font-medium" style={{ color: "var(--ds-text-secondary)" }}>
                   Título de la descripción
                </label>
                <input onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="border-gray-300 outline-none rounded-md w-full border p-2"
+                  className="outline-none rounded-md w-full h-9 px-3 text-sm bg-[var(--ds-card)] transition-shadow duration-150 shadow-[var(--shadow-border)] focus:shadow-[0_0_0_1px_var(--blue-700)] placeholder:text-[var(--ds-text-muted)]"
+                  style={{ color: "var(--ds-text)" }}
                   value={formData.title}
                   name="title"
                   type="text"
@@ -39,19 +40,28 @@ export default function AddNewDescription({ onSubmit, onCancel, desc = { id: "",
             </div>
 
             <div>
-               <label htmlFor="text" className="text-gray-700 text-sm font-medium">
+               <label htmlFor="text" className="block text-[13px] font-medium" style={{ color: "var(--ds-text-secondary)" }}>
                   Contenido de la descripción
                </label>
                <AutoResizeTextarea onChange={(str) => setFormData({ ...formData, text: str })}
                   value={formData.text}
                   required={true}
+                  className="border-0! text-sm bg-[var(--ds-card)] text-[var(--ds-text)] transition-shadow duration-150 shadow-[var(--shadow-border)] focus:shadow-[0_0_0_1px_var(--blue-700)] placeholder:text-[var(--ds-text-muted)]"
                />
             </div>
          </span>
 
          <section className="flex justify-between items-center gap-2">
-            <button type="button" onClick={onCancel} className="border-black/15 hover:bg-red-600 hover:text-white duration-150 rounded-md border w-full p-2">Cancelar</button>
-            <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white duration-150 border-transparent rounded-md border w-full p-2">Añadir Descripción</button>
+            <button type="button" onClick={onCancel}
+               className="w-full h-9 px-4 rounded-md text-sm font-medium transition-colors duration-150 bg-[var(--ds-card)] hover:bg-[var(--gray-alpha-100)] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2"
+               style={{ color: "var(--ds-text)", boxShadow: "var(--shadow-border)" }}>
+               Cancelar
+            </button>
+            <button type="submit"
+               className="w-full h-9 px-4 rounded-md text-sm font-medium transition-colors duration-150 bg-[var(--primary-700)] hover:bg-[var(--primary-800)] focus-visible:outline-2 focus-visible:outline-[var(--primary-900)] focus-visible:outline-offset-2"
+               style={{ color: "var(--primary-contrast-fg)" }}>
+               Añadir Descripción
+            </button>
          </section>
       </form>
    )

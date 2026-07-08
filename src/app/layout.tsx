@@ -1,11 +1,13 @@
 import { Analytics } from "@vercel/analytics/next"
-import Notifications from '@/components/layout/Notifications'
 import ConditionalLayout from '@/components/new_layout/ConditionalLayout'
+import ThemeScript from '@/components/geist/ThemeScript'
+import HydrationNoiseFilter from '@/components/geist/HydrationNoiseFilter'
 import { Toaster } from 'react-hot-toast'
-import { Inter } from 'next/font/google'
+import { Geist, Geist_Mono } from 'next/font/google'
 import '../assets/globals.css'
 
-const inter = Inter({ subsets: ['latin'] })
+const geistSans = Geist({ subsets: ['latin'], variable: '--font-geist-sans', display: 'swap' })
+const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono', display: 'swap' })
 
 export const metadata = {
   title: 'La Muralla - Gestión de Proyectos',
@@ -28,12 +30,14 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es">
-      <head>
-        <script src="https://cdn.jsdelivr.net/npm/frappe-gantt/dist/frappe-gantt.umd.js" />
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/frappe-gantt/dist/frappe-gantt.css" />
+    <html lang="es" className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
+      <head suppressHydrationWarning>
+        <HydrationNoiseFilter />
+        <ThemeScript />
+        <script src="https://cdn.jsdelivr.net/npm/frappe-gantt/dist/frappe-gantt.umd.js" suppressHydrationWarning />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/frappe-gantt/dist/frappe-gantt.css" suppressHydrationWarning />
       </head>
-      <body className={`${inter.className} bg-gray-50`}>
+      <body suppressHydrationWarning>
         <ConditionalLayout>
           {children}
         </ConditionalLayout>
@@ -44,7 +48,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             className: 'z-50 text-sm'
           }}
         />
-        <Notifications />
         <Analytics />
       </body>
     </html>

@@ -1,6 +1,6 @@
 'use client'
 
-import { XIcon, AttachIcon, BoldIcon, ItalicIcon, StrikethroughIcon, CodeIcon, UnderlineIcon, PaletteIcon, HighlighterIcon, PlusIcon } from '@/assets/Icon'
+import { X, Paperclip, Bold, Italic, Strikethrough, Code, Underline, Palette, Highlighter, Plus } from 'lucide-react'
 import { TextAreaProps, TooltipPosition, TaskProps } from '@/lib/types/types'
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import SelectionTooltip from './SelectionTooltip'
@@ -321,11 +321,11 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
 
     // Format buttons configuration
     const formatButtons = [
-        { icon: BoldIcon, type: 'bold', label: 'Negrita', command: 'bold' },
-        { icon: ItalicIcon, type: 'italic', label: 'Cursiva', command: 'italic' },
-        { icon: StrikethroughIcon, type: 'strikethrough', label: 'Tachado', command: 'strikeThrough' },
-        { icon: CodeIcon, type: 'code', label: 'Código' },
-        { icon: UnderlineIcon, type: 'underline', label: 'Subrayado', command: 'underline' },
+        { icon: Bold, type: 'bold', label: 'Negrita', command: 'bold' },
+        { icon: Italic, type: 'italic', label: 'Cursiva', command: 'italic' },
+        { icon: Strikethrough, type: 'strikethrough', label: 'Tachado', command: 'strikeThrough' },
+        { icon: Code, type: 'code', label: 'Código' },
+        { icon: Underline, type: 'underline', label: 'Subrayado', command: 'underline' },
     ]
 
     // Check if a format button is active
@@ -707,12 +707,15 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
     return (
         <div className="flex flex-col">
             {/* Title */}
-            <label className="text-gray-900 text-sm font-semibold block mb-2">
+            <label className="text-sm font-medium block mb-2" style={{ color: "var(--ds-text)" }}>
                 {title}
             </label>
 
             {/* Toolbar */}
-            <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-t-lg px-3 py-2">
+            <div
+                className="flex items-center justify-between rounded-t-md px-3 py-2"
+                style={{ background: "var(--background-200)", border: "1px solid var(--ds-border)" }}
+            >
                 <div className="flex items-center gap-1">
                     {/* Format buttons */}
                     {formatButtons.map((btn, index) => (
@@ -720,7 +723,7 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
                             key={index}
                             type="button"
                             onClick={() => handleFormatClick(btn.type)}
-                            className={`p-2 hover:bg-gray-200 rounded transition-colors ${isButtonActive(btn.type, btn.command) ? 'bg-gray-300 text-blue-600' : ''
+                            className={`p-2 rounded-md transition-colors duration-150 hover:bg-[var(--gray-alpha-100)] ${isButtonActive(btn.type, btn.command) ? 'bg-[var(--gray-alpha-200)] text-[var(--blue-700)]' : 'text-[var(--ds-text-secondary)]'
                                 }`}
                             title={btn.label}
                         >
@@ -736,27 +739,30 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
                                 setShowColorPicker(!showColorPicker)
                                 setShowHighlightPicker(false)
                             }}
-                            className="p-2 hover:bg-gray-200 rounded transition-colors relative flex items-center justify-center"
+                            className="p-2 rounded-md transition-colors duration-150 hover:bg-[var(--gray-alpha-100)] text-[var(--ds-text-secondary)] relative flex items-center justify-center"
                             title="Color de texto"
                         >
                             {activeTextColor ? (
                                 <div
-                                    className="w-4 h-4 rounded-full border border-black"
-                                    style={{ backgroundColor: activeTextColor }}
+                                    className="w-4 h-4 rounded-full border"
+                                    style={{ backgroundColor: activeTextColor, borderColor: "var(--ds-border-strong)" }}
                                 />
                             ) : (
-                                <PaletteIcon size={16} />
+                                <Palette size={16} />
                             )}
                         </button>
                         {showColorPicker && (
-                            <div className="absolute w-40 top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-10 grid grid-cols-5 gap-1.5">
+                            <div
+                                className="absolute w-40 top-full left-0 mt-1 rounded-md p-2 z-10 grid grid-cols-5 gap-1.5"
+                                style={{ background: "var(--ds-card)", border: "1px solid var(--ds-border)", boxShadow: "var(--shadow-lg)" }}
+                            >
                                 {colors.map(color => (
                                     <button
                                         key={color.name}
                                         type="button"
                                         onClick={() => handleColorSelect(color.name)}
-                                        className="w-6 h-6 rounded hover:scale-110 transition-transform border border-gray-300"
-                                        style={{ backgroundColor: color.hex }}
+                                        className="w-6 h-6 rounded-md transition-opacity duration-150 hover:opacity-80 border"
+                                        style={{ backgroundColor: color.hex, borderColor: "var(--gray-alpha-400)" }}
                                         title={color.name}
                                     />
                                 ))}
@@ -772,10 +778,10 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
                                 setShowHighlightPicker(!showHighlightPicker)
                                 setShowColorPicker(false)
                             }}
-                            className="p-2 hover:bg-gray-200 rounded transition-colors relative"
+                            className="p-2 rounded-md transition-colors duration-150 hover:bg-[var(--gray-alpha-100)] text-[var(--ds-text-secondary)] relative"
                             title="Resaltado"
                         >
-                            <HighlighterIcon size={16} />
+                            <Highlighter size={16} />
                             {activeHighlightColor && (
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
@@ -787,7 +793,7 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
                                     <path
                                         d="m9 11-6 6v3h9l3-3"
                                         fill={activeHighlightColor}
-                                        stroke="#000000"
+                                        stroke="var(--ds-text)"
                                         strokeWidth="2.5"
                                         strokeLinecap="round"
                                         strokeLinejoin="round"
@@ -796,14 +802,17 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
                             )}
                         </button>
                         {showHighlightPicker && (
-                            <div className="absolute w-40 top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-10 grid grid-cols-5 gap-1.5">
+                            <div
+                                className="absolute w-40 top-full left-0 mt-1 rounded-md p-2 z-10 grid grid-cols-5 gap-1.5"
+                                style={{ background: "var(--ds-card)", border: "1px solid var(--ds-border)", boxShadow: "var(--shadow-lg)" }}
+                            >
                                 {colors.map(color => (
                                     <button
                                         key={color.name}
                                         type="button"
                                         onClick={() => handleHighlightSelect(color.hex)}
-                                        className="w-6 h-6 rounded hover:scale-110 transition-transform border border-gray-300"
-                                        style={{ backgroundColor: color.hex }}
+                                        className="w-6 h-6 rounded-md transition-opacity duration-150 hover:opacity-80 border"
+                                        style={{ backgroundColor: color.hex, borderColor: "var(--gray-alpha-400)" }}
                                         title={color.name}
                                     />
                                 ))}
@@ -815,10 +824,10 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
                     <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="p-2 hover:bg-gray-200 rounded transition-colors"
+                        className="p-2 rounded-md transition-colors duration-150 hover:bg-[var(--gray-alpha-100)] text-[var(--ds-text-secondary)]"
                         title="Adjuntar imagen"
                     >
-                        <AttachIcon size={16} stroke={1.5} />
+                        <Paperclip size={16} strokeWidth={1.5} />
                     </button>
                     <input
                         ref={fileInputRef}
@@ -835,26 +844,30 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
                             <button
                                 type="button"
                                 onClick={handleIssueTooltipToggle}
-                                className="p-2 hover:bg-gray-200 rounded transition-colors text-blue-600"
+                                className="p-2 rounded-md transition-colors duration-150 hover:bg-[var(--gray-alpha-100)] text-[var(--blue-700)]"
                                 title="Referenciar tarea"
                             >
-                                <PlusIcon size={16} stroke={1.5} />
+                                <Plus size={16} strokeWidth={1.5} />
                             </button>
 
                             {/* Issue search tooltip */}
                             {showIssueTooltip && (
-                                <div className="absolute bottom-full right-0 mb-2 w-80 bg-white border border-gray-200 rounded-lg shadow-xl z-20">
+                                <div
+                                    className="absolute bottom-full right-0 mb-2 w-80 rounded-md z-20 overflow-hidden"
+                                    style={{ background: "var(--ds-card)", border: "1px solid var(--ds-border)", boxShadow: "var(--shadow-lg)" }}
+                                >
                                     <div
                                         ref={issueScrollRef}
                                         onScroll={handleIssueScroll}
-                                        className="max-h-80 overflow-y-auto border-b border-gray-200"
+                                        className="max-h-80 overflow-y-auto"
+                                        style={{ borderBottom: "1px solid var(--ds-border)" }}
                                     >
                                         {isLoading && currentPage === 0 ? (
-                                            <div className="p-4 text-center text-sm text-gray-500">
+                                            <div className="p-4 text-center text-sm" style={{ color: "var(--ds-text-muted)" }}>
                                                 Cargando issues...
                                             </div>
                                         ) : issues.content.length === 0 ? (
-                                            <div className="p-4 text-center text-sm text-gray-500">
+                                            <div className="p-4 text-center text-sm" style={{ color: "var(--ds-text-muted)" }}>
                                                 No se encontraron issues
                                             </div>
                                         ) : (
@@ -869,16 +882,17 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
                                                             key={issue.id}
                                                             type="button"
                                                             onClick={() => handleIssueSelect(issue)}
-                                                            className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 transition-colors"
+                                                            className="w-full px-4 py-3 text-left hover:bg-[var(--gray-alpha-100)] transition-colors duration-150"
+                                                            style={{ borderBottom: "1px solid var(--ds-border)" }}
                                                         >
                                                             <div className="flex items-center gap-3" title={typeName}>
                                                                 <span className="w-1 h-10 rounded-full flex-shrink-0" style={{ backgroundColor: typeColor }} />
                                                                 <div className="flex-1 min-w-0">
-                                                                    <p className="text-sm font-medium text-gray-900 truncate">
+                                                                    <p className="text-sm font-medium truncate" style={{ color: "var(--ds-text)" }}>
                                                                         {issue.title}
                                                                     </p>
                                                                     {issue.descriptions && issue.descriptions[0] && (
-                                                                        <p className="text-xs text-gray-500 truncate mt-1">
+                                                                        <p className="text-xs truncate mt-1" style={{ color: "var(--ds-text-muted)" }}>
                                                                             {issue.descriptions[0].title}
                                                                         </p>
                                                                     )}
@@ -889,7 +903,7 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
                                                 })}
 
                                                 {isLoadingMore && (
-                                                    <div className="p-3 text-center text-sm text-gray-500">
+                                                    <div className="p-3 text-center text-sm" style={{ color: "var(--ds-text-muted)" }}>
                                                         Cargando más...
                                                     </div>
                                                 )}
@@ -903,7 +917,8 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
                                             placeholder="Buscar issues..."
                                             value={issueSearchQuery}
                                             onChange={(e) => handleIssueSearch(e.target.value)}
-                                            className="w-full px-1 text-sm rounded-lg outline-none"
+                                            className="w-full px-1 text-sm rounded-md outline-none bg-transparent placeholder:text-[var(--ds-text-muted)]"
+                                            style={{ color: "var(--ds-text)" }}
                                         />
                                     </div>
                                 </div>
@@ -914,8 +929,14 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
 
                 {/* Character counter */}
                 <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${getTextLength(value) > maxLength * 0.9 ? 'bg-red-500' : getTextLength(value) > maxLength * 0.7 ? 'bg-yellow-500' : 'bg-green-500'}`} />
-                    <span className={`text-xs font-medium ${getTextLength(value) > maxLength * 0.9 ? 'text-red-500' : getTextLength(value) > maxLength * 0.7 ? 'text-yellow-500' : 'text-gray-500'}`}>
+                    <div
+                        className="w-2 h-2 rounded-full"
+                        style={{ background: getTextLength(value) > maxLength * 0.9 ? 'var(--red-700)' : getTextLength(value) > maxLength * 0.7 ? 'var(--amber-700)' : 'var(--green-700)' }}
+                    />
+                    <span
+                        className="text-xs font-medium"
+                        style={{ color: getTextLength(value) > maxLength * 0.9 ? 'var(--ds-error)' : getTextLength(value) > maxLength * 0.7 ? 'var(--ds-warning)' : 'var(--ds-text-muted)' }}
+                    >
                         {getTextLength(value)} / {maxLength}
                     </span>
                 </div>
@@ -924,7 +945,12 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
             {/* ContentEditable editor with live formatting */}
             <div
                 ref={containerRef}
-                className={`relative text-sm border border-t-0 border-gray-200 rounded-b-lg ${dragActive ? 'border-blue-500 bg-blue-50' : ''}`}
+                className="relative text-sm rounded-b-md"
+                style={{
+                    border: `1px solid ${dragActive ? 'var(--blue-700)' : 'var(--ds-border)'}`,
+                    borderTop: 'none',
+                    background: dragActive ? 'var(--blue-100)' : 'var(--ds-card)',
+                }}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
@@ -955,18 +981,22 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
                     onKeyDown={handleKeyDown}
                     onPaste={handlePaste}
                     data-placeholder={placeholder}
-                    className="rounded-b-lg w-full px-4 py-3 text-xs outline-none bg-white min-h-[60px] max-h-[180px] overflow-auto break-words empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400 [&_code]:font-mono [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-sm [&_span[contenteditable='false']]:select-none [&_span[contenteditable='false']]:inline-flex [&_span[contenteditable='false']]:items-center [&_span[contenteditable='false']]:align-middle"
+                    className="rounded-b-md w-full px-4 py-3 text-xs outline-none bg-transparent min-h-[60px] max-h-[180px] overflow-auto break-words empty:before:content-[attr(data-placeholder)] empty:before:text-[var(--ds-text-muted)] [&_code]:font-mono [&_code]:bg-[var(--gray-alpha-200)] [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-sm [&_span[contenteditable='false']]:select-none [&_span[contenteditable='false']]:inline-flex [&_span[contenteditable='false']]:items-center [&_span[contenteditable='false']]:align-middle"
                     style={{
                         minHeight,
                         maxHeight,
-                        whiteSpace: 'normal'
+                        whiteSpace: 'normal',
+                        color: 'var(--ds-text)'
                     }}
                     suppressContentEditableWarning
                 />
 
                 {dragActive && (
-                    <div className="absolute inset-0 bg-blue-50 bg-opacity-50 flex items-center justify-center pointer-events-none">
-                        <p className="text-blue-600 font-medium">Suelta la imagen aquí</p>
+                    <div
+                        className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                        style={{ background: "color-mix(in srgb, var(--blue-100) 60%, transparent)" }}
+                    >
+                        <p className="font-medium" style={{ color: "var(--blue-900)" }}>Suelta la imagen aquí</p>
                     </div>
                 )}
             </div>
@@ -974,7 +1004,7 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
             {/* Attached images */}
             {files.length > 0 && (
                 <div className="space-y-2 mt-2">
-                    <p className="text-xs font-semibold text-gray-600">
+                    <p className="text-xs font-medium" style={{ color: "var(--ds-text-secondary)" }}>
                         {extensionAllowed === 'image/*' ? 'Imágenes adjuntas:' : 'Archivos adjuntos:'}
                     </p>
                     <div className="flex flex-wrap gap-2">
@@ -984,11 +1014,12 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
                                     <img
                                         src={URL.createObjectURL(file)}
                                         alt={file.name}
-                                        className="w-20 h-20 object-cover rounded border border-gray-200"
+                                        className="w-20 h-20 object-cover rounded-md"
+                                        style={{ border: "1px solid var(--ds-border)" }}
                                     />
                                 ) : (
-                                    <div className="w-20 h-20 flex items-center justify-center bg-gray-100 rounded border border-gray-200">
-                                        <p className="text-xs text-gray-500 text-center px-1 truncate w-full">
+                                    <div className="w-20 h-20 flex items-center justify-center rounded-md" style={{ background: "var(--gray-alpha-100)", border: "1px solid var(--ds-border)" }}>
+                                        <p className="text-xs text-center px-1 truncate w-full" style={{ color: "var(--ds-text-secondary)" }}>
                                             {file.name}
                                         </p>
                                     </div>
@@ -997,9 +1028,10 @@ export default function TextArea({ title, value, onChange, files = [], onRemoveF
                                     <button
                                         type="button"
                                         onClick={() => onRemoveFile(index)}
-                                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        className="absolute -top-2 -right-2 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 hover:bg-[var(--red-800)]"
+                                        style={{ background: "var(--red-700)", color: "var(--ds-contrast-inverse)" }}
                                     >
-                                        <XIcon size={12} stroke={1.5} />
+                                        <X size={12} strokeWidth={1.5} />
                                     </button>
                                 )}
                             </div>

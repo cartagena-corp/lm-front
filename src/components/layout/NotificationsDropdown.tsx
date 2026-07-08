@@ -2,14 +2,19 @@
 
 import { useNotificationStore } from "@/lib/store/NotificationStore"
 import { useAuthStore } from "@/lib/store/AuthStore"
+import { useModalStore } from "@/lib/hooks/ModalStore"
 import { useEffect, useState, useRef } from "react"
-import { BellIcon, DeleteIcon, MegaphoneIcon } from "@/assets/Icon"
+import { Bell, Trash2, Settings } from "lucide-react"
 import { Client } from "@stomp/stompjs"
 import { useRouter } from "next/navigation"
-import { NotificationProps } from "@/lib/types/types"
+import { NotificationProps, PermissionProps } from "@/lib/types/types"
+import NotificationConfig from "@/components/partials/config/notifications/NotificationConfig"
 
-export default function Notifications() {
-   const { getValidAccessToken, user } = useAuthStore()
+const iconBtn = "w-[34px] h-[34px] flex items-center justify-center rounded-md cursor-pointer transition-colors hover:bg-[var(--gray-alpha-100)]"
+
+/** Notifications bell + anchored dropdown, rendered inline in the Topbar. */
+export default function NotificationsDropdown() {
+   const { getValidAccessToken, user, normalizeUserRole } = useAuthStore()
    const {
       notifications,
       unreadCount,
@@ -21,23 +26,19 @@ export default function Notifications() {
       deleteNotification,
       deleteAllNotifications
    } = useNotificationStore()
+   const { openModal } = useModalStore()
 
-   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
+   const [isOpen, setIsOpen] = useState(false)
    const [isClient, setIsClient] = useState(false)
    const clientRef = useRef<Client | null>(null)
    const ntfRef = useRef<HTMLDivElement>(null)
    const router = useRouter()
 
-   // TODOS LOS HOOKS DEBEN ESTAR ANTES DE CUALQUIER EARLY RETURN
-
-   // Evitar problemas de hidratación
    useEffect(() => {
       setIsClient(true)
    }, [])
 
-   // Inicialización de notificaciones y WebSocket
    useEffect(() => {
-      // Solo ejecutar si el cliente está listo y el usuario está logueado
       if (!isClient || !user) return
 
       const init = async () => {
@@ -55,11 +56,10 @@ export default function Notifications() {
       }
    }, [isClient, user, getValidAccessToken, getNotifications, connectAndSubscribe])
 
-   // Click outside handler
    useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
          if (ntfRef.current && !ntfRef.current.contains(event.target as Node)) {
-            setIsNotificationsOpen(false)
+            setIsOpen(false)
          }
       }
 
@@ -69,14 +69,13 @@ export default function Notifications() {
       }
    }, [])
 
-   // Solo renderizar si el cliente está listo y el usuario está logueado
    if (!isClient || !user) return null
 
    const handleNotificationClick = async (notification: NotificationProps) => {
       const token = await getValidAccessToken()
       if (token) {
          await readNotification(token, notification.id)
-         setIsNotificationsOpen(false)
+         setIsOpen(false)
          router.push(`/tableros/${notification.projectId}`)
       }
    }
@@ -102,6 +101,23 @@ export default function Notifications() {
          await deleteNotification(token, notificationId)
       }
    }
+
+   const handleOpenPreferences = () => {
+      setIsOpen(false)
+      openModal({
+         size: "lg",
+         title: "Preferencias de Notificaciones",
+         desc: "Configura qué notificaciones deseas recibir",
+         Icon: <Settings size={20} strokeWidth={1.75} />,
+         children: <NotificationConfig />,
+         closeOnBackdrop: false,
+         closeOnEscape: false,
+         mode: "UPDATE"
+      })
+   }
+
+   const userRole = normalizeUserRole(user)
+   const hasPermissionNotifications = userRole?.permissions.some((p: PermissionProps) => p.name === "NOTIFICATION_CRUD") ?? false
 
    const formatDate = (dateStr: string) => {
       if (!dateStr) return ''
@@ -131,35 +147,56 @@ export default function Notifications() {
    }
 
    return (
-      <>
-         {/* Panel de notificaciones */}
-         {isNotificationsOpen && (
+      <div className="relative" ref={ntfRef}>
+         <button
+            onClick={() => setIsOpen(!isOpen)}
+            title="Notificaciones"
+            className={iconBtn}
+            style={{ border: "1px solid var(--ds-border)", background: "var(--ds-background)", color: "var(--ds-text-secondary)" }}
+         >
+            <div className="relative flex items-center justify-center">
+               <Bell size={16} strokeWidth={1.5} />
+               {unreadCount > 0 && (
+                  <div className="absolute -top-2 -right-2.5 min-w-[16px] h-[16px] px-1 text-[10px] font-semibold rounded-full flex items-center justify-center"
+                     style={{ background: "var(--red-700)", color: "var(--ds-contrast-inverse)" }}>
+                     {unreadCount > 9 ? '9+' : unreadCount}
+                  </div>
+               )}
+            </div>
+         </button>
+
+         {isOpen && (
             <div
-               ref={ntfRef}
-               className="fixed bottom-24 right-6 z-40 bg-white rounded-2xl shadow-2xl border border-gray-200 w-96 max-h-[600px] overflow-hidden animate-in slide-in-from-bottom-2 duration-300"
+               className="absolute right-0 top-full mt-2 z-30 rounded-xl w-[min(24rem,calc(100vw-3rem))] max-h-[70vh] overflow-hidden"
+               style={{ background: "var(--ds-card)", border: "1px solid var(--ds-border)", boxShadow: "var(--shadow-lg)" }}
             >
                {/* Header */}
-               <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-purple-50">
+               <div className="p-4" style={{ borderBottom: "1px solid var(--ds-border)" }}>
                   <div className="flex items-center justify-between">
-                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                           <BellIcon size={20} />
-                        </div>
-                        <div>
-                           <h3 className="font-semibold text-gray-900">Notificaciones</h3>
-                           <p className="text-sm text-gray-500">
-                              {unreadCount > 0 ? `${unreadCount} sin leer` : 'Todo al día'}
-                           </p>
-                        </div>
+                     <div>
+                        <h3 className="text-sm font-semibold" style={{ color: "var(--ds-text)" }}>Notificaciones</h3>
+                        <p className="text-xs" style={{ color: "var(--ds-text-muted)" }}>
+                           {unreadCount > 0 ? `${unreadCount} sin leer` : 'Todo al día'}
+                        </p>
                      </div>
 
-                     {/* Acciones del header */}
-                     <div className="flex items-center gap-2">
+                     <div className="flex items-center gap-1">
+                        {hasPermissionNotifications && (
+                           <button
+                              onClick={handleOpenPreferences}
+                              className="p-2 rounded-md transition-colors duration-150 hover:bg-[var(--gray-alpha-100)] hover:text-[var(--ds-text)]"
+                              style={{ color: "var(--ds-text-secondary)" }}
+                              title="Preferencias de notificaciones"
+                           >
+                              <Settings size={16} strokeWidth={1.5} />
+                           </button>
+                        )}
                         {notifications.length > 0 && (
                            <>
                               <button
                                  onClick={handleReadAll}
-                                 className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                 className="p-2 rounded-md transition-colors duration-150 hover:bg-[var(--gray-alpha-100)] hover:text-[var(--ds-text)]"
+                                 style={{ color: "var(--ds-text-secondary)" }}
                                  title="Marcar todas como leídas"
                               >
                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -168,10 +205,11 @@ export default function Notifications() {
                               </button>
                               <button
                                  onClick={handleDeleteAll}
-                                 className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                 className="p-2 rounded-md transition-colors duration-150 hover:bg-[var(--red-100)] hover:text-[var(--red-900)]"
+                                 style={{ color: "var(--ds-text-secondary)" }}
                                  title="Eliminar todas"
                               >
-                                 <DeleteIcon size={16} />
+                                 <Trash2 size={16} strokeWidth={1.5} />
                               </button>
                            </>
                         )}
@@ -180,62 +218,58 @@ export default function Notifications() {
                </div>
 
                {/* Lista de notificaciones */}
-               <div className="max-h-[500px] overflow-y-auto">
+               <div className="max-h-[50vh] overflow-y-auto">
                   {isLoading ? (
                      <div className="p-8 text-center">
-                        <div className="w-8 h-8 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-                        <p className="text-gray-500">Cargando notificaciones...</p>
+                        <div className="w-8 h-8 border-2 rounded-full animate-spin mx-auto mb-4" style={{ borderColor: "var(--gray-alpha-200)", borderTopColor: "var(--gray-700)" }}></div>
+                        <p className="text-sm" style={{ color: "var(--ds-text-muted)" }}>Cargando notificaciones…</p>
                      </div>
                   ) : notifications.length === 0 ? (
                      <div className="p-8 text-center">
-                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                           <BellIcon size={32} />
+                        <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: "var(--gray-alpha-100)", color: "var(--ds-text-muted)" }}>
+                           <Bell size={28} strokeWidth={1.5} />
                         </div>
-                        <h4 className="font-medium text-gray-900 mb-2">Sin notificaciones</h4>
-                        <p className="text-sm text-gray-500">No tienes notificaciones nuevas</p>
+                        <h4 className="text-sm font-medium mb-1" style={{ color: "var(--ds-text-secondary)" }}>Sin notificaciones</h4>
+                        <p className="text-[13px]" style={{ color: "var(--ds-text-muted)" }}>No tienes notificaciones nuevas</p>
                      </div>
                   ) : (
-                     <div className="divide-y divide-gray-100">
+                     <div className="divide-y divide-[var(--ds-border)]">
                         {notifications.map(notification => (
                            <div
                               key={notification.id}
-                              className={`group p-4 hover:bg-gray-50 cursor-pointer transition-colors ${!notification.read ? 'bg-blue-50/50 border-l-4 border-l-blue-500' : ''
+                              className={`group p-4 hover:bg-[var(--gray-alpha-100)] cursor-pointer transition-colors duration-150 ${!notification.read ? 'bg-[var(--blue-100)] border-l-2 border-l-[var(--blue-700)]' : ''
                                  }`}
                               onClick={() => handleNotificationClick(notification)}
                            >
                               <div className="flex items-start gap-3">
-                                 {/* Indicador de estado */}
                                  <div className="flex-shrink-0 mt-1">
                                     {!notification.read ? (
-                                       <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                       <div className="w-2 h-2 rounded-full" style={{ background: "var(--blue-700)" }}></div>
                                     ) : (
-                                       <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                                       <div className="w-2 h-2 rounded-full" style={{ background: "var(--gray-alpha-400)" }}></div>
                                     )}
                                  </div>
 
-                                 {/* Contenido */}
                                  <div className="flex-1 min-w-0">
                                     <div className="flex items-start justify-between gap-2">
                                        <div className="flex-1">
-                                          <h4 className={`text-sm font-medium ${!notification.read ? 'text-gray-900' : 'text-gray-700'
-                                             }`}>
+                                          <h4 className="text-sm font-medium" style={{ color: !notification.read ? "var(--ds-text)" : "var(--ds-text-secondary)" }}>
                                              {!notification.read ? 'Nueva Notificación' : 'Notificación'}
                                           </h4>
-                                          <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                                          <p className="text-sm mt-1 line-clamp-2" style={{ color: "var(--ds-text-secondary)" }}>
                                              {notification.message}
                                           </p>
-                                          <p className="text-xs text-gray-500 mt-2">
+                                          <p className="text-xs mt-2" style={{ color: "var(--ds-text-muted)" }}>
                                              {formatDate(notification.timestamp)}
                                           </p>
                                        </div>
 
-                                       {/* Botón eliminar */}
                                        <button
                                           onClick={(e) => handleDeleteNotification(notification.id, e)}
-                                          className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors opacity-0 group-hover:opacity-100"
+                                          className="p-1 rounded-md transition-colors duration-150 opacity-0 group-hover:opacity-100 text-[var(--ds-text-muted)] hover:text-[var(--red-900)] hover:bg-[var(--red-100)]"
                                           title="Eliminar notificación"
                                        >
-                                          <DeleteIcon size={14} />
+                                          <Trash2 size={14} strokeWidth={1.5} />
                                        </button>
                                     </div>
                                  </div>
@@ -246,12 +280,11 @@ export default function Notifications() {
                   )}
                </div>
 
-               {/* Footer */}
                {notifications.length > 0 && (
-                  <div className="p-3 border-t border-gray-100 bg-gray-50">
+                  <div className="p-2" style={{ borderTop: "1px solid var(--ds-border)", background: "var(--background-200)" }}>
                      <button
-                        onClick={() => setIsNotificationsOpen(false)}
-                        className="w-full text-sm text-gray-600 hover:text-gray-900 py-2 px-4 rounded-lg hover:bg-white transition-colors"
+                        onClick={() => setIsOpen(false)}
+                        className="w-full text-sm py-2 px-4 rounded-md transition-colors duration-150 text-[var(--ds-text-secondary)] hover:text-[var(--ds-text)] hover:bg-[var(--gray-alpha-100)]"
                      >
                         Cerrar panel
                      </button>
@@ -259,24 +292,6 @@ export default function Notifications() {
                )}
             </div>
          )}
-
-         {/* Botón flotante - Completamente independiente */}
-         <button
-            onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-            className={`fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full shadow-lg transition-all duration-300 ${unreadCount > 0
-               ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/25'
-               : 'bg-white hover:bg-gray-50 text-gray-700 shadow-gray-900/10'
-               } border ${unreadCount > 0 ? 'border-blue-600' : 'border-gray-200'}`}
-         >
-            <div className="relative flex items-center justify-center">
-               <BellIcon size={24} />
-               {unreadCount > 0 && (
-                  <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center animate-pulse">
-                     {unreadCount > 9 ? '9+' : unreadCount}
-                  </div>
-               )}
-            </div>
-         </button>
-      </>
+      </div>
    )
 }

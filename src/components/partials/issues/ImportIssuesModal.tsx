@@ -1,4 +1,4 @@
-import { ImportIcon, SendIcon, XIcon } from "@/assets/Icon"
+import { Upload, Send, X, ArrowRight } from "lucide-react"
 import { useAuthStore } from "@/lib/store/AuthStore"
 import { useIssueStore } from "@/lib/store/IssueStore"
 import { usePathname } from "next/navigation"
@@ -162,7 +162,7 @@ export default function ImportIssuesModal({ onCancel, sprintId }: FormProps) {
             }
             const sprintText = sprintId && sprintId !== 'null' ? ' al sprint' : ''
             toast.success(`Tareas importadas correctamente${sprintText}`)
-            setInterval(() => {
+            setTimeout(() => {
                 onCancel()
                 window.location.reload()
             }, 3000)
@@ -170,15 +170,17 @@ export default function ImportIssuesModal({ onCancel, sprintId }: FormProps) {
     }
 
     return (
-        <div className="bg-white border-gray-100 rounded-xl shadow-sm border">
+        <div>
             {/* Content */}
             <div className="p-6">
                 {!columns ? (
                     <label
                         htmlFor="file-upload"
-                        className={`flex flex-col items-center justify-center border-2 border-dashed rounded-lg cursor-pointer transition-all duration-200
-                            ${dragActive ? "border-blue-400 bg-blue-50" : "border-gray-200 bg-gray-50"}
-                            min-h-[120px] px-4 py-6 relative`}
+                        className="flex flex-col items-center justify-center rounded-md cursor-pointer transition-colors duration-150 min-h-[120px] px-4 py-6 relative"
+                        style={{
+                            border: `2px dashed ${dragActive ? "var(--blue-700)" : "var(--ds-border-strong)"}`,
+                            background: dragActive ? "var(--blue-100)" : "var(--gray-alpha-100)",
+                        }}
                         onDrop={handleDrop}
                         onDragOver={handleDragOver}
                         onDragLeave={handleDragLeave}
@@ -193,23 +195,23 @@ export default function ImportIssuesModal({ onCancel, sprintId }: FormProps) {
                         />
                         {!file ? (
                             <>
-                                <span className="text-blue-400 mb-2">
-                                    <ImportIcon size={24} />
+                                <span className="mb-2" style={{ color: "var(--blue-700)" }}>
+                                    <Upload size={24} strokeWidth={1.5} />
                                 </span>
-                                <span className="text-base font-medium text-gray-700">
+                                <span className="text-base font-medium" style={{ color: "var(--ds-text)" }}>
                                     Haz clic o arrastra un archivo aquí
                                 </span>
-                                <span className="text-xs text-gray-400 mt-1">
+                                <span className="text-xs mt-1" style={{ color: "var(--ds-text-muted)" }}>
                                     Archivos permitidos: .xls, .xlsx, .csv
                                 </span>
                             </>
                         ) : (
                             <div className="flex justify-between items-center gap-10">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-blue-400">
-                                        <ImportIcon size={24} />
+                                    <span style={{ color: "var(--blue-700)" }}>
+                                        <Upload size={24} strokeWidth={1.5} />
                                     </span>
-                                    <span className="text-gray-800 font-medium text-sm">{file.name}</span>
+                                    <span className="font-medium text-sm" style={{ color: "var(--ds-text)" }}>{file.name}</span>
                                 </div>
                                 <div className="flex items-center">
                                     <button
@@ -218,10 +220,11 @@ export default function ImportIssuesModal({ onCancel, sprintId }: FormProps) {
                                             e.stopPropagation()
                                             handleRemoveFile()
                                         }}
-                                        className="text-gray-400 hover:text-red-500 rounded-full p-1 transition"
+                                        className="rounded-full p-1 transition-colors duration-150 hover:bg-[var(--red-100)] hover:text-[var(--red-900)]"
+                                        style={{ color: "var(--ds-text-muted)" }}
                                         aria-label="Eliminar archivo"
                                     >
-                                        <XIcon size={18} />
+                                        <X size={18} strokeWidth={1.5} />
                                     </button>
                                     <button
                                         type="button"
@@ -229,10 +232,11 @@ export default function ImportIssuesModal({ onCancel, sprintId }: FormProps) {
                                             e.stopPropagation()
                                             handleSendFile()
                                         }}
-                                        className="text-gray-400 hover:text-green-500 rounded-full p-1 transition"
+                                        className="rounded-full p-1 transition-colors duration-150 hover:bg-[var(--green-100)] hover:text-[var(--green-900)]"
+                                        style={{ color: "var(--ds-text-muted)" }}
                                         aria-label="Enviar archivo"
                                     >
-                                        <SendIcon size={18} />
+                                        <Send size={18} strokeWidth={1.5} />
                                     </button>
                                 </div>
                             </div>
@@ -242,15 +246,17 @@ export default function ImportIssuesModal({ onCancel, sprintId }: FormProps) {
                     <div className="flex flex-col md:flex-row gap-8 items-start justify-center">
                         {/* Columnas del archivo */}
                         <div className="flex-1 min-w-[200px]">
-                            <h4 className="font-semibold text-gray-700 mb-2">Columnas del archivo</h4>
-                            <div className={`bg-blue-600/10 text-blue-600 pointer-events-none rounded-md border top-[-9999px] left-[-9999px] w-fit h-fit z-10 py-2 pl-8 pr-4
+                            <h4 className="font-semibold mb-2" style={{ color: "var(--ds-text)" }}>Columnas del archivo</h4>
+                            <div className={`pointer-events-none rounded-md top-[-9999px] left-[-9999px] w-fit h-fit z-10 py-2 pl-8 pr-4
                             ${draggedColumn ? "absolute" : "hidden"}`}
+                                style={{ background: "var(--blue-100)", color: "var(--blue-900)", border: "1px solid var(--blue-400)" }}
                                 ref={dragPreviewRef}>
                                 {draggedColumn}
                             </div>
                             <div className="flex flex-col gap-3 max-h-[500px] min-h-[460px] overflow-y-auto pr-1 relative">
                                 {columns.filter(col => !Object.values(mapping).flat().includes(col)).length === 0 ? (
-                                    <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-center pointer-events-none select-none bg-white/90 z-10">
+                                    <div className="absolute inset-0 flex items-center justify-center text-center pointer-events-none select-none z-10"
+                                        style={{ color: "var(--ds-text-muted)", background: "color-mix(in srgb, var(--ds-card) 90%, transparent)" }}>
                                         Ya no hay columnas por mapear
                                     </div>
                                 ) : (
@@ -270,14 +276,14 @@ export default function ImportIssuesModal({ onCancel, sprintId }: FormProps) {
                                                     }
                                                 }}
                                                 onDragEnd={handleColumnDragEnd}
-                                                className={`bg-white text-blue-800 border-blue-300 hover:bg-blue-50 hover:border-blue-500 ${draggedColumn === col && "opacity-40 scale-95"}
-                                                    border group p-3 rounded-lg shadow-sm hover:shadow-md cursor-grab active:cursor-grabbing transition-all select-none`}
+                                                className={`bg-[var(--blue-100)] text-[var(--blue-900)] border border-[var(--blue-400)] hover:bg-[var(--blue-200)] hover:border-[var(--blue-600)] ${draggedColumn === col && "opacity-40 scale-95"}
+                                                    group p-3 rounded-md shadow-[var(--shadow-border)] hover:shadow-[var(--shadow-md)] cursor-grab active:cursor-grabbing transition-all duration-150 select-none`}
                                                 style={{ zIndex: draggedColumn === col ? 1000 : 1 }}
                                                 title={sampleRow && sampleRow[col] !== undefined ? sampleRow[col] : ""}
                                             >
-                                                <div className="font-semibold text-blue-700">{col}</div>
+                                                <div className="font-semibold" style={{ color: "var(--blue-900)" }}>{col}</div>
                                                 {sampleRow && sampleRow[col] !== undefined && (
-                                                    <div className="text-xs text-gray-500 group-hover:text-blue-600 line-clamp-1">
+                                                    <div className="text-xs line-clamp-1" style={{ color: "var(--ds-text-muted)" }}>
                                                         <b>Ej:</b> {sampleRow[col] || "Sin datos"}
                                                     </div>
                                                 )}
@@ -290,19 +296,18 @@ export default function ImportIssuesModal({ onCancel, sprintId }: FormProps) {
 
                         {/* Flecha */}
                         <div className="self-center">
-                            <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                                <path d="M16 24h16m0 0-6-6m6 6-6 6" stroke="#60A5FA" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
+                            <ArrowRight size={40} strokeWidth={2} style={{ color: "var(--blue-700)" }} />
                         </div>
 
                         {/* Estructura de la tarea */}
                         <div className="flex-1 min-w-[220px]">
                             <div className="flex justify-between items-center gap-2 mb-2">
-                                <h4 className="font-semibold text-gray-700">Estructura de una tarea</h4>
-                                <button className="bg-blue-600/10 text-blue-600 disabled:opacity-35 not-disabled:border flex items-center gap-2 rounded-md text-sm px-2 py-0.5"
+                                <h4 className="font-semibold" style={{ color: "var(--ds-text)" }}>Estructura de una tarea</h4>
+                                <button className="disabled:opacity-35 flex items-center gap-2 rounded-md text-sm px-3 h-7 transition-colors duration-150 bg-[var(--primary-700)] hover:bg-[var(--primary-800)]"
+                                    style={{ color: "var(--primary-contrast-fg)" }}
                                     disabled={!mapping.title || mapping.title.length === 0}
                                     onClick={handleSendColumns}>
-                                    <SendIcon size={12} stroke={2} />
+                                    <Send size={12} strokeWidth={2} />
                                     Importar tareas
                                 </button>
                             </div>
@@ -323,32 +328,35 @@ export default function ImportIssuesModal({ onCancel, sprintId }: FormProps) {
                                             handleFieldDrop(field.key, field.multi)
                                             setHoveredField(null)
                                         }}
-                                        className={`border-2 border-dashed rounded-lg p-3 flex flex-col gap-2 transition-all
-                                        ${draggedColumn ? hoveredField === field.key
-                                                ? "border-blue-400 bg-blue-50" : "border-gray-300 bg-gray-50" : "border-gray-300 bg-gray-50"}`}
+                                        className="rounded-md p-3 flex flex-col gap-2 transition-colors duration-150"
+                                        style={{
+                                            border: `2px dashed ${draggedColumn && hoveredField === field.key ? "var(--blue-700)" : "var(--ds-border-strong)"}`,
+                                            background: draggedColumn && hoveredField === field.key ? "var(--blue-100)" : "var(--gray-alpha-100)",
+                                        }}
                                     >
-                                        <span className="font-medium text-gray-800 mb-1">{field.label}</span>
+                                        <span className="font-medium mb-1" style={{ color: "var(--ds-text)" }}>{field.label}</span>
                                         <div className="flex flex-wrap gap-2 min-h-[28px]">
                                             {(mapping[field.key] || []).map(col => (
                                                 <div
                                                     key={col}
-                                                    className="flex items-center bg-blue-600/10 text-blue-600 rounded px-2 py-0.5 shadow-sm text-sm"
+                                                    className="flex items-center rounded px-2 py-0.5 shadow-[var(--shadow-border)] text-sm"
+                                                    style={{ background: "var(--blue-100)", color: "var(--blue-900)" }}
                                                 >
                                                     {col}
                                                     <button
                                                         type="button"
-                                                        className="ml-1 text-red-500 hover:text-red-700 transition-colors"
+                                                        className="ml-1 transition-colors duration-150 text-[var(--red-700)] hover:text-[var(--red-900)]"
                                                         onClick={() => handleRemoveMappedColumn(field.key, col)}
                                                         aria-label="Quitar columna"
                                                     >
-                                                        <XIcon size={12} />
+                                                        <X size={12} strokeWidth={1.5} />
                                                     </button>
                                                 </div>
                                             ))}
                                         </div>
                                         {field.multi
-                                            ? <span className="text-xs text-gray-400">Puedes soltar varias columnas aquí</span>
-                                            : <span className="text-xs text-gray-400">Solo una columna</span>
+                                            ? <span className="text-xs" style={{ color: "var(--ds-text-muted)" }}>Puedes soltar varias columnas aquí</span>
+                                            : <span className="text-xs" style={{ color: "var(--ds-text-muted)" }}>Solo una columna</span>
                                         }
                                     </div>
                                 ))}

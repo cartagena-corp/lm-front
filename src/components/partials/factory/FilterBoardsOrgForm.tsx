@@ -1,6 +1,5 @@
 'use client'
 
-import { XIcon } from '@/assets/Icon'
 import { FormEvent, useState, useEffect, useRef } from 'react'
 
 interface FilterBoardsOrgProps {
@@ -54,13 +53,13 @@ export default function FilterBoardsOrgForm({ onSubmit, onCancel, initialData }:
    }
 
    return (
-      <div className="bg-white border-gray-100 rounded-xl shadow-sm border">
+      <div>
          {/* Form Content */}
          <form onSubmit={handleSubmit} className="p-6">
             <div className='space-y-5'>
                {/* Ordenamiento */}
                <div className='space-y-2' ref={sortBySelectRef}>
-                  <label htmlFor="sortBy" className="text-gray-900 text-sm font-semibold">
+                  <label htmlFor="sortBy" className="text-sm font-medium" style={{ color: "var(--ds-text)" }}>
                      Ordenar resultados
                   </label>
                   <div className='flex gap-3'>
@@ -69,27 +68,30 @@ export default function FilterBoardsOrgForm({ onSubmit, onCancel, initialData }:
                            setIsSortBySelectOpen(!isSortBySelectOpen)
                         }}
                         type='button'
-                        className='border-gray-200 flex items-center justify-between rounded-lg border flex-1 px-4 py-3 hover:border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 relative'
+                        className='flex items-center justify-between rounded-md flex-1 px-3 h-9 text-sm transition-colors duration-150 relative focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2'
+                        style={{ background: "var(--ds-card)", color: "var(--ds-text)", boxShadow: "var(--shadow-border)" }}
                      >
-                        <span className='text-sm text-gray-700'>
+                        <span className='text-sm'>
                            {sortBySelect.find(item => item.id === formData.sortBy)?.sort || 'Nombre'}
                         </span>
-                        <svg className={`text-gray-400 w-4 h-4 transition-transform duration-200 ${isSortBySelectOpen ? "rotate-180" : ""}`}
+                        <svg className={`w-4 h-4 transition-transform duration-200 ${isSortBySelectOpen ? "rotate-180" : ""}`}
+                           style={{ color: "var(--ds-text-muted)" }}
                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                            <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                         </svg>
 
                         {isSortBySelectOpen && (
-                           <div className='border-gray-200 bg-white shadow-lg absolute z-10 top-full mt-1 left-0 flex flex-col rounded-lg border text-sm w-full max-h-48 overflow-y-auto'>
+                           <div className='absolute z-10 top-full mt-1 left-0 flex flex-col rounded-md text-sm w-full max-h-48 overflow-y-auto'
+                              style={{ background: "var(--ds-card)", border: "1px solid var(--ds-border)", boxShadow: "var(--shadow-lg)" }}>
                               {sortBySelect.map((obj) => (
                                  <div
                                     key={obj.id}
                                     onClick={() => { setFormData({ ...formData, sortBy: obj.id }), setIsSortBySelectOpen(false) }}
-                                    className='hover:bg-blue-50 duration-150 w-full text-start py-3 px-4 flex items-center gap-3 cursor-pointer'
+                                    className='hover:bg-[var(--gray-alpha-100)] transition-colors duration-150 w-full text-start py-2 px-3 flex items-center gap-3 cursor-pointer'
                                  >
-                                    <span className="text-gray-700 flex-1">{obj.sort}</span>
+                                    <span className="flex-1" style={{ color: "var(--ds-text)" }}>{obj.sort}</span>
                                     {obj.id === formData.sortBy && (
-                                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-blue-600">
+                                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4" style={{ color: "var(--blue-700)" }}>
                                           <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                                        </svg>
                                     )}
@@ -108,11 +110,14 @@ export default function FilterBoardsOrgForm({ onSubmit, onCancel, initialData }:
                            setFormData({ ...formData, direction: newDirection })
                         }}
                         type='button'
-                        className={`border-gray-200 border p-3 rounded-lg hover:border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${isAsc ? 'bg-blue-50 border-blue-200' : 'bg-gray-50'}`}
+                        className={`h-9 w-9 flex items-center justify-center rounded-md transition-colors duration-150 ${isAsc ? '' : 'hover:bg-[var(--gray-alpha-100)]'} focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2`}
+                        style={isAsc
+                           ? { background: "var(--blue-100)", border: "1px solid var(--blue-400)", color: "var(--blue-900)" }
+                           : { background: "var(--ds-card)", boxShadow: "var(--shadow-border)", color: "var(--ds-text-secondary)" }}
                         title={isAsc ? 'Orden ascendente (A-Z, 1-9, más reciente)' : 'Orden descendente (Z-A, 9-1, más antiguo)'}
                      >
                         {isAsc ? (
-                           <svg className='w-5 h-5 text-blue-600' viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                           <svg className='w-5 h-5' viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                               <path d="M11 10H18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                               <path d="M11 14H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                               <path d="M11 18H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -120,7 +125,7 @@ export default function FilterBoardsOrgForm({ onSubmit, onCancel, initialData }:
                               <path d="M3 5.1875C3.39322 4.74501 4.43982 3 5 3M5 3C5.56018 3 6.60678 4.74501 7 5.1875M5 3V9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                            </svg>
                         ) : (
-                           <svg className='w-5 h-5 text-gray-600' viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                           <svg className='w-5 h-5' viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                               <path d="M11 10H18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                               <path d="M11 14H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                               <path d="M11 18H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -134,11 +139,13 @@ export default function FilterBoardsOrgForm({ onSubmit, onCancel, initialData }:
             </div>
 
             <div className="flex justify-end gap-3 mt-4">
-               <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 transition-all duration-200 text-sm font-medium" type="button"
+               <button className="h-9 px-4 rounded-md text-sm font-medium transition-colors duration-150 hover:bg-[var(--gray-alpha-100)] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2" type="button"
+                  style={{ background: "var(--ds-card)", color: "var(--ds-text)", boxShadow: "var(--shadow-border)" }}
                   onClick={() => onCancel()}>
                   Cancelar
                </button>
-               <button className={`bg-blue-600 hover:bg-blue-700 focus:ring-blue-500 text-white focus:ring-2 rounded-md focus:ring-offset-2 transition-all duration-200 text-sm font-medium px-4 py-2`} type="submit">
+               <button className="h-9 px-4 rounded-md text-sm font-medium transition-colors duration-150 bg-[var(--primary-700)] hover:bg-[var(--primary-800)] focus-visible:outline-2 focus-visible:outline-[var(--primary-900)] focus-visible:outline-offset-2" type="submit"
+                  style={{ color: "var(--primary-contrast-fg)" }}>
                   Aplicar Filtros
                </button>
             </div>

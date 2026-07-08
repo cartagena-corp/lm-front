@@ -1,6 +1,6 @@
 "use client"
 
-import { DeleteIcon } from "@/assets/Icon"
+import { Trash2 } from "lucide-react"
 
 interface DeleteNotificationTypeProps {
    onSubmit: () => void
@@ -10,39 +10,35 @@ interface DeleteNotificationTypeProps {
 
 export default function DeleteNotificationType({ onSubmit, onCancel, type }: DeleteNotificationTypeProps) {
    return (
-      <div className="p-6 max-w-md mx-auto">
-         <div className="flex items-center gap-4 mb-6">
-            <div className="p-3 bg-red-50 rounded-full text-red-600">
-               <DeleteIcon size={24} />
-            </div>
-            <div>
-               <h3 className="text-lg font-semibold text-gray-900">Eliminar Tipo de Notificación</h3>
-               <p className="text-sm text-gray-600">Esta acción no se puede deshacer</p>
+      <div className="p-6">
+         {/* Header con icono */}
+         <div className="flex items-center justify-center mb-6">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: "var(--red-100)", color: "var(--red-900)" }}>
+               <Trash2 size={32} strokeWidth={1.5} />
             </div>
          </div>
 
-         <div className="bg-gray-50 rounded-lg p-4 mb-6">
-            <p className="text-sm text-gray-700">
-               ¿Estás seguro de que deseas eliminar el tipo de notificación{" "}
-               <span className="font-semibold text-gray-900">"{type.name}"</span>?
-            </p>
-            <p className="text-xs text-gray-500 mt-2">
-               Esta acción eliminará permanentemente este tipo de notificación.
-            </p>
+         {/* Título y descripción */}
+         <div className="text-center mb-8">
+            <h3 className="text-lg font-semibold mb-2" style={{ color: "var(--ds-text)", letterSpacing: "-0.01em" }}>
+               Eliminar Tipo de Notificación
+            </h3>
+            <hgroup className="flex flex-col">
+               <h6 className="text-sm leading-relaxed" style={{ color: "var(--ds-text-secondary)" }}>
+                  Estás a punto de eliminar el tipo de notificación <b style={{ color: "var(--red-700)" }}>{type.name}</b> de forma permanente.
+               </h6>
+               <p className="text-sm leading-relaxed" style={{ color: "var(--ds-text-secondary)" }}>
+                  Esta acción <b>NO</b> se puede deshacer.
+               </p>
+            </hgroup>
          </div>
-
-         <div className="flex gap-3">
-            <button
-               onClick={onCancel}
-               className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200 font-medium"
-            >
+         <div className="flex justify-center gap-2 mt-4">
+            <button className="w-full h-9 px-4 rounded-md text-sm font-medium transition-colors duration-150 bg-[var(--ds-card)] hover:bg-[var(--gray-alpha-100)] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2" type="button"
+               style={{ color: "var(--ds-text)", boxShadow: "var(--shadow-border)" }}
+               onClick={() => onCancel()}>
                Cancelar
             </button>
-            <button
-               onClick={onSubmit}
-               className="flex-1 px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-lg transition-colors duration-200 font-medium flex items-center justify-center gap-2"
-            >
-               <DeleteIcon size={16} />
+            <button className="w-full h-9 px-4 rounded-md text-sm font-medium transition-colors duration-150 bg-[var(--red-700)] hover:bg-[var(--red-800)] focus-visible:outline-2 focus-visible:outline-[var(--red-700)] focus-visible:outline-offset-2" type="button" style={{ color: "var(--ds-contrast-inverse)" }} onClick={() => onSubmit()}>
                Eliminar
             </button>
          </div>

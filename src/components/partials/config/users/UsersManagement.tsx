@@ -1,5 +1,5 @@
 "use client"
-import { useRef, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 // Components
 import CreateUserFormConfig from './CreateUserFormConfig'
@@ -10,6 +10,7 @@ import EditUserForm from './EditUserForm'
 // Store
 import { useAuthStore } from '@/lib/store/AuthStore'
 import { useModalStore } from '@/lib/hooks/ModalStore'
+import { useInfiniteScroll } from '@/lib/hooks/useInfiniteScroll'
 
 // Utils
 import { getUserAvatar } from '@/lib/utils/avatar.utils'
@@ -19,7 +20,7 @@ import { getUserRoleName } from '@/lib/utils/user.utils'
 import { PermissionProps, UserProps } from '@/lib/types/types'
 
 // Icons
-import { UsersIcon, PlusIcon, EditIcon, DownloadIcon, DeleteIcon } from '@/assets/Icon'
+import { Users, Plus, Pencil, Download, Trash2, Search } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 // Utilidad para normalizar el campo role
@@ -51,7 +52,6 @@ export default function UsersManagement() {
     // Estados para búsqueda y paginación
     const [searchQuery, setSearchQuery] = useState('')
     const [isLoadingMore, setIsLoadingMore] = useState(false)
-    const usersListRef = useRef<HTMLDivElement>(null)
     const [displayedUsers, setDisplayedUsers] = useState<UserProps[]>([])
 
     // Cargar datos iniciales
@@ -74,26 +74,6 @@ export default function UsersManagement() {
         return () => clearTimeout(timeoutId)
     }, [searchQuery])
 
-    // Efecto para detectar scroll y cargar más usuarios
-    useEffect(() => {
-        const handleScroll = () => {
-            if (!usersListRef.current || isLoadingMore || !usersPagination) return
-
-            const { scrollTop, scrollHeight, clientHeight } = usersListRef.current
-            const isNearBottom = scrollTop + clientHeight >= scrollHeight - 200
-
-            if (isNearBottom && usersPagination.number < usersPagination.totalPages - 1) {
-                loadMoreUsersData()
-            }
-        }
-
-        const listElement = usersListRef.current
-        if (listElement) {
-            listElement.addEventListener('scroll', handleScroll)
-            return () => listElement.removeEventListener('scroll', handleScroll)
-        }
-    }, [isLoadingMore, usersPagination])
-
     const loadData = async () => {
         const token = await getValidAccessToken()
         if (token) {
@@ -112,7 +92,10 @@ export default function UsersManagement() {
         }
     }
 
-    const loadMoreUsersData = async () => {
+    // Infinite scroll: atado al scroll principal de la app (ver useInfiniteScroll), no a un contenedor propio
+    const hasMoreUsers = usersPagination ? usersPagination.number < usersPagination.totalPages - 1 : false
+
+    const loadMoreUsersData = useCallback(async () => {
         if (isLoadingMore || !usersPagination) return
 
         setIsLoadingMore(true)
@@ -123,7 +106,14 @@ export default function UsersManagement() {
             setDisplayedUsers(normalizeUsersRole(listUsers || []))
         }
         setIsLoadingMore(false)
-    }
+    }, [isLoadingMore, usersPagination, getValidAccessToken, loadMoreUsers, searchQuery])
+
+    useInfiniteScroll({
+        loading: isLoading || isLoadingMore,
+        hasMore: hasMoreUsers,
+        onLoadMore: loadMoreUsersData,
+        threshold: 200
+    })
 
     const handleCreateUser = async (data: { email: string, role: string }) => {
         const token = await getValidAccessToken()
@@ -170,7 +160,7 @@ export default function UsersManagement() {
             title: "Crear Usuario",
             desc: "Agrega un nuevo usuario al sistema",
             children: <CreateUserFormConfig onSubmit={handleCreateUser} onCancel={() => closeModal()} />,
-            Icon: <PlusIcon size={20} stroke={1.75} />,
+            Icon: <Plus size={20} strokeWidth={1.75} />,
             closeOnBackdrop: false,
             closeOnEscape: false,
             mode: "CREATE"
@@ -183,7 +173,7 @@ export default function UsersManagement() {
             title: "Importar Usuarios",
             desc: "Importa múltiples usuarios desde un archivo",
             children: <ImportUsersForm onSubmit={handleImportUsers} onCancel={() => closeModal()} isLoading={isLoading} />,
-            Icon: <DownloadIcon size={20} stroke={1.75} />,
+            Icon: <Download size={20} strokeWidth={1.75} />,
             closeOnBackdrop: false,
             closeOnEscape: false,
             mode: "CREATE"
@@ -196,7 +186,7 @@ export default function UsersManagement() {
             title: "Editar Usuario",
             desc: "Modifica la información del usuario",
             children: <EditUserForm user={user} onSubmit={(data) => handleEditUser(user, data)} onCancel={() => closeModal()} />,
-            Icon: <EditIcon size={20} stroke={1.75} />,
+            Icon: <Pencil size={20} strokeWidth={1.75} />,
             closeOnBackdrop: false,
             closeOnEscape: false,
             mode: "UPDATE"
@@ -215,19 +205,20 @@ export default function UsersManagement() {
 
     if (error) {
         return (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div className="p-6" style={{ background: 'var(--ds-card)', borderRadius: 'var(--radius-xl)', boxShadow: 'var(--shadow-border)' }}>
                 <div className="text-center py-8">
-                    <div className="p-4 bg-red-50 text-red-600 rounded-lg w-fit mx-auto mb-4">
-                        <UsersIcon size={32} />
+                    <div className="w-fit mx-auto mb-4 p-4 rounded-full" style={{ background: 'var(--red-100)', color: 'var(--red-900)' }}>
+                        <Users size={32} strokeWidth={1.5} />
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Error al cargar datos</h3>
-                    <p className="text-gray-600 mb-4">{error}</p>
+                    <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--ds-text)' }}>Error al cargar datos</h3>
+                    <p className="mb-4" style={{ color: 'var(--ds-text-secondary)' }}>{error}</p>
                     <button
                         onClick={() => {
                             clearError()
                             loadData()
                         }}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+                        className="transition-colors hover:bg-[var(--primary-800)] bg-[var(--primary-700)] text-sm font-medium focus-visible:outline-2 focus-visible:outline-[var(--primary-900)] focus-visible:outline-offset-2"
+                        style={{ height: 36, padding: '0 16px', color: 'var(--primary-contrast-fg)', border: '1px solid var(--primary-700)', borderRadius: 'var(--radius-md)' }}
                     >
                         Reintentar
                     </button>
@@ -246,119 +237,126 @@ export default function UsersManagement() {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <UsersIcon size={24} />
-                        <div>
-                            <h2 className="text-lg font-semibold text-gray-900">Usuarios</h2>
-                            {usersPagination && (
-                                <p className="text-sm text-gray-500">
-                                    {usersPagination.totalElements} usuarios en total
-                                </p>
-                            )}
-                        </div>
+            <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
+                    <div>
+                        <h2 className="font-semibold" style={{ fontSize: 20, letterSpacing: "-0.02em", color: 'var(--ds-text)', margin: "0 0 4px" }}>Usuarios</h2>
+                        <p style={{ fontSize: 14, color: 'var(--ds-text-secondary)', margin: 0 }}>
+                            {usersPagination ? `${usersPagination.totalElements} usuarios en total` : 'Gestiona los usuarios de la plataforma'}
+                        </p>
                     </div>
                     {
                         hasPermissionCreateUser &&
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                             <button
                                 onClick={handleImportUsersModal}
-                                className="bg-white hover:bg-blue-50 text-blue-600 border border-blue-600 px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+                                className="flex items-center gap-2 transition-colors hover:bg-[var(--gray-alpha-100)] text-sm font-medium focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2"
+                                style={{ height: 36, padding: '0 16px', color: 'var(--ds-text)', background: 'var(--ds-card)', boxShadow: 'var(--shadow-border)', borderRadius: 'var(--radius-md)' }}
                             >
-                                <DownloadIcon size={16} />
+                                <Download size={16} strokeWidth={1.5} />
                                 Importar
                             </button>
                             <button
                                 onClick={handleCreateUserModal}
-                                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+                                className="flex items-center gap-2 transition-colors hover:bg-[var(--primary-800)] bg-[var(--primary-700)] text-sm font-medium focus-visible:outline-2 focus-visible:outline-[var(--primary-900)] focus-visible:outline-offset-2"
+                                style={{ height: 36, padding: '0 16px', color: 'var(--primary-contrast-fg)', border: '1px solid var(--primary-700)', borderRadius: 'var(--radius-md)' }}
                             >
-                                <PlusIcon size={16} />
-                                Agregar Usuario
+                                <Plus size={16} strokeWidth={1.5} />
+                                <span className="hidden sm:inline">Agregar Usuario</span>
+                                <span className="sm:hidden">Agregar</span>
                             </button>
                         </div>
                     }
                 </div>
 
                 {/* Search Bar */}
-                <div className="max-w-md">
+                <div
+                    className="max-w-md flex items-center gap-2 px-3 transition-colors focus-within:outline-2 focus-within:outline-[var(--blue-700)] focus-within:outline-offset-2"
+                    style={{ height: 40, background: 'var(--ds-card)', boxShadow: 'var(--shadow-border)', borderRadius: 'var(--radius-md)' }}
+                >
+                    <Search size={16} strokeWidth={1.5} className="flex-shrink-0" style={{ color: 'var(--ds-text-muted)' }} />
                     <input
                         type="text"
                         placeholder="Buscar usuarios por nombre o correo..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        className="w-full bg-transparent outline-none text-sm placeholder:text-[var(--ds-text-muted)]"
+                        style={{ color: 'var(--ds-text)' }}
                     />
                 </div>
             </div>
 
             {/* Users List */}
-            <div
-                ref={usersListRef}
-                className="bg-white rounded-xl shadow-sm border border-gray-100 max-h-[calc(100vh-16rem)] overflow-y-auto"
-            >
+            <div style={{ borderTop: '1px solid var(--ds-border)' }}>
                 {isLoading && displayedUsers.length === 0 ? (
                     <div className="p-8 text-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                        <p className="text-gray-500">Cargando usuarios...</p>
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--blue-700)] mx-auto mb-4"></div>
+                        <p style={{ color: 'var(--ds-text-muted)' }}>Cargando usuarios...</p>
                     </div>
                 ) : displayedUsers.length === 0 ? (
                     <div className="p-8 text-center">
-                        <div className="p-4 bg-gray-50 rounded-lg w-fit mx-auto mb-4">
-                            <UsersIcon size={32} />
+                        <div className="w-fit mx-auto mb-4 p-3 rounded-full" style={{ background: 'var(--gray-alpha-100)', color: 'var(--ds-text-muted)' }}>
+                            <Users size={32} strokeWidth={1.5} />
                         </div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">No hay usuarios</h3>
-                        <p className="text-gray-500">No se encontraron usuarios en el sistema.</p>
+                        <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--ds-text)' }}>No hay usuarios</h3>
+                        <p style={{ color: 'var(--ds-text-muted)' }}>No se encontraron usuarios en el sistema.</p>
                     </div>
                 ) : (
-                    <div className="divide-y divide-gray-100">
+                    <div className="grid pt-4 gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}>
                         {displayedUsers.map((user) => (
-                            <div key={user.id} className="p-4">
-                                <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-4 hover:shadow-md transition-all group">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <img
-                                                src={getUserAvatar(user)}
-                                                alt={`${user.firstName} ${user.lastName}`}
-                                                className="w-10 h-10 rounded-full object-cover bg-gray-100 ring-2 ring-white shadow-sm"
-                                            />
-                                            <div>
-                                                <h4 className="font-medium text-gray-900">
-                                                    {user.firstName} {user.lastName}
-                                                </h4>
-                                                <p className="text-sm text-gray-500">{user.email}</p>
-                                                <p className="text-xs text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full w-fit mt-1">
-                                                    {getUserRoleName(user)}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            {
-                                                hasPermissionUpdateUser &&
-                                                <button
-                                                    onClick={() => handleEditUserModal(user)}
-                                                    className="text-gray-400 hover:text-blue-600 transition-colors opacity-0 group-hover:opacity-100 p-2 hover:bg-blue-100 rounded-lg"
-                                                >
-                                                    <EditIcon size={16} />
-                                                </button>
-                                            }
-                                            {
-                                                (hasPermissionDeleteUser) &&
-                                                <button
-                                                    onClick={() => handleDeleteUserModal(user)}
-                                                    className="text-gray-400 hover:text-blue-600 transition-colors opacity-0 group-hover:opacity-100 p-2 hover:bg-blue-100 rounded-lg"
-                                                >
-                                                    <DeleteIcon size={16} />
-                                                </button>
-                                            }
+                            <div key={user.id} className="group flex flex-col gap-3 p-[18px]" style={{ background: 'var(--ds-card)', borderRadius: 'var(--radius-xl)', boxShadow: 'var(--shadow-border)' }}>
+                                <div className="flex items-start justify-between gap-2">
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <img
+                                            src={getUserAvatar(user)}
+                                            alt={`${user.firstName} ${user.lastName}`}
+                                            className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                                            style={{ background: 'var(--gray-alpha-100)' }}
+                                        />
+                                        <div className="min-w-0">
+                                            <h4 className="font-medium truncate" style={{ fontSize: 14, color: 'var(--ds-text)' }}>
+                                                {user.firstName} {user.lastName}
+                                            </h4>
+                                            <p className="text-xs truncate" style={{ color: 'var(--ds-text-secondary)' }}>{user.email}</p>
                                         </div>
                                     </div>
+                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex-shrink-0">
+                                        {
+                                            hasPermissionUpdateUser &&
+                                            <button
+                                                onClick={() => handleEditUserModal(user)}
+                                                className="p-1.5 rounded-md transition-colors duration-150 hover:bg-[var(--gray-alpha-100)]"
+                                                style={{ color: 'var(--ds-text-muted)' }}
+                                            >
+                                                <Pencil size={14} strokeWidth={1.5} />
+                                            </button>
+                                        }
+                                        {
+                                            (hasPermissionDeleteUser) &&
+                                            <button
+                                                onClick={() => handleDeleteUserModal(user)}
+                                                className="p-1.5 rounded-md transition-colors duration-150 hover:bg-[var(--red-100)] hover:text-[var(--red-900)]"
+                                                style={{ color: 'var(--ds-text-muted)' }}
+                                            >
+                                                <Trash2 size={14} strokeWidth={1.5} />
+                                            </button>
+                                        }
+                                    </div>
                                 </div>
+                                <span className="text-xs font-medium px-2 py-[2px] rounded-full w-fit" style={{ background: 'var(--blue-100)', color: 'var(--blue-900)', border: '1px solid var(--blue-400)' }}>
+                                    {getUserRoleName(user)}
+                                </span>
                             </div>
                         ))}
                         {isLoadingMore && (
-                            <div className="p-4 text-center">
-                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+                            <div className="col-span-full flex items-center justify-center gap-2 p-4 text-sm" style={{ color: 'var(--ds-text-muted)' }}>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[var(--blue-700)]"></div>
+                                Cargando más usuarios...
+                            </div>
+                        )}
+                        {!hasMoreUsers && !isLoadingMore && (
+                            <div className="col-span-full text-center py-4 text-sm" style={{ color: 'var(--ds-text-muted)' }}>
+                                No hay más usuarios para mostrar
                             </div>
                         )}
                     </div>

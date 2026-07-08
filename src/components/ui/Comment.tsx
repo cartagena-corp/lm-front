@@ -3,7 +3,7 @@ import TextArea from "./TextArea"
 import SafeHtml from "./SafeHtml"
 import { CommentProps } from "@/lib/types/types"
 import Image from "next/image"
-import { DeleteIcon } from "@/assets/Icon"
+import { Trash2 } from "lucide-react"
 import CommentAttachments from "./CommentAttachments"
 import { useCommentStore } from "@/lib/store/CommentStore"
 import { useAuthStore } from "@/lib/store/AuthStore"
@@ -125,7 +125,7 @@ export default function Comment({ comment }: Props) {
                onCancel={() => closeModal()}
             />
          ),
-         Icon: <DeleteIcon size={20} stroke={1.75} />,
+         Icon: <Trash2 size={20} strokeWidth={1.75} />,
          closeOnBackdrop: false,
          closeOnEscape: true,
          mode: "DELETE"
@@ -143,7 +143,7 @@ export default function Comment({ comment }: Props) {
                onCancel={() => closeModal()}
             />
          ),
-         Icon: <DeleteIcon size={20} stroke={1.75} />,
+         Icon: <Trash2 size={20} strokeWidth={1.75} />,
          closeOnBackdrop: false,
          closeOnEscape: true,
          mode: "DELETE"
@@ -156,7 +156,7 @@ export default function Comment({ comment }: Props) {
             <div className="flex items-start gap-2">
                {/* Avatar */}
                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-100">
+                  <div className="w-8 h-8 rounded-full overflow-hidden" style={{ background: "var(--gray-alpha-200)" }}>
                      <Image
                         className="w-full h-full object-cover"
                         src={getUserAvatar(comment.user, 32)}
@@ -169,14 +169,14 @@ export default function Comment({ comment }: Props) {
 
                {/* Contenido del comentario */}
                <div className="flex-1 min-w-0">
-                  <div className="rounded-xl">
+                  <div className="rounded-md">
                      {/* Header del comentario */}
                      <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                           <h6 className="font-semibold text-xs text-gray-900">
+                           <h6 className="font-medium text-xs" style={{ color: "var(--ds-text)" }}>
                               {comment.user.firstName} {comment.user.lastName}
                            </h6>
-                           <span className="text-xs text-gray-500">
+                           <span className="text-xs" style={{ color: "var(--ds-text-muted)" }}>
                               {formatDate(comment.createdAt)}
                            </span>
                         </div>
@@ -184,18 +184,18 @@ export default function Comment({ comment }: Props) {
                            <button
                               type="button"
                               onClick={handleDeleteCommentModal}
-                              className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                              className="p-1 text-[var(--ds-text-muted)] hover:text-[var(--red-800)] hover:bg-[var(--red-100)] rounded-md transition-colors duration-150"
                               title="Eliminar comentario"
                            >
-                              <DeleteIcon size={16} />
+                              <Trash2 size={16} strokeWidth={1.5} />
                            </button>
                         )}
                      </div>
 
                      {/* Texto del comentario */}
-                     <SafeHtml 
-                        html={comment.text} 
-                        className="text-xs text-gray-700 mb-3 [&_code]:font-mono [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs"
+                     <SafeHtml
+                        html={comment.text}
+                        className="text-xs text-[var(--ds-text-secondary)] mb-3 [&_code]:font-mono [&_code]:bg-[var(--gray-alpha-200)] [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs"
                      />
 
                      {/* Archivos adjuntos */}
@@ -209,7 +209,7 @@ export default function Comment({ comment }: Props) {
                      <button
                         type="button"
                         onClick={() => setGonnaReply(!gonnaReply)}
-                        className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                        className="text-[var(--blue-700)] hover:text-[var(--blue-800)] font-medium transition-colors"
                      >
                         Responder
                      </button>
@@ -217,7 +217,7 @@ export default function Comment({ comment }: Props) {
                         <button
                            type="button"
                            onClick={toggleResponses}
-                           className="text-gray-600 hover:text-gray-700 font-medium transition-colors"
+                           className="text-[var(--ds-text-secondary)] hover:text-[var(--ds-text)] font-medium transition-colors"
                         >
                            {viewResponses
                               ? "Ocultar respuestas"
@@ -231,7 +231,7 @@ export default function Comment({ comment }: Props) {
 
             {/* Área de respuesta */}
             {gonnaReply && (
-               <div className="ml-14 bg-white border border-gray-200 rounded-lg p-3">
+               <div className="ml-14">
                   <TextArea
                      title=""
                      value={newReply}
@@ -249,7 +249,8 @@ export default function Comment({ comment }: Props) {
                   />
                   <button
                      type="button"
-                     className="mt-3 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                     className="mt-3 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors duration-150 bg-[var(--primary-700)] hover:bg-[var(--primary-800)] disabled:opacity-50 disabled:cursor-not-allowed"
+                     style={{ color: "var(--primary-contrast-fg)" }}
                      onClick={handleReply}
                      disabled={!newReply.trim()}
                      title="Enviar respuesta"
@@ -267,8 +268,8 @@ export default function Comment({ comment }: Props) {
             {viewResponses && (
                <div className="ml-14 space-y-3">
                   {isLoadingResponses ? (
-                     <div className="flex items-center gap-2 text-sm text-gray-500 py-4">
-                        <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
+                     <div className="flex items-center gap-2 text-sm py-4" style={{ color: "var(--ds-text-muted)" }}>
+                        <div className="w-4 h-4 rounded-full animate-spin" style={{ border: "2px solid var(--ds-border)", borderTopColor: "var(--blue-700)" }}></div>
                         Cargando respuestas...
                      </div>
                   ) : commentResponses.length > 0 ? (
@@ -276,7 +277,7 @@ export default function Comment({ comment }: Props) {
                         <div key={reply.id} className="flex items-start gap-2">
                            {/* Avatar de la respuesta */}
                            <div className="flex-shrink-0">
-                              <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-100">
+                              <div className="w-8 h-8 rounded-full overflow-hidden" style={{ background: "var(--gray-alpha-200)" }}>
                                  <Image
                                     className="w-full h-full object-cover"
                                     src={getUserAvatar(reply.user, 32)}
@@ -289,42 +290,40 @@ export default function Comment({ comment }: Props) {
 
                            {/* Contenido de la respuesta */}
                            <div className="flex-1 min-w-0">
-                              <div className="bg-white border border-gray-200 rounded-lg p-2.5">
-                                 <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                       <h6 className="font-semibold text-xs text-gray-900">
-                                          {reply.user.firstName} {reply.user.lastName}
-                                       </h6>
-                                       <span className="text-xs text-gray-500">
-                                          {formatDate(reply.createdAt)}
-                                       </span>
-                                    </div>
-                                    {reply.userId === user?.id && (
-                                       <button
-                                          type="button"
-                                          onClick={() => handleDeleteReplyModal(reply.id)}
-                                          className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
-                                          title="Eliminar respuesta"
-                                       >
-                                          <DeleteIcon size={12} />
-                                       </button>
-                                    )}
+                              <div className="flex items-center justify-between">
+                                 <div className="flex items-center gap-2">
+                                    <h6 className="font-semibold text-xs" style={{ color: "var(--ds-text)" }}>
+                                       {reply.user.firstName} {reply.user.lastName}
+                                    </h6>
+                                    <span className="text-xs" style={{ color: "var(--ds-text-muted)" }}>
+                                       {formatDate(reply.createdAt)}
+                                    </span>
                                  </div>
-                                 <SafeHtml
-                                    html={reply.text}
-                                    className="text-xs/tight text-gray-700 [&_code]:font-mono [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs"
-                                 />
-                                 {reply.attachments && reply.attachments.length > 0 && (
-                                    <div className="mt-2">
-                                       <CommentAttachments attachments={reply.attachments} />
-                                    </div>
+                                 {reply.userId === user?.id && (
+                                    <button
+                                       type="button"
+                                       onClick={() => handleDeleteReplyModal(reply.id)}
+                                       className="p-1 text-[var(--ds-text-muted)] hover:text-[var(--red-800)] hover:bg-[var(--red-100)] rounded-md transition-colors duration-150"
+                                       title="Eliminar respuesta"
+                                    >
+                                       <Trash2 size={12} strokeWidth={1.5} />
+                                    </button>
                                  )}
                               </div>
+                              <SafeHtml
+                                 html={reply.text}
+                                 className="text-xs/tight text-[var(--ds-text-secondary)] [&_code]:font-mono [&_code]:bg-[var(--gray-alpha-200)] [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs"
+                              />
+                              {reply.attachments && reply.attachments.length > 0 && (
+                                 <div className="mt-2">
+                                    <CommentAttachments attachments={reply.attachments} />
+                                 </div>
+                              )}
                            </div>
                         </div>
                      ))
                   ) : (
-                     <div className="text-sm text-gray-500 py-4 text-center">
+                     <div className="text-sm py-4 text-center" style={{ color: "var(--ds-text-muted)" }}>
                         No hay respuestas aún
                      </div>
                   )}

@@ -1,11 +1,11 @@
-import { AlertCircleIcon, AttachIcon, SendIcon, XIcon } from "@/assets/Icon"
+import { Send } from "lucide-react"
 import TextArea from "@/components/ui/TextArea"
 import Comment from "@/components/ui/Comment"
 import { useAuthStore } from "@/lib/store/AuthStore"
 import { useCommentStore } from "@/lib/store/CommentStore"
 import { GlobalPagination, CommentProps, TaskProps } from "@/lib/types/types"
-import Image from "next/image"
-import { useEffect, useState, useCallback, DragEvent, useRef } from "react"
+import { getUserAvatar } from "@/lib/utils/avatar.utils"
+import { useEffect, useState, useRef } from "react"
 
 interface ShowCommentsProps {
    arrayComments: GlobalPagination
@@ -13,7 +13,7 @@ interface ShowCommentsProps {
 }
 
 export default function ShowComments({ arrayComments, task }: ShowCommentsProps) {
-   const { getValidAccessToken } = useAuthStore()
+   const { getValidAccessToken, user } = useAuthStore()
    const { addComment, loadMoreComments, isLoading, isLoadingMore, hasMoreComments, comments: storeComments } = useCommentStore()
 
    const scrollContainerRef = useRef<HTMLDivElement>(null)
@@ -72,21 +72,21 @@ export default function ShowComments({ arrayComments, task }: ShowCommentsProps)
    }
 
    return (
-      <section className="space-y-4 w-full">
+      <section className="space-y-2 w-full px-0.5">
          <div className="flex items-center gap-2">
-            <h6 className="text-lg font-semibold text-gray-900">Comentarios</h6>
-            <span className="bg-gray-100 text-gray-600 flex justify-center items-center text-xs font-bold rounded-full w-6 h-6">
+            <h3 className="text-sm font-semibold" style={{ color: "var(--ds-text)" }}>Comentarios</h3>
+            <span className="text-xs" style={{ color: "var(--ds-text-muted)" }}>
                {comments.totalElements}
             </span>
          </div>
 
          {/* Lista de comentarios */}
          {comments.content.length ? (
-            <div className="bg-white border border-gray-100 rounded-xl overflow-hidden">
-               <div ref={scrollContainerRef}>
-                  <div className="divide-y divide-gray-100">
-                     {comments.content.map((c) => (
-                        <div key={c.id} className="p-4">
+            <div className="overflow-hidden" style={{ background: "var(--ds-card)", borderRadius: "var(--radius-xl)", boxShadow: "var(--shadow-border)" }}>
+               <div ref={scrollContainerRef} className="max-h-[60vh] overflow-y-auto">
+                  <div>
+                     {comments.content.map((c, idx) => (
+                        <div key={c.id} className="p-4" style={idx > 0 ? { borderTop: "1px solid var(--ds-border)" } : undefined}>
                            <Comment comment={c as CommentProps} />
                         </div>
                      ))}
@@ -94,9 +94,9 @@ export default function ShowComments({ arrayComments, task }: ShowCommentsProps)
 
                   {/* Loading indicator for infinite scroll */}
                   {isLoadingMore && (
-                     <div className="flex items-center justify-center py-4 border-t border-gray-100">
-                        <div className="flex items-center gap-2 text-sm text-gray-500">
-                           <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
+                     <div className="flex items-center justify-center py-4" style={{ borderTop: "1px solid var(--ds-border)" }}>
+                        <div className="flex items-center gap-2 text-sm" style={{ color: "var(--ds-text-secondary)" }}>
+                           <div className="w-4 h-4 rounded-full animate-spin" style={{ border: "2px solid var(--ds-border)", borderTopColor: "var(--blue-700)" }}></div>
                            Cargando más comentarios...
                         </div>
                      </div>
@@ -104,10 +104,11 @@ export default function ShowComments({ arrayComments, task }: ShowCommentsProps)
 
                   {/* Load more button - shown when there are more comments and not loading */}
                   {hasMoreComments && !isLoadingMore && (
-                     <div className="flex items-center justify-center py-4 border-t border-gray-100">
+                     <div className="flex items-center justify-center py-4" style={{ borderTop: "1px solid var(--ds-border)" }}>
                         <button
                            onClick={handleLoadMore}
-                           className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                           className="px-4 py-2 text-sm font-medium rounded-md transition-colors duration-150 hover:bg-[var(--gray-alpha-100)]"
+                           style={{ color: "var(--blue-700)" }}
                         >
                            Cargar más comentarios
                         </button>
@@ -116,8 +117,8 @@ export default function ShowComments({ arrayComments, task }: ShowCommentsProps)
 
                   {/* End of comments indicator */}
                   {!hasMoreComments && comments.content.length > 0 && (
-                     <div className="flex items-center justify-center py-4 border-t border-gray-100">
-                        <div className="text-xs text-gray-400">
+                     <div className="flex items-center justify-center py-4" style={{ borderTop: "1px solid var(--ds-border)" }}>
+                        <div className="text-xs" style={{ color: "var(--ds-text-muted)" }}>
                            No hay más comentarios
                         </div>
                      </div>
@@ -125,55 +126,59 @@ export default function ShowComments({ arrayComments, task }: ShowCommentsProps)
                </div>
             </div>
          ) : (
-            <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
-               <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
-                  <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                     <AlertCircleIcon size={24} />
-                  </div>
-                  <h6 className="text-sm font-medium text-gray-900 mb-1">Aún no hay comentarios</h6>
-                  <p className="text-xs text-gray-500">Sé el primero en comentar esta tarea</p>
-               </div>
-            </div>
+            <p className="text-sm" style={{ color: "var(--ds-text-muted)" }}>Aún no hay comentarios. Sé el primero en comentar.</p>
          )}
 
          {/* Área de nuevo comentario */}
-         <div className="bg-white border border-gray-100 rounded-xl p-4">
-            <TextArea
-               title=""
-               value={newComment}
-               onChange={setNewComment}
-               placeholder="Escribe tu comentario..."
-               maxLength={5000}
-               minHeight='100px'
-               maxHeight='200px'
-               files={files}
-               onFilesChange={setFiles}
-               onRemoveFile={(index) => {
-                  setFiles(prev => prev.filter((_, i) => i !== index))
-               }}
-               extensionAllowed="*"
-               projectId={task.projectId as string}
-            />
+         <div className="flex items-start gap-2.5">
+            <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 mt-0.5" style={{ background: "var(--gray-alpha-200)" }}>
+               {user && (
+                  <img
+                     src={getUserAvatar({ picture: user.picture || undefined, firstName: user.firstName, lastName: user.lastName, email: user.email }, 32)}
+                     alt=""
+                     className="w-full h-full object-cover"
+                  />
+               )}
+            </div>
+            <div className="flex-1 min-w-0">
+               <TextArea
+                  title=""
+                  value={newComment}
+                  onChange={setNewComment}
+                  placeholder="Escribe tu comentario..."
+                  maxLength={5000}
+                  minHeight='44px'
+                  maxHeight='160px'
+                  files={files}
+                  onFilesChange={setFiles}
+                  onRemoveFile={(index) => {
+                     setFiles(prev => prev.filter((_, i) => i !== index))
+                  }}
+                  extensionAllowed="*"
+                  projectId={task.projectId as string}
+               />
 
-            <div className="flex justify-end items-center mt-3">
-               <button
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  onClick={handleAddComment}
-                  type="button"
-                  disabled={(!newComment.trim() && files.length === 0) || isLoading}
-               >
-                  {isLoading ? (
-                     <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        Enviando...
-                     </>
-                  ) : (
-                     <>
-                        <SendIcon size={16} stroke={2} />
-                        Comentar
-                     </>
-                  )}
-               </button>
+               <div className="flex justify-end items-center mt-2">
+                  <button
+                     className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors duration-150 bg-[var(--primary-700)] hover:bg-[var(--primary-800)] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2"
+                     style={{ color: "var(--primary-contrast-fg)" }}
+                     onClick={handleAddComment}
+                     type="button"
+                     disabled={(!newComment.trim() && files.length === 0) || isLoading}
+                  >
+                     {isLoading ? (
+                        <>
+                           <div className="w-4 h-4 rounded-full animate-spin" style={{ border: "2px solid var(--gray-alpha-400)", borderTopColor: "transparent" }}></div>
+                           Enviando...
+                        </>
+                     ) : (
+                        <>
+                           <Send size={14} strokeWidth={2} />
+                           Comentar
+                        </>
+                     )}
+                  </button>
+               </div>
             </div>
          </div>
       </section>

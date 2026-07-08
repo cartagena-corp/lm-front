@@ -1,6 +1,5 @@
 "use client"
 
-import ConfigOrg from "@/components/partials/factory/ConfigOrg"
 import BoardsOrg from "@/components/partials/factory/BoardsOrg"
 import UsersOrg from "@/components/partials/factory/UsersOrg"
 import { useParams } from "next/navigation"
@@ -8,17 +7,23 @@ import { useEffect, useState, useRef } from "react"
 import { useOrganizationStore } from "@/lib/store/OrganizationStore"
 import { useBoardStore } from "@/lib/store/BoardStore"
 import { useAuthStore } from "@/lib/store/AuthStore"
-import { DeleteIcon, EditIcon, FactoryIcon } from "@/assets/Icon"
+import { Pencil, Factory as FactoryIcon, MoreVertical } from "lucide-react"
 import { useRouter } from "next/navigation"
 import toast from "react-hot-toast"
 import { useModalStore } from "@/lib/hooks/ModalStore"
 import DeleteOrganization from "@/components/partials/factory/DeleteOrganization"
 import UpdateOrganization from "@/components/partials/factory/UpdateOrganization"
+import { CustomSwitch, valueProps } from "@/components/ui/CustomSwitch"
+
+const ORG_TABS: valueProps[] = [
+    { id: 1, name: "Tableros", view: () => <></> },
+    { id: 2, name: "Usuarios", view: () => <></> },
+]
 
 export default function Factory() {
     const router = useRouter()
     const [organization, setOrganization] = useState<{ organizationId: string; organizationName: string; createdAt: string }>({ organizationId: '', organizationName: '', createdAt: '' })
-    const [activeTab, setActiveTab] = useState<'boards' | 'users' | 'config'>('boards')
+    const [activeTab, setActiveTab] = useState<valueProps>(ORG_TABS[0])
     const { getSpecificOrganization, updateOrganization, deleteOrganization } = useOrganizationStore()
     const { getBoardsByOrganization } = useBoardStore()
     const { getValidAccessToken } = useAuthStore()
@@ -32,10 +37,9 @@ export default function Factory() {
     const renderTabContent = () => {
         if (!id) return null // Verificar que el ID existe
 
-        switch (activeTab) {
-            case 'boards': return <BoardsOrg organization={organization} idOrg={id as string} />
-            case 'users': return <UsersOrg organization={organization} />
-            case 'config': return <ConfigOrg id={id as string} />
+        switch (activeTab.id) {
+            case 1: return <BoardsOrg organization={organization} idOrg={id as string} />
+            case 2: return <UsersOrg organization={organization} />
             default: return null
         }
     }
@@ -113,7 +117,7 @@ export default function Factory() {
             size: "md",
             title: "Editar Organización",
             desc: "Edita el nombre de la organización",
-            Icon: <EditIcon size={20} stroke={1.75} />,
+            Icon: <Pencil size={20} strokeWidth={1.75} />,
             children: <UpdateOrganization organizationName={organization.organizationName} onClick={(newOrgName: string) => handleEdit(newOrgName)} onCancel={() => closeModal()} />,
             closeOnBackdrop: false,
             closeOnEscape: false,
@@ -123,16 +127,16 @@ export default function Factory() {
     }
 
     return (
-        <>
-            <section className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+        <div className="space-y-4" style={{ background: "var(--ds-card)" }}>
+            <div>
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <div className="p-3 bg-blue-100 text-blue-600 rounded-xl">
-                            <FactoryIcon size={28} />
+                        <div className="flex items-center justify-center" style={{ width: 44, height: 44, borderRadius: 10, background: "var(--gray-alpha-100)", color: "var(--ds-text-secondary)" }}>
+                            <FactoryIcon size={24} />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900">{organization ? organization.organizationName : 'Cargando...'}</h1>
-                            <p className="text-gray-600 mt-1">Panel de configuración de la organización</p>
+                            <h1 className="font-semibold" style={{ fontSize: 24, letterSpacing: "-0.96px", color: "var(--ds-text)" }}>{organization ? organization.organizationName : 'Cargando...'}</h1>
+                            <p style={{ fontSize: 13, color: "var(--ds-text-secondary)", marginTop: 2 }}>Panel de configuración de la organización</p>
                         </div>
                     </div>
 
@@ -140,22 +144,22 @@ export default function Factory() {
                     <div className="relative" ref={menuRef}>
                         <button
                             onClick={() => setShowMenu(!showMenu)}
-                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                            className="p-2 rounded-md transition-colors duration-150 hover:bg-[var(--gray-alpha-100)]"
+                            style={{ color: "var(--ds-text-muted)" }}
                         >
-                            <svg className="w-6 h-6 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z" />
-                            </svg>
+                            <MoreVertical size={20} strokeWidth={1.5} />
                         </button>
 
                         {showMenu && (
-                            <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-100 z-10">
+                            <div className="absolute right-0 mt-2 w-56 z-10 overflow-hidden" style={{ background: "var(--ds-card)", border: "1px solid var(--ds-border)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-lg)" }}>
                                 <div className="py-1">
                                     <button
                                         onClick={() => {
                                             setShowMenu(false)
                                             handleEditOrganizacion()
                                         }}
-                                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                        className="w-full text-left px-4 py-2 text-sm transition-colors duration-150 hover:bg-[var(--gray-alpha-100)]"
+                                        style={{ color: "var(--ds-text)" }}
                                     >
                                         Editar Organización
                                     </button>
@@ -164,7 +168,8 @@ export default function Factory() {
                                             setShowMenu(false)
                                             handleDeleteOrganizacion()
                                         }}
-                                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                                        className="w-full text-left px-4 py-2 text-sm transition-colors duration-150 hover:bg-[var(--red-100)]"
+                                        style={{ color: "var(--ds-error)" }}
                                     >
                                         Eliminar Organización
                                     </button>
@@ -173,19 +178,12 @@ export default function Factory() {
                         )}
                     </div>
                 </div>
-            </section>
-            <section className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                {/* Tabs */}
-                <nav className="flex space-x-4 border-b border-gray-200 mb-4">
-                    <button className={`px-4 py-2 rounded-t-lg font-medium ${activeTab === 'boards' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-                        onClick={() => setActiveTab('boards')}>Tableros</button>
-                    <button className={`px-4 py-2 rounded-t-lg font-medium ${activeTab === 'users' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-                        onClick={() => setActiveTab('users')}>Usuarios</button>
-                    {/* <button className={`px-4 py-2 rounded-t-lg font-medium ${activeTab === 'config' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-                        onClick={() => setActiveTab('config')}>Configuración</button> */}
-                </nav>
+            </div>
+
+            <div>
+                <CustomSwitch tabs={ORG_TABS} value={activeTab} onChange={setActiveTab} />
                 {renderTabContent()}
-            </section>
-        </>
+            </div>
+        </div>
     )
 }

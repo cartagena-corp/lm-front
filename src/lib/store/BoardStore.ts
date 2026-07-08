@@ -2,6 +2,7 @@ import { GlobalPagination, ProjectProps, AuditPagination, UserProps } from '../t
 import { API_ROUTES } from "@/lib/routes/boards.routes"
 import { API_ROUTES as ORG_API_ROUTES } from "@/lib/routes/organization.route"
 import { API_ROUTES as AUDIT_ROUTES } from "@/lib/routes/audit.routes"
+import { authFetch } from '@/lib/http/authFetch'
 import { create } from 'zustand'
 import toast from 'react-hot-toast'
 
@@ -29,10 +30,12 @@ interface BoardState {
    selectedBoard: ProjectProps | null
    projectParticipants: UserProps[]
    isLoading: boolean
+   isLoadingMore: boolean
+   hasMoreBoards: boolean
    error: string | null
 
    // Actions
-   getBoards: (token: string, filters?: BoardFilters) => Promise<void>
+   getBoards: (token: string, filters?: BoardFilters, append?: boolean) => Promise<void>
    getBoardsByOrganization: (token: string, organizationId: string, filters?: BoardFilters) => Promise<void>
    createBoard: (token: string, boardData: CreateBoardData) => Promise<void>
    getBoard: (token: string, projectId: string) => Promise<void>
@@ -66,12 +69,19 @@ export const useBoardStore = create<BoardState>((set, get) => ({
    },
    projectParticipants: [],
    isLoading: true,
+   isLoadingMore: false,
+   hasMoreBoards: true,
    error: null,
 
-   // Get Boards with filters
-   getBoards: async (token: string, filters?: BoardFilters) => {
-      set({ isLoading: true, error: null })
-      
+   // Get Boards with filters. Pass append=true (infinite scroll "load more") to
+   // concatenate onto the existing content instead of replacing it.
+   getBoards: async (token: string, filters?: BoardFilters, append: boolean = false) => {
+      if (append) {
+         set({ isLoadingMore: true, error: null })
+      } else {
+         set({ isLoading: true, error: null })
+      }
+
       try {
          const params = new URLSearchParams()
          if (filters) {
@@ -84,11 +94,10 @@ export const useBoardStore = create<BoardState>((set, get) => ({
             params.append('size', (filters.size ?? 10).toString())
          }
 
-         const response = await fetch(`${API_ROUTES.CRUD_BOARDS}?${params.toString()}`, {
+         const response = await authFetch(`${API_ROUTES.CRUD_BOARDS}?${params.toString()}`, token, {
             method: 'GET',
             headers: {
                'Content-Type': 'application/json',
-               'Authorization': `Bearer ${token}`,
             },
          })
 
@@ -98,19 +107,21 @@ export const useBoardStore = create<BoardState>((set, get) => ({
 
          const data: GlobalPagination = await response.json()
 
-         set({
+         set((state) => ({
             boards: {
-               content: data.content,
+               content: append ? [...(state.boards.content as ProjectProps[] || []), ...data.content as ProjectProps[]] : data.content,
                totalElements: data.totalElements,
                totalPages: data.totalPages,
                number: data.number,
                size: data.size,
             },
-            isLoading: false
-         })
+            hasMoreBoards: data.number < data.totalPages - 1,
+            isLoading: false,
+            isLoadingMore: false
+         }))
       } catch (error) {
          const errorMessage = error instanceof Error ? error.message : 'Error al obtener los tableros'
-         set({ error: errorMessage, isLoading: false })
+         set({ error: errorMessage, isLoading: false, isLoadingMore: false })
          toast.error(errorMessage)
          console.error('Error en getBoards:', error)
       }
@@ -132,11 +143,10 @@ export const useBoardStore = create<BoardState>((set, get) => ({
             params.append('size', (filters.size ?? 10).toString())
          }
 
-         const response = await fetch(`${ORG_API_ROUTES.GET_PROJECTS_BY_ORGANIZATION({ idOrg: organizationId })}?${params.toString()}`, {
+         const response = await authFetch(`${ORG_API_ROUTES.GET_PROJECTS_BY_ORGANIZATION({ idOrg: organizationId })}?${params.toString()}`, token, {
             method: 'GET',
             headers: {
                'Content-Type': 'application/json',
-               'Authorization': `Bearer ${token}`,
             },
          })
 
@@ -169,11 +179,10 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       set({ isLoading: true, error: null })
       
       try {
-         const response = await fetch(API_ROUTES.CRUD_BOARDS, {
+         const response = await authFetch(API_ROUTES.CRUD_BOARDS, token, {
             method: 'POST',
             headers: {
                "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
             },
             body: JSON.stringify(boardData)
          })
@@ -207,11 +216,10 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       set({ isLoading: true, error: null })
       
       try {
-         const response = await fetch(`${API_ROUTES.CRUD_BOARDS}/${projectId}`, {
+         const response = await authFetch(`${API_ROUTES.CRUD_BOARDS}/${projectId}`, token, {
             method: 'GET',
             headers: {
                'Content-Type': 'application/json',
-               'Authorization': `Bearer ${token}`,
             },
          })
 
@@ -237,11 +245,10 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       set({ isLoading: true, error: null })
       
       try {
-         const response = await fetch(`${API_ROUTES.CRUD_BOARDS}/${projectId}`, {
+         const response = await authFetch(`${API_ROUTES.CRUD_BOARDS}/${projectId}`, token, {
             method: 'PUT',
-            headers: { 
-               'Content-Type': 'application/json', 
-               'Authorization': `Bearer ${token}` 
+            headers: {
+               'Content-Type': 'application/json',
             },
             body: JSON.stringify(boardData)
          })
@@ -270,11 +277,10 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       set({ isLoading: true, error: null })
       
       try {
-         const response = await fetch(`${API_ROUTES.CRUD_BOARDS}/${projectId}`, {
-            method: 'DELETE', 
-            headers: { 
-               'Content-Type': 'application/json', 
-               'Authorization': `Bearer ${token}` 
+         const response = await authFetch(`${API_ROUTES.CRUD_BOARDS}/${projectId}`, token, {
+            method: 'DELETE',
+            headers: {
+               'Content-Type': 'application/json',
             }
          })
 
@@ -304,11 +310,8 @@ export const useBoardStore = create<BoardState>((set, get) => ({
          formData.append('project', JSON.stringify(boardData))
          if (jiraImport) formData.append('file', jiraImport)
 
-         const response = await fetch(API_ROUTES.IMPORT_BOARD_FROM_JIRA, {
+         const response = await authFetch(API_ROUTES.IMPORT_BOARD_FROM_JIRA, token, {
             method: 'POST',
-            headers: {
-               "Authorization": `Bearer ${token}`
-            },
             body: formData
          })
 
@@ -334,11 +337,10 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       set({ isLoading: true, error: null })
       
       try {
-         const response = await fetch(API_ROUTES.VALIDATE_BOARD, {
+         const response = await authFetch(API_ROUTES.VALIDATE_BOARD, token, {
             method: 'POST',
             headers: {
                "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
             },
             body: JSON.stringify(boardData)
          })
@@ -367,11 +369,10 @@ export const useBoardStore = create<BoardState>((set, get) => ({
             size: size.toString()
          })
 
-         const response = await fetch(`${AUDIT_ROUTES.GET_PROJECT_HISTORY}/${projectId}?${params.toString()}`, {
+         const response = await authFetch(`${AUDIT_ROUTES.GET_PROJECT_HISTORY}/${projectId}?${params.toString()}`, token, {
             method: 'GET',
             headers: {
                'Content-Type': 'application/json',
-               'Authorization': `Bearer ${token}`,
             },
          })
 
@@ -392,11 +393,10 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${API_ROUTES.CRUD_BOARDS}/${projectId}/participants`, {
+         const response = await authFetch(`${API_ROUTES.CRUD_BOARDS}/${projectId}/participants`, token, {
             method: 'GET',
             headers: {
                'Content-Type': 'application/json',
-               'Authorization': `Bearer ${token}`,
             },
          })
 
@@ -417,11 +417,10 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${API_ROUTES.CRUD_BOARDS}/${projectId}/participants`, {
+         const response = await authFetch(`${API_ROUTES.CRUD_BOARDS}/${projectId}/participants`, token, {
             method: 'POST',
             headers: {
                'Content-Type': 'application/json',
-               'Authorization': `Bearer ${token}`,
             },
             body: JSON.stringify({ userIds })
          })
@@ -445,11 +444,10 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${API_ROUTES.CRUD_BOARDS}/${projectId}/participants`, {
+         const response = await authFetch(`${API_ROUTES.CRUD_BOARDS}/${projectId}/participants`, token, {
             method: 'DELETE',
             headers: {
                'Content-Type': 'application/json',
-               'Authorization': `Bearer ${token}`,
             },
             body: JSON.stringify({ userIds })
          })

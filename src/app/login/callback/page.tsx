@@ -1,11 +1,11 @@
-import { Suspense } from 'react'
+import { Suspense, CSSProperties } from 'react'
 import AuthCallback from './AuthCallback'
 
 export default function Page() {
    return (
       <Suspense fallback={
-         <div className="bg-gray-900 h-screen flex justify-center items-center">
-            <div className="loader" />
+         <div className="h-screen flex justify-center items-center" style={{ background: "var(--ds-background)" }}>
+            <div className="loader" style={{ "--c": "no-repeat linear-gradient(var(--ds-text-secondary) 0 0)" } as CSSProperties} />
          </div>
       }>
          <AuthCallback />

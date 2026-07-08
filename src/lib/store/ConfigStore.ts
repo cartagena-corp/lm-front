@@ -1,5 +1,6 @@
 import { ConfigProjectStatusProps, ProjectConfigProps, UserProps } from '../types/types'
 import { getUserIdFromToken } from '@/lib/utils/token.utils'
+import { authFetch } from '@/lib/http/authFetch'
 import { API_ROUTES } from '@/lib/routes/config.routes'
 import { API_ROUTES as BOARD_ROUTES } from '@/lib/routes/boards.routes'
 import toast from 'react-hot-toast'
@@ -85,11 +86,10 @@ export const useConfigStore = create<ConfigProjectState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${API_ROUTES.CRUD_CONFIG_BOARDS}`, {
+         const response = await authFetch(`${API_ROUTES.CRUD_CONFIG_BOARDS}`, token, {
             method: 'GET',
             headers: {
                "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
             }
          })
 
@@ -115,62 +115,27 @@ export const useConfigStore = create<ConfigProjectState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         // Cargar configuración principal del proyecto
-         const response = await fetch(`${API_ROUTES.GET_CONFIG_BOARD}/${id}`, {
-            method: 'POST',
-            headers: {
-               "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
-            }
-         })
+         const headers = { "Content-Type": "application/json" }
+
+         // Las 4 peticiones son independientes entre sí (todas solo necesitan
+         // id + token) — se piden en paralelo en vez de una tras otra, que es
+         // como estaban antes (una demora de hasta 4x sin ninguna razón, ya
+         // que nada aquí depende del resultado de otra).
+         const [response, descriptionsResponse, sprintStatusesResponse, participantsResponse] = await Promise.all([
+            authFetch(`${API_ROUTES.GET_CONFIG_BOARD}/${id}`, token, { method: 'POST', headers }),
+            authFetch(`${API_ROUTES.CRUD_CONFIG_ISSUES_DESCRIPTIONS}/${id}`, token, { method: 'GET', headers }),
+            authFetch(`${API_ROUTES.CRUD_CONFIG_SPRINTS}/${id}`, token, { method: 'GET', headers }),
+            authFetch(`${BOARD_ROUTES.CRUD_BOARDS}/${id}/participants`, token, { method: 'GET', headers }),
+         ])
 
          if (!response.ok) {
             throw new Error(`Error al obtener la configuración del proyecto: ${response.statusText}`)
          }
-
          const projectConfigData = await response.json()
 
-         // Cargar descripciones de issues
-         const descriptionsResponse = await fetch(`${API_ROUTES.CRUD_CONFIG_ISSUES_DESCRIPTIONS}/${id}`, {
-            method: 'GET',
-            headers: {
-               "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
-            }
-         })
-
-         let issueDescriptions = []
-         if (descriptionsResponse.ok) {
-            issueDescriptions = await descriptionsResponse.json()
-         }
-
-         // Cargar estados de sprints
-         const sprintStatusesResponse = await fetch(`${API_ROUTES.CRUD_CONFIG_SPRINTS}/${id}`, {
-            method: 'GET',
-            headers: {
-               "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
-            }
-         })
-
-         let sprintStatuses = []
-         if (sprintStatusesResponse.ok) {
-            sprintStatuses = await sprintStatusesResponse.json()
-         }
-
-         // Cargar participantes del proyecto
-         const participantsResponse = await fetch(`${BOARD_ROUTES.CRUD_BOARDS}/${id}/participants`, {
-            method: 'GET',
-            headers: {
-               "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
-            }
-         })
-
-         let projectParticipants = []
-         if (participantsResponse.ok) {
-            projectParticipants = await participantsResponse.json()
-         }
+         const issueDescriptions = descriptionsResponse.ok ? await descriptionsResponse.json() : []
+         const sprintStatuses = sprintStatusesResponse.ok ? await sprintStatusesResponse.json() : []
+         const projectParticipants = participantsResponse.ok ? await participantsResponse.json() : []
 
          // Combinar todos los datos
          const completeProjectConfig: ProjectConfigProps = {
@@ -179,12 +144,12 @@ export const useConfigStore = create<ConfigProjectState>((set, get) => ({
             sprintStatuses
          }
 
-         set({ 
+         set({
             projectConfig: completeProjectConfig,
             issueDescriptions,
             sprintStatuses,
             projectParticipants,
-            isLoading: false 
+            isLoading: false
          })
 
       } catch (error) {
@@ -202,11 +167,10 @@ export const useConfigStore = create<ConfigProjectState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(API_ROUTES.CRUD_CONFIG_BOARDS, {
+         const response = await authFetch(API_ROUTES.CRUD_CONFIG_BOARDS, token, {
             method: 'POST',
             headers: {
                "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
             },
             body: JSON.stringify(newProjectStatus)
          })
@@ -232,11 +196,10 @@ export const useConfigStore = create<ConfigProjectState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${API_ROUTES.CRUD_CONFIG_BOARDS}/${projectStatus.id}`, {
+         const response = await authFetch(`${API_ROUTES.CRUD_CONFIG_BOARDS}/${projectStatus.id}`, token, {
             method: 'PUT',
             headers: {
                "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
             },
             body: JSON.stringify({
                name: projectStatus.name,
@@ -265,11 +228,10 @@ export const useConfigStore = create<ConfigProjectState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${API_ROUTES.CRUD_CONFIG_BOARDS}/${projectStatusId}`, {
+         const response = await authFetch(`${API_ROUTES.CRUD_CONFIG_BOARDS}/${projectStatusId}`, token, {
             method: 'DELETE',
             headers: {
                "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
             }
          })
 
@@ -295,11 +257,10 @@ export const useConfigStore = create<ConfigProjectState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${API_ROUTES.CRUD_CONFIG_ISSUES_STATUS}/${projectId}`, {
+         const response = await authFetch(`${API_ROUTES.CRUD_CONFIG_ISSUES_STATUS}/${projectId}`, token, {
             method: 'POST',
             headers: {
                "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
             },
             body: JSON.stringify(newProjectStatus)
          })
@@ -354,11 +315,10 @@ export const useConfigStore = create<ConfigProjectState>((set, get) => ({
          }))
 
          // Enviar todos los estados al backend
-         const response = await fetch(`${API_ROUTES.CRUD_CONFIG_ISSUES_STATUS}/${projectId}`, {
+         const response = await authFetch(`${API_ROUTES.CRUD_CONFIG_ISSUES_STATUS}/${projectId}`, token, {
             method: 'PUT',
             headers: {
                "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
             },
             body: JSON.stringify(statusesPayload)
          })
@@ -387,11 +347,10 @@ export const useConfigStore = create<ConfigProjectState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${API_ROUTES.CRUD_CONFIG_ISSUES_STATUS}/${projectId}`, {
+         const response = await authFetch(`${API_ROUTES.CRUD_CONFIG_ISSUES_STATUS}/${projectId}`, token, {
             method: 'PUT',
             headers: {
                "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
             },
             body: JSON.stringify(statuses)
          })
@@ -429,11 +388,10 @@ export const useConfigStore = create<ConfigProjectState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${API_ROUTES.CRUD_CONFIG_ISSUES_STATUS}/${projectStatusId}`, {
+         const response = await authFetch(`${API_ROUTES.CRUD_CONFIG_ISSUES_STATUS}/${projectStatusId}`, token, {
             method: 'DELETE',
             headers: {
                "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
             }
          })
 
@@ -468,11 +426,10 @@ export const useConfigStore = create<ConfigProjectState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${API_ROUTES.CRUD_CONFIG_ISSUES_PRIORITIES}/${projectId}`, {
+         const response = await authFetch(`${API_ROUTES.CRUD_CONFIG_ISSUES_PRIORITIES}/${projectId}`, token, {
             method: 'POST',
             headers: {
                "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
             },
             body: JSON.stringify(newProjectStatus)
          })
@@ -498,11 +455,10 @@ export const useConfigStore = create<ConfigProjectState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${API_ROUTES.CRUD_CONFIG_ISSUES_PRIORITIES}/${projectStatus.id}`, {
+         const response = await authFetch(`${API_ROUTES.CRUD_CONFIG_ISSUES_PRIORITIES}/${projectStatus.id}`, token, {
             method: 'PUT',
             headers: {
                "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
             },
             body: JSON.stringify({
                name: projectStatus.name,
@@ -531,11 +487,10 @@ export const useConfigStore = create<ConfigProjectState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${API_ROUTES.CRUD_CONFIG_ISSUES_PRIORITIES}/${projectStatusId}`, {
+         const response = await authFetch(`${API_ROUTES.CRUD_CONFIG_ISSUES_PRIORITIES}/${projectStatusId}`, token, {
             method: 'DELETE',
             headers: {
                "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
             }
          })
 
@@ -561,11 +516,10 @@ export const useConfigStore = create<ConfigProjectState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${API_ROUTES.CRUD_CONFIG_ISSUES_TYPES}/${projectId}`, {
+         const response = await authFetch(`${API_ROUTES.CRUD_CONFIG_ISSUES_TYPES}/${projectId}`, token, {
             method: 'POST',
             headers: {
                "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
             },
             body: JSON.stringify(newProjectStatus)
          })
@@ -591,11 +545,10 @@ export const useConfigStore = create<ConfigProjectState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${API_ROUTES.CRUD_CONFIG_ISSUES_TYPES}/${projectStatus.id}`, {
+         const response = await authFetch(`${API_ROUTES.CRUD_CONFIG_ISSUES_TYPES}/${projectStatus.id}`, token, {
             method: 'PUT',
             headers: {
                "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
             },
             body: JSON.stringify({
                name: projectStatus.name,
@@ -624,11 +577,10 @@ export const useConfigStore = create<ConfigProjectState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${API_ROUTES.CRUD_CONFIG_ISSUES_TYPES}/${projectStatusId}`, {
+         const response = await authFetch(`${API_ROUTES.CRUD_CONFIG_ISSUES_TYPES}/${projectStatusId}`, token, {
             method: 'DELETE',
             headers: {
                "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
             }
          })
 
@@ -654,11 +606,10 @@ export const useConfigStore = create<ConfigProjectState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${API_ROUTES.CRUD_CONFIG_SPRINTS}/${projectId}`, {
+         const response = await authFetch(`${API_ROUTES.CRUD_CONFIG_SPRINTS}/${projectId}`, token, {
             method: 'GET',
             headers: {
                "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
             }
          })
 
@@ -687,11 +638,10 @@ export const useConfigStore = create<ConfigProjectState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${API_ROUTES.CRUD_CONFIG_SPRINTS}/${projectId}`, {
+         const response = await authFetch(`${API_ROUTES.CRUD_CONFIG_SPRINTS}/${projectId}`, token, {
             method: 'POST',
             headers: {
                "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
             },
             body: JSON.stringify(newSprintStatus)
          })
@@ -717,11 +667,10 @@ export const useConfigStore = create<ConfigProjectState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${API_ROUTES.CRUD_CONFIG_SPRINTS}/${sprintStatus.id}`, {
+         const response = await authFetch(`${API_ROUTES.CRUD_CONFIG_SPRINTS}/${sprintStatus.id}`, token, {
             method: 'PUT',
             headers: {
                "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
             },
             body: JSON.stringify({
                name: sprintStatus.name,
@@ -750,11 +699,10 @@ export const useConfigStore = create<ConfigProjectState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${API_ROUTES.CRUD_CONFIG_SPRINTS}/${sprintStatusId}`, {
+         const response = await authFetch(`${API_ROUTES.CRUD_CONFIG_SPRINTS}/${sprintStatusId}`, token, {
             method: 'DELETE',
             headers: {
                "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
             }
          })
 
@@ -780,11 +728,10 @@ export const useConfigStore = create<ConfigProjectState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${API_ROUTES.CRUD_CONFIG_ISSUES_DESCRIPTIONS}/${projectId}`, {
+         const response = await authFetch(`${API_ROUTES.CRUD_CONFIG_ISSUES_DESCRIPTIONS}/${projectId}`, token, {
             method: 'GET',
             headers: {
                "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
             }
          })
 
@@ -813,11 +760,10 @@ export const useConfigStore = create<ConfigProjectState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${API_ROUTES.CRUD_CONFIG_ISSUES_DESCRIPTIONS}/${projectId}`, {
+         const response = await authFetch(`${API_ROUTES.CRUD_CONFIG_ISSUES_DESCRIPTIONS}/${projectId}`, token, {
             method: 'POST',
             headers: {
                "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
             },
             body: JSON.stringify(newDescription)
          })
@@ -843,11 +789,10 @@ export const useConfigStore = create<ConfigProjectState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${API_ROUTES.CRUD_CONFIG_ISSUES_DESCRIPTIONS}/${descriptionId}`, {
+         const response = await authFetch(`${API_ROUTES.CRUD_CONFIG_ISSUES_DESCRIPTIONS}/${descriptionId}`, token, {
             method: 'PUT',
             headers: {
                "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
             },
             body: JSON.stringify(description)
          })
@@ -873,11 +818,10 @@ export const useConfigStore = create<ConfigProjectState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${API_ROUTES.CRUD_CONFIG_ISSUES_DESCRIPTIONS}/${descriptionId}`, {
+         const response = await authFetch(`${API_ROUTES.CRUD_CONFIG_ISSUES_DESCRIPTIONS}/${descriptionId}`, token, {
             method: 'DELETE',
             headers: {
                "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
             }
          })
 
@@ -903,11 +847,10 @@ export const useConfigStore = create<ConfigProjectState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${BOARD_ROUTES.CRUD_BOARDS}/${projectId}/participants`, {
+         const response = await authFetch(`${BOARD_ROUTES.CRUD_BOARDS}/${projectId}/participants`, token, {
             method: 'GET',
             headers: {
                "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
             }
          })
 
@@ -936,11 +879,10 @@ export const useConfigStore = create<ConfigProjectState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${BOARD_ROUTES.CRUD_BOARDS}/${projectId}/participants`, {
+         const response = await authFetch(`${BOARD_ROUTES.CRUD_BOARDS}/${projectId}/participants`, token, {
             method: 'POST',
             headers: {
                "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
             },
             body: JSON.stringify({ userIds })
          })
@@ -966,11 +908,10 @@ export const useConfigStore = create<ConfigProjectState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${BOARD_ROUTES.CRUD_BOARDS}/${projectId}/participants`, {
+         const response = await authFetch(`${BOARD_ROUTES.CRUD_BOARDS}/${projectId}/participants`, token, {
             method: 'DELETE',
             headers: {
                "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
             },
             body: JSON.stringify({ userIds })
          })

@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "motion/react"
-import { PlusIcon, XIcon } from "@/assets/Icon"
+import { Plus, X } from "lucide-react"
 import { useModalStore } from "@/lib/hooks/ModalStore"
 import { useEffect, useCallback } from "react"
 
@@ -12,10 +12,10 @@ const sizeClasses = {
     sm: "max-w-[500px]",
 }
 
-const styleClasses = {
-    CREATE: "bg-blue-50 text-blue-600",
-    UPDATE: "bg-purple-50 text-purple-600",
-    DELETE: "bg-red-50 text-red-600",
+const styleClasses: Record<"CREATE" | "UPDATE" | "DELETE", React.CSSProperties> = {
+    CREATE: { background: "var(--blue-200)", color: "var(--blue-900)" },
+    UPDATE: { background: "var(--purple-200)", color: "var(--purple-900)" },
+    DELETE: { background: "var(--red-200)", color: "var(--red-900)" },
 }
 
 type ModalSize = keyof typeof sizeClasses
@@ -78,24 +78,26 @@ export default function Modal() {
                         transition={{ duration: 0.2 }}
                     >
                         <motion.section
-                            className={`${sizeClasses[modalSize]} bg-button-secondary-background rounded-md flex flex-col w-full max-h-[95vh] p-6`}
+                            className={`${sizeClasses[modalSize]} flex flex-col w-full max-h-[95vh]`}
+                            style={{ background: "var(--ds-card)", color: "var(--ds-text)", borderRadius: "var(--radius-xl)", boxShadow: "var(--shadow-xl)" }}
                             initial={{ scale: 0.9, opacity: 0, y: 20 }}
                             animate={{ scale: 1, opacity: 1, y: 0 }}
                             exit={{ scale: 0.9, opacity: 0, y: 20 }}
                             transition={{ duration: 0.2, ease: "easeOut" }}
                             onClick={(e) => e.stopPropagation()}
                         >
-                            <article className="border-background-background rounded-xl shadow-sm border flex flex-col h-full">
+                            <article className="flex flex-col h-full min-h-0">
                                 {
                                     modal.title &&
-                                    <header className="border-background-background flex items-center justify-between border-b p-6 flex-shrink-0">
-                                        <aside className="flex items-center gap-4">
-                                            <span className={`${styleClasses[modal.mode ?? "CREATE"]} flex justify-center items-center rounded-md aspect-square p-2`}>
-                                                {modal.Icon ? modal.Icon : <PlusIcon size={20} stroke={1.75} />}
+                                    <header className="flex items-center justify-between p-5 flex-shrink-0" style={{ borderBottom: "1px solid var(--ds-border)" }}>
+                                        <aside className="flex items-center gap-3 min-w-0">
+                                            <span className="flex justify-center items-center aspect-square p-2" style={{ borderRadius: "var(--radius-md)", ...styleClasses[modal.mode ?? "CREATE"] }}>
+                                                {modal.Icon ? modal.Icon : <Plus size={20} strokeWidth={1.75} />}
                                             </span>
-                                            <hgroup className="flex flex-col">
+                                            <hgroup className="flex flex-col min-w-0">
                                                 <h2
-                                                    className="text-primary font-semibold line-clamp-1 text-lg"
+                                                    className="font-semibold line-clamp-1 text-base"
+                                                    style={{ color: "var(--ds-text)", letterSpacing: "-0.01em" }}
                                                     id={`modal-title-${modal.id}`}
                                                     title={modal.title}
                                                 >
@@ -103,7 +105,8 @@ export default function Modal() {
                                                 </h2>
                                                 {modal.desc && (
                                                     <p
-                                                        className="text-sm text-gray-600 line-clamp-2"
+                                                        className="text-sm line-clamp-2"
+                                                        style={{ color: "var(--ds-text-secondary)" }}
                                                         id={`modal-desc-${modal.id}`}
                                                         title={modal.desc}
                                                     >
@@ -114,9 +117,10 @@ export default function Modal() {
                                         </aside>
                                         <button
                                             onClick={() => closeModal(modal.id)}
-                                            className="hover:bg-background-background text-button-secondary-text/50 transition-colors aspect-square p-2 rounded"
+                                            className="transition-colors aspect-square p-2 rounded-md flex-shrink-0 hover:bg-[var(--gray-alpha-100)]"
+                                            style={{ color: "var(--ds-text-muted)" }}
                                         >
-                                            <XIcon size={20} stroke={2} />
+                                            <X size={20} strokeWidth={2} />
                                         </button>
                                     </header>
                                 }

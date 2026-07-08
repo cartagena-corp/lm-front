@@ -2,15 +2,15 @@
 
 import React, { useState } from 'react'
 import {
-    BoldIcon,
-    ItalicIcon,
-    StrikethroughIcon,
-    CodeIcon,
-    UnderlineIcon,
-    PaletteIcon,
-    HighlighterIcon,
-    RemoveFormatIcon
-} from '@/assets/Icon'
+    Bold,
+    Italic,
+    Strikethrough,
+    Code,
+    Underline,
+    Palette,
+    Highlighter,
+    RemoveFormatting
+} from 'lucide-react'
 import { TooltipPosition } from '@/lib/types/types'
 
 interface SelectionTooltipProps {
@@ -38,11 +38,11 @@ export default function SelectionTooltip({
     const [showHighlightPicker, setShowHighlightPicker] = useState(false)
 
     const formatButtons = [
-        { icon: BoldIcon, type: 'bold', label: 'Negrita', command: 'bold' },
-        { icon: ItalicIcon, type: 'italic', label: 'Cursiva', command: 'italic' },
-        { icon: StrikethroughIcon, type: 'strikethrough', label: 'Tachado', command: 'strikeThrough' },
-        { icon: CodeIcon, type: 'code', label: 'Código' },
-        { icon: UnderlineIcon, type: 'underline', label: 'Subrayado', command: 'underline' },
+        { icon: Bold, type: 'bold', label: 'Negrita', command: 'bold' },
+        { icon: Italic, type: 'italic', label: 'Cursiva', command: 'italic' },
+        { icon: Strikethrough, type: 'strikethrough', label: 'Tachado', command: 'strikeThrough' },
+        { icon: Code, type: 'code', label: 'Código' },
+        { icon: Underline, type: 'underline', label: 'Subrayado', command: 'underline' },
     ]
 
     // Check if format is active
@@ -83,10 +83,13 @@ export default function SelectionTooltip({
 
     return (
         <div
-            className="absolute z-50 bg-white border border-gray-200 rounded-lg shadow-lg p-1 flex items-center gap-1"
+            className="absolute z-50 rounded-md p-1 flex items-center gap-1"
             style={{
                 top: `${position.top}px`,
-                left: `${position.left}px`
+                left: `${position.left}px`,
+                background: "var(--ds-card)",
+                border: "1px solid var(--ds-border)",
+                boxShadow: "var(--shadow-lg)"
             }}
         >
             {formatButtons.map((btn, index) => (
@@ -94,8 +97,8 @@ export default function SelectionTooltip({
                     key={index}
                     type="button"
                     onClick={() => onFormatClick(btn.type)}
-                    className={`p-1.5 hover:bg-gray-100 rounded transition-colors ${
-                        isButtonActive(btn.type, btn.command) ? 'bg-gray-200 text-blue-600' : ''
+                    className={`p-1.5 rounded-md transition-colors duration-150 hover:bg-[var(--gray-alpha-100)] ${
+                        isButtonActive(btn.type, btn.command) ? 'bg-[var(--gray-alpha-200)] text-[var(--blue-700)]' : 'text-[var(--ds-text-secondary)]'
                     }`}
                     title={btn.label}
                 >
@@ -111,20 +114,23 @@ export default function SelectionTooltip({
                         setShowColorPicker(!showColorPicker)
                         setShowHighlightPicker(false)
                     }}
-                    className="p-1.5 hover:bg-gray-100 rounded transition-colors relative flex items-center justify-center"
+                    className="p-1.5 rounded-md transition-colors duration-150 hover:bg-[var(--gray-alpha-100)] text-[var(--ds-text-secondary)] relative flex items-center justify-center"
                     title="Color"
                 >
                     {activeTextColor ? (
-                        <div 
-                            className="w-3.5 h-3.5 rounded-full border border-black"
-                            style={{ backgroundColor: activeTextColor }}
+                        <div
+                            className="w-3.5 h-3.5 rounded-full border"
+                            style={{ backgroundColor: activeTextColor, borderColor: "var(--ds-border-strong)" }}
                         />
                     ) : (
-                        <PaletteIcon size={14} />
+                        <Palette size={14} />
                     )}
                 </button>
                 {showColorPicker && (
-                    <div className="absolute w-40 top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-2 grid grid-cols-5 gap-1.5">
+                    <div
+                        className="absolute w-40 top-full left-0 mt-1 rounded-md p-2 grid grid-cols-5 gap-1.5"
+                        style={{ background: "var(--ds-card)", border: "1px solid var(--ds-border)", boxShadow: "var(--shadow-lg)" }}
+                    >
                         {colors.map(color => (
                             <button
                                 key={color.name}
@@ -133,8 +139,8 @@ export default function SelectionTooltip({
                                     onColorSelect(color.name)
                                     setShowColorPicker(false)
                                 }}
-                                className="w-5 h-5 rounded hover:scale-110 transition-transform border border-gray-300"
-                                style={{ backgroundColor: color.hex }}
+                                className="w-5 h-5 rounded-md transition-opacity duration-150 hover:opacity-80 border"
+                                style={{ backgroundColor: color.hex, borderColor: "var(--gray-alpha-400)" }}
                                 title={color.name}
                             />
                         ))}
@@ -150,22 +156,22 @@ export default function SelectionTooltip({
                         setShowHighlightPicker(!showHighlightPicker)
                         setShowColorPicker(false)
                     }}
-                    className="p-1.5 hover:bg-gray-100 rounded transition-colors relative"
+                    className="p-1.5 rounded-md transition-colors duration-150 hover:bg-[var(--gray-alpha-100)] text-[var(--ds-text-secondary)] relative"
                     title="Resaltado"
                 >
-                    <HighlighterIcon size={14} />
+                    <Highlighter size={14} />
                     {activeHighlightColor && (
-                        <svg 
-                            xmlns="http://www.w3.org/2000/svg" 
-                            viewBox="0 0 24 24" 
-                            width={14} 
-                            height={14} 
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            width={14}
+                            height={14}
                             className="absolute top-1.5 left-1.5"
                         >
-                            <path 
-                                d="m9 11-6 6v3h9l3-3" 
+                            <path
+                                d="m9 11-6 6v3h9l3-3"
                                 fill={activeHighlightColor}
-                                stroke="#000000"
+                                stroke="var(--ds-text)"
                                 strokeWidth="2.5"
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
@@ -174,7 +180,10 @@ export default function SelectionTooltip({
                     )}
                 </button>
                 {showHighlightPicker && (
-                    <div className="absolute w-40 top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-2 grid grid-cols-5 gap-1.5">
+                    <div
+                        className="absolute w-40 top-full left-0 mt-1 rounded-md p-2 grid grid-cols-5 gap-1.5"
+                        style={{ background: "var(--ds-card)", border: "1px solid var(--ds-border)", boxShadow: "var(--shadow-lg)" }}
+                    >
                         {colors.map(color => (
                             <button
                                 key={color.name}
@@ -183,8 +192,8 @@ export default function SelectionTooltip({
                                     onHighlightSelect(color.hex)
                                     setShowHighlightPicker(false)
                                 }}
-                                className="w-5 h-5 rounded hover:scale-110 transition-transform border border-gray-300"
-                                style={{ backgroundColor: color.hex }}
+                                className="w-5 h-5 rounded-md transition-opacity duration-150 hover:opacity-80 border"
+                                style={{ backgroundColor: color.hex, borderColor: "var(--gray-alpha-400)" }}
                                 title={color.name}
                             />
                         ))}
@@ -193,14 +202,14 @@ export default function SelectionTooltip({
             </div>
 
             {/* Remove format button */}
-            <div className="border-l border-gray-200 pl-1 ml-1">
+            <div className="pl-1 ml-1" style={{ borderLeft: "1px solid var(--ds-border)" }}>
                 <button
                     type="button"
                     onClick={onRemoveFormat}
-                    className="p-1.5 hover:bg-gray-100 rounded transition-colors text-red-500"
+                    className="p-1.5 rounded-md transition-colors duration-150 hover:bg-[var(--red-100)] text-[var(--red-800)]"
                     title="Limpiar formato"
                 >
-                    <RemoveFormatIcon size={14} />
+                    <RemoveFormatting size={14} />
                 </button>
             </div>
         </div>

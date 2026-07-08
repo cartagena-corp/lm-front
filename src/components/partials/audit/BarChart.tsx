@@ -1,4 +1,5 @@
 import React, { CSSProperties, useState } from "react";
+import { createPortal } from "react-dom";
 import { scaleBand, scaleLinear, max } from "d3";
 
 type DataItem = {
@@ -84,13 +85,12 @@ export function BarChartHorizontal({ data }: BarChartHorizontalProps) {
                         .map((active, i) => (
                             <g
                                 transform={`translate(${xScale(+active)},0)`}
-                                className="text-gray-300/80 dark:text-gray-800/80"
                                 key={i}
                             >
                                 <line
                                     y1={0}
                                     y2={100}
-                                    stroke="currentColor"
+                                    stroke="var(--ds-border)"
                                     strokeDasharray="6,5"
                                     strokeWidth={0.5}
                                     vectorEffect="non-scaling-stroke"
@@ -105,8 +105,9 @@ export function BarChartHorizontal({ data }: BarChartHorizontalProps) {
                         style={{
                             left: `${xScale(value)}%`,
                             top: "100%",
+                            color: "var(--ds-text-muted)",
                         }}
-                        className="absolute text-xs -translate-x-1/2 tabular-nums text-gray-400"
+                        className="absolute text-xs -translate-x-1/2 tabular-nums"
                     >
                         {value}
                     </div>
@@ -127,16 +128,20 @@ export function BarChartHorizontal({ data }: BarChartHorizontalProps) {
                         style={{
                             left: "-8px",
                             top: `${yScale(entry.key)! + yScale.bandwidth() / 2}%`,
+                            color: "var(--ds-text-muted)",
                         }}
-                        className="absolute text-xs text-gray-400 -translate-y-1/2 w-full text-right"
+                        className="absolute text-xs -translate-y-1/2 w-full text-right"
                     >
                         {entry.key}
                     </span>
                 ))}
             </div>
 
-            {/* Tooltip */}
-            {hoveredBar !== null && (
+            {/* Tooltip — se porta a document.body para no quedar recortado por el
+                overflow-y-auto de la modal (Modal.tsx), que además rompe position:fixed
+                al animar con un transform en framer-motion (ver Tooltip.tsx, usado por
+                PieChart, que ya aplica este mismo fix) */}
+            {hoveredBar !== null && typeof document !== "undefined" && createPortal(
                 <div
                     style={{
                         position: 'fixed',
@@ -144,14 +149,19 @@ export function BarChartHorizontal({ data }: BarChartHorizontalProps) {
                         top: `${tooltipPosition.y}px`,
                         transform: 'translateY(-50%)',
                         zIndex: 1000,
+                        background: "var(--ds-card)",
+                        color: "var(--ds-text)",
+                        border: "1px solid var(--ds-border)",
+                        boxShadow: "var(--shadow-lg)",
                     }}
-                    className="bg-gray-900 text-white px-3 py-2 rounded-lg shadow-lg text-sm pointer-events-none"
+                    className="px-3 py-2 rounded-md text-sm pointer-events-none"
                 >
                     <div className="font-medium">{data[hoveredBar].key}</div>
-                    <div className="text-gray-400">
+                    <div style={{ color: "var(--ds-text-secondary)" }}>
                         {data[hoveredBar].value} {data[hoveredBar].value === 1 ? 'tarea' : 'tareas'}
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

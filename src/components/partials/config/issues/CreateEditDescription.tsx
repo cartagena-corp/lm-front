@@ -51,11 +51,11 @@ export default function CreateEditDescription({
    const isEditing = currentDescription.name !== ""
 
    return (
-      <div className="bg-white p-6">
+      <div className="bg-[var(--ds-card)] p-6">
          <form onSubmit={handleSubmit} className="space-y-6">
             {/* Campo de nombre */}
             <div>
-               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+               <label htmlFor="name" className="block text-sm font-medium text-[var(--ds-text-secondary)] mb-2">
                   Nombre de la descripción
                </label>
                <input
@@ -63,22 +63,22 @@ export default function CreateEditDescription({
                   id="name"
                   value={formData.name}
                   onChange={handleNameChange}
-                  className={`${isEditing ? "focus:ring-purple-500" : "focus:ring-blue-500"} w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-colors 
-                  ${errors.name ? 'border-red-300 bg-red-50' : 'border-gray-300 focus:border-purple-500'}`}
+                  className="w-full px-3 py-2 rounded-md outline-none transition-shadow duration-150 focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2"
+                  style={{ boxShadow: errors.name ? "0 0 0 1px var(--red-700)" : "var(--shadow-border)", background: errors.name ? "var(--red-100)" : "var(--ds-card)" }}
                   placeholder="Ej: Criterios de aceptación, Descripción técnica..."
                   maxLength={50}
                />
                {errors.name && (
-                  <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+                  <p className="mt-1 text-sm text-[var(--red-700)]">{errors.name}</p>
                )}
             </div>
 
             {/* Preview */}
-            <div className="p-4 bg-gray-100 rounded-lg border border-gray-200">
-               <h4 className="text-sm font-medium text-gray-600 mb-2">Vista previa:</h4>
+            <div className="p-4 bg-[var(--gray-alpha-100)] rounded-md" style={{ boxShadow: "var(--shadow-border)" }}>
+               <h4 className="text-sm font-medium text-[var(--ds-text-muted)] mb-2">Vista previa:</h4>
                <div className="flex items-center gap-3">
-                  <div className={`${isEditing ? "bg-purple-500" : "bg-blue-500"} w-3 h-3 rounded-full flex-shrink-0`} />
-                  <span className="font-medium text-sm text-gray-900">
+                  <div className={`${isEditing ? "bg-[var(--purple-500)]" : "bg-[var(--blue-500)]"} w-3 h-3 rounded-full flex-shrink-0`} />
+                  <span className="font-medium text-sm text-[var(--ds-text)]">
                      {formData.name || "Nombre de la descripción"}
                   </span>
                </div>
@@ -89,14 +89,14 @@ export default function CreateEditDescription({
                <button
                   type="button"
                   onClick={onCancel}
-                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium"
+                  className="px-4 py-2 text-[var(--ds-text)] bg-[var(--ds-card)] rounded-md hover:bg-[var(--gray-alpha-100)] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2 transition-all duration-200 text-sm font-medium"
+                  style={{ boxShadow: "var(--shadow-border)" }}
                >
                   Cancelar
                </button>
                <button
                   type="submit"
-                  className={`${isEditing ? "bg-purple-600 hover:bg-purple-700 focus:ring-purple-500" : "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"}
-                  px-4 py-2 text-white rounded-lg focus:ring-2 focus:ring-offset-2 transition-all duration-200 text-sm font-medium`}
+                  className="bg-[var(--primary-700)] hover:bg-[var(--primary-800)] px-4 py-2 text-[var(--primary-contrast-fg)] rounded-md focus-visible:outline-2 focus-visible:outline-[var(--primary-900)] focus-visible:outline-offset-2 transition-all duration-200 text-sm font-medium"
                >
                   {isEditing ? "Guardar Cambios" : "Crear Descripción"}
                </button>

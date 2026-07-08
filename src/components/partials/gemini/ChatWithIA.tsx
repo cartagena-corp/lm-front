@@ -1,4 +1,4 @@
-import { SendIcon, AttachIcon, IAIcon, CopyIcon, CheckmarkIcon, DocumentIcon, RefreshIcon } from "@/assets/Icon"
+import { Send, Paperclip, Sparkles, Copy, CircleCheck, FileText, RefreshCw, FileSearch, ScanSearch, Calculator, FileCheck } from "lucide-react"
 import AutoResizeTextarea from "@/components/ui/AutoResizeTextarea"
 import { useEffect, useRef, useState } from "react"
 import { useGeminiStore } from "@/lib/store/GeminiStore"
@@ -102,10 +102,10 @@ const DEFAULT_INSTRUCTION = "Analiza los documentos adjuntos y genera el resumen
 
 // Capacidades mostradas en el estado inicial (sin análisis todavía).
 const CAPABILITIES = [
-    { emoji: "📄", title: "Clasifica el documento", desc: "Distingue entre Contrato Nuevo (contrato, resolución, orden) y Adición (otrosí, modificatorio)." },
-    { emoji: "🔎", title: "Extrae los datos clave", desc: "Asegurado, afianzado, garantías exigidas, valores y plazos, tolerante a errores de OCR." },
-    { emoji: "🧮", title: "Calcula valores y vigencias", desc: "Suma asegurada según el porcentaje y la fecha exacta de vigencia hasta." },
-    { emoji: "📋", title: "Redacta y deja listo para copiar", desc: "Texto del objeto y resumen en texto plano, ideal para WhatsApp o el sistema." },
+    { icon: FileSearch, bg: "var(--blue-100)", fg: "var(--blue-900)", title: "Clasifica el documento", desc: "Distingue entre Contrato Nuevo (contrato, resolución, orden) y Adición (otrosí, modificatorio)." },
+    { icon: ScanSearch, bg: "var(--purple-100)", fg: "var(--purple-900)", title: "Extrae los datos clave", desc: "Asegurado, afianzado, garantías exigidas, valores y plazos, tolerante a errores de OCR." },
+    { icon: Calculator, bg: "var(--amber-100)", fg: "var(--amber-900)", title: "Calcula valores y vigencias", desc: "Suma asegurada según el porcentaje y la fecha exacta de vigencia hasta." },
+    { icon: FileCheck, bg: "var(--green-100)", fg: "var(--green-900)", title: "Redacta y deja listo para copiar", desc: "Texto del objeto y resumen en texto plano, ideal para WhatsApp o el sistema." },
 ]
 
 interface Message {
@@ -124,7 +124,7 @@ function renderAnalysisText(text: string) {
     const flush = (key: string) => {
         if (buffer.length === 0) return
         blocks.push(
-            <p key={key} className="whitespace-pre-wrap break-words text-sm leading-relaxed text-gray-800">
+            <p key={key} className="whitespace-pre-wrap break-words text-sm leading-relaxed" style={{ color: "var(--ds-text)" }}>
                 {buffer.join("\n")}
             </p>
         )
@@ -138,7 +138,8 @@ function renderAnalysisText(text: string) {
             blocks.push(
                 <div
                     key={`alert-${idx}`}
-                    className="whitespace-pre-wrap break-words rounded-md border-l-4 border-amber-400 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800"
+                    className="whitespace-pre-wrap break-words rounded-md px-3 py-2 text-sm font-medium"
+                    style={{ background: "var(--amber-100)", color: "var(--amber-900)", borderLeft: "3px solid var(--amber-700)" }}
                 >
                     {trimmed}
                 </div>
@@ -284,38 +285,45 @@ export default function ChatWithIA() {
 
     return (
         <div
-            className={`bg-white rounded-xl shadow-sm flex flex-col relative overflow-hidden h-full border-2 transition-colors
-                ${isDragActive ? "border-blue-500 border-dashed" : "border-gray-200"}`}
+            className="flex flex-col relative overflow-hidden h-full transition-colors"
+            style={{
+                background: "var(--ds-background)",
+                border: isDragActive ? "2px dashed var(--blue-700)" : "2px solid transparent",
+            }}
             onDragOver={handleDragOver}
             onDrop={handleDrop}
             onDragEnter={handleDragEnter}
             onDragLeave={handleDragLeave}
         >
             {isDragActive && (
-                <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-blue-50/90 pointer-events-none">
-                    <span className="mb-4 text-blue-500">
-                        <AttachIcon size={48} stroke={2} />
+                <div
+                    className="absolute inset-0 z-50 flex flex-col items-center justify-center pointer-events-none"
+                    style={{ background: "color-mix(in srgb, var(--blue-100) 92%, transparent)" }}
+                >
+                    <span className="mb-4" style={{ color: "var(--blue-700)" }}>
+                        <Paperclip size={48} strokeWidth={2} />
                     </span>
-                    <span className="text-lg font-semibold text-blue-700">Suelta aquí los documentos a analizar</span>
+                    <span className="text-lg font-semibold" style={{ color: "var(--blue-900)" }}>Suelta aquí los documentos a analizar</span>
                 </div>
             )}
 
-            {/* Barra superior: identidad del asistente + acción de reinicio */}
-            <div className="flex flex-shrink-0 items-center justify-between gap-3 border-b border-gray-200 px-6 py-3">
-                <div className="flex items-center gap-2.5">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white">
-                        <IAIcon size={16} stroke={1.75} />
-                    </span>
-                    <span className="text-sm font-semibold text-gray-800">Analista de Pólizas de Cumplimiento</span>
+            {/* Barra superior: título de la página + acción de reinicio */}
+            <div className="flex flex-shrink-0 flex-col gap-3 pb-4 sm:flex-row sm:items-end sm:justify-between" >
+                <div>
+                    <h1 className="font-semibold" style={{ fontSize: 28, letterSpacing: "-1.1px", color: "var(--ds-text)", margin: "0 0 4px" }}>Analista de Pólizas</h1>
+                    <p style={{ fontSize: 14, color: "var(--ds-text-secondary)", margin: 0 }}>
+                        Analiza contratos, resoluciones y otrosí, y genera el resumen listo para la expedición de la póliza
+                    </p>
                 </div>
                 {hasMessages && (
                     <button
                         onClick={resetAnalysis}
                         disabled={isProcessing}
-                        className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="flex items-center justify-center gap-[7px] transition-colors text-sm font-medium hover:bg-[var(--gray-alpha-100)] disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                        style={{ height: 36, padding: "0 12px", color: "var(--ds-text)", background: "var(--ds-background)", border: "1px solid var(--ds-border-strong)", borderRadius: "var(--radius-md)" }}
                         type="button"
                     >
-                        <RefreshIcon size={15} stroke={2} />
+                        <RefreshCw size={15} strokeWidth={2} />
                         Nuevo análisis
                     </button>
                 )}
@@ -325,34 +333,39 @@ export default function ChatWithIA() {
             <section ref={scrollRef} className="flex-1 overflow-y-auto custom-scrollbar p-6">
                 {!hasMessages ? (
                     // Estado inicial: presentación del experto y capacidades.
-                    <div className="flex h-full flex-col items-center justify-center text-center">
-                        <span className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-sm">
-                            <IAIcon size={34} stroke={1.75} />
+                    <div className="mx-auto flex h-full max-w-4xl flex-col items-center justify-center py-10 text-center">
+                        <span className="mb-5 flex h-20 w-20 items-center justify-center" style={{ borderRadius: "var(--radius-xl)", background: "var(--blue-200)", color: "var(--blue-900)" }}>
+                            <Sparkles size={40} strokeWidth={1.5} />
                         </span>
-                        <h2 className="text-xl font-bold text-gray-900">Analista de Pólizas de Cumplimiento</h2>
-                        <p className="mt-2 max-w-xl text-sm text-gray-500">
-                            Analizo contratos, resoluciones y otrosí para la expedición de pólizas: clasifico el documento,
-                            extraigo los datos, calculo valores y vigencias, y redacto el texto listo para copiar.
+                        <h2 className="text-3xl font-semibold" style={{ color: "var(--ds-text)", letterSpacing: "-0.03em" }}>¿Qué documento vamos a analizar?</h2>
+                        <p className="mt-3 max-w-2xl text-base leading-relaxed" style={{ color: "var(--ds-text-secondary)" }}>
+                            Adjunta o pega el contrato, resolución u otrosí y me encargo de clasificarlo, extraer los datos,
+                            calcular valores y vigencias, y redactar el texto listo para la expedición de la póliza.
                         </p>
 
-                        <div className="mt-8 grid w-full max-w-2xl grid-cols-1 gap-3 text-left sm:grid-cols-2">
-                            {CAPABILITIES.map(cap => (
-                                <div key={cap.title} className="flex gap-3 rounded-lg border border-gray-200 bg-gray-50/60 p-4">
-                                    <span className="text-xl leading-none">{cap.emoji}</span>
-                                    <div>
-                                        <h3 className="text-sm font-semibold text-gray-800">{cap.title}</h3>
-                                        <p className="mt-0.5 text-xs leading-relaxed text-gray-500">{cap.desc}</p>
+                        <div className="mt-10 grid w-full grid-cols-1 gap-4 text-left sm:grid-cols-2">
+                            {CAPABILITIES.map(cap => {
+                                const Icon = cap.icon
+                                return (
+                                    <div key={cap.title} className="flex gap-3.5 rounded-md p-5" style={{ background: "var(--ds-card)", boxShadow: "var(--shadow-border)" }}>
+                                        <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md" style={{ background: cap.bg, color: cap.fg }}>
+                                            <Icon size={19} strokeWidth={1.5} />
+                                        </span>
+                                        <div>
+                                            <h3 className="text-sm font-semibold" style={{ color: "var(--ds-text)" }}>{cap.title}</h3>
+                                            <p className="mt-1 text-xs leading-relaxed" style={{ color: "var(--ds-text-secondary)" }}>{cap.desc}</p>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                )
+                            })}
                         </div>
 
-                        <p className="mt-8 text-xs text-gray-400">
-                            Adjunta el documento (PDF, Word, imagen o texto) o pega su contenido abajo y presiona <span className="font-semibold text-gray-500">Analizar</span>.
+                        <p className="mt-10 text-xs" style={{ color: "var(--ds-text-muted)" }}>
+                            Adjunta el documento (PDF, Word, imagen o texto) o pega su contenido abajo y presiona <span className="font-medium" style={{ color: "var(--ds-text-secondary)" }}>Analizar</span>.
                         </p>
                     </div>
                 ) : (
-                    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
+                    <div className="mx-auto flex w-full max-w-4xl flex-col gap-4">
                         {messages.map((message, index) => (
                         message.isUser ? (
                             // Solicitud del usuario: documentos e instrucciones enviadas.
@@ -361,15 +374,22 @@ export default function ChatWithIA() {
                                     {message.files && message.files.length > 0 && (
                                         <div className="flex flex-wrap justify-end gap-1.5">
                                             {message.files.map((file, fileIndex) => (
-                                                <span key={fileIndex} className="flex items-center gap-1.5 rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs text-blue-700">
-                                                    <DocumentIcon size={13} stroke={1.75} />
+                                                <span
+                                                    key={fileIndex}
+                                                    className="flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium"
+                                                    style={{ background: "var(--blue-100)", color: "var(--blue-900)", boxShadow: "0 0 0 1px var(--blue-400)" }}
+                                                >
+                                                    <FileText size={13} strokeWidth={1.75} />
                                                     {file.name}
                                                 </span>
                                             ))}
                                         </div>
                                     )}
                                     {message.text && (
-                                        <div className="whitespace-pre-wrap break-words rounded-2xl rounded-br-none bg-blue-600 px-4 py-2.5 text-sm text-white">
+                                        <div
+                                            className="whitespace-pre-wrap break-words rounded-md px-4 py-2.5 text-sm"
+                                            style={{ background: "var(--gray-alpha-200)", color: "var(--ds-text)" }}
+                                        >
                                             {message.text}
                                         </div>
                                     )}
@@ -377,30 +397,31 @@ export default function ChatWithIA() {
                             </div>
                         ) : (
                             // Resultado del análisis: tarjeta con encabezado y botón de copiar.
-                            <div key={index} className="rounded-xl border border-gray-200 bg-white shadow-sm">
-                                <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-4 py-2.5">
-                                    <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                                        <span className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-50 text-blue-600">
-                                            <IAIcon size={15} stroke={1.75} />
+                            <div key={index} className="rounded-md" style={{ background: "var(--ds-card)", boxShadow: "var(--shadow-border)" }}>
+                                <div className="flex items-center justify-between gap-3 px-4 py-2.5" style={{ borderBottom: "1px solid var(--ds-border)" }}>
+                                    <div className="flex items-center gap-2 text-sm font-medium" style={{ color: "var(--ds-text)" }}>
+                                        <span className="flex h-6 w-6 items-center justify-center rounded-md" style={{ background: "var(--blue-200)", color: "var(--blue-900)" }}>
+                                            <Sparkles size={15} strokeWidth={1.75} />
                                         </span>
                                         Resultado del análisis
                                     </div>
                                     <button
                                         onClick={() => handleCopy(message.text, index)}
                                         type="button"
-                                        className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors
-                                            ${copiedIndex === index
-                                                ? "border-green-300 bg-green-50 text-green-700"
-                                                : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"}`}
+                                        className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2
+                                            ${copiedIndex === index ? "" : "hover:bg-[var(--gray-alpha-100)]"}`}
+                                        style={copiedIndex === index
+                                            ? { background: "var(--green-100)", color: "var(--green-900)", boxShadow: "0 0 0 1px var(--green-400)" }
+                                            : { color: "var(--ds-text-secondary)", boxShadow: "var(--shadow-border)" }}
                                     >
                                         {copiedIndex === index ? (
                                             <>
-                                                <CheckmarkIcon size={14} stroke={2} />
+                                                <CircleCheck size={14} strokeWidth={2} />
                                                 Copiado
                                             </>
                                         ) : (
                                             <>
-                                                <CopyIcon size={14} stroke={1.75} />
+                                                <Copy size={14} strokeWidth={1.75} />
                                                 Copiar
                                             </>
                                         )}
@@ -415,17 +436,17 @@ export default function ChatWithIA() {
 
                         {/* Loader mientras se procesa el análisis */}
                         {isProcessing && (
-                            <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-                                <div className="flex items-center gap-2 border-b border-gray-100 px-4 py-2.5 text-sm font-semibold text-gray-700">
-                                    <span className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-50 text-blue-600">
-                                        <IAIcon size={15} stroke={1.75} />
+                            <div className="rounded-md" style={{ background: "var(--ds-card)", boxShadow: "var(--shadow-border)" }}>
+                                <div className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium" style={{ color: "var(--ds-text)", borderBottom: "1px solid var(--ds-border)" }}>
+                                    <span className="flex h-6 w-6 items-center justify-center rounded-md" style={{ background: "var(--blue-200)", color: "var(--blue-900)" }}>
+                                        <Sparkles size={15} strokeWidth={1.75} />
                                     </span>
                                     Analizando documentos…
                                 </div>
                                 <div className="flex items-center gap-1.5 p-4">
-                                    <span className="inline-block h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: "0ms" }}></span>
-                                    <span className="inline-block h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: "200ms" }}></span>
-                                    <span className="inline-block h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: "400ms" }}></span>
+                                    <span className="inline-block h-2 w-2 animate-bounce rounded-full" style={{ background: "var(--ds-text-muted)", animationDelay: "0ms" }}></span>
+                                    <span className="inline-block h-2 w-2 animate-bounce rounded-full" style={{ background: "var(--ds-text-muted)", animationDelay: "200ms" }}></span>
+                                    <span className="inline-block h-2 w-2 animate-bounce rounded-full" style={{ background: "var(--ds-text-muted)", animationDelay: "400ms" }}></span>
                                 </div>
                             </div>
                         )}
@@ -434,17 +455,17 @@ export default function ChatWithIA() {
             </section>
 
             {/* Zona de carga e instrucciones */}
-            <div className="flex-shrink-0 border-t border-gray-200 p-6">
-                <div className="mx-auto flex w-full max-w-3xl flex-col items-stretch gap-2">
+            <div className="flex-shrink-0 p-6 pb-0" style={{ borderTop: "1px solid var(--ds-border)" }}>
+                <div className="mx-auto flex w-full max-w-4xl flex-col items-stretch gap-2">
                     {files.length > 0 && !isProcessing && (
-                        <div className="flex flex-wrap gap-2 rounded-md bg-gray-50 p-2">
+                        <div className="flex flex-wrap gap-2 rounded-md p-2" style={{ background: "var(--gray-alpha-100)" }}>
                             {files.map((file, index) => (
-                                <div key={index} className="flex items-center gap-2 rounded-md bg-white px-3 py-1.5 text-xs shadow-sm">
-                                    <DocumentIcon size={14} stroke={1.75} />
+                                <div key={index} className="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs" style={{ background: "var(--ds-card)", color: "var(--ds-text-secondary)", boxShadow: "var(--shadow-border)" }}>
+                                    <FileText size={14} strokeWidth={1.75} />
                                     <span className="max-w-[220px] truncate" title={file.name}>{file.name}</span>
                                     <button
                                         onClick={() => removeFile(index)}
-                                        className="font-bold text-red-500 hover:text-red-700"
+                                        className="font-medium text-[var(--red-700)] hover:text-[var(--red-900)] transition-colors"
                                         disabled={isProcessing}
                                         type="button"
                                         aria-label={`Quitar ${file.name}`}
@@ -457,7 +478,8 @@ export default function ChatWithIA() {
                     )}
 
                     <AutoResizeTextarea
-                        className="w-full max-h-28! resize-none border p-2.5 text-sm placeholder-gray-500 transition-all focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                        className="w-full max-h-28! resize-none p-2.5 text-sm placeholder:text-[var(--ds-text-muted)] transition-all focus:ring-2 focus:ring-[var(--blue-700)] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                        style={{ background: "var(--ds-card)", color: "var(--ds-text)", border: "1px solid var(--ds-border)", borderRadius: "var(--radius-md)" }}
                         value={inputText}
                         onChange={setInputText}
                         placeholder="Pega aquí el contrato, resolución u otrosí, o adjúntalo. Puedes agregar instrucciones opcionales (ej. el porcentaje de garantía exigido)…"
@@ -482,27 +504,29 @@ export default function ChatWithIA() {
                             />
                             <label
                                 htmlFor="file-upload"
-                                className={`${isProcessing ? "cursor-not-allowed opacity-50" : "cursor-pointer bg-white hover:bg-gray-50"} flex items-center gap-2 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+                                className={`${isProcessing ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:bg-[var(--gray-alpha-100)]"} flex h-9 items-center gap-2 rounded-md px-4 text-sm font-medium transition-colors duration-150`}
+                                style={{ color: "var(--ds-text)", background: "var(--ds-card)", boxShadow: "var(--shadow-border)" }}
                             >
-                                <AttachIcon size={16} stroke={2} />
+                                <Paperclip size={16} strokeWidth={2} />
                                 Adjuntar documento
                             </label>
                         </div>
 
                         <button
-                            className="flex items-center gap-2 rounded-md bg-blue-600 px-5 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="flex h-9 items-center gap-2 rounded-md px-5 text-sm font-medium transition-colors duration-150 bg-[var(--primary-700)] hover:bg-[var(--primary-800)] focus-visible:outline-2 focus-visible:outline-[var(--primary-900)] focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            style={{ color: "var(--primary-contrast-fg)" }}
                             onClick={handleSubmit}
                             type="button"
                             disabled={(!inputText.trim() && files.length === 0) || isProcessing}
                         >
                             {isProcessing ? (
                                 <>
-                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
                                     Analizando…
                                 </>
                             ) : (
                                 <>
-                                    <SendIcon size={16} stroke={2} />
+                                    <Send size={16} strokeWidth={2} />
                                     Analizar
                                 </>
                             )}

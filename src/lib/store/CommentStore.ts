@@ -1,5 +1,6 @@
 import { CommentProps, GlobalPagination, ResponseProps } from '../types/types'
 import { API_ROUTES } from '../routes/comments.routes'
+import { authFetch } from '@/lib/http/authFetch'
 import toast from 'react-hot-toast'
 import { create } from 'zustand'
 
@@ -54,11 +55,10 @@ export const useCommentStore = create<CommentState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${API_ROUTES.CRUD_RESPONSES}/${commentId}`, {
+         const response = await authFetch(`${API_ROUTES.CRUD_RESPONSES}/${commentId}`, token, {
             method: 'GET',
             headers: {
                'Content-Type': 'application/json',
-               'Authorization': `Bearer ${token}`
             },
          })
 
@@ -91,11 +91,10 @@ export const useCommentStore = create<CommentState>((set, get) => ({
             size: size.toString()
          })
 
-         const response = await fetch(`${API_ROUTES.CRUD_COMMENTS}/${issueId}?${params}`, {
+         const response = await authFetch(`${API_ROUTES.CRUD_COMMENTS}/${issueId}?${params}`, token, {
             method: 'GET',
             headers: {
                'Content-Type': 'application/json',
-               'Authorization': `Bearer ${token}`
             },
          })
 
@@ -142,11 +141,10 @@ export const useCommentStore = create<CommentState>((set, get) => ({
             size: comments.size.toString()
          })
 
-         const response = await fetch(`${API_ROUTES.CRUD_COMMENTS}/${issueId}?${params}`, {
+         const response = await authFetch(`${API_ROUTES.CRUD_COMMENTS}/${issueId}?${params}`, token, {
             method: 'GET',
             headers: {
                'Content-Type': 'application/json',
-               'Authorization': `Bearer ${token}`
             },
          })
 
@@ -208,11 +206,8 @@ export const useCommentStore = create<CommentState>((set, get) => ({
             })
          }
 
-         const response = await fetch(API_ROUTES.CRUD_COMMENTS, {
+         const response = await authFetch(API_ROUTES.CRUD_COMMENTS, token, {
             method: 'POST',
-            headers: { 
-               'Authorization': `Bearer ${token}`
-            },
             body: formData
          })
 
@@ -241,10 +236,9 @@ export const useCommentStore = create<CommentState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(API_ROUTES.CRUD_RESPONSES, {
+         const response = await authFetch(API_ROUTES.CRUD_RESPONSES, token, {
             method: 'POST',
             headers: {
-               'Authorization': `Bearer ${token}`,
                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
@@ -277,11 +271,8 @@ export const useCommentStore = create<CommentState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${API_ROUTES.CRUD_COMMENTS}/${commentId}`, { 
-            method: 'DELETE', 
-            headers: { 
-               'Authorization': `Bearer ${token}` 
-            } 
+         const response = await authFetch(`${API_ROUTES.CRUD_COMMENTS}/${commentId}`, token, {
+            method: 'DELETE'
          })
 
          if (!response.ok) {
@@ -308,11 +299,8 @@ export const useCommentStore = create<CommentState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${API_ROUTES.CRUD_RESPONSES}/${responseId}`, { 
-            method: 'DELETE', 
-            headers: { 
-               'Authorization': `Bearer ${token}` 
-            } 
+         const response = await authFetch(`${API_ROUTES.CRUD_RESPONSES}/${responseId}`, token, {
+            method: 'DELETE'
          })
 
          if (!response.ok) {

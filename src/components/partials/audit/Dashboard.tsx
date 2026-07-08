@@ -5,7 +5,7 @@ import { BarChartHorizontal } from "./BarChart";
 import { Live3_PieChartLabels } from "./PieChart";
 import { API_ROUTES } from "@/lib/routes/audit.routes";
 import Link from "next/link";
-import { LinkRedirect } from "@/assets/Icon";
+import { ExternalLink } from "lucide-react";
 
 type StateData = {
     id: number;
@@ -101,7 +101,7 @@ export default function Dashboard({ projectId, token, sprintId, issueId }: Dashb
     if (loading) {
         return (
             <div className="flex items-center justify-center p-8">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--blue-700)]"></div>
             </div>
         );
     }
@@ -109,7 +109,7 @@ export default function Dashboard({ projectId, token, sprintId, issueId }: Dashb
     if (error) {
         return (
             <div className="p-8 text-center">
-                <p className="text-red-600 font-medium">{error}</p>
+                <p className="font-medium" style={{ color: "var(--ds-error)" }}>{error}</p>
             </div>
         );
     }
@@ -117,7 +117,7 @@ export default function Dashboard({ projectId, token, sprintId, issueId }: Dashb
     if (!data) {
         return (
             <div className="p-8 text-center">
-                <p className="text-gray-600">No hay datos disponibles</p>
+                <p style={{ color: "var(--ds-text-secondary)" }}>No hay datos disponibles</p>
             </div>
         );
     }
@@ -153,15 +153,15 @@ export default function Dashboard({ projectId, token, sprintId, issueId }: Dashb
             {/* Columna 1: Gráficos */}
             <div className="flex flex-col gap-6 overflow-y-auto pr-2">
                 {/* Gráfico de Barras */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 flex flex-col min-h-0 flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex-shrink-0">
+                <div className="rounded-md p-6 flex flex-col min-h-0 flex-1" style={{ background: "var(--ds-card)", boxShadow: "var(--shadow-border)" }}>
+                    <h3 className="text-base font-semibold mb-4 flex-shrink-0" style={{ color: "var(--ds-text)", letterSpacing: "-0.01em" }}>
                         {taskLabel} por Estado
                     </h3>
                     <div className="flex-1 min-h-0 flex items-center justify-center">
                         {barChartData.length > 0 ? (
                             <BarChartHorizontal data={barChartData} />
                         ) : (
-                            <p className="text-gray-500 text-center">
+                            <p className="text-center text-[13px]" style={{ color: "var(--ds-text-muted)" }}>
                                 No hay {taskLabelLower} para mostrar
                             </p>
                         )}
@@ -169,15 +169,15 @@ export default function Dashboard({ projectId, token, sprintId, issueId }: Dashb
                 </div>
 
                 {/* Gráfico de Pastel */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 flex flex-col min-h-0 flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex-shrink-0">
+                <div className="rounded-md p-6 flex flex-col min-h-0 flex-1" style={{ background: "var(--ds-card)", boxShadow: "var(--shadow-border)" }}>
+                    <h3 className="text-base font-semibold mb-4 flex-shrink-0" style={{ color: "var(--ds-text)", letterSpacing: "-0.01em" }}>
                         Distribución de {taskLabel}
                     </h3>
                     <div className="flex-1 min-h-0 flex items-center justify-center">
                         {pieChartData.length > 0 ? (
                             <Live3_PieChartLabels data={pieChartData} />
                         ) : (
-                            <p className="text-gray-500 text-center">
+                            <p className="text-center text-[13px]" style={{ color: "var(--ds-text-muted)" }}>
                                 No hay {taskLabelLower} para mostrar
                             </p>
                         )}
@@ -186,8 +186,8 @@ export default function Dashboard({ projectId, token, sprintId, issueId }: Dashb
             </div>
 
             {/* Columna 2: Tareas Recientes */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 flex flex-col h-full overflow-hidden">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex-shrink-0">
+            <div className="rounded-md p-6 flex flex-col h-full overflow-hidden" style={{ background: "var(--ds-card)", boxShadow: "var(--shadow-border)" }}>
+                <h3 className="text-base font-semibold mb-4 flex-shrink-0" style={{ color: "var(--ds-text)", letterSpacing: "-0.01em" }}>
                     {taskLabel} Recientes
                 </h3>
                 {recentIssues && recentIssues.length > 0 ? (
@@ -195,25 +195,25 @@ export default function Dashboard({ projectId, token, sprintId, issueId }: Dashb
                         {recentIssues.map((issue) => (
                             <Link href={`/tableros/${projectId}/${issue.id}`} target="_blank"
                                 key={issue.id}
-                                className="group flex items-center justify-between p-3 hover:bg-blue-50 rounded-lg transition-colors border border-gray-100"
+                                className="group flex items-center justify-between p-3 hover:bg-[var(--gray-alpha-100)] rounded-md transition-colors duration-150 border border-[var(--ds-border)]"
                             >
                                 <div className="flex-1 min-w-0">
-                                    <p className="group-hover:text-blue-600 text-sm font-medium truncate">
+                                    <p className="text-sm font-medium truncate text-[var(--ds-text)] group-hover:text-[var(--blue-900)] transition-colors duration-150">
                                         {issue.title}
                                     </p>
-                                    <p className="text-xs group-hover:text-blue-900 mt-1">
+                                    <p className="text-xs mt-1 text-[var(--ds-text-muted)]">
                                         Creada el {formatDate(issue.created_at)}
                                     </p>
                                 </div>
-                                <span className="group-hover:text-blue-600">
-                                    <LinkRedirect size={16} />
+                                <span className="text-[var(--ds-text-muted)] group-hover:text-[var(--blue-700)] transition-colors duration-150">
+                                    <ExternalLink size={16} strokeWidth={1.5} />
                                 </span>
                             </Link>
                         ))}
                     </div>
                 ) : (
                     <div className="flex items-center justify-center flex-1">
-                        <p className="text-gray-500 text-center">
+                        <p className="text-center text-[13px]" style={{ color: "var(--ds-text-muted)" }}>
                             No hay {taskLabelLower} recientes
                         </p>
                     </div>

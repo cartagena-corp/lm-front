@@ -44,9 +44,10 @@ export default function Switch({
   return (
     <div className={`flex items-center ${className}`}>
       {label && (
-        <label 
+        <label
           htmlFor={id}
-          className={`text-sm font-medium text-gray-700 mr-3 ${disabled ? 'opacity-50' : ''}`}
+          className={`text-sm font-medium mr-3 ${disabled ? 'opacity-50' : ''}`}
+          style={{ color: "var(--ds-text-secondary)" }}
         >
           {label}
         </label>
@@ -59,19 +60,20 @@ export default function Switch({
         disabled={disabled}
         onClick={() => !disabled && onChange(!checked)}
         className={`
-          relative inline-flex ${currentSize.switch} items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-          ${checked 
-            ? 'bg-blue-600 hover:bg-blue-700' 
-            : 'bg-gray-200 hover:bg-gray-300'
+          relative inline-flex ${currentSize.switch} items-center rounded-full transition-colors duration-150 ease-in-out focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2
+          ${checked
+            ? 'bg-[var(--blue-700)] hover:bg-[var(--blue-800)]'
+            : 'bg-[var(--gray-alpha-200)] hover:bg-[var(--gray-alpha-300)]'
           }
           ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
         `}
       >
         <span
           className={`
-            inline-block ${currentSize.toggle} transform rounded-full bg-white shadow-lg ring-0 transition-transform duration-200 ease-in-out
+            inline-block ${currentSize.toggle} transform rounded-full ring-0 transition-transform duration-150 ease-in-out
             ${checked ? currentSize.translate : 'translate-x-0.5'}
           `}
+          style={{ background: "var(--background-100)", boxShadow: "var(--shadow-sm)" }}
         />
       </button>
     </div>

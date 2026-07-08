@@ -2,12 +2,12 @@ import { AnimatePresence, motion } from "motion/react"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import {
-   DownloadIcon,
-   XIcon,
-   ZoomInIcon,
-   ZoomOutIcon,
-   ZoomResetIcon,
-} from "@/assets/Icon"
+   Download,
+   X,
+   ZoomIn,
+   ZoomOut,
+   RotateCcw,
+} from "lucide-react"
 
 export type MediaType = "image" | "video"
 
@@ -108,7 +108,7 @@ export default function MediaViewerModal({ url, fileName, type, onClose }: Props
    return createPortal(
       <AnimatePresence>
          <motion.div
-            className="fixed inset-0 z-[1000] flex h-screen w-screen flex-col bg-black/90 backdrop-blur-sm"
+            className="fixed inset-0 z-[1000] flex h-screen w-screen flex-col bg-[var(--gray-alpha-1000)] backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -120,7 +120,7 @@ export default function MediaViewerModal({ url, fileName, type, onClose }: Props
                className="flex items-center justify-between gap-2 p-3 sm:p-4"
                onClick={(e) => e.stopPropagation()}
             >
-               <span className="max-w-[60%] truncate text-xs text-white/80 sm:text-sm">
+               <span className="max-w-[60%] truncate text-xs text-[var(--ds-contrast-inverse)]/80 sm:text-sm">
                   {fileName}
                </span>
 
@@ -131,29 +131,29 @@ export default function MediaViewerModal({ url, fileName, type, onClose }: Props
                            type="button"
                            onClick={zoomOut}
                            disabled={scale <= MIN_SCALE}
-                           className="rounded-full p-2 text-white transition-colors hover:bg-white/15 disabled:opacity-30 disabled:hover:bg-transparent"
+                           className="rounded-full p-2 text-[var(--ds-contrast-inverse)] transition-colors hover:bg-[var(--ds-contrast-inverse)]/15 disabled:opacity-30 disabled:hover:bg-transparent"
                            title="Alejar"
                         >
-                           <ZoomOutIcon size={20} stroke={2} />
+                           <ZoomOut size={20} strokeWidth={2} />
                         </button>
                         <button
                            type="button"
                            onClick={zoomIn}
                            disabled={scale >= MAX_SCALE}
-                           className="rounded-full p-2 text-white transition-colors hover:bg-white/15 disabled:opacity-30 disabled:hover:bg-transparent"
+                           className="rounded-full p-2 text-[var(--ds-contrast-inverse)] transition-colors hover:bg-[var(--ds-contrast-inverse)]/15 disabled:opacity-30 disabled:hover:bg-transparent"
                            title="Acercar"
                         >
-                           <ZoomInIcon size={20} stroke={2} />
+                           <ZoomIn size={20} strokeWidth={2} />
                         </button>
                         <button
                            type="button"
                            onClick={resetView}
-                           className="rounded-full p-2 text-white transition-colors hover:bg-white/15"
+                           className="rounded-full p-2 text-[var(--ds-contrast-inverse)] transition-colors hover:bg-[var(--ds-contrast-inverse)]/15"
                            title="Restablecer"
                         >
-                           <ZoomResetIcon size={20} stroke={2} />
+                           <RotateCcw size={20} strokeWidth={2} />
                         </button>
-                        <span className="hidden w-12 text-center text-xs text-white/60 sm:inline">
+                        <span className="hidden w-12 text-center text-xs text-[var(--ds-contrast-inverse)]/60 sm:inline">
                            {Math.round(scale * 100)}%
                         </span>
                      </>
@@ -165,18 +165,18 @@ export default function MediaViewerModal({ url, fileName, type, onClose }: Props
                      target="_blank"
                      rel="noopener noreferrer"
                      onClick={(e) => e.stopPropagation()}
-                     className="rounded-full p-2 text-white transition-colors hover:bg-white/15"
+                     className="rounded-full p-2 text-[var(--ds-contrast-inverse)] transition-colors hover:bg-[var(--ds-contrast-inverse)]/15"
                      title="Descargar"
                   >
-                     <DownloadIcon size={20} stroke={2} />
+                     <Download size={20} strokeWidth={2} />
                   </a>
                   <button
                      type="button"
                      onClick={onClose}
-                     className="rounded-full p-2 text-white transition-colors hover:bg-white/15"
+                     className="rounded-full p-2 text-[var(--ds-contrast-inverse)] transition-colors hover:bg-[var(--ds-contrast-inverse)]/15"
                      title="Cerrar"
                   >
-                     <XIcon size={22} stroke={2} />
+                     <X size={22} strokeWidth={2} />
                   </button>
                </div>
             </header>

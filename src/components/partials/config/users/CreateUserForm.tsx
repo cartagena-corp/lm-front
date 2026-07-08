@@ -1,6 +1,10 @@
 import { useState, useEffect, useRef } from "react"
+import { createPortal } from "react-dom"
 import { useAuthStore } from "@/lib/store/AuthStore"
 import { useOrganizationStore } from "@/lib/store/OrganizationStore"
+import { computeDropdownPosition } from "@/lib/utils/dropdown.utils"
+
+const DROPDOWN_MAX_HEIGHT = 240 // px, debe coincidir con max-h-60 del panel
 
 interface CreateUserFormProps {
    onSubmit: (data: { email: string, role: string, organizationId: string }) => void
@@ -21,6 +25,14 @@ export default function CreateUserForm({ onSubmit, onCancel, organizationId }: C
    const [isRoleSelectOpen, setIsRoleSelectOpen] = useState(false)
 
    const roleSelectRef = useRef<HTMLDivElement>(null)
+   const rolePanelRef = useRef<HTMLDivElement>(null)
+   const [rolePosition, setRolePosition] = useState<{ top?: number, bottom?: number, left: number, width: number, openUpward: boolean }>({ left: 0, width: 0, openUpward: false })
+   const [mounted, setMounted] = useState(false)
+
+   // Necesario para el portal del dropdown: document solo existe en el cliente
+   useEffect(() => {
+      setMounted(true)
+   }, [])
 
    // Fetch organization and roles
    useEffect(() => {
@@ -48,9 +60,11 @@ export default function CreateUserForm({ onSubmit, onCancel, organizationId }: C
 
    useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
+         const target = event.target as Node
          if (
             roleSelectRef.current &&
-            !roleSelectRef.current.contains(event.target as Node)
+            !roleSelectRef.current.contains(target) &&
+            !(rolePanelRef.current && rolePanelRef.current.contains(target))
          ) {
             setIsRoleSelectOpen(false)
          }
@@ -61,6 +75,27 @@ export default function CreateUserForm({ onSubmit, onCancel, organizationId }: C
          document.removeEventListener('mousedown', handleClickOutside)
       }
    }, [])
+
+   // El dropdown se porta a document.body para no quedar recortado por el overflow-y-auto
+   // del contenido de la modal (Modal.tsx). Si no cabe debajo antes del borde inferior del
+   // viewport, se abre hacia arriba (ver dropdown.utils.ts)
+   useEffect(() => {
+      if (isRoleSelectOpen && roleSelectRef.current) {
+         const rect = roleSelectRef.current.getBoundingClientRect()
+         setRolePosition(computeDropdownPosition(rect, { maxHeight: DROPDOWN_MAX_HEIGHT, gap: 4 }))
+      }
+   }, [isRoleSelectOpen])
+
+   useEffect(() => {
+      if (!isRoleSelectOpen) return
+      const handleScroll = (event: Event) => {
+         const target = event.target as Node
+         if (rolePanelRef.current?.contains(target)) return
+         setIsRoleSelectOpen(false)
+      }
+      window.addEventListener('scroll', handleScroll, true)
+      return () => window.removeEventListener('scroll', handleScroll, true)
+   }, [isRoleSelectOpen])
 
    const validateForm = () => {
       const newErrors: { [key: string]: string } = {}
@@ -94,11 +129,11 @@ export default function CreateUserForm({ onSubmit, onCancel, organizationId }: C
    }
 
    return (
-      <div className="space-y-6 p-6">
-         <form onSubmit={handleSubmit} className="space-y-2">
+      <div className="p-6">
+         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             {/* Organization Field - Display only */}
-            <div className="space-y-1">
-               <label htmlFor="organization" className="block text-sm font-medium text-gray-700">
+            <div className="flex flex-col gap-1">
+               <label htmlFor="organization" className="text-sm font-medium" style={{ color: "var(--ds-text)" }}>
                   Organización
                </label>
                <input
@@ -106,55 +141,59 @@ export default function CreateUserForm({ onSubmit, onCancel, organizationId }: C
                   id="organization"
                   value={organization?.organizationName || 'Cargando...'}
                   readOnly
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm bg-gray-50 text-gray-500 focus:outline-none"
+                  className="h-9 px-3 rounded-md text-sm outline-none"
+                  style={{ background: "var(--gray-alpha-100)", color: "var(--ds-text-muted)" }}
                />
             </div>
 
             {/* Email Input */}
-            <div className="space-y-1">
-               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+            <div className="flex flex-col gap-1">
+               <label htmlFor="email" className="text-sm font-medium" style={{ color: "var(--ds-text)" }}>
                   Correo electrónico
                </label>
-               <div className="relative">
-                  <input
-                     type="email"
-                     id="email"
-                     value={formData.email}
-                     onChange={(e) => handleChange('email', e.target.value)}
-                     className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 ${errors.email
-                        ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                        : 'border-gray-300 hover:border-gray-400'
-                        }`}
-                     placeholder="usuario@ejemplo.com"
-                  />
-                  {errors.email && (
-                     <p className="mt-1 text-sm text-red-600">{errors.email}</p>
-                  )}
-               </div>
+               <input
+                  type="email"
+                  id="email"
+                  value={formData.email}
+                  onChange={(e) => handleChange('email', e.target.value)}
+                  className="h-9 px-3 rounded-md text-sm outline-none transition-shadow duration-150 placeholder:text-[var(--ds-text-muted)]"
+                  style={{
+                     background: "var(--ds-card)",
+                     color: "var(--ds-text)",
+                     boxShadow: errors.email ? "0 0 0 1px var(--red-700)" : "var(--shadow-border)"
+                  }}
+                  placeholder="usuario@ejemplo.com"
+               />
+               {errors.email && (
+                  <p className="text-xs" style={{ color: "var(--ds-error)" }}>{errors.email}</p>
+               )}
             </div>
 
-            {/* Role Select - Custom Button Select */}
-            <div className="space-y-1 relative" ref={roleSelectRef}>
-               <label htmlFor="role" className="block text-sm font-medium text-gray-700">
+            {/* Role Select - Custom Select */}
+            <div className="flex flex-col gap-1 relative" ref={roleSelectRef}>
+               <label htmlFor="role" className="text-sm font-medium" style={{ color: "var(--ds-text)" }}>
                   Rol del usuario
                </label>
                <button
+                  id="role"
                   onClick={() => setIsRoleSelectOpen(!isRoleSelectOpen)}
                   type="button"
                   disabled={organizationRoles.length === 0}
-                  className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 flex items-center justify-between ${errors.role
-                     ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                     : 'border-gray-300 hover:border-gray-400'
-                     } ${organizationRoles.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className="h-9 px-3 rounded-md text-sm flex items-center justify-between transition-colors duration-150 hover:bg-[var(--gray-alpha-100)] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{
+                     background: "var(--ds-card)",
+                     boxShadow: errors.role ? "0 0 0 1px var(--red-700)" : "var(--shadow-border)"
+                  }}
                >
-                  <span className="text-sm text-gray-700">
+                  <span className="truncate" style={{ color: formData.role ? "var(--ds-text)" : "var(--ds-text-muted)" }}>
                      {organizationRoles.length === 0
                         ? 'Cargando roles...'
                         : (organizationRoles.find(role => role.name === formData.role)?.name || 'Seleccionar rol')
                      }
                   </span>
                   <svg
-                     className={`text-gray-400 w-4 h-4 transition-transform duration-200 ${isRoleSelectOpen ? "rotate-180" : ""}`}
+                     className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 ${isRoleSelectOpen ? "rotate-180" : ""}`}
+                     style={{ color: "var(--ds-text-muted)" }}
                      xmlns="http://www.w3.org/2000/svg"
                      fill="none"
                      viewBox="0 0 24 24"
@@ -165,8 +204,17 @@ export default function CreateUserForm({ onSubmit, onCancel, organizationId }: C
                   </svg>
                </button>
 
-               {isRoleSelectOpen && (
-                  <div className="border-gray-200 bg-white shadow-lg absolute z-10 top-full mt-1 flex flex-col rounded-lg border text-sm w-full max-h-60 overflow-y-auto">
+               {isRoleSelectOpen && mounted && createPortal(
+                  <div
+                     ref={rolePanelRef}
+                     className="fixed z-[9999] flex flex-col rounded-md text-sm max-h-60 overflow-y-auto"
+                     style={{
+                        ...(rolePosition.openUpward ? { bottom: rolePosition.bottom } : { top: rolePosition.top }),
+                        left: rolePosition.left,
+                        width: rolePosition.width,
+                        background: "var(--ds-card)", border: "1px solid var(--ds-border)", boxShadow: "var(--shadow-lg)"
+                     }}
+                  >
                      {organizationRoles.map((role) => (
                         <div
                            key={role.name}
@@ -174,30 +222,40 @@ export default function CreateUserForm({ onSubmit, onCancel, organizationId }: C
                               handleChange('role', role.name)
                               setIsRoleSelectOpen(false)
                            }}
-                           className="hover:bg-blue-50 duration-150 w-full text-start py-3 px-4 flex items-center justify-between cursor-pointer"
+                           className="hover:bg-[var(--gray-alpha-100)] transition-colors duration-150 w-full text-start py-2.5 px-3 flex items-center gap-3 cursor-pointer"
                         >
-                           <span className="text-gray-700">{role.name}</span>
+                           <span className="flex-1 truncate" style={{ color: "var(--ds-text)" }}>{role.name}</span>
                            {role.name === formData.role && (
-                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-blue-600">
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 flex-shrink-0" style={{ color: "var(--blue-700)" }}>
                                  <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                               </svg>
                            )}
                         </div>
                      ))}
-                  </div>
+                  </div>,
+                  document.body
                )}
 
                {errors.role && (
-                  <p className="mt-1 text-sm text-red-600">{errors.role}</p>
+                  <p className="text-xs" style={{ color: "var(--ds-error)" }}>{errors.role}</p>
                )}
             </div>
 
-            <div className="flex justify-end gap-3 mt-4">
-               <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 transition-all duration-200 text-sm font-medium" type="button"
-                  onClick={() => onCancel()}>
+            <div className="flex justify-end gap-3 mt-2">
+               <button
+                  type="button"
+                  onClick={() => onCancel()}
+                  className="h-9 px-4 rounded-md text-sm font-medium transition-colors duration-150 hover:bg-[var(--gray-alpha-100)] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2"
+                  style={{ background: "var(--ds-card)", color: "var(--ds-text)", boxShadow: "var(--shadow-border)" }}
+               >
                   Cancelar
                </button>
-               <button className={`${organizationRoles.length === 0 ? "bg-gray-600 hover:bg-gray-700 focus:ring-gray-500" : "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"} text-white focus:ring-2 rounded-md focus:ring-offset-2 transition-all duration-200 text-sm font-medium px-4 py-2`} type="submit">
+               <button
+                  type="submit"
+                  disabled={organizationRoles.length === 0}
+                  className="h-9 px-4 rounded-md text-sm font-medium transition-colors duration-150 bg-[var(--primary-700)] hover:bg-[var(--primary-800)] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-[var(--primary-900)] focus-visible:outline-offset-2"
+                  style={{ color: "var(--primary-contrast-fg)" }}
+               >
                   {organizationRoles.length === 0 ? "Cargando..." : "Agregar usuario"}
                </button>
             </div>

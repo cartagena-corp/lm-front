@@ -1,9 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
+import { createPortal } from "react-dom"
 import { RoleProps } from "@/lib/types/types"
 import { useAuthStore } from "@/lib/store/AuthStore"
-import { ChevronRightIcon } from "@/assets/Icon"
+import { ChevronDown } from "lucide-react"
+import { computeDropdownPosition } from "@/lib/utils/dropdown.utils"
+
+const ROLE_DROPDOWN_MAX_HEIGHT = 240 // px, debe coincidir con max-h-60 del panel
 
 interface CreateUserFormConfigProps {
     onSubmit: (data: { email: string; role: string }) => void
@@ -15,6 +19,15 @@ export default function CreateUserFormConfig({ onSubmit, onCancel }: CreateUserF
     const [formData, setFormData] = useState({ email: "", role: "" })
     const [errors, setErrors] = useState<{ [key: string]: string }>({})
     const [isRoleSelectOpen, setIsRoleSelectOpen] = useState(false)
+    const roleSelectRef = useRef<HTMLDivElement>(null)
+    const roleDropdownRef = useRef<HTMLDivElement>(null)
+    const [mounted, setMounted] = useState(false)
+    const [dropdownPosition, setDropdownPosition] = useState<{ top?: number, bottom?: number, left: number, width: number, openUpward: boolean }>({ left: 0, width: 0, openUpward: false })
+
+    // Necesario para el portal del dropdown: document solo existe en el cliente
+    useEffect(() => {
+        setMounted(true)
+    }, [])
 
     useEffect(() => {
         const loadRoles = async () => {
@@ -25,6 +38,27 @@ export default function CreateUserFormConfig({ onSubmit, onCancel }: CreateUserF
         }
         loadRoles()
     }, [])
+
+    // El dropdown se porta a document.body para no quedar recortado por el overflow-y-auto
+    // del contenido de la modal (Modal.tsx), que además rompe position:fixed al animar con
+    // un transform en framer-motion.
+    useEffect(() => {
+        if (isRoleSelectOpen && roleSelectRef.current) {
+            const rect = roleSelectRef.current.getBoundingClientRect()
+            setDropdownPosition(computeDropdownPosition(rect, { maxHeight: ROLE_DROPDOWN_MAX_HEIGHT, gap: 4 }))
+        }
+    }, [isRoleSelectOpen])
+
+    useEffect(() => {
+        if (!isRoleSelectOpen) return
+        const handleScroll = (event: Event) => {
+            const target = event.target as Node
+            if (roleDropdownRef.current?.contains(target)) return
+            setIsRoleSelectOpen(false)
+        }
+        window.addEventListener('scroll', handleScroll, true)
+        return () => window.removeEventListener('scroll', handleScroll, true)
+    }, [isRoleSelectOpen])
 
     const validateForm = () => {
         const newErrors: { [key: string]: string } = {}
@@ -51,11 +85,11 @@ export default function CreateUserFormConfig({ onSubmit, onCancel }: CreateUserF
     }
 
     return (
-        <div className="space-y-6 p-6">
-            <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="p-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Email Input */}
-                <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                <div className="space-y-2">
+                    <label htmlFor="email" className="block text-[13px] font-medium" style={{ color: "var(--ds-text-secondary)" }}>
                         Correo Electrónico
                     </label>
                     <input
@@ -66,74 +100,86 @@ export default function CreateUserFormConfig({ onSubmit, onCancel }: CreateUserF
                             setFormData({ ...formData, email: e.target.value })
                             if (errors.email) setErrors({ ...errors, email: "" })
                         }}
-                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-colors ${errors.email
-                            ? "border-red-300 focus:ring-red-200"
-                            : "border-gray-300 focus:ring-blue-200 focus:border-blue-500"
-                            }`}
+                        className="w-full h-9 px-3 rounded-md text-sm bg-[var(--ds-card)] outline-none transition-shadow duration-150 placeholder:text-[var(--ds-text-muted)] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2"
+                        style={{ color: "var(--ds-text)", boxShadow: errors.email ? "0 0 0 1px var(--red-700)" : "var(--shadow-border)" }}
                         placeholder="usuario@ejemplo.com"
                     />
                     {errors.email && (
-                        <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                        <p className="mt-1 text-sm" style={{ color: "var(--red-700)" }}>{errors.email}</p>
                     )}
                 </div>
 
                 {/* Role Select */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                <div className="space-y-2 relative" ref={roleSelectRef}>
+                    <label className="block text-[13px] font-medium" style={{ color: "var(--ds-text-secondary)" }}>
                         Rol del Usuario
                     </label>
-                    <div className="relative">
-                        <button
-                            type="button"
-                            onClick={() => setIsRoleSelectOpen(!isRoleSelectOpen)}
-                            className={`w-full px-3 py-2 text-left border rounded-lg focus:outline-none focus:ring-2 transition-colors ${errors.role
-                                ? "border-red-300 focus:ring-red-200"
-                                : "border-gray-300 focus:ring-blue-200 focus:border-blue-500"
-                                }`}
-                        >
-                            {formData.role || "Selecciona un rol"}
-                            <span className={`${isRoleSelectOpen ? "-rotate-180" : "rotate-0"} absolute inset-y-0 right-0 flex items-center p-2 duration-200`}>
-                                <span className="rotate-90">
-                                    <ChevronRightIcon size={18} stroke={1.75} />
-                                </span>
-                            </span>
-                        </button>
+                    <button
+                        type="button"
+                        onClick={() => setIsRoleSelectOpen(!isRoleSelectOpen)}
+                        className="w-full flex items-center justify-between h-9 px-3 rounded-md text-sm transition-colors duration-150 hover:bg-[var(--gray-alpha-100)] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2"
+                        style={{ background: "var(--ds-card)", boxShadow: errors.role ? "0 0 0 1px var(--red-700)" : "var(--shadow-border)", color: formData.role ? "var(--ds-text)" : "var(--ds-text-muted)" }}
+                    >
+                        <span className="truncate">{formData.role || "Selecciona un rol"}</span>
+                        <ChevronDown
+                            size={16}
+                            strokeWidth={2}
+                            className={`flex-shrink-0 transition-transform duration-200 ${isRoleSelectOpen ? "rotate-180" : ""}`}
+                            style={{ color: "var(--ds-text-muted)" }}
+                        />
+                    </button>
 
-                        {isRoleSelectOpen && (
-                            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg">
-                                <ul className="py-1 max-h-60 overflow-auto">
-                                    {roles ? roles.map((role: RoleProps) => (
-                                        <li
-                                            key={role.name}
-                                            onClick={() => {
-                                                setFormData({ ...formData, role: role.name })
-                                                setIsRoleSelectOpen(false)
-                                                if (errors.role) setErrors({ ...errors, role: "" })
-                                            }}
-                                            className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
-                                        >
-                                            {role.name}
-                                        </li>
-                                    )) : (
-                                        <li className="px-3 py-2 text-gray-500">
-                                            Cargando roles...
-                                        </li>
-                                    )}
-                                </ul>
-                            </div>
-                        )}
-                    </div>
+                    {isRoleSelectOpen && mounted && createPortal(
+                        <div
+                            ref={roleDropdownRef}
+                            className="fixed z-[9999] rounded-md text-sm max-h-60 overflow-auto"
+                            style={{
+                                ...(dropdownPosition.openUpward ? { bottom: dropdownPosition.bottom } : { top: dropdownPosition.top }),
+                                left: dropdownPosition.left,
+                                width: dropdownPosition.width,
+                                background: "var(--ds-card)", border: "1px solid var(--ds-border)", boxShadow: "var(--shadow-lg)"
+                            }}
+                        >
+                            <ul className="py-1">
+                                {roles ? roles.map((role: RoleProps) => (
+                                    <li
+                                        key={role.name}
+                                        onClick={() => {
+                                            setFormData({ ...formData, role: role.name })
+                                            setIsRoleSelectOpen(false)
+                                            if (errors.role) setErrors({ ...errors, role: "" })
+                                        }}
+                                        className="px-3 py-2 cursor-pointer transition-colors duration-150 hover:bg-[var(--gray-alpha-100)]"
+                                        style={{ color: "var(--ds-text)" }}
+                                    >
+                                        {role.name}
+                                    </li>
+                                )) : (
+                                    <li className="px-3 py-2" style={{ color: "var(--ds-text-muted)" }}>
+                                        Cargando roles...
+                                    </li>
+                                )}
+                            </ul>
+                        </div>,
+                        document.body
+                    )}
                     {errors.role && (
-                        <p className="mt-1 text-sm text-red-600">{errors.role}</p>
+                        <p className="mt-1 text-sm" style={{ color: "var(--red-700)" }}>{errors.role}</p>
                     )}
                 </div>
 
                 <div className="flex justify-end gap-3 mt-4">
-                    <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 transition-all duration-200 text-sm font-medium" type="button"
+                    <button
+                        className="h-9 px-4 rounded-md text-sm font-medium transition-colors duration-150 bg-[var(--ds-card)] hover:bg-[var(--gray-alpha-100)] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2"
+                        style={{ color: "var(--ds-text)", boxShadow: "var(--shadow-border)" }}
+                        type="button"
                         onClick={() => onCancel()}>
                         Cancelar
                     </button>
-                    <button className={`bg-blue-600 hover:bg-blue-700 focus:ring-blue-500 text-white focus:ring-2 rounded-md focus:ring-offset-2 transition-all duration-200 text-sm font-medium px-4 py-2`} type="submit">
+                    <button
+                        className="h-9 px-4 rounded-md text-sm font-medium transition-colors duration-150 bg-[var(--primary-700)] hover:bg-[var(--primary-800)] focus-visible:outline-2 focus-visible:outline-[var(--primary-900)] focus-visible:outline-offset-2"
+                        style={{ color: "var(--primary-contrast-fg)" }}
+                        type="submit">
                         Agregar Usuario
                     </button>
                 </div>

@@ -4,20 +4,22 @@ import { useState, useEffect, useCallback } from 'react'
 import { useGeminiStore } from '@/lib/store/GeminiStore'
 import { useAuthStore } from '@/lib/store/AuthStore'
 import { useInfiniteScroll } from '@/lib/hooks/useInfiniteScroll'
-import { AuditIcon, FilterIcon, ClockIcon, CheckmarkIcon, AlertCircleIcon } from '@/assets/Icon'
+import { useModalStore } from '@/lib/hooks/ModalStore'
+import { ClipboardCheck, Filter, Clock, CircleCheck, AlertCircle, X } from 'lucide-react'
 import toast from 'react-hot-toast'
+import FilterGeminiHistoryForm, { GeminiHistoryFiltersValue } from './FilterGeminiHistoryForm'
 
 export default function GeminiUseHistory() {
-    const [filters, setFilters] = useState({
+    const [filters, setFilters] = useState<GeminiHistoryFiltersValue>({
         feature: '',
         projectId: '',
         userEmail: ''
     })
-    const [showFilters, setShowFilters] = useState(false)
     const [isLoadingMore, setIsLoadingMore] = useState(false)
 
+    const { openModal, closeModal } = useModalStore()
+
     const {
-        historyFilters,
         historyItems,
         historyLoading,
         historyHasMore,
@@ -101,22 +103,16 @@ export default function GeminiUseHistory() {
         }
     }, [historyLoading, historyHasMore, isLoadingMore, historyCurrentPage, historySize, filters.feature, filters.projectId, filters.userEmail, getValidAccessToken, getHistory])
 
-    const handleFilterChange = (key: string, value: string) => {
-        setFilters(prev => ({
-            ...prev,
-            [key]: value
-        }))
-    }
-
-    const applyFilters = async () => {
+    const applyFilters = async (newFilters: GeminiHistoryFiltersValue) => {
+        setFilters(newFilters)
         try {
             const token = await getValidAccessToken()
             if (token) {
                 resetHistory()
                 await getHistory(token, {
-                    feature: filters.feature,
-                    projectId: filters.projectId,
-                    userEmail: filters.userEmail,
+                    feature: newFilters.feature,
+                    projectId: newFilters.projectId,
+                    userEmail: newFilters.userEmail,
                     page: 0,
                     size: historySize
                 }, true)
@@ -124,7 +120,22 @@ export default function GeminiUseHistory() {
         } catch (error) {
             console.error('Error al aplicar filtros:', error)
             toast.error('Error al aplicar los filtros')
+        } finally {
+            closeModal()
         }
+    }
+
+    const handleFilterHistoryModal = () => {
+        openModal({
+            size: "md",
+            title: "Filtrar historial",
+            desc: "Encuentra registros específicos usando los filtros",
+            Icon: <Filter size={20} strokeWidth={1.75} />,
+            children: <FilterGeminiHistoryForm onSubmit={applyFilters} onCancel={() => closeModal()} initialFilters={filters} />,
+            closeOnBackdrop: false,
+            closeOnEscape: false,
+            mode: "UPDATE"
+        })
     }
 
     const clearFilters = async () => {
@@ -141,22 +152,22 @@ export default function GeminiUseHistory() {
     const getStatusIcon = (status: string) => {
         switch (status.toLowerCase()) {
             case 'ok':
-                return <div className="text-green-600"><CheckmarkIcon size={16} /></div>
+                return <div className="flex"><CircleCheck size={16} strokeWidth={1.5} /></div>
             case 'error':
-                return <div className="text-red-600"><AlertCircleIcon size={16} /></div>
+                return <div className="flex"><AlertCircle size={16} strokeWidth={1.5} /></div>
             default:
-                return <div className="text-yellow-600"><ClockIcon size={16} /></div>
+                return <div className="flex"><Clock size={16} strokeWidth={1.5} /></div>
         }
     }
 
-    const getStatusColor = (status: string) => {
+    const getStatusColor = (status: string): React.CSSProperties => {
         switch (status.toLowerCase()) {
             case 'ok':
-                return 'bg-green-100 text-green-800'
+                return { background: "var(--green-100)", color: "var(--green-900)", boxShadow: "0 0 0 1px var(--green-400)" }
             case 'error':
-                return 'bg-red-100 text-red-800'
+                return { background: "var(--red-100)", color: "var(--red-900)", boxShadow: "0 0 0 1px var(--red-400)" }
             default:
-                return 'bg-yellow-100 text-yellow-800'
+                return { background: "var(--amber-100)", color: "var(--amber-900)", boxShadow: "0 0 0 1px var(--amber-400)" }
         }
     }
 
@@ -195,29 +206,29 @@ export default function GeminiUseHistory() {
     const SkeletonLoader = () => (
         <div className="space-y-4">
             {Array.from({ length: 3 }).map((_, index) => (
-                <div key={index} className="bg-gray-50 rounded-lg p-4 border border-gray-200 animate-pulse">
+                <div key={index} className="rounded-md p-4 animate-pulse" style={{ background: "var(--gray-alpha-100)", boxShadow: "var(--shadow-border)" }}>
                     <div className="flex items-start justify-between">
                         <div className="flex-1">
                             <div className="flex items-center gap-3 mb-2">
-                                <div className="h-5 bg-gray-300 rounded w-24"></div>
-                                <div className="h-6 bg-gray-300 rounded-full w-16"></div>
+                                <div className="h-5 rounded w-24" style={{ background: "var(--gray-alpha-300)" }}></div>
+                                <div className="h-6 rounded-full w-16" style={{ background: "var(--gray-alpha-300)" }}></div>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                                 <div className="space-y-1">
-                                    <div className="h-4 bg-gray-300 rounded w-16"></div>
-                                    <div className="h-4 bg-gray-300 rounded w-32"></div>
+                                    <div className="h-4 rounded w-16" style={{ background: "var(--gray-alpha-300)" }}></div>
+                                    <div className="h-4 rounded w-32" style={{ background: "var(--gray-alpha-300)" }}></div>
                                 </div>
                                 <div className="space-y-1">
-                                    <div className="h-4 bg-gray-300 rounded w-16"></div>
-                                    <div className="h-4 bg-gray-300 rounded w-20"></div>
+                                    <div className="h-4 rounded w-16" style={{ background: "var(--gray-alpha-300)" }}></div>
+                                    <div className="h-4 rounded w-20" style={{ background: "var(--gray-alpha-300)" }}></div>
                                 </div>
                                 <div className="space-y-1">
-                                    <div className="h-4 bg-gray-300 rounded w-24"></div>
-                                    <div className="h-4 bg-gray-300 rounded w-16"></div>
+                                    <div className="h-4 rounded w-24" style={{ background: "var(--gray-alpha-300)" }}></div>
+                                    <div className="h-4 rounded w-16" style={{ background: "var(--gray-alpha-300)" }}></div>
                                 </div>
                                 <div className="space-y-1">
-                                    <div className="h-4 bg-gray-300 rounded w-12"></div>
-                                    <div className="h-4 bg-gray-300 rounded w-28"></div>
+                                    <div className="h-4 rounded w-12" style={{ background: "var(--gray-alpha-300)" }}></div>
+                                    <div className="h-4 rounded w-28" style={{ background: "var(--gray-alpha-300)" }}></div>
                                 </div>
                             </div>
                         </div>
@@ -236,181 +247,106 @@ export default function GeminiUseHistory() {
     })
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <div className="space-y-6">
-                {/* Header */}
-                <div className="flex items-center justify-between pb-4 border-b border-gray-100">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-green-50 rounded-lg text-green-600">
-                            <AuditIcon size={20} />
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-semibold text-gray-900">Historial de Uso de Gemini</h3>
-                            <p className="text-sm text-gray-600">
-                                {historyTotalElements > 0 ? `${historyTotalElements} registro${historyTotalElements !== 1 ? 's' : ''} encontrado${historyTotalElements !== 1 ? 's' : ''}` : 'Sin registros'}
-                            </p>
-                        </div>
-                    </div>
+        <div className="space-y-6">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
+                <div>
+                    <h2 className="font-semibold" style={{ fontSize: 20, letterSpacing: "-0.02em", color: "var(--ds-text)", margin: "0 0 4px" }}>Historial de Uso de Gemini</h2>
+                    <p style={{ fontSize: 14, color: "var(--ds-text-secondary)", margin: 0 }}>
+                        {historyTotalElements > 0 ? `${historyTotalElements} registro${historyTotalElements !== 1 ? 's' : ''} encontrado${historyTotalElements !== 1 ? 's' : ''}` : 'Sin registros'}
+                    </p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2">
+                    {getActiveFiltersCount() > 0 && (
+                        <button
+                            onClick={clearFilters}
+                            className="flex items-center justify-center gap-2 transition-colors text-sm font-medium hover:bg-[var(--red-100)] hover:text-[var(--red-900)] flex-shrink-0"
+                            style={{ height: 36, padding: "0 12px", color: "var(--red-700)", background: "var(--ds-background)", border: "1px solid var(--red-400)", borderRadius: "var(--radius-md)" }}
+                        >
+                            <X size={15} strokeWidth={2} />
+                            Limpiar filtros
+                        </button>
+                    )}
                     <button
-                        onClick={() => setShowFilters(!showFilters)}
-                        className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors relative"
+                        onClick={handleFilterHistoryModal}
+                        className="flex items-center justify-center gap-[7px] transition-colors text-sm font-medium relative hover:bg-[var(--gray-alpha-100)] flex-shrink-0"
+                        style={{ height: 36, padding: "0 12px", color: "var(--ds-text)", background: "var(--ds-background)", border: "1px solid var(--ds-border-strong)", borderRadius: "var(--radius-md)" }}
                     >
-                        <FilterIcon size={16} />
+                        <Filter size={15} strokeWidth={2} />
                         Filtros
                         {getActiveFiltersCount() > 0 && (
-                            <span className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                            <span className="absolute -top-2 -right-2 text-xs rounded-full h-5 w-5 flex items-center justify-center" style={{ background: "var(--blue-700)", color: "var(--ds-contrast-inverse)" }}>
                                 {getActiveFiltersCount()}
                             </span>
                         )}
                     </button>
                 </div>
+            </div>
 
-                {/* Filtros */}
-                {showFilters && (
-                    <div className="bg-gray-50 rounded-lg p-4 space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            {/* Feature Filter */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Funcionalidad
-                                </label>
-                                <select
-                                    value={filters.feature}
-                                    onChange={(e) => handleFilterChange('feature', e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                >
-                                    <option value="">Todas las funcionalidades</option>
-                                    {historyFilters?.features.map((feature) => (
-                                        <option key={feature} value={feature}>
-                                            {getFeatureLabel(feature)}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            {/* Project Filter */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Proyecto
-                                </label>
-                                <select
-                                    value={filters.projectId}
-                                    onChange={(e) => handleFilterChange('projectId', e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                >
-                                    <option value="">Todos los proyectos</option>
-                                    {historyFilters?.projectIds.map((project) => (
-                                        <option key={project.id} value={project.id}>
-                                            {project.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            {/* Email Filter */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Usuario
-                                </label>
-                                <select
-                                    value={filters.userEmail}
-                                    onChange={(e) => handleFilterChange('userEmail', e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                >
-                                    <option value="">Todos los usuarios</option>
-                                    {historyFilters?.emails.map((email) => (
-                                        <option key={email} value={email}>
-                                            {email}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
+            {/* Lista de Historial */}
+            <div className="space-y-4">
+                {historyLoading && historyItems.length === 0 ? (
+                    <SkeletonLoader />
+                ) : historyItems.length === 0 ? (
+                    <div className="text-center py-12">
+                        <div className="mb-2 flex justify-center" style={{ color: "var(--ds-text-muted)" }}>
+                            <ClipboardCheck size={48} />
                         </div>
-
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={applyFilters}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                            >
-                                Aplicar Filtros
-                            </button>
-                            <button
-                                onClick={clearFilters}
-                                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-                            >
-                                Limpiar
-                            </button>
-                        </div>
+                        <p style={{ color: "var(--ds-text-secondary)" }}>No se encontraron registros de uso</p>
                     </div>
-                )}
+                ) : (
+                    historyItems.map((item) => (
+                        <div key={item.id} className="rounded-md p-4 transition-shadow duration-150 hover:shadow-md" style={{ background: "var(--gray-alpha-100)", boxShadow: "var(--shadow-border)" }}>
+                            <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <span className="font-medium" style={{ color: "var(--ds-text)" }}>
+                                            {getFeatureLabel(item.feature)}
+                                        </span>
+                                        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full" style={getStatusColor(item.status)}>
+                                            {getStatusIcon(item.status)}
+                                            {item.status}
+                                        </span>
+                                    </div>
 
-                {/* Lista de Historial */}
-                <div className="space-y-4">
-                    {historyLoading && historyItems.length === 0 ? (
-                        <SkeletonLoader />
-                    ) : historyItems.length === 0 ? (
-                        <div className="text-center py-12">
-                            <div className="text-gray-400 mb-2 flex justify-center">
-                                <AuditIcon size={48} />
-                            </div>
-                            <p className="text-gray-500">No se encontraron registros de uso</p>
-                        </div>
-                    ) : (
-                        historyItems.map((item) => (
-                            <div key={item.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:shadow-md transition-shadow">
-                                <div className="flex items-start justify-between">
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-3 mb-2">
-                                            <span className="font-medium text-gray-900">
-                                                {getFeatureLabel(item.feature)}
-                                            </span>
-                                            <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(item.status)}`}>
-                                                {getStatusIcon(item.status)}
-                                                {item.status}
-                                            </span>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm" style={{ color: "var(--ds-text-secondary)" }}>
+                                        <div>
+                                            <span className="font-medium">Usuario:</span>
+                                            <p className="truncate">{item.userEmail}</p>
                                         </div>
-                                        
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-gray-600">
-                                            <div>
-                                                <span className="font-medium">Usuario:</span>
-                                                <p className="truncate">{item.userEmail}</p>
-                                            </div>
-                                            <div>
-                                                <span className="font-medium">Proyecto:</span>
-                                                <p className="truncate">{item.projectId || 'N/A'}</p>
-                                            </div>
-                                            <div>
-                                                <span className="font-medium">Tiempo de respuesta:</span>
-                                                <p>{formatResponseTime(item.responseTimeMs)}</p>
-                                            </div>
-                                            <div>
-                                                <span className="font-medium">Fecha:</span>
-                                                <p>{formatDate(item.timestamp)}</p>
-                                            </div>
+                                        <div>
+                                            <span className="font-medium">Proyecto:</span>
+                                            <p className="truncate">{item.projectId || 'N/A'}</p>
+                                        </div>
+                                        <div>
+                                            <span className="font-medium">Tiempo de respuesta:</span>
+                                            <p>{formatResponseTime(item.responseTimeMs)}</p>
+                                        </div>
+                                        <div>
+                                            <span className="font-medium">Fecha:</span>
+                                            <p>{formatDate(item.timestamp)}</p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        ))
-                    )}
-
-                    {/* Loading indicator */}
-                    {(historyLoading || isLoadingMore) && (
-                        <div className="flex justify-center py-4">
-                            <svg className="animate-spin h-6 w-6 text-blue-600" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                            </svg>
                         </div>
-                    )}
+                    ))
+                )}
 
-                    {/* No more items indicator */}
-                    {!historyHasMore && historyItems.length > 0 && (
-                        <div className="text-center py-4 text-gray-500 text-sm">
-                            No hay más registros para mostrar
-                        </div>
-                    )}
-                </div>
+                {/* Loading indicator */}
+                {(historyLoading || isLoadingMore) && historyItems.length > 0 && (
+                    <div className="flex items-center justify-center gap-2 py-4 text-sm" style={{ color: "var(--ds-text-muted)" }}>
+                        <div className="w-4 h-4 rounded-full animate-spin" style={{ border: "2px solid var(--ds-border)", borderTopColor: "var(--blue-700)" }}></div>
+                        Cargando más registros...
+                    </div>
+                )}
+
+                {/* No more items indicator */}
+                {!historyHasMore && historyItems.length > 0 && (
+                    <div className="text-center py-4 text-sm" style={{ color: "var(--ds-text-secondary)" }}>
+                        No hay más registros para mostrar
+                    </div>
+                )}
             </div>
         </div>
     )

@@ -109,12 +109,6 @@ export interface PermissionProps {
 
 
 
-//* Notifications Metadata
-export interface IconProps {
-   size?: number | string
-   stroke?: number
-}
-
 //* Configuration
 export interface ConfigProjectStatusProps {
    id: number

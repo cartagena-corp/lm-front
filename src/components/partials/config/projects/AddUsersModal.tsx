@@ -7,13 +7,11 @@ import { getUserAvatar } from "@/lib/utils/avatar.utils"
 import { getUserRoleName } from "@/lib/utils/user.utils"
 import InviteUserForm from "./InviteUserForm"
 import {
-    UsersIcon,
-    FilterIcon,
-    EditIcon,
-    PlusIcon,
-    XIcon,
-    CheckmarkIcon
-} from "@/assets/Icon"
+    Users,
+    Filter,
+    Plus,
+    CircleCheck
+} from "lucide-react"
 
 interface AddUsersModalProps {
     onSubmit: (userIds: string[]) => void
@@ -160,38 +158,40 @@ export default function AddUsersModal({
 
                 {/* Search Bar */}
                 <div className="relative">
-                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                        <FilterIcon size={16} />
+                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2" style={{ color: "var(--ds-text-muted)" }}>
+                        <Filter size={16} strokeWidth={1.5} />
                     </div>
                     <input
                         type="text"
                         placeholder="Buscar usuarios por nombre o correo..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        className="w-full h-9 pl-10 pr-4 rounded-md text-sm outline-none transition-shadow duration-150 placeholder:text-[var(--ds-text-muted)] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2"
+                        style={{ background: "var(--ds-card)", color: "var(--ds-text)", boxShadow: "var(--shadow-border)" }}
                     />
                 </div>
 
                 {/* User List */}
                 <div
                     ref={modalUsersListRef}
-                    className="max-h-96 overflow-y-auto border border-gray-200 rounded-lg"
+                    className="max-h-96 overflow-y-auto rounded-md"
+                    style={{ boxShadow: "var(--shadow-border)" }}
                 >
                     <div className="p-4">
                         {(authLoading && availableUsers.length === 0) ? (
                             <div className="text-center py-8">
-                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                                <p className="text-gray-600">Cargando usuarios...</p>
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto mb-4" style={{ borderColor: "var(--blue-700)" }}></div>
+                                <p className="text-sm" style={{ color: "var(--ds-text-secondary)" }}>Cargando usuarios...</p>
                             </div>
                         ) : (availableUsers.length === 0 && !authLoading) ? (
                             <div className="text-center py-8">
-                                <div className="p-4 bg-gray-50 text-gray-400 rounded-lg w-fit mx-auto mb-4">
-                                    <UsersIcon size={32} />
+                                <div className="w-fit mx-auto mb-4 p-4" style={{ background: "var(--gray-alpha-100)", color: "var(--ds-text-muted)", borderRadius: "var(--radius-md)" }}>
+                                    <Users size={32} strokeWidth={1.5} />
                                 </div>
-                                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                                <h3 className="font-semibold mb-2" style={{ fontSize: 16, color: "var(--ds-text)" }}>
                                     No hay usuarios disponibles
                                 </h3>
-                                <p className="text-gray-600 mb-4">
+                                <p className="mb-4 text-sm" style={{ color: "var(--ds-text-secondary)" }}>
                                     {searchQuery
                                         ? 'No se encontraron usuarios que coincidan con la búsqueda'
                                         : 'Todos los usuarios ya están participando en el proyecto'
@@ -200,9 +200,10 @@ export default function AddUsersModal({
                                 {hasUserCreatePermission && searchQuery && (
                                     <button
                                         onClick={() => setShowInviteForm(true)}
-                                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2 mx-auto"
+                                        className="flex items-center gap-2 h-9 px-4 rounded-md text-sm font-medium mx-auto transition-opacity duration-150 hover:opacity-90 focus-visible:outline-2 focus-visible:outline-[var(--primary-900)] focus-visible:outline-offset-2"
+                                        style={{ background: "var(--primary-700)", color: "var(--primary-contrast-fg)" }}
                                     >
-                                        <PlusIcon size={16} />
+                                        <Plus size={16} strokeWidth={1.5} />
                                         Invitar "{searchQuery}" a La Muralla
                                     </button>
                                 )}
@@ -213,34 +214,34 @@ export default function AddUsersModal({
                                     <div
                                         key={user.id}
                                         onClick={() => toggleUserSelection(user.id)}
-                                        className={`p-4 rounded-lg border cursor-pointer transition-all duration-200 ${selectedUsers.has(user.id)
-                                                ? 'border-blue-500 bg-blue-50'
-                                                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                                            }`}
+                                        className="p-4 rounded-md cursor-pointer transition-colors duration-150 hover:bg-[var(--gray-alpha-100)]"
+                                        style={selectedUsers.has(user.id)
+                                            ? { boxShadow: "0 0 0 1px var(--blue-700)", background: "var(--blue-100)" }
+                                            : { boxShadow: "var(--shadow-border)" }}
                                     >
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
+                                        <div className="flex items-center justify-between gap-3">
+                                            <div className="flex items-center gap-3 min-w-0">
                                                 <img
                                                     src={getUserAvatar(user, 40)}
                                                     alt={`${user.firstName || ''} ${user.lastName || ''}`}
-                                                    className="w-10 h-10 rounded-full object-cover"
+                                                    className="w-10 h-10 rounded-full object-cover flex-shrink-0"
                                                 />
-                                                <div>
-                                                    <h4 className="font-medium text-gray-900">
+                                                <div className="min-w-0">
+                                                    <h4 className="font-medium text-sm truncate" style={{ color: "var(--ds-text)" }}>
                                                         {user.firstName && user.lastName
                                                             ? `${user.firstName} ${user.lastName}`
                                                             : user.email
                                                         }
                                                     </h4>
-                                                    <p className="text-sm text-gray-500">{user.email}</p>
-                                                    <p className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full w-fit mt-1">
+                                                    <p className="text-sm truncate" style={{ color: "var(--ds-text-secondary)" }}>{user.email}</p>
+                                                    <p className="inline-block text-xs px-2 py-1 rounded-full w-fit mt-1" style={{ background: "var(--blue-100)", color: "var(--blue-900)" }}>
                                                         {getUserRoleName(user)}
                                                     </p>
                                                 </div>
                                             </div>
                                             {selectedUsers.has(user.id) && (
-                                                <div className="text-blue-600">
-                                                    <CheckmarkIcon size={20} />
+                                                <div className="flex-shrink-0" style={{ color: "var(--blue-700)" }}>
+                                                    <CircleCheck size={20} strokeWidth={1.5} />
                                                 </div>
                                             )}
                                         </div>
@@ -250,8 +251,8 @@ export default function AddUsersModal({
                                 {/* Indicador de carga para más usuarios */}
                                 {isLoadingMore && (
                                     <div className="py-4">
-                                        <div className="flex items-center justify-center gap-3 text-blue-600">
-                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                                        <div className="flex items-center justify-center gap-3" style={{ color: "var(--blue-700)" }}>
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2" style={{ borderColor: "var(--blue-700)" }}></div>
                                             <span className="text-sm">Cargando más usuarios...</span>
                                         </div>
                                     </div>
@@ -259,11 +260,11 @@ export default function AddUsersModal({
 
                                 {/* Indicador de fin de lista */}
                                 {usersPagination && usersPagination.number >= usersPagination.totalPages - 1 && !isLoadingMore && availableUsers.length > 0 && (
-                                    <div className="text-center py-4 text-gray-500 text-sm">
+                                    <div className="text-center py-4 text-sm" style={{ color: "var(--ds-text-muted)" }}>
                                         <div className="flex items-center justify-center gap-2">
-                                            <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                                            <div className="w-2 h-2 rounded-full" style={{ background: "var(--gray-alpha-300)" }}></div>
                                             <span>No hay más usuarios para mostrar</span>
-                                            <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                                            <div className="w-2 h-2 rounded-full" style={{ background: "var(--gray-alpha-300)" }}></div>
                                         </div>
                                     </div>
                                 )}
@@ -273,19 +274,20 @@ export default function AddUsersModal({
                 </div>
 
                 {/* Footer */}
-                <div className="border-t border-gray-200 pt-6">
-                    <div className="flex items-center justify-between">
-                        <p className="text-sm text-gray-600">
+                <div className="pt-6" style={{ borderTop: "1px solid var(--ds-border)" }}>
+                    <div className="flex items-center justify-between gap-3 flex-wrap">
+                        <p className="text-sm" style={{ color: "var(--ds-text-secondary)" }}>
                             {selectedUsers.size} usuarios seleccionados
                         </p>
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={handleSubmit}
                                 disabled={selectedUsers.size === 0 || isLoading}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                                className="flex items-center gap-2 h-9 px-4 rounded-md text-sm font-medium transition-opacity duration-150 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-[var(--primary-900)] focus-visible:outline-offset-2"
+                                style={{ background: "var(--primary-700)", color: "var(--primary-contrast-fg)" }}
                             >
                                 {isLoading && (
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[var(--primary-contrast-fg)]"></div>
                                 )}
                                 Agregar Participantes
                             </button>

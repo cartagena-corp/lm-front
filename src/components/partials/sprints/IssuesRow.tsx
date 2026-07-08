@@ -1,9 +1,5 @@
-import { useMultiDragContext } from '@/components/ui/dnd-kit/MultiDragContext'
 import { Dispatch, SetStateAction, useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { useBoardStore } from '@/lib/store/BoardStore'
-import { useDraggable } from '@dnd-kit/core'
-import { CSS } from '@dnd-kit/utilities'
-import { Droppable } from '@/components/ui/dnd-kit/Droppable'
 import { SprintProps, TaskProps, UserProps } from '@/lib/types/types'
 import { useConfigStore } from '@/lib/store/ConfigStore'
 import DeleteIssueForm from '../issues/DeleteIssueForm'
@@ -12,13 +8,12 @@ import { useIssueStore } from '@/lib/store/IssueStore'
 import CreateTaskForm from '../issues/CreateTaskForm'
 import { useAuthStore } from '@/lib/store/AuthStore'
 import ReasignIssue from '../issues/ReasignIssue'
-import { CalendarIcon, CheckmarkIcon, EditIcon, DeleteIcon, PlusIcon, EyeIcon, ClockIcon, ForbiddenIcon, IAIcon, ChatIAIcon, ImportIcon, FilterIcon, XIcon, DashboardIcon } from '@/assets/Icon'
+import { Calendar, CircleCheck, Pencil, Trash2, Plus, Eye, Clock, Ban, Bot, Upload, BarChart3, MoreVertical, PowerOff, Zap, ListChecks, FileText } from 'lucide-react'
 import { useModalStore } from '@/lib/hooks/ModalStore'
 import Image from 'next/image'
 import CreateSprintForm from './CreateSprintForm'
 import { useSprintStore } from '@/lib/store/SprintStore'
 import DeleteSprintForm from './DeleteSprintForm'
-import IssueConfig from '../config/issues/IssueConfig'
 import AuditHistory from '../audit/AuditHistory'
 import { getUserAvatar } from '@/lib/utils/avatar.utils'
 import ImportIssuesModal from '../issues/ImportIssuesModal'
@@ -26,12 +21,15 @@ import CreateWithIA from '../issues/CreateWithIA'
 import DeleteAllForm from '../issues/DeleteAllForm'
 import SafeHtml from '@/components/ui/SafeHtml'
 import Dashboard from '../audit/Dashboard'
+import UserFilterSelect, { FilterUser } from '@/components/ui/UserFilterSelect'
+import ColumnFilterSelect, { ColumnFilterOption } from '@/components/ui/ColumnFilterSelect'
 
-// Component DraggableIssueRow - Implementación igual a SprintKanbanCard
+// Component DraggableIssueRow
 interface DraggableIssueRowProps {
    task: TaskProps
    selectedIds: string[]
    toggleSelect: (id: string) => void
+   onDragStart: (e: React.DragEvent, taskId: string) => void
    onViewDetails: () => void
    onEdit: () => void
    onReassign: () => void
@@ -46,101 +44,12 @@ interface DraggableIssueRowProps {
    wrapperRef: React.RefObject<HTMLDivElement>
 }
 
-function DraggableIssueRow({ task, selectedIds, toggleSelect, onViewDetails, onEdit, onReassign, onDelete, onHistory, onDashboard, getStatusStyle, getPriorityStyle, getTypeStyle, openItemId, setOpenItemId, wrapperRef }: DraggableIssueRowProps) {
+function DraggableIssueRow({ task, selectedIds, toggleSelect, onDragStart, onViewDetails, onEdit, onReassign, onDelete, onHistory, onDashboard, getStatusStyle, getPriorityStyle, getTypeStyle, openItemId, setOpenItemId, wrapperRef }: DraggableIssueRowProps) {
    const id = task.id as string
    const isChecked = selectedIds.includes(id)
    const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 })
    const buttonRef = useRef<HTMLButtonElement>(null)
-
-   // Estado para manejar clicks y drag - MISMA LÓGICA QUE SprintKanbanCard
-   const startPosition = useRef<{ x: number; y: number } | null>(null)
-   const lastClickTime = useRef<number>(0)
-   const isPointerDown = useRef<boolean>(false)
-   const hasMoved = useRef<boolean>(false)
-
-   const {
-      attributes,
-      listeners,
-      setNodeRef,
-      transform,
-      isDragging,
-   } = useDraggable({ id })
-
-   const style = {
-      transform: CSS.Translate.toString(transform),
-   }
-
-   // Custom event handlers para detectar drag vs click - MISMA LÓGICA QUE SprintKanbanCard
-   const handlePointerDown = useCallback((event: React.PointerEvent) => {
-      const currentTime = Date.now()
-      startPosition.current = { x: event.clientX, y: event.clientY }
-      isPointerDown.current = true
-      hasMoved.current = false
-
-      // Detectar doble click
-      if (currentTime - lastClickTime.current < 300) {
-         // Es un doble click
-         event.preventDefault()
-         event.stopPropagation()
-         onViewDetails()
-         return
-      }
-
-      lastClickTime.current = currentTime
-
-      // Siempre llamar al listener original, el sensor se encarga de la distancia
-      if (listeners?.onPointerDown) {
-         listeners.onPointerDown(event)
-      }
-   }, [onViewDetails, listeners])
-
-   const handlePointerMove = useCallback((event: React.PointerEvent) => {
-      if (startPosition.current && isPointerDown.current) {
-         const deltaX = Math.abs(event.clientX - startPosition.current.x)
-         const deltaY = Math.abs(event.clientY - startPosition.current.y)
-
-         // Si se mueve más de 3 píxeles, marcar como movimiento
-         if (deltaX > 3 || deltaY > 3) {
-            hasMoved.current = true
-         }
-      }
-
-      // Llamar al listener original del drag
-      if (listeners?.onPointerMove) {
-         listeners.onPointerMove(event)
-      }
-   }, [listeners])
-
-   const handlePointerUp = useCallback((event: React.PointerEvent) => {
-      // Si fue un click simple (sin movimiento) y no fue doble click
-      if (isPointerDown.current && !hasMoved.current) {
-         // Esperar un momento para ver si viene un segundo click
-         setTimeout(() => {
-            const timeSinceLastClick = Date.now() - lastClickTime.current
-            // Si han pasado más de 300ms desde el último click, es un click simple
-            if (timeSinceLastClick > 300) {
-               onViewDetails()
-            }
-         }, 350) // Esperar un poco más de 300ms para asegurar que no es doble click
-      }
-
-      startPosition.current = null
-      isPointerDown.current = false
-      hasMoved.current = false
-
-      // Llamar al listener original del drag
-      if (listeners?.onPointerUp) {
-         listeners.onPointerUp(event)
-      }
-   }, [onViewDetails, listeners])
-
-   // Crear listeners personalizados
-   const customListeners = {
-      ...listeners,
-      onPointerDown: handlePointerDown,
-      onPointerMove: handlePointerMove,
-      onPointerUp: handlePointerUp
-   }
+   const [isDragging, setIsDragging] = useState(false)
 
    // Cerrar menú al hacer scroll
    useEffect(() => {
@@ -175,47 +84,63 @@ function DraggableIssueRow({ task, selectedIds, toggleSelect, onViewDetails, onE
 
    return (
       <div
-         ref={setNodeRef}
-         style={style}
-         {...attributes}
-         {...customListeners}
-         className={`grid grid-cols-18 gap-4 p-3 items-center hover:bg-blue-50/30 rounded-lg border border-gray-100 hover:border-blue-200 transition-all cursor-grab active:cursor-grabbing bg-white shadow-sm hover:shadow-md ${isDragging ? 'opacity-0' : ''}`}
+         draggable
+         onDragStart={(e) => {
+            // No iniciar un drag si el gesto arrancó sobre un control interactivo
+            // (checkbox, reasignar, menú de acciones) — debe comportarse como su
+            // propio click, no como el arrastre de toda la fila.
+            if ((e.target as HTMLElement).closest('button, input')) {
+               e.preventDefault()
+               return
+            }
+            onDragStart(e, id)
+            // Atenuar en el siguiente tick: si se aplica en el mismo frame, el
+            // navegador la captura en la miniatura ("ghost") del drag.
+            setTimeout(() => setIsDragging(true), 0)
+         }}
+         onDragEnd={() => setIsDragging(false)}
+         onClick={() => onViewDetails()}
+         className={`grid grid-cols-1 md:grid-cols-18 gap-2 md:gap-3 py-2 px-3 items-start md:items-center hover:bg-[var(--gray-alpha-100)] rounded-md border border-[var(--ds-border)] hover:border-[var(--ds-border-strong)] transition-all cursor-grab active:cursor-grabbing bg-[var(--ds-card)] ${isDragging ? 'opacity-50' : ''}`}
       >
          {/* Checkbox */}
-         <div className="col-span-1 flex justify-center">
+         <div className="col-span-full md:col-span-1 flex items-center gap-2 md:justify-center">
             <input
                type="checkbox"
                checked={isChecked}
                onChange={() => toggleSelect(id)}
-               onPointerDown={e => e.stopPropagation()}
-               className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+               onClick={e => e.stopPropagation()}
+               className="w-4 h-4 rounded accent-[var(--blue-700)] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2"
             />
+            <span className="md:hidden text-xs text-[var(--ds-text-muted)]">Seleccionar</span>
          </div>
 
          {/* Tipo */}
-         <div
-            className="col-span-1 rounded-full text-[10px] border px-2 whitespace-nowrap w-fit"
-            style={{
-               backgroundColor: `${getTypeStyle(Number(task.type))?.color ?? "#000000"}0f`,
-               color: getTypeStyle(Number(task.type))?.color ?? "#000000"
-            }}
-         >
-            {getTypeStyle(Number(task.type))?.name ?? "Sin tipo"}
+         <div className="col-span-full md:col-span-1">
+            <span className="md:hidden block text-[10px] font-medium uppercase tracking-wide text-[var(--ds-text-muted)] mb-1">Tipo</span>
+            <div
+               className="rounded-full text-[10px] border px-2 whitespace-nowrap w-fit"
+               style={{
+                  backgroundColor: `${getTypeStyle(Number(task.type))?.color ?? "#6B7280"}0f`,
+                  color: getTypeStyle(Number(task.type))?.color ?? "#6B7280"
+               }}
+            >
+               {getTypeStyle(Number(task.type))?.name ?? "Sin tipo"}
+            </div>
          </div>
 
          {/* Tarea */}
-         <div className="col-span-5">
-            <h6 className="font-medium text-gray-900 text-sm line-clamp-1" title={task.title}>
+         <div className="col-span-full md:col-span-5">
+            <h6 className="font-medium text-[var(--ds-text)] text-sm line-clamp-1" title={task.title}>
                {task.title}
             </h6>
             {
                (task.descriptions.length > 0) ?
                   <SafeHtml
                      html={task.descriptions[0].text}
-                     className="line-clamp-1 text-xs text-gray-600 leading-relaxed [&_code]:font-mono [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs"
+                     className="line-clamp-1 text-xs text-[var(--ds-text-secondary)] leading-relaxed [&_code]:font-mono [&_code]:bg-[var(--gray-alpha-200)] [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs"
                   />
                   :
-                  <p className="text-xs text-gray-500 line-clamp-1">
+                  <p className="text-xs text-[var(--ds-text-muted)] line-clamp-1">
                      {
                         ((task.startDate || task.endDate) && !task.realDate) ?
                            <>
@@ -232,7 +157,8 @@ function DraggableIssueRow({ task, selectedIds, toggleSelect, onViewDetails, onE
          </div>
 
          {/* Estado */}
-         <div className="col-span-2">
+         <div className="col-span-full md:col-span-2">
+            <span className="md:hidden block text-[10px] font-medium uppercase tracking-wide text-[var(--ds-text-muted)] mb-1">Estado</span>
             <span
                className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border"
                style={{
@@ -250,7 +176,8 @@ function DraggableIssueRow({ task, selectedIds, toggleSelect, onViewDetails, onE
          </div>
 
          {/* Prioridad */}
-         <div className="col-span-2">
+         <div className="col-span-full md:col-span-2">
+            <span className="md:hidden block text-[10px] font-medium uppercase tracking-wide text-[var(--ds-text-muted)] mb-1">Prioridad</span>
             <span
                className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border"
                style={{
@@ -268,13 +195,13 @@ function DraggableIssueRow({ task, selectedIds, toggleSelect, onViewDetails, onE
          </div>
 
          {/* Asignado a */}
-         <div className="col-span-5">
+         <div className="col-span-full md:col-span-5">
+            <span className="md:hidden block text-[10px] font-medium uppercase tracking-wide text-[var(--ds-text-muted)] mb-1">Asignado a</span>
             <button
-               className="flex items-center gap-2 w-full text-left hover:bg-gray-50 rounded-lg p-2 transition-colors"
-               onPointerDown={e => e.stopPropagation()}
-               onClick={onReassign}
+               className="flex items-center gap-2 w-full text-left hover:bg-[var(--gray-alpha-100)] rounded-md p-2 transition-colors"
+               onClick={e => { e.stopPropagation(); onReassign() }}
             >
-               <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
+               <div className="w-6 h-6 rounded-full bg-[var(--gray-alpha-200)] flex items-center justify-center overflow-hidden flex-shrink-0">
                   {typeof task.assignedId === 'object' && task.assignedId ? (
                      <img
                         src={getUserAvatar(task.assignedId, 24)}
@@ -282,11 +209,11 @@ function DraggableIssueRow({ task, selectedIds, toggleSelect, onViewDetails, onE
                         className="w-full h-full object-cover rounded-full"
                      />
                   ) : (
-                     <span className="text-xs text-gray-500">N/A</span>
+                     <span className="text-xs text-[var(--ds-text-muted)]">N/A</span>
                   )}
 
                </div>
-               <span className="text-xs text-gray-700 line-clamp-1">
+               <span className="text-xs text-[var(--ds-text-secondary)] line-clamp-1">
                   {typeof task.assignedId === 'object' && task.assignedId
                      ? (
                         task.assignedId.firstName || task.assignedId.lastName
@@ -300,14 +227,15 @@ function DraggableIssueRow({ task, selectedIds, toggleSelect, onViewDetails, onE
          </div>
 
          {/* Acciones */}
-         <div className="col-span-1 flex justify-center">
+         <div className="col-span-full md:col-span-1 flex justify-end md:justify-center">
             <div ref={openItemId === task.id ? wrapperRef : null} className="relative">
                <button
                   ref={buttonRef}
-                  onClick={() => {
+                  onClick={(e) => {
+                     e.stopPropagation()
                      const newOpenState = openItemId === task.id ? null : task.id as string
                      setOpenItemId(newOpenState)
-                     
+
                      // Calcular posición si se está abriendo
                      if (newOpenState && buttonRef.current) {
                         const rect = buttonRef.current.getBoundingClientRect()
@@ -317,77 +245,69 @@ function DraggableIssueRow({ task, selectedIds, toggleSelect, onViewDetails, onE
                         })
                      }
                   }}
-                  onPointerDown={e => e.stopPropagation()}
-                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-2 text-[var(--ds-text-muted)] hover:text-[var(--ds-text-secondary)] hover:bg-[var(--gray-alpha-100)] rounded-md transition-colors"
                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                  </svg>
+                  <MoreVertical size={16} strokeWidth={1.5} />
                </button>
 
                {openItemId === task.id && (
                   <div
-                     className="fixed w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-[99999] overflow-hidden"
+                     className="fixed w-40 bg-[var(--ds-card)] border border-[var(--ds-border)] rounded-md shadow-[var(--shadow-lg)] z-[99999] overflow-hidden"
                      style={{
                         top: `${menuPosition.top}px`,
                         left: `${menuPosition.left}px`
                      }}
-                     onPointerDown={e => e.stopPropagation()}
+                     onClick={e => e.stopPropagation()}
                   >
                      <button
-                        className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
-                        onPointerDown={e => e.stopPropagation()}
+                        className="w-full px-3 py-2 text-left text-sm text-[var(--ds-text)] hover:bg-[var(--gray-alpha-100)] transition-colors flex items-center gap-2"
                         onClick={() => {
                            onDashboard()
                            setOpenItemId(null)
                         }}
                      >
-                        <DashboardIcon size={14} />
+                        <BarChart3 size={14} />
                         Ver Dashboard
                      </button>
                      <button
-                        className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
-                        onPointerDown={e => e.stopPropagation()}
+                        className="w-full px-3 py-2 text-left text-sm text-[var(--ds-text)] hover:bg-[var(--gray-alpha-100)] transition-colors flex items-center gap-2"
                         onClick={() => {
                            onViewDetails()
                            setOpenItemId(null)
                         }}
                      >
-                        <EyeIcon size={14} />
+                        <Eye size={14} strokeWidth={1.5} />
                         Ver Detalles
                      </button>
                      <button
-                        className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
-                        onPointerDown={e => e.stopPropagation()}
+                        className="w-full px-3 py-2 text-left text-sm text-[var(--ds-text)] hover:bg-[var(--gray-alpha-100)] transition-colors flex items-center gap-2"
                         onClick={() => {
                            onEdit()
                            setOpenItemId(null)
                         }}
                      >
-                        <EditIcon size={14} />
+                        <Pencil size={14} strokeWidth={1.5} />
                         Editar
                      </button>
                      <button
-                        className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
-                        onPointerDown={e => e.stopPropagation()}
+                        className="w-full px-3 py-2 text-left text-sm text-[var(--ds-text)] hover:bg-[var(--gray-alpha-100)] transition-colors flex items-center gap-2"
                         onClick={() => {
                            onHistory()
                            setOpenItemId(null)
                         }}
                      >
-                        <ClockIcon size={14} />
+                        <Clock size={14} strokeWidth={1.5} />
                         Historial
                      </button>
-                     <div className="border-t border-gray-100"></div>
+                     <div style={{ borderTop: "1px solid var(--ds-border)" }}></div>
                      <button
-                        className="w-full px-3 py-2 text-left text-sm hover:bg-red-50 transition-colors flex items-center gap-2 text-red-600"
-                        onPointerDown={e => e.stopPropagation()}
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-[var(--red-100)] transition-colors flex items-center gap-2 text-[var(--ds-error)]"
                         onClick={() => {
                            onDelete()
                            setOpenItemId(null)
                         }}
                      >
-                        <DeleteIcon size={14} />
+                        <Trash2 size={14} strokeWidth={1.5} />
                         Eliminar
                      </button>
                   </div>
@@ -398,27 +318,22 @@ function DraggableIssueRow({ task, selectedIds, toggleSelect, onViewDetails, onE
    )
 }
 
-export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOverlay = false }: { spr: SprintProps, setIsOpen: Dispatch<SetStateAction<boolean>>, setIsCreateWithIAOpen: Dispatch<SetStateAction<boolean>>, isOverlay?: boolean }) {
-   const { selectedIds, setSelectedIds } = useMultiDragContext()
+interface IssuesRowProps {
+   spr: SprintProps
+   setIsOpen: Dispatch<SetStateAction<boolean>>
+   setIsCreateWithIAOpen: Dispatch<SetStateAction<boolean>>
+   selectedIds: string[]
+   setSelectedIds: Dispatch<SetStateAction<string[]>>
+   onTaskDragStart: (e: React.DragEvent, taskId: string) => void
+   onDropOnSprint: (e: React.DragEvent) => void
+}
 
-   if (isOverlay) {
-      return (
-         <div className="bg-blue-50 border-2 border-blue-200 border-dashed text-blue-700 cursor-grabbing flex items-center justify-center rounded-xl shadow-lg w-full h-20 transition-all duration-200">
-            <div className="flex items-center gap-2">
-               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-               </svg>
-               <span className="font-medium text-sm">
-                  {selectedIds.length === 1 ? `${selectedIds.length} tarea seleccionada` : `${selectedIds.length} tareas seleccionadas`}
-               </span>
-            </div>
-         </div>
-      )
-   }
+export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, selectedIds, setSelectedIds, onTaskDragStart, onDropOnSprint }: IssuesRowProps) {
+   const [isDragOverSprint, setIsDragOverSprint] = useState(false)
 
    const { getValidAccessToken, user } = useAuthStore()
    const { deleteAllIssues, deleteIssue, updateIssue, assignIssue, createIssue } = useIssueStore()
-   const { updateSprint, deleteSprint, activeSprint, getIssuesBySprint, loadMoreIssuesBySprint, clearIssuesFromSprint } = useSprintStore()
+   const { updateSprint, deleteSprint, activeSprint, getIssuesBySprint, loadMoreIssuesBySprint, clearIssuesFromSprint, isLoadingSprintDetails } = useSprintStore()
    const { openModal, closeModal } = useModalStore()
 
    const wrapperRef = useRef<HTMLDivElement>(null)
@@ -461,7 +376,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
          const projectId = spr.projectId as string
 
 
-         await loadMoreIssuesBySprint(token, sprintId, projectId, currentPage + 1, filterRef.current)
+         await loadMoreIssuesBySprint(token, sprintId, projectId, currentPage + 1, activeFiltersRef.current)
 
          // Verificar si hay más páginas después de cargar
          const updatedSprint = useSprintStore.getState().sprints.find(s => {
@@ -645,7 +560,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
          title: "Importar Tareas",
          desc: "Importa tareas desde un archivo CSV o Excel al sprint actual",
          children: <ImportIssuesModal onCancel={() => closeModal()} sprintId={spr.id} />,
-         Icon: <ImportIcon size={20} />,
+         Icon: <Upload size={20} strokeWidth={1.5} />,
          closeOnBackdrop: false,
          closeOnEscape: true,
          mode: "CREATE"
@@ -658,7 +573,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
          title: "Editar Sprint",
          desc: `Modifica la información del sprint ${spr.title}`,
          children: <CreateSprintForm onSubmit={handleUpdateSprint} onCancel={() => closeModal()} currentSprint={sprintSelected as SprintProps} isEdit={true} />,
-         Icon: <EditIcon size={20} />,
+         Icon: <Pencil size={20} strokeWidth={1.5} />,
          closeOnBackdrop: false,
          closeOnEscape: true,
          mode: "UPDATE"
@@ -682,7 +597,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
             size: "xxl",
             title: `Dashboard del sprint: ${sprintSelected.title}`,
             desc: "Estadísticas y métricas del sprint",
-            Icon: <DashboardIcon size={20} />,
+            Icon: <BarChart3 size={20} />,
             children: <Dashboard projectId={spr.projectId as string} sprintId={sprintSelected.id as string} token={token} />,
             closeOnBackdrop: false,
             closeOnEscape: false,
@@ -696,7 +611,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
          size: "full",
          desc: "Detalles completos de la tarea",
          children: <TaskDetailsForm task={task} onSubmit={() => closeModal()} onCancel={() => closeModal()} />,
-         Icon: <EyeIcon size={20} />,
+         Icon: <Eye size={20} strokeWidth={1.5} />,
          closeOnBackdrop: false,
          closeOnEscape: true,
          mode: "UPDATE"
@@ -710,7 +625,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
          title: "Editar Tarea",
          desc: `Modifica la información de la tarea ${task.title}`,
          children: <CreateTaskForm onSubmit={handleUpdate} onCancel={() => closeModal()} taskObject={task} isEdit={true} />,
-         Icon: <EditIcon size={20} />,
+         Icon: <Pencil size={20} strokeWidth={1.5} />,
          closeOnBackdrop: false,
          closeOnEscape: true,
          mode: "UPDATE"
@@ -724,7 +639,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
          title: "Reasignar Tarea",
          desc: `Reasigna la tarea ${task.title} a otro usuario`,
          children: <ReasignIssue onSubmit={(data) => handleReasign({ ...data, task })} onCancel={() => closeModal()} taskObject={task} />,
-         Icon: <EditIcon size={20} />,
+         Icon: <Pencil size={20} strokeWidth={1.5} />,
          closeOnBackdrop: false,
          closeOnEscape: true,
          mode: "UPDATE"
@@ -749,7 +664,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
          title: "Historial de Cambios",
          desc: `Historial completo de la tarea ${task.title}`,
          children: <AuditHistory issueId={task.id} currentIssue={task} onCancel={() => closeModal()} />,
-         Icon: <ClockIcon size={20} />,
+         Icon: <Clock size={20} strokeWidth={1.5} />,
          closeOnBackdrop: false,
          closeOnEscape: true,
          mode: "UPDATE"
@@ -764,7 +679,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
             size: "xxl",
             title: `Dashboard de la tarea: ${task.title}`,
             desc: "Estadísticas y métricas de la tarea",
-            Icon: <DashboardIcon size={20} />,
+            Icon: <BarChart3 size={20} />,
             children: <Dashboard projectId={task.projectId} issueId={task.id as string} token={token} />,
             closeOnBackdrop: false,
             closeOnEscape: false,
@@ -784,11 +699,11 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
 
    const handleCreateTaskInSprintModal = () => {
       openModal({
-         size: "xxl",
+         size: "xl",
          title: "Crear Tarea en Sprint",
          desc: `Crea una nueva tarea en el sprint ${spr.title}`,
          children: <CreateTaskForm onSubmit={handleCreateTaskInSprint} onCancel={() => closeModal()} />,
-         Icon: <PlusIcon size={20} />,
+         Icon: <Plus size={20} strokeWidth={1.5} />,
          closeOnBackdrop: false,
          closeOnEscape: true,
          mode: "CREATE"
@@ -801,7 +716,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
          title: "Crear Tareas con IA",
          desc: "Chatea con IA para crear tareas de forma rápida y eficiente.",
          children: <CreateWithIA onSubmit={handleCreateWithIAInSprint} onCancel={() => closeModal()} sprintId={spr.id} />,
-         Icon: <ChatIAIcon size={20} />,
+         Icon: <Bot size={20} strokeWidth={1.5} />,
          closeOnBackdrop: false,
          closeOnEscape: true,
          mode: "CREATE"
@@ -834,29 +749,16 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
    const sprintId = spr.id as string
    const filter = filters?.[sprintId] || { key: '', value: '' }
 
-   const [userSelected, setUserSelected] = useState<any[]>([])
-   const [isUserOpen, setIsUserOpen] = useState(false)
-   const userRef = useRef<HTMLDivElement>(null)
+   const [userSelected, setUserSelected] = useState<FilterUser[]>([])
 
-   interface FilterOption {
-      color: string
-      name: string
-      id: number
-   }
+   const [typeSelected, setTypeSelected] = useState<ColumnFilterOption | null>(null)
+   const [statusSelected, setStatusSelected] = useState<ColumnFilterOption | null>(null)
+   const [prioritySelected, setPrioritySelected] = useState<ColumnFilterOption | null>(null)
 
-   const [typeSelected, setTypeSelected] = useState<FilterOption | null>(null)
-   const [isTypeOpen, setIsTypeOpen] = useState(false)
-   const typeRef = useRef<HTMLDivElement>(null)
-
-   const [statusSelected, setStatusSelected] = useState<FilterOption | null>(null)
-   const [isStatusOpen, setIsStatusOpen] = useState(false)
-   const statusRef = useRef<HTMLDivElement>(null)
-
-   const [prioritySelected, setPrioritySelected] = useState<FilterOption | null>(null)
-   const [isPriorityOpen, setIsPriorityOpen] = useState(false)
-   const priorityRef = useRef<HTMLDivElement>(null)
-
-   const filterRef = useRef(filter)
+   // Filtros combinados vigentes (Tipo/Estado/Prioridad/Asignado a), en un ref para que
+   // `handleLoadMore` (más arriba, definido antes de que exista este estado) pueda leer
+   // el valor más reciente sin tener que recrearse en cada cambio de filtro.
+   const activeFiltersRef = useRef({ assignedIds: '', type: null as number | null, status: null as number | null, priority: null as number | null })
 
    // Sincronizar userSelected con el filtro del sprint al montar/cambiar filtro
    useEffect(() => {
@@ -872,19 +774,21 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
    }, [filter, allProjectUsers])
 
    useEffect(() => {
-      filterRef.current = filter
+      const filters = {
+         type: typeSelected?.id ?? null,
+         status: statusSelected?.id ?? null,
+         priority: prioritySelected?.id ?? null,
+         assignedIds: userSelected.map(u => u.id).join(','),
+      }
+      activeFiltersRef.current = filters
       const getNewIssues = async () => {
          setIsFiltering(true)
          await clearIssuesFromSprint(sprintId)
          const token = await getValidAccessToken()
-         let newTasks
-         const filters = {
-            type: typeSelected?.id ?? null,
-            status: statusSelected?.id ?? null,
-            priority: prioritySelected?.id ?? null,
-            assignedIds: userSelected.map(u => u.id).join(','),
-         }
-         newTasks = await getIssuesBySprint(token, sprintId, spr.projectId as string, filters, 10)
+         // El sprint activo siempre debe traer todas sus issues (size 999), tanto en
+         // esta vista (Lista) como en el fast path de Tablero (SprintStore.getSprints) —
+         // si no, este efecto (que corre también al montar) pisa esas 999 con solo 10.
+         const newTasks = await getIssuesBySprint(token, sprintId, spr.projectId as string, filters, spr.active ? 999 : 10)
 
          if (newTasks) {
             useSprintStore.setState(state => {
@@ -907,150 +811,140 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
       getNewIssues()
    }, [userSelected, typeSelected, statusSelected, prioritySelected])
 
-   // Effect to close dropdown on outside click
-   useEffect(() => {
-      const handleClickOutside: (event: MouseEvent) => void = (event: MouseEvent) => {
-         if (userRef.current && !(userRef.current as HTMLElement).contains(event.target as Node)) setIsUserOpen(false)
-         if (typeRef.current && !(typeRef.current as HTMLElement).contains(event.target as Node)) setIsTypeOpen(false)
-         if (statusRef.current && !(statusRef.current as HTMLElement).contains(event.target as Node)) setIsStatusOpen(false)
-         if (priorityRef.current && !(priorityRef.current as HTMLElement).contains(event.target as Node)) setIsPriorityOpen(false)
-      }
-      document.addEventListener('mousedown', handleClickOutside)
-      return () => {
-         document.removeEventListener('mousedown', handleClickOutside)
-      }
-   }, [])
-
    return (
       <>
-         <Droppable id={spr.id as string} styleClass="bg-white rounded-xl shadow-sm border mb-6">
+         <div
+            onDragOver={(e) => e.preventDefault()}
+            onDragEnter={(e) => { e.preventDefault(); setIsDragOverSprint(true) }}
+            onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setIsDragOverSprint(false) }}
+            onDrop={(e) => { setIsDragOverSprint(false); onDropOnSprint(e) }}
+            className="rounded-xl transition-shadow duration-150"
+            style={{ background: "var(--ds-card)", boxShadow: isDragOverSprint ? "0 0 0 2px var(--blue-600)" : "var(--shadow-border)" }}
+         >
             {/* Header del sprint */}
-            <div className="bg-zinc-50/75 border-b border-gray-200/50 p-6">
-               <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-4">
-                     <div className={`w-3 h-3 rounded-full ${spr.active ? 'bg-green-500 animate-pulse shadow-sm' : 'bg-gray-400'}`}></div>
-                     <h3 className="text-xl font-semibold text-gray-900">{spr.title}</h3>
+            <div className="bg-[var(--gray-alpha-100)] border-b border-[var(--ds-border)] px-5 py-3">
+               <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                     <div className={`w-2 h-2 rounded-full flex-shrink-0 ${spr.active ? 'bg-[var(--green-700)] animate-pulse' : 'bg-[var(--gray-500)]'}`}></div>
+                     <h3 className="text-sm font-semibold text-[var(--ds-text)] truncate">{spr.title}</h3>
 
                      {/* Badge de activo */}
                      {spr.active && (
-                        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-sm">
-                           <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0" style={{ background: "var(--green-100)", color: "var(--green-900)", border: "1px solid var(--green-400)" }}>
+                           <div className="w-1.5 h-1.5 rounded-full bg-[var(--green-700)] animate-pulse" />
                            ACTIVO
                         </span>
                      )}
                   </div>
 
-
                   {/* Acciones del sprint */}
-                  <div className="flex items-center gap-3 flex-shrink-0">
+                  <div className="flex items-center gap-2 flex-shrink-0">
                      {spr.id !== 'null' ? (
                         <>
                            <button
-                              onClick={handleImportModal}
-                              className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                              title="Importar tareas en este sprint"
-                           >
-                              <ImportIcon size={16} stroke={2} />
-                              <span>Importar Tareas</span>
-                           </button>
-                           {
-                              // Solo mostrar si el usuario tiene el permiso GEMINI_ACTIVE
-                              (typeof user?.role === 'object' && user?.role?.permissions?.some(p => (p.name === "GEMINI_ACTIVE" || p.name === "GEMINI_CONFIG"))) && (
-                                 <button className="flex items-center gap-2 px-4 py-2 text-blue-700 bg-blue-50 border border-blue-300 rounded-lg hover:bg-blue-100 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                                    onClick={handleCreateWithIAInSprintModal}
-                                    title="Crear tareas con IA en este sprint"
-                                 >
-                                    <ChatIAIcon size={18} stroke={2} />
-                                    <span>Crear tareas con IA</span>
-                                 </button>
-                              )
-                           }
-
-                           <button
-                              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--primary-700)] text-[var(--primary-contrast-fg)] rounded-md hover:bg-[var(--primary-800)] transition-colors duration-200 text-xs font-medium"
                               onClick={handleCreateTaskInSprintModal}
                               title="Crear nueva tarea en este sprint"
                            >
-                              <PlusIcon size={16} stroke={2} />
+                              <Plus size={14} strokeWidth={2} />
                               <span>Nueva Tarea</span>
                            </button>
-                           {/* Botón de Activar Sprint */}
-                           {!spr.active && (
-                              <button
-                                 onClick={() => handleActivateSprint(spr)}
-                                 disabled={!!activeSprint && activeSprint.id !== spr.id}
-                                 className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${!!activeSprint && activeSprint.id !== spr.id
-                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
-                                    : 'bg-green-600 hover:bg-green-700 text-white border border-green-500 shadow-sm hover:shadow-md'
-                                    }`}
-                                 title={!!activeSprint && activeSprint.id !== spr.id ? 'Ya hay un sprint activo' : 'Activar este sprint'}
-                              >
-                                 {!!activeSprint && activeSprint.id !== spr.id ? <ForbiddenIcon size={16} stroke={2.5} /> : <CheckmarkIcon size={16} stroke={2.5} />}
-                                 <span>{!!activeSprint && activeSprint.id !== spr.id ? "Deshabilitado" : "Activar"}</span>
-                              </button>
-                           )}
 
-                           {/* Menú de opciones */}
+                           {/* Menú de opciones — el resto de acciones del sprint vive acá para no
+                              saturar el header con botones */}
                            <div ref={wrapperSprintRef} className="relative">
                               <button
                                  onClick={() => {
                                     setSprintSelected(spr)
                                     setisSprintOptionsOpen(!isSprintOptionsOpen)
                                  }}
-                                 className="p-2 text-gray-500 hover:text-gray-700 hover:bg-white rounded-lg transition-all duration-200 border border-gray-200/60 shadow-sm hover:shadow-md"
+                                 className="p-1.5 text-[var(--ds-text-secondary)] hover:text-[var(--ds-text)] hover:bg-[var(--gray-alpha-100)] rounded-md transition-colors duration-200 border border-[var(--ds-border)]"
                               >
-                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                                 </svg>
+                                 <MoreVertical size={16} strokeWidth={1.5} />
                               </button>
 
                               {isSprintOptionsOpen && (
-                                 <div className="absolute top-full right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-xl z-50 overflow-hidden">
+                                 <div className="absolute top-full right-0 mt-2 w-56 bg-[var(--ds-card)] border border-[var(--ds-border)] rounded-md shadow-[var(--shadow-lg)] z-50 overflow-hidden">
                                     <div className="py-1">
                                        <button
-                                          className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-3 transition-colors"
+                                          className="w-full px-4 py-2 text-left text-sm text-[var(--ds-text)] hover:bg-[var(--gray-alpha-100)] flex items-center gap-3 transition-colors"
                                           onClick={() => {
                                              handleShowDashboardModal()
                                              setisSprintOptionsOpen(false)
                                           }}
                                        >
-                                          <DashboardIcon size={16} />
+                                          <BarChart3 size={16} />
                                           <span>Ver Dashboard</span>
                                        </button>
                                        <button
-                                          className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-3 transition-colors"
+                                          className="w-full px-4 py-2 text-left text-sm text-[var(--ds-text)] hover:bg-[var(--gray-alpha-100)] flex items-center gap-3 transition-colors"
                                           onClick={() => {
                                              handleUpdateSprintModal()
                                              setisSprintOptionsOpen(false)
                                           }}
                                        >
-                                          <EditIcon size={16} />
+                                          <Pencil size={16} strokeWidth={1.5} />
                                           <span>Editar Sprint</span>
                                        </button>
-                                       {spr.active && (
+                                       <div style={{ borderTop: "1px solid var(--ds-border)", margin: "4px 0" }}></div>
+                                       <button
+                                          className="w-full px-4 py-2 text-left text-sm text-[var(--ds-text)] hover:bg-[var(--gray-alpha-100)] flex items-center gap-3 transition-colors"
+                                          onClick={() => {
+                                             handleImportModal()
+                                             setisSprintOptionsOpen(false)
+                                          }}
+                                       >
+                                          <Upload size={16} strokeWidth={1.5} />
+                                          <span>Importar Tareas</span>
+                                       </button>
+                                       {(typeof user?.role === 'object' && user?.role?.permissions?.some(p => (p.name === "GEMINI_ACTIVE" || p.name === "GEMINI_CONFIG"))) && (
                                           <button
-                                             className="w-full px-4 py-2 text-left text-sm hover:bg-orange-50 flex items-center gap-3 transition-colors text-orange-600"
+                                             className="w-full px-4 py-2 text-left text-sm text-[var(--ds-text)] hover:bg-[var(--gray-alpha-100)] flex items-center gap-3 transition-colors"
+                                             onClick={() => {
+                                                handleCreateWithIAInSprintModal()
+                                                setisSprintOptionsOpen(false)
+                                             }}
+                                          >
+                                             <Bot size={16} strokeWidth={1.5} />
+                                             <span>Crear tareas con IA</span>
+                                          </button>
+                                       )}
+                                       <div style={{ borderTop: "1px solid var(--ds-border)", margin: "4px 0" }}></div>
+                                       {!spr.active ? (
+                                          <button
+                                             disabled={!!activeSprint && activeSprint.id !== spr.id}
+                                             className="w-full px-4 py-2 text-left text-sm flex items-center gap-3 transition-colors text-[var(--green-900)] hover:bg-[var(--green-100)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:text-[var(--ds-text-muted)]"
+                                             title={!!activeSprint && activeSprint.id !== spr.id ? 'Ya hay un sprint activo' : 'Activar este sprint'}
+                                             onClick={() => {
+                                                handleActivateSprint(spr)
+                                                setisSprintOptionsOpen(false)
+                                             }}
+                                          >
+                                             {!!activeSprint && activeSprint.id !== spr.id ? <Ban size={16} strokeWidth={1.5} /> : <CircleCheck size={16} strokeWidth={1.5} />}
+                                             <span>{!!activeSprint && activeSprint.id !== spr.id ? "Ya hay un sprint activo" : "Activar Sprint"}</span>
+                                          </button>
+                                       ) : (
+                                          <button
+                                             className="w-full px-4 py-2 text-left text-sm hover:bg-[var(--amber-100)] flex items-center gap-3 transition-colors text-[var(--amber-900)]"
                                              onClick={() => {
                                                 const updatedSprint = { ...spr, active: false }
                                                 handleUpdateSprint(updatedSprint)
                                                 setisSprintOptionsOpen(false)
                                              }}
                                           >
-                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                             </svg>
+                                             <PowerOff size={16} strokeWidth={1.5} />
                                              <span>Desactivar Sprint</span>
                                           </button>
                                        )}
-                                       <div className="border-t border-gray-100 my-1"></div>
+                                       <div style={{ borderTop: "1px solid var(--ds-border)", margin: "4px 0" }}></div>
                                        <button
-                                          className="w-full px-4 py-2 text-left text-sm hover:bg-red-50 flex items-center gap-3 transition-colors text-red-600"
+                                          className="w-full px-4 py-2 text-left text-sm hover:bg-[var(--red-100)] flex items-center gap-3 transition-colors text-[var(--ds-error)]"
                                           onClick={() => {
                                              handleDeleteSprintModal()
                                              setisSprintOptionsOpen(false)
                                           }}
                                        >
-                                          <DeleteIcon size={16} />
+                                          <Trash2 size={16} strokeWidth={1.5} />
                                           <span>Eliminar Sprint</span>
                                        </button>
                                     </div>
@@ -1062,29 +956,29 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                         <>
                            <button
                               onClick={handleImportModal}
-                              className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="flex items-center gap-1.5 px-3 py-1.5 text-[var(--ds-text)] bg-[var(--ds-card)] border border-[var(--ds-border-strong)] rounded-md hover:bg-[var(--gray-alpha-100)] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2 transition-colors duration-200 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                               title="Importar tareas"
                            >
-                              <ImportIcon size={16} stroke={2} />
+                              <Upload size={14} strokeWidth={2} />
                               <span>Importar Tareas</span>
                            </button>
                            {
                               // Solo mostrar si el usuario tiene el permiso GEMINI_ACTIVE
                               (typeof user?.role === 'object' && user?.role?.permissions?.some(p => (p.name === "GEMINI_ACTIVE" || p.name === "GEMINI_CONFIG"))) && (
-                                 <button className="flex items-center gap-2 px-4 py-2 text-blue-700 bg-blue-50 border border-blue-300 rounded-lg hover:bg-blue-100 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                                 <button className="flex items-center gap-1.5 px-3 py-1.5 text-[var(--blue-900)] bg-[var(--blue-100)] border border-[var(--blue-400)] rounded-md hover:bg-[var(--blue-200)] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2 transition-colors duration-200 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                                     onClick={() => setIsCreateWithIAOpen(true)}
                                     title="Crear tareas con IA"
                                  >
-                                    <ChatIAIcon size={18} stroke={2} />
+                                    <Bot size={16} strokeWidth={2} />
                                     <span>Crear tareas con IA</span>
                                  </button>
                               )
                            }
                            <button
                               onClick={() => setIsOpen(true)}
-                              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--primary-700)] text-[var(--primary-contrast-fg)] rounded-md hover:bg-[var(--primary-800)] transition-colors duration-200 text-xs font-medium"
                            >
-                              <PlusIcon size={16} stroke={2} />
+                              <Plus size={14} strokeWidth={2} />
                               <span>Nueva Tarea</span>
                            </button>
                         </>
@@ -1092,106 +986,89 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                   </div>
                </div>
 
-               {/* Meta del sprint */}
-               {spr.goal && (
-                  <div className="px-6 pb-4">
-                     <div className="bg-white/70 backdrop-blur-sm border border-gray-200/80 rounded-lg p-3 shadow-sm">
-                        <div className="flex items-start gap-2">
-                           <div className="flex-shrink-0 mt-0.5">
-                              <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                              </svg>
-                           </div>
-                           <div>
-                              <p className="text-xs font-medium text-gray-800 mb-1">Meta del Sprint</p>
-                              <p className="text-xs text-gray-600 leading-relaxed">{spr.goal}</p>
-                           </div>
+               {/* Información secundaria: estado, tareas, meta y fechas en una sola fila compacta */}
+               <div className="flex items-center gap-2 flex-wrap mt-2">
+                  {/* Badge de estado */}
+                  {(() => {
+                     const statusObject = spr.statusObject || (spr.status ? getSprintStatusStyle(spr.status) : null)
+                     return statusObject ? (
+                        <div
+                           className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium border flex-shrink-0"
+                           style={{
+                              backgroundColor: `${statusObject.color}15`,
+                              color: statusObject.color,
+                              borderColor: `${statusObject.color}30`
+                           }}
+                        >
+                           <div
+                              className="w-1.5 h-1.5 rounded-full"
+                              style={{ backgroundColor: statusObject.color }}
+                           />
+                           {statusObject.name}
                         </div>
+                     ) : null
+                  })()}
+
+                  {/* Badge de tareas */}
+                  {spr.tasks?.content && spr.tasks.content.length > 0 && (
+                     <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0" style={{ background: "var(--blue-100)", color: "var(--blue-900)", border: "1px solid var(--blue-400)" }}>
+                        <ListChecks size={11} strokeWidth={1.5} className="text-[var(--blue-700)]" />
+                        <span>
+                           {spr.tasks.totalElements} {spr.tasks.totalElements === 1 ? 'tarea' : 'tareas'}
+                        </span>
                      </div>
-                  </div>
-               )}
+                  )}
 
-               {/* Información secundaria - badges */}
-               <div className="px-6 pb-4">
-                  <div className='flex justify-between items-center'>
-                     <div className="flex items-center gap-2 flex-wrap">
-                        {/* Badge de estado */}
-                        {(() => {
-                           const statusObject = spr.statusObject || (spr.status ? getSprintStatusStyle(spr.status) : null)
-                           return statusObject ? (
-                              <div
-                                 className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium border"
-                                 style={{
-                                    backgroundColor: `${statusObject.color}15`,
-                                    color: statusObject.color,
-                                    borderColor: `${statusObject.color}30`
-                                 }}
-                              >
-                                 <div
-                                    className="w-2 h-2 rounded-full"
-                                    style={{ backgroundColor: statusObject.color }}
-                                 />
-                                 {statusObject.name}
-                              </div>
-                           ) : null
-                        })()}
-
-                        {/* Badge de tareas */}
-                        {spr.tasks?.content && spr.tasks.content.length > 0 && (
-                           <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 rounded-full text-xs font-medium text-blue-800 border border-blue-200">
-                              <svg className="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                              </svg>
-                              <span>
-                                 {spr.tasks.totalElements} {spr.tasks.totalElements === 1 ? 'tarea' : 'tareas'}
-                              </span>
-                           </div>
-                        )}
+                  {/* Meta del sprint — línea inline en vez de tarjeta propia, para no ocupar una fila entera */}
+                  {spr.goal && (
+                     <div className="flex items-center gap-1.5 min-w-0 text-[11px] text-[var(--ds-text-secondary)]" title={spr.goal}>
+                        <Zap size={11} strokeWidth={1.5} className="text-[var(--blue-700)] flex-shrink-0" />
+                        <span className="truncate max-w-[320px]">{spr.goal}</span>
                      </div>
+                  )}
 
-                     {/* Badge de fechas */}
-                     {spr.id !== 'null' && (
-                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-purple-50 rounded-full text-xs font-medium text-purple-800 border border-purple-200">
-                           <CalendarIcon size={14} />
-                           <span>
-                              {spr.startDate ? (() => {
-                                 const [year, month, day] = spr.startDate.split('-').map(num => parseInt(num, 10))
-                                 const date = new Date(year, month - 1, day)
-                                 return date.toLocaleDateString('es-ES', {
-                                    day: '2-digit',
-                                    month: 'short',
-                                    year: 'numeric'
-                                 })
-                              })() : 'No definida'}
-                              &nbsp;–&nbsp;
-                              {spr.endDate ? (() => {
-                                 const [year, month, day] = spr.endDate.split('-').map(num => parseInt(num, 10))
-                                 const date = new Date(year, month - 1, day)
-                                 return date.toLocaleDateString('es-ES', {
-                                    day: '2-digit',
-                                    month: 'short',
-                                    year: 'numeric'
-                                 })
-                              })() : 'No definida'}
-                           </span>
-                        </div>
-                     )}
-                  </div>
+                  {/* Badge de fechas */}
+                  {spr.id !== 'null' && (
+                     <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0 ml-auto" style={{ background: "var(--purple-100)", color: "var(--purple-900)", border: "1px solid var(--purple-400)" }}>
+                        <Calendar size={12} strokeWidth={1.5} />
+                        <span>
+                           {spr.startDate ? (() => {
+                              const [year, month, day] = spr.startDate.split('-').map(num => parseInt(num, 10))
+                              const date = new Date(year, month - 1, day)
+                              return date.toLocaleDateString('es-ES', {
+                                 day: '2-digit',
+                                 month: 'short',
+                                 year: 'numeric'
+                              })
+                           })() : 'No definida'}
+                           &nbsp;–&nbsp;
+                           {spr.endDate ? (() => {
+                              const [year, month, day] = spr.endDate.split('-').map(num => parseInt(num, 10))
+                              const date = new Date(year, month - 1, day)
+                              return date.toLocaleDateString('es-ES', {
+                                 day: '2-digit',
+                                 month: 'short',
+                                 year: 'numeric'
+                              })
+                           })() : 'No definida'}
+                        </span>
+                     </div>
+                  )}
                </div>
             </div>
 
             {/* Lista de tareas */}
-            <div className="p-6">
+            <div className="p-4">
                {spr.tasks?.content.length ? (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                      {/* Cabecera del grid */}
-                     <div className="grid grid-cols-18 gap-4 p-3 pl-0 bg-gray-50 rounded-lg border border-gray-200 text-xs font-medium text-gray-600">
-                        <div className="col-span-1 flex items-center justify-center gap-1">
+                     <div className="grid grid-cols-1 md:grid-cols-18 gap-2 md:gap-3 py-2 px-3 md:pl-0 rounded-md text-xs font-medium text-[var(--ds-text-secondary)]" style={{ background: "var(--gray-alpha-100)", border: "1px solid var(--ds-border)" }}>
+                        <div className="col-span-full md:col-span-1 flex items-center justify-start md:justify-center gap-1">
                            <div className="w-6 h-6 flex items-center justify-center">
                               {
                                  selectedIds.length > 0 &&
-                                 <button onClick={handleDeleteAllModal} className='text-red-500 hover:text-red-700 transition-colors cursor-pointer'>
-                                    <DeleteIcon size={16} stroke={2} />
+                                 <button onClick={handleDeleteAllModal} className='text-[var(--red-700)] hover:text-[var(--red-900)] transition-colors cursor-pointer'>
+                                    <Trash2 size={16} strokeWidth={2} />
                                  </button>
                               }
                            </div>
@@ -1199,261 +1076,54 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                               type="checkbox"
                               checked={allSelected}
                               onChange={toggleSelectAll}
-                              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                              className="w-4 h-4 rounded accent-[var(--blue-700)] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2"
                            />
                         </div>
-                        <div className="col-span-1 flex items-center gap-1 relative w-full" style={{ zIndex: 20 }}>
-                           <div className="relative" ref={typeRef}>
-                              <button onClick={() => setIsTypeOpen(!isTypeOpen)} className="flex items-center transition-colors rounded-full gap-1 py-0.5 px-2"
-                                 style={{ backgroundColor: typeSelected ? typeSelected.color + '25' : 'transparent', color: typeSelected ? typeSelected.color : 'inherit' }}>
-                                 {typeSelected ? <span onClick={() => setTypeSelected(null)}><XIcon size={14} stroke={2} /></span> : <FilterIcon size={14} stroke={2} />}
-                                 {typeSelected ? typeSelected.name : 'Tipo'}
-                              </button>
-                              {isTypeOpen &&
-                                 <div className="bg-white border-gray-200 absolute top-full -left-full mt-2 w-48 border rounded-lg shadow-xl z-50">
-                                    <button key={"none"} className={`w-full text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 
-                                       ${!typeSelected ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50'}`}
-                                       onClick={() => setTypeSelected(null)}>
-                                       <span style={{ backgroundColor: "#0000001f" }} className='p-1 rounded-full' />
-                                       Todos los tipos
-                                    </button>
-                                    {
-                                       projectConfig?.issueTypes?.map(type =>
-                                          <button key={type.id} className={`w-full text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 
-                                             ${typeSelected?.id === type.id ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50'}`}
-                                             onClick={() => setTypeSelected(type)}>
-                                             <span style={{ backgroundColor: type.color }} className='p-1 rounded-full' />
-                                             {type.name}
-                                          </button>
-                                       )
-                                    }
-                                 </div>
-                              }
-                           </div>
+                        <div className="col-span-full md:col-span-1 flex items-center w-full">
+                           <ColumnFilterSelect
+                              label="Tipo"
+                              allLabel="Todos los tipos"
+                              options={projectConfig?.issueTypes || []}
+                              selected={typeSelected}
+                              onChange={setTypeSelected}
+                           />
                         </div>
-                        <div className="col-span-5 flex items-center gap-2 relative w-full" style={{ zIndex: 20 }}>
+                        <div className="col-span-full md:col-span-5 flex items-center gap-2 w-full">
                            <p className='whitespace-nowrap'>Tarea</p>
                         </div>
-                        <div className="col-span-2 flex items-center gap-2 relative w-full" style={{ zIndex: 20 }}>
-                           <div className="relative" ref={statusRef}>
-                              <button onClick={() => setIsStatusOpen(!isTypeOpen)} className="flex items-center transition-colors rounded-full gap-1 py-0.5 px-2"
-                                 style={{ backgroundColor: statusSelected ? statusSelected.color + '25' : 'transparent', color: statusSelected ? statusSelected.color : 'inherit' }}>
-                                 {statusSelected ? <span onClick={() => setStatusSelected(null)}><XIcon size={14} stroke={2} /></span> : <FilterIcon size={14} stroke={2} />}
-                                 {statusSelected ? statusSelected.name : 'Estado'}
-                              </button>
-                              {isStatusOpen &&
-                                 <div className="bg-white border-gray-200 absolute top-full -left-full mt-2 w-48 border rounded-lg shadow-xl z-50">
-                                    <button key={"none"} className={`w-full text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 
-                                       ${!statusSelected ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50'}`}
-                                       onClick={() => setStatusSelected(null)}>
-                                       <span style={{ backgroundColor: "#0000001f" }} className='p-1 rounded-full' />
-                                       Todos los estados
-                                    </button>
-                                    {
-                                       projectConfig?.issueStatuses?.map(status =>
-                                          <button key={status.id} className={`w-full text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 
-                                             ${statusSelected?.id === status.id ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50'}`}
-                                             onClick={() => setStatusSelected(status)}>
-                                             <span style={{ backgroundColor: status.color }} className='p-1 rounded-full' />
-                                             {status.name}
-                                          </button>
-                                       )
-                                    }
-                                 </div>
-                              }
-                           </div>
+                        <div className="col-span-full md:col-span-2 flex items-center w-full">
+                           <ColumnFilterSelect
+                              label="Estado"
+                              allLabel="Todos los estados"
+                              options={projectConfig?.issueStatuses || []}
+                              selected={statusSelected}
+                              onChange={setStatusSelected}
+                           />
                         </div>
-                        <div className="col-span-2 flex items-center gap-2 relative w-full" style={{ zIndex: 20 }}>
-                           <div className="relative" ref={priorityRef}>
-                              <button onClick={() => setIsPriorityOpen(!isPriorityOpen)} className="flex items-center transition-colors rounded-full gap-1 py-0.5 px-2"
-                                 style={{ backgroundColor: prioritySelected ? prioritySelected.color + '25' : 'transparent', color: prioritySelected ? prioritySelected.color : 'inherit' }}>
-                                 {prioritySelected ? <span onClick={() => setPrioritySelected(null)}><XIcon size={14} stroke={2} /></span> : <FilterIcon size={14} stroke={2} />}
-                                 {prioritySelected ? prioritySelected.name : 'Prioridad'}
-                              </button>
-                              {isPriorityOpen &&
-                                 <div className="bg-white border-gray-200 absolute top-full -left-full mt-2 w-48 border rounded-lg shadow-xl z-50">
-                                    <button key={"none"} className={`w-full text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 
-                                       ${!prioritySelected ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50'}`}
-                                       onClick={() => setPrioritySelected(null)}>
-                                       <span style={{ backgroundColor: "#0000001f" }} className='p-1 rounded-full' />
-                                       Todas las prioridades
-                                    </button>
-                                    {
-                                       projectConfig?.issuePriorities?.map(prio =>
-                                          <button key={prio.id} className={`w-full text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 
-                                             ${prioritySelected?.id === prio.id ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50'}`}
-                                             onClick={() => setPrioritySelected(prio)}>
-                                             <span style={{ backgroundColor: prio.color }} className='p-1 rounded-full' />
-                                             {prio.name}
-                                          </button>
-                                       )
-                                    }
-                                 </div>
-                              }
-                           </div>
+                        <div className="col-span-full md:col-span-2 flex items-center w-full">
+                           <ColumnFilterSelect
+                              label="Prioridad"
+                              allLabel="Todas las prioridades"
+                              options={projectConfig?.issuePriorities || []}
+                              selected={prioritySelected}
+                              onChange={setPrioritySelected}
+                           />
                         </div>
-                        <div className="col-span-5 flex items-center gap-2 relative w-full" style={{ zIndex: 20 }}>
+                        <div className="col-span-full md:col-span-5 flex items-center gap-2 w-full">
                            <p className='whitespace-nowrap'>Asignado a</p>
-                           <div className="w-full" ref={userRef}>
-                              <button
-                                 type="button"
-                                 className="bg-black/5 hover:bg-black/10 transition-colors rounded-full pr-2 flex items-center gap-2 w-full group"
-                                 onClick={() => setIsUserOpen(!isUserOpen)}
-                              >
-                                 {/* Avatar/Count */}
-                                 <div
-                                    className={`w-5 h-5 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden relative group ${userSelected.length > 0 ? 'cursor-pointer' : ''}`}
-                                    onMouseEnter={e => {
-                                       if (userSelected.length > 0) e.currentTarget.classList.add('hovering-x')
-                                    }}
-                                    onMouseLeave={e => {
-                                       e.currentTarget.classList.remove('hovering-x')
-                                    }}
-                                 >
-                                    {userSelected.length > 0 && (
-                                       <div
-                                          className="absolute inset-0 flex items-center justify-center bg-black/60 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-150 z-10"
-                                          style={{ fontSize: 14 }}
-                                          title="Limpiar selección"
-                                          onClick={e => {
-                                             e.stopPropagation();
-                                             setUserSelected([])
-                                             setFilter(sprintId, { key: 'assignedIds', value: '' })
-                                          }}
-                                       >
-                                          <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                          </svg>
-                                       </div>
-                                    )}
-                                    <span className={`${userSelected.length > 0 ? 'opacity-100 group-hover:opacity-0 transition-opacity' : ''} flex items-center justify-center w-full h-full`}>
-                                       {userSelected.length === 1 ? (
-                                          userSelected[0].picture ? (
-                                             <img
-                                                src={getUserAvatar(userSelected[0], 28)}
-                                                alt="avatar"
-                                                className="w-full h-full object-cover rounded-full"
-                                             />
-                                          ) : (
-                                             <span className="text-xs font-medium text-gray-600">
-                                                {userSelected[0].firstName || userSelected[0].lastName ?
-                                                   ((userSelected[0].firstName?.[0] || '') + (userSelected[0].lastName?.[0] || '')).toUpperCase()
-                                                   : (userSelected[0].email[0].toUpperCase() || 'Sin asignar')}
-                                             </span>
-                                          )
-                                       ) : userSelected.length > 1 ? (
-                                          <span className="text-xs font-semibold text-gray-700">{userSelected.length}</span>
-                                       ) : (
-                                          <span className="text-xs font-medium text-gray-500">?</span>
-                                       )}
-                                    </span>
-                                 </div>
-                                 {/* Name/Count */}
-                                 <span
-                                    className="text-xs font-medium text-gray-900 truncate block mr-auto"
-                                    title={userSelected.length === 1
-                                       ? (userSelected[0].firstName || userSelected[0].lastName
-                                          ? `${userSelected[0].firstName ?? ''} ${userSelected[0].lastName ?? ''}`.trim()
-                                          : (userSelected[0].email || 'Sin asignar'))
-                                       : userSelected.length > 1
-                                          ? `${userSelected.length} seleccionados`
-                                          : 'Todos'}
-                                 >
-                                    {userSelected.length === 1 ? (
-                                       userSelected[0].firstName || userSelected[0].lastName ?
-                                          `${`${userSelected[0].firstName ?? ''} ${userSelected[0].lastName ?? ''}`.trim()}`.slice(0, 20) +
-                                          (`${userSelected[0].firstName ?? ''} ${userSelected[0].lastName ?? ''}`.trim().length > 20 ? '…' : '')
-                                          : (userSelected[0].email?.slice(0, 20) || 'Sin asignar') + (userSelected[0].email && userSelected[0].email.length > 20 ? '…' : '')
-                                    ) : userSelected.length > 1 ? (
-                                       `${userSelected.length} seleccionados`
-                                    ) : (
-                                       'Todos'
-                                    )}
-                                 </span>
-                                 <svg className={`text-gray-400 w-4 h-4 transition-transform duration-200 ${isUserOpen ? "rotate-180" : ""}`}
-                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-                                 </svg>
-                              </button>
-
-                              {isUserOpen && (
-                                 <div className="absolute z-[9999] top-full left-0 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-xl max-h-48 overflow-y-auto overscroll-none min-w-md">
-                                    <button
-                                       type="button"
-                                       onClick={() => {
-                                          setUserSelected([])
-                                          setFilter(sprintId, { key: 'assignedIds', value: '' })
-                                          setIsUserOpen(false)
-                                       }}
-                                       className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors first:rounded-t-lg ${userSelected.length === 0 ? 'bg-blue-50' : ''}`}
-                                    >
-                                       <div className="flex items-center gap-3">
-                                          <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                                             <span className="text-xs font-medium text-gray-500">?</span>
-                                          </div>
-                                          <span className="text-sm font-medium text-gray-900">Todos</span>
-                                       </div>
-                                    </button>
-                                    {allProjectUsers.map((obj, i) => {
-                                       const isSelected = userSelected.some(u => u.id === obj.id)
-                                       return (
-                                          <button
-                                             key={i}
-                                             type="button"
-                                             onClick={e => {
-                                                e.stopPropagation()
-                                                let newSelected;
-                                                if (isSelected) {
-                                                   newSelected = userSelected.filter(u => u.id !== obj.id)
-                                                } else {
-                                                   newSelected = [...userSelected, obj]
-                                                }
-                                                setUserSelected(newSelected)
-                                                setFilter(sprintId, { key: 'assignedIds', value: newSelected.length > 0 ? newSelected.map(u => u.id).join(',') : '' })
-                                             }}
-                                             className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${isSelected ? 'bg-blue-50' : ''}`}
-                                          >
-                                             <div className="flex items-center gap-3">
-                                                <div className={`w-2 h-2 rounded-full ${isSelected ? 'bg-blue-600' : 'bg-transparent'}`} />
-                                                <div className='w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden'>
-                                                   {obj.picture ? (
-                                                      <img
-                                                         src={getUserAvatar(obj, 28)}
-                                                         alt={obj.id}
-                                                         className="w-full h-full object-cover rounded-full"
-                                                      />
-                                                   ) : (
-                                                      <span className="text-sm font-medium text-gray-600">
-                                                         {obj.firstName || obj.lastName ?
-                                                            ((obj.firstName?.[0] || '') + (obj.lastName?.[0] || '')).toUpperCase()
-                                                            : (obj.email?.[0] || '?').toUpperCase()}
-                                                      </span>
-                                                   )}
-                                                </div>
-                                                <div className="flex-1">
-                                                   <span className='text-sm font-medium text-gray-900 block'>
-                                                      {obj.firstName || obj.lastName ? `${obj.firstName ?? ''} ${obj.lastName ?? ''}`.trim() : (obj.email || 'Sin email')}
-                                                   </span>
-                                                   <span className="text-xs text-gray-500">
-                                                      {obj.email || 'Sin email'}
-                                                   </span>
-                                                </div>
-                                                {isSelected && (
-                                                   <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                   </svg>
-                                                )}
-                                             </div>
-                                          </button>
-                                       )
-                                    })}
-                                 </div>
-                              )}
-                           </div>
+                           <UserFilterSelect
+                              users={allProjectUsers}
+                              selected={userSelected}
+                              onChange={newSelected => {
+                                 setUserSelected(newSelected)
+                                 setFilter(sprintId, { key: 'assignedIds', value: newSelected.length > 0 ? newSelected.map(u => u.id).join(',') : '' })
+                              }}
+                              className="w-full"
+                           />
                         </div>
-                        <div className="col-span-1 flex items-center">Acciones</div>
+                        <div className="col-span-full md:col-span-1 flex items-center justify-start md:justify-center">Acciones</div>
                      </div>
-                     <div className='space-y-2 max-h-[440px] overflow-y-auto overscroll-contain' ref={scrollContainerRef}>
+                     <div className='space-y-1.5 max-h-[440px] overflow-y-auto overscroll-contain' ref={scrollContainerRef}>
                         {/* Filas de tareas */}
                         {spr.tasks.content.map((task, index) => {
                            return (
@@ -1462,6 +1132,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                                  task={task}
                                  selectedIds={selectedIds}
                                  toggleSelect={toggleSelect}
+                                 onDragStart={onTaskDragStart}
                                  onViewDetails={() => handleTaskDetailsModal(task)}
                                  onEdit={() => handleTaskUpdateModal(task)}
                                  onReassign={() => handleReasignModal(task)}
@@ -1481,8 +1152,8 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                         {/* Indicador de carga para páginas adicionales */}
                         {isLoadingMore && (
                            <div className="py-4">
-                              <div className="flex items-center justify-center gap-3 text-blue-600">
-                                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                              <div className="flex items-center justify-center gap-3 text-[var(--blue-700)]">
+                                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[var(--blue-700)]"></div>
                                  <span className="text-sm">Cargando más tareas...</span>
                               </div>
                            </div>
@@ -1490,11 +1161,11 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
 
                         {/* Mensaje cuando no hay más elementos */}
                         {!hasMore && spr.tasks.content.length > 0 && (
-                           <div className="text-center py-4 text-gray-500 text-sm mt-4">
+                           <div className="text-center py-4 text-[var(--ds-text-muted)] text-sm mt-4">
                               <div className="flex items-center justify-center gap-2">
-                                 <div className="w-2 h-2 bg-gray-300 rounded-full" />
+                                 <div className="w-2 h-2 bg-[var(--gray-alpha-300)] rounded-full" />
                                  <span>No hay más tareas para mostrar</span>
-                                 <div className="w-2 h-2 bg-gray-300 rounded-full" />
+                                 <div className="w-2 h-2 bg-[var(--gray-alpha-300)] rounded-full" />
                               </div>
                            </div>
                         )}
@@ -1503,21 +1174,26 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                ) : (
                   isFiltering ? (
                      <div className="text-center py-12">
-                        <div className="mx-auto w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center mb-4 animate-spin-slow">
-                           <svg className="w-8 h-8 text-blue-500 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-                           </svg>
+                        <div className="mx-auto w-16 h-16 rounded-xl flex items-center justify-center mb-4" style={{ background: "var(--blue-100)" }}>
+                           <div className="w-8 h-8 rounded-full animate-spin" style={{ border: "2px solid var(--blue-200)", borderTopColor: "var(--blue-700)" }}></div>
                         </div>
-                        <h3 className="text-lg font-medium text-blue-700 mb-2">Aplicando Filtros…</h3>
-                        <p className="text-blue-500 text-sm">Por favor espera mientras se filtran las tareas</p>
+                        <h3 className="text-lg font-medium text-[var(--blue-700)] mb-2">Aplicando Filtros…</h3>
+                        <p className="text-[var(--blue-700)] text-sm">Por favor espera mientras se filtran las tareas</p>
+                     </div>
+                  ) : (isLoadingSprintDetails && !spr.active && !filter.key) ? (
+                     // Este sprint todavía no trajo sus issues reales (el fast path de
+                     // getSprints solo trae de una vez el sprint activo) — mostrar esto
+                     // en vez de "no hay tareas", que sería falso mientras carga.
+                     <div className="text-center py-12">
+                        <div className="mx-auto w-8 h-8 rounded-full animate-spin" style={{ border: "2px solid var(--gray-alpha-200)", borderTopColor: "var(--blue-700)" }}></div>
+                        <p className="text-sm mt-3" style={{ color: "var(--ds-text-muted)" }}>Cargando tareas…</p>
                      </div>
                   ) : (
                      (filter && filter.key === 'assignedIds' && filter.value && userSelected.length > 0) ? (
                         <div className="text-center py-12 flex flex-col items-center justify-center">
                            <div className="flex items-center justify-center gap-2 mb-4">
                               {userSelected.length === 1 ? (
-                                 <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden">
+                                 <div className="mx-auto w-16 h-16 rounded-full flex items-center justify-center overflow-hidden" style={{ background: "var(--gray-alpha-200)" }}>
                                     {userSelected[0].picture ? (
                                        <img
                                           src={getUserAvatar(userSelected[0], 64)}
@@ -1525,7 +1201,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                                           className="w-full h-full object-cover rounded-full"
                                        />
                                     ) : (
-                                       <span className="text-3xl font-medium text-gray-600">
+                                       <span className="text-3xl font-medium text-[var(--ds-text-secondary)]">
                                           {userSelected[0].firstName || userSelected[0].lastName ?
                                              ((userSelected[0].firstName?.[0] || '') + (userSelected[0].lastName?.[0] || '')).toUpperCase()
                                              : (userSelected[0].email?.[0] || '?').toUpperCase()}
@@ -1534,7 +1210,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                                  </div>
                               ) : (
                                  userSelected.slice(0, 3).map((user, idx) => (
-                                    <div key={user.id} className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden border-2 border-white -ml-2 first:ml-0">
+                                    <div key={user.id} className="w-12 h-12 rounded-full flex items-center justify-center overflow-hidden -ml-2 first:ml-0" style={{ background: "var(--gray-alpha-200)", border: "2px solid var(--ds-card)" }}>
                                        {user.picture ? (
                                           <img
                                              src={getUserAvatar(user, 48)}
@@ -1542,7 +1218,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                                              className="w-full h-full object-cover rounded-full"
                                           />
                                        ) : (
-                                          <span className="text-xl font-medium text-gray-600">
+                                          <span className="text-xl font-medium text-[var(--ds-text-secondary)]">
                                              {user.firstName || user.lastName ?
                                                 ((user.firstName?.[0] || '') + (user.lastName?.[0] || '')).toUpperCase()
                                                 : (user.email?.[0] || '?').toUpperCase()}
@@ -1552,171 +1228,31 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                                  ))
                               )}
                               {userSelected.length > 3 && (
-                                 <span className="ml-2 text-gray-500 text-lg font-semibold">+{userSelected.length - 3}</span>
+                                 <span className="ml-2 text-[var(--ds-text-muted)] text-lg font-semibold">+{userSelected.length - 3}</span>
                               )}
                            </div>
-                           <h3 className="text-lg font-medium text-gray-900 mb-2">
+                           <h3 className="text-lg font-medium text-[var(--ds-text)] mb-2">
                               {userSelected.length === 1
                                  ? `No hay tareas asignadas a ${userSelected[0].firstName || userSelected[0].lastName ? `${userSelected[0].firstName ?? ''} ${userSelected[0].lastName ?? ''}`.trim() : (userSelected[0].email || 'Sin asignar')}`
                                  : `No hay tareas asignadas a los usuarios seleccionados`}
                            </h3>
-                           <p className="text-gray-500 text-sm">Selecciona otro usuario o elimina el filtro para ver más tareas</p>
+                           <p className="text-[var(--ds-text-muted)] text-sm">Selecciona otro usuario o elimina el filtro para ver más tareas</p>
                            {/* Mostrar el filtro aquí cuando no hay resultados */}
                            <div className="mt-6 flex justify-center items-center">
                               <div className="flex items-center gap-2 max-w-xs">
-                                 {/* Copia el botón y dropdown del filtro aquí */}
-                                 <div className="relative w-full" ref={userRef}>
-                                    <button
-                                       type="button"
-                                       className="bg-black/5 hover:bg-black/10 rounded-full pr-2 flex items-center gap-2 w-full group"
-                                       onClick={() => setIsUserOpen(!isUserOpen)}
-                                    >
-                                       <div
-                                          className={`w-5 h-5 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden relative group ${userSelected.length > 0 ? 'cursor-pointer' : ''}`}
-                                       >
-                                          {userSelected.length > 0 && (
-                                             <div
-                                                className="absolute inset-0 flex items-center justify-center bg-black/60 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-150 z-10"
-                                                style={{ fontSize: 14 }}
-                                                title="Limpiar selección"
-                                                onClick={e => {
-                                                   e.stopPropagation();
-                                                   setUserSelected([])
-                                                   setFilter(sprintId, { key: 'assignedIds', value: '' })
-                                                }}
-                                             >
-                                                <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                                </svg>
-                                             </div>
-                                          )}
-                                          <span className={`${userSelected.length > 0 ? 'opacity-100 group-hover:opacity-0 transition-opacity' : ''} flex items-center justify-center w-full h-full`}>
-                                             {userSelected.length === 1 ? (
-                                                userSelected[0].picture ? (
-                                                   <img
-                                                      src={getUserAvatar(userSelected[0], 28)}
-                                                      alt="avatar"
-                                                      className="w-full h-full object-cover rounded-full"
-                                                   />
-                                                ) : (
-                                                   <span className="text-xs font-medium text-gray-600">
-                                                      {userSelected[0].firstName || userSelected[0].lastName ?
-                                                         ((userSelected[0].firstName?.[0] || '') + (userSelected[0].lastName?.[0] || '')).toUpperCase()
-                                                         : (userSelected[0].email?.[0] || '?').toUpperCase()}
-                                                   </span>
-                                                )
-                                             ) : userSelected.length > 1 ? (
-                                                <span className="text-xs font-semibold text-gray-700">{userSelected.length}</span>
-                                             ) : (
-                                                <span className="text-xs font-medium text-gray-500">?</span>
-                                             )}
-                                          </span>
-                                       </div>
-                                       <span
-                                          className="text-xs font-medium text-gray-900 truncate block mr-auto"
-                                          title={userSelected.length === 1
-                                             ? (userSelected[0].firstName || userSelected[0].lastName
-                                                ? `${userSelected[0].firstName ?? ''} ${userSelected[0].lastName ?? ''}`.trim()
-                                                : (userSelected[0].email || 'Sin asignar'))
-                                             : userSelected.length > 1
-                                                ? `${userSelected.length} seleccionados`
-                                                : 'Todos'}
-                                       >
-                                          {userSelected.length === 1 ? (
-                                             userSelected[0].firstName || userSelected[0].lastName ?
-                                                `${`${userSelected[0].firstName ?? ''} ${userSelected[0].lastName ?? ''}`.trim()}`.slice(0, 20) +
-                                                (`${userSelected[0].firstName ?? ''} ${userSelected[0].lastName ?? ''}`.trim().length > 20 ? '…' : '')
-                                                : (userSelected[0].email?.slice(0, 20) || 'Sin asignar') + (userSelected[0].email && userSelected[0].email.length > 20 ? '…' : '')
-                                          ) : userSelected.length > 1 ? (
-                                             `${userSelected.length} seleccionados`
-                                          ) : (
-                                             'Todos'
-                                          )}
-                                       </span>
-                                       <svg className={`text-gray-400 w-4 h-4 transition-transform duration-200 ${isUserOpen ? "rotate-180" : ""}`}
-                                          xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                          <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-                                       </svg>
-                                    </button>
-                                    {isUserOpen && (
-                                       <div className="absolute z-[9999] top-full left-0 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-xl max-h-48 overflow-y-auto overscroll-none min-w-md">
-                                          <button
-                                             type="button"
-                                             onClick={() => {
-                                                setUserSelected([])
-                                                setFilter(sprintId, { key: 'assignedIds', value: '' })
-                                                setIsUserOpen(false)
-                                             }}
-                                             className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors first:rounded-t-lg ${userSelected.length === 0 ? 'bg-blue-50' : ''}`}
-                                          >
-                                             <div className="flex items-center gap-3">
-                                                <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                                                   <span className="text-xs font-medium text-gray-500">?</span>
-                                                </div>
-                                                <span className="text-sm font-medium text-gray-900">Todos</span>
-                                             </div>
-                                          </button>
-                                          {allProjectUsers.map((obj, i) => {
-                                             const isSelected = userSelected.some(u => u.id === obj.id)
-                                             return (
-                                                <button
-                                                   key={i}
-                                                   type="button"
-                                                   onClick={e => {
-                                                      e.stopPropagation()
-                                                      let newSelected;
-                                                      if (isSelected) {
-                                                         newSelected = userSelected.filter(u => u.id !== obj.id)
-                                                      } else {
-                                                         newSelected = [...userSelected, obj]
-                                                      }
-                                                      setUserSelected(newSelected)
-                                                      setFilter(sprintId, { key: 'assignedIds', value: newSelected.length > 0 ? newSelected.map(u => u.id).join(',') : '' })
-                                                   }}
-                                                   className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${isSelected ? 'bg-blue-50' : ''}`}
-                                                >
-                                                   <div className="flex items-center gap-3">
-                                                      <div className={`w-2 h-2 rounded-full ${isSelected ? 'bg-blue-600' : 'bg-transparent'}`} />
-                                                      <div className='w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden'>
-                                                         {obj.picture ? (
-                                                            <img
-                                                               src={getUserAvatar(obj, 28)}
-                                                               alt={obj.id}
-                                                               className="w-full h-full object-cover rounded-full"
-                                                            />
-                                                         ) : (
-                                                            <span className="text-sm font-medium text-gray-600">
-                                                               {obj.firstName || obj.lastName ?
-                                                                  ((obj.firstName?.[0] || '') + (obj.lastName?.[0] || '')).toUpperCase()
-                                                                  : (obj.email?.[0] || '?').toUpperCase()}
-                                                            </span>
-                                                         )}
-                                                      </div>
-                                                      <div className="flex-1">
-                                                         <span className='text-sm font-medium text-gray-900 block'>
-                                                            {obj.firstName || obj.lastName ? `${obj.firstName ?? ''} ${obj.lastName ?? ''}`.trim() : (obj.email || 'Sin email')}
-                                                         </span>
-                                                         <span className="text-xs text-gray-500">
-                                                            {obj.email || 'Sin email'}
-                                                         </span>
-                                                      </div>
-                                                      {isSelected && (
-                                                         <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                         </svg>
-                                                      )}
-                                                   </div>
-                                                </button>
-                                             )
-                                          })}
-                                       </div>
-                                    )}
-                                 </div>
+                                 <UserFilterSelect
+                                    users={allProjectUsers}
+                                    selected={userSelected}
+                                    onChange={newSelected => {
+                                       setUserSelected(newSelected)
+                                       setFilter(sprintId, { key: 'assignedIds', value: newSelected.length > 0 ? newSelected.map(u => u.id).join(',') : '' })
+                                    }}
+                                    className="w-full"
+                                 />
                                  {
                                     (userSelected.length !== 0 || typeSelected || statusSelected || prioritySelected) &&
                                     <div className="flex justify-center w-full gap-2">
-                                       o
-                                       <button className="flex items-center gap-2 py-0.5 px-2 text-red-700 rounded-full hover:bg-red-100 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                                       <button className="flex items-center gap-2 py-0.5 px-2 text-[var(--red-800)] rounded-full hover:bg-[var(--red-100)] focus-visible:outline-2 focus-visible:outline-[var(--red-700)] focus-visible:outline-offset-2 transition-all duration-200 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                                           onClick={() => {
                                              setUserSelected([])
                                              setTypeSelected(null)
@@ -1725,7 +1261,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                                              setFilter(sprintId, { key: '', value: '' })
                                           }}
                                        >
-                                          <DeleteIcon size={16} />
+                                          <Trash2 size={16} strokeWidth={1.5} />
                                           Borrar Filtros
                                        </button>
                                     </div>
@@ -1735,17 +1271,15 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                         </div>
                      ) : (
                         <div className="text-center py-12 w-full">
-                           <div className="mx-auto w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center mb-4">
-                              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                              </svg>
+                           <div className="mx-auto w-16 h-16 rounded-xl flex items-center justify-center mb-4" style={{ background: "var(--gray-alpha-100)" }}>
+                              <FileText size={32} strokeWidth={1.5} className="text-[var(--ds-text-muted)]" />
                            </div>
-                           <h3 className="text-lg font-medium text-gray-900 mb-2">No hay tareas disponibles</h3>
-                           <p className="text-gray-500 text-sm">Agrega algunas tareas para comenzar a trabajar en este sprint</p>
+                           <h3 className="text-lg font-medium text-[var(--ds-text)] mb-2">No hay tareas disponibles</h3>
+                           <p className="text-[var(--ds-text-muted)] text-sm">Agrega algunas tareas para comenzar a trabajar en este sprint</p>
                            {
                               (userSelected.length !== 0 || typeSelected || statusSelected || prioritySelected) &&
                               <div className="flex justify-center mt-6">
-                                 <button className="flex items-center gap-2 px-4 py-2 text-red-700 bg-red-50 border border-red-300 rounded-lg hover:bg-red-100 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                                 <button className="flex items-center gap-2 px-4 py-2 text-[var(--red-900)] bg-[var(--red-100)] border border-[var(--red-400)] rounded-md hover:bg-[var(--red-200)] focus-visible:outline-2 focus-visible:outline-[var(--red-700)] focus-visible:outline-offset-2 transition-all duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                                     onClick={() => {
                                        setUserSelected([])
                                        setTypeSelected(null)
@@ -1754,7 +1288,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                                        setFilter(sprintId, { key: '', value: '' })
                                     }}
                                  >
-                                    <DeleteIcon size={18} />
+                                    <Trash2 size={18} strokeWidth={1.5} />
                                     Borrar Filtros
                                  </button>
                               </div>
@@ -1764,7 +1298,7 @@ export default function IssuesRow({ spr, setIsOpen, setIsCreateWithIAOpen, isOve
                   )
                )}
             </div>
-         </Droppable >
+         </div>
       </>
    )
 }

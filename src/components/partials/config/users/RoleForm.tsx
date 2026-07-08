@@ -81,11 +81,11 @@ export default function RoleForm({ role, onSubmit, onCancel, isEdit = false }: R
     }
 
     return (
-        <div className="space-y-6 p-6">
-            <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="p-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Nombre del rol */}
                 <div className="space-y-2">
-                    <label htmlFor="roleName" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="roleName" className="block text-[13px] font-medium" style={{ color: "var(--ds-text-secondary)" }}>
                         Nombre del rol
                     </label>
                     <input
@@ -94,50 +94,56 @@ export default function RoleForm({ role, onSubmit, onCancel, isEdit = false }: R
                         value={formData.name}
                         onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                         disabled={isEdit}
-                        className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 ${isEdit ? 'bg-gray-50 text-gray-500' : ''
-                            } ${errors.name
-                                ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                                : 'border-gray-300 hover:border-gray-400'
-                            }`}
+                        className="w-full h-9 px-3 rounded-md text-sm outline-none transition-shadow duration-150 placeholder:text-[var(--ds-text-muted)] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2 disabled:cursor-not-allowed"
+                        style={{
+                            background: isEdit ? "var(--gray-100)" : "var(--ds-card)",
+                            color: isEdit ? "var(--ds-text-muted)" : "var(--ds-text)",
+                            boxShadow: errors.name ? "0 0 0 1px var(--red-700)" : "var(--shadow-border)"
+                        }}
                         placeholder="Ej: manager, developer, viewer"
                     />
                     {errors.name && (
-                        <p className="text-sm text-red-600">{errors.name}</p>
+                        <p className="text-sm" style={{ color: "var(--red-700)" }}>{errors.name}</p>
                     )}
                 </div>
 
                 {/* Permisos */}
                 <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-[13px] font-medium" style={{ color: "var(--ds-text-secondary)" }}>
                         Permisos del rol
                     </label>
-                    <div className="border border-gray-300 rounded-lg p-4 max-h-[40vh] overflow-y-auto">
+                    <div className="rounded-md p-4 max-h-[40vh] overflow-y-auto" style={{ border: "1px solid var(--ds-border)" }}>
                         {allPermissions.map((permission) => (
                             <label
                                 key={permission.name}
-                                className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-lg cursor-pointer"
+                                className="flex items-center gap-2 p-2 rounded-md cursor-pointer min-w-0 transition-colors duration-150 hover:bg-[var(--gray-alpha-100)]"
                             >
                                 <input
                                     type="checkbox"
                                     checked={formData.permissions.some(p => p.name === permission.name)}
                                     onChange={() => handlePermissionToggle(permission)}
-                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    className="w-4 h-4 rounded flex-shrink-0 focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2"
+                                    style={{ accentColor: "var(--blue-700)" }}
                                 />
-                                <span className="text-sm text-gray-700">{permission.name}</span>
+                                <span className="text-sm truncate min-w-0" style={{ color: "var(--ds-text-secondary)" }}>{permission.name}</span>
                             </label>
                         ))}
                     </div>
                     {errors.permissions && (
-                        <p className="text-sm text-red-600">{errors.permissions}</p>
+                        <p className="text-sm" style={{ color: "var(--red-700)" }}>{errors.permissions}</p>
                     )}
                 </div>
 
                 <div className="flex justify-end gap-3 mt-4">
-                    <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 transition-all duration-200 text-sm font-medium" type="button"
+                    <button className="h-9 px-4 rounded-md text-sm font-medium transition-colors duration-150 bg-[var(--ds-card)] hover:bg-[var(--gray-alpha-100)] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2"
+                        style={{ color: "var(--ds-text)", boxShadow: "var(--shadow-border)" }}
+                        type="button"
                         onClick={() => onCancel()}>
                         Cancelar
                     </button>
-                    <button className={`${isEdit ? "bg-purple-600 hover:bg-purple-700 focus:ring-purple-500" : "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"} text-white focus:ring-2 rounded-md focus:ring-offset-2 transition-all duration-200 text-sm font-medium px-4 py-2`} type="submit">
+                    <button className="h-9 px-4 rounded-md text-sm font-medium transition-colors duration-150 bg-[var(--primary-700)] hover:bg-[var(--primary-800)] focus-visible:outline-2 focus-visible:outline-[var(--primary-900)] focus-visible:outline-offset-2"
+                        style={{ color: "var(--primary-contrast-fg)" }}
+                        type="submit">
                         {isEdit ? "Guardar cambios" : "Crear Rol"}
                     </button>
                 </div>

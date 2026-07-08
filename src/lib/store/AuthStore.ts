@@ -49,6 +49,7 @@ interface AuthState {
    getListUsers: (token: string, search?: string, page?: number, size?: number) => Promise<void>
    loadMoreUsers: (token: string, search?: string) => Promise<void>
    setAccessToken: (token: string) => void
+   scheduleTokenRefresh: (token: string) => void
    refreshToken: () => Promise<string>
    logout: () => Promise<void>
    validateToken: (token: string) => Promise<boolean>
@@ -134,6 +135,64 @@ function isTokenExpired(token: string): boolean {
    }
 }
 
+// Obtiene el timestamp (ms) de expiración de un JWT, o null si no se puede determinar
+function getTokenExpiryMs(token: string): number | null {
+   try {
+      const decoded = jwtDecode<{ exp?: number }>(token)
+      return decoded.exp ? decoded.exp * 1000 : null
+   } catch (error) {
+      return null
+   }
+}
+
+const REFRESH_BUFFER_MS = 60_000 // refrescar 60s antes de que expire
+const FETCH_TIMEOUT_MS = 15_000
+
+// Evita refrescos concurrentes: todas las llamadas simultáneas comparten la misma promesa en curso
+let refreshInFlightPromise: Promise<string> | null = null
+let refreshTimeoutId: ReturnType<typeof setTimeout> | null = null
+
+function clearScheduledRefresh() {
+   if (refreshTimeoutId) {
+      clearTimeout(refreshTimeoutId)
+      refreshTimeoutId = null
+   }
+}
+
+// fetch con timeout: evita que un backend caído/lento deje el loading colgado indefinidamente
+async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit = {}, timeoutMs: number = FETCH_TIMEOUT_MS): Promise<Response> {
+   const controller = new AbortController()
+   const timer = setTimeout(() => controller.abort(), timeoutMs)
+   try {
+      return await fetch(input, { ...init, signal: controller.signal })
+   } finally {
+      clearTimeout(timer)
+   }
+}
+
+// fetch autenticado con reintento ante 401: si el backend rechaza un token que localmente
+// parecía vigente (revocado, reloj desincronizado, etc.), refresca una vez y reintenta.
+async function authedFetch(
+   input: string,
+   token: string,
+   init: RequestInit,
+   refresh: () => Promise<string>,
+   timeoutMs: number = FETCH_TIMEOUT_MS
+): Promise<Response> {
+   const headers = new Headers(init.headers)
+   if (!headers.has('Authorization')) headers.set('Authorization', `Bearer ${token}`)
+
+   const response = await fetchWithTimeout(input, { ...init, headers }, timeoutMs)
+   if (response.status !== 401) return response
+
+   const refreshedToken = await refresh()
+   if (!refreshedToken) return response
+
+   const retryHeaders = new Headers(init.headers)
+   retryHeaders.set('Authorization', `Bearer ${refreshedToken}`)
+   return fetchWithTimeout(input, { ...init, headers: retryHeaders }, timeoutMs)
+}
+
 // Inicialización: intenta leer el token actual
 const initializeAuthState = (): { user: UserProps | null, isAuthenticated: boolean } => {
    if (typeof window === 'undefined') return { user: null, isAuthenticated: false }
@@ -183,13 +242,32 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
    // Establecer el token de acceso
    setAccessToken: (token: string) => {
       try {
-         setCookie("NEXT_COOKIE_ACCESS_TOKEN", token)
+         const expiryMs = getTokenExpiryMs(token)
+         setCookie("NEXT_COOKIE_ACCESS_TOKEN", token, {
+            path: '/',
+            sameSite: 'lax',
+            secure: typeof window !== 'undefined' && window.location.protocol === 'https:',
+            ...(expiryMs ? { expires: new Date(expiryMs) } : {}),
+         })
          const user = decodeToken(token)
          set({ user, isAuthenticated: !!user, error: null })
+         get().scheduleTokenRefresh(token)
       } catch (error) {
          const errorMessage = error instanceof Error ? error.message : 'Error al establecer token'
          set({ error: errorMessage })
       }
+   },
+
+   // Programa un refresh silencioso ~60s antes de que expire el access token
+   scheduleTokenRefresh: (token: string) => {
+      if (typeof window === 'undefined') return
+      clearScheduledRefresh()
+      const expiryMs = getTokenExpiryMs(token)
+      if (!expiryMs) return
+      const delay = Math.max(expiryMs - Date.now() - REFRESH_BUFFER_MS, 0)
+      refreshTimeoutId = setTimeout(() => {
+         get().refreshToken()
+      }, delay)
    },
 
    // Obtener lista de usuarios con paginación y búsqueda
@@ -204,13 +282,10 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
 
          const url = `${API_ROUTES.LIST_USERS}${params.toString() ? `?${params.toString()}` : ''}`
 
-         const response = await fetch(url, {
+         const response = await authedFetch(url, token, {
             method: 'GET',
-            headers: {
-               "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
-            },
-         })
+            headers: { "Content-Type": "application/json" },
+         }, () => get().refreshToken())
 
          if (!response.ok) {
             throw new Error(`Error ${response.status}: ${response.statusText}`)
@@ -264,13 +339,10 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
 
          const url = `${API_ROUTES.LIST_USERS}?${params.toString()}`
 
-         const response = await fetch(url, {
+         const response = await authedFetch(url, token, {
             method: 'GET',
-            headers: {
-               "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
-            },
-         })
+            headers: { "Content-Type": "application/json" },
+         }, () => get().refreshToken())
 
          if (!response.ok) {
             throw new Error(`Error ${response.status}: ${response.statusText}`)
@@ -301,14 +373,11 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(API_ROUTES.ADD_USER, {
+         const response = await authedFetch(API_ROUTES.ADD_USER, token, {
             method: 'POST',
-            headers: {
-               "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data)
-         })
+         }, () => get().refreshToken())
 
          if (!response.ok) {
             throw new Error(`Error ${response.status}: ${response.statusText}`)
@@ -328,14 +397,11 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(API_ROUTES.ADD_USER_WITH_ORGANIZATION, {
+         const response = await authedFetch(API_ROUTES.ADD_USER_WITH_ORGANIZATION, token, {
             method: 'POST',
-            headers: {
-               "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data)
-         })
+         }, () => get().refreshToken())
 
          if (!response.ok) {
             throw new Error(`Error ${response.status}: ${response.statusText}`)
@@ -359,13 +425,10 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
          const formData = new FormData()
          formData.append('file', file)
 
-         const response = await fetch(API_ROUTES.IMPORT_USERS, {
+         const response = await authedFetch(API_ROUTES.IMPORT_USERS, token, {
             method: 'POST',
-            headers: {
-               "Authorization": `Bearer ${token}`
-            },
             body: formData
-         })
+         }, () => get().refreshToken())
 
          if (!response.ok) {
             throw new Error(`Error ${response.status}: ${response.statusText}`)
@@ -385,14 +448,11 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${API_ROUTES.ASSIGN_ROLE}/${userId}/role`, {
+         const response = await authedFetch(`${API_ROUTES.ASSIGN_ROLE}/${userId}/role`, token, {
             method: 'PUT',
-            headers: {
-               "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
-            },
+            headers: { "Content-Type": "application/json" },
             body: data.role
-         })
+         }, () => get().refreshToken())
 
          if (!response.ok) {
             throw new Error(`Error ${response.status}: ${response.statusText}`)
@@ -412,13 +472,10 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${API_ROUTES.SELECT_USER}/${userId}`, {
+         const response = await authedFetch(`${API_ROUTES.SELECT_USER}/${userId}`, token, {
             method: 'DELETE',
-            headers: {
-               "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
-            }
-         })
+            headers: { "Content-Type": "application/json" }
+         }, () => get().refreshToken())
 
          if (!response.ok) {
             throw new Error(`Error ${response.status}: ${response.statusText}`)
@@ -434,26 +491,40 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       }
    },
 
-   // Refrescar el token
-   refreshToken: async (): Promise<string> => {
-      set({ isLoading: true, error: null })
-      try {
-         const response = await fetch(API_ROUTES.REFRESH_TOKEN, {
-            method: 'POST',
-            credentials: 'include'
-         })
-         if (!response.ok) {
+   // Refrescar el token. Deduplicado: si ya hay un refresh en curso, todas las llamadas
+   // concurrentes reciben la misma promesa en vez de disparar múltiples requests en paralelo.
+   refreshToken: (): Promise<string> => {
+      if (refreshInFlightPromise) return refreshInFlightPromise
+
+      const doRefresh = async (): Promise<string> => {
+         set({ isLoading: true, error: null })
+         try {
+            const response = await fetchWithTimeout(API_ROUTES.REFRESH_TOKEN, {
+               method: 'POST',
+               credentials: 'include'
+            })
+            if (!response.ok) {
+               get().clearAuth()
+               return ''
+            }
+            const data = await response.json()
+            if (!data?.accessToken) {
+               get().clearAuth()
+               return ''
+            }
+            get().setAccessToken(data.accessToken)
+            set({ isLoading: false })
+            return data.accessToken
+         } catch (error) {
             get().clearAuth()
             return ''
+         } finally {
+            refreshInFlightPromise = null
          }
-         const data = await response.json()
-         get().setAccessToken(data.accessToken)
-         set({ isLoading: false })
-         return data.accessToken
-      } catch (error) {
-         get().clearAuth()
-         return ''
       }
+
+      refreshInFlightPromise = doRefresh()
+      return refreshInFlightPromise
    },
 
    // Cerrar sesión
@@ -461,7 +532,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(API_ROUTES.USER_LOGOUT, {
+         const response = await fetchWithTimeout(API_ROUTES.USER_LOGOUT, {
             method: 'POST', credentials: 'include'
          })
 
@@ -483,7 +554,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(API_ROUTES.VALIDATE_TOKEN, {
+         const response = await fetchWithTimeout(API_ROUTES.VALIDATE_TOKEN, {
             method: 'GET',
             headers: {
                'Authorization': `Bearer ${token}`
@@ -493,7 +564,9 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
          set({ isLoading: false })
          return response.ok
       } catch (error) {
-         const errorMessage = error instanceof Error ? error.message : 'Error al validar el token'
+         const errorMessage = error instanceof Error && error.name === 'AbortError'
+            ? 'El servidor tardó demasiado en responder al validar el token.'
+            : (error instanceof Error ? error.message : 'Error al validar el token')
          set({ error: errorMessage, isLoading: false })
          console.error('Error en validateToken:', error)
          return false
@@ -508,6 +581,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
    // Limpiar autenticación
    clearAuth: () => {
       try {
+         clearScheduledRefresh()
          deleteCookie("NEXT_COOKIE_ACCESS_TOKEN", { path: '/' })
          set({
             user: null,
@@ -533,13 +607,10 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(API_ROUTES.CRUD_ROLES, {
+         const response = await authedFetch(API_ROUTES.CRUD_ROLES, token, {
             method: 'GET',
-            headers: {
-               "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
-            },
-         })
+            headers: { "Content-Type": "application/json" },
+         }, () => get().refreshToken())
 
          if (!response.ok) {
             throw new Error(`Error ${response.status}: ${response.statusText}`)
@@ -558,13 +629,10 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${API_ROUTES.CRUD_ROLES}/${role}`, {
+         const response = await authedFetch(`${API_ROUTES.CRUD_ROLES}/${role}`, token, {
             method: 'GET',
-            headers: {
-               "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
-            },
-         })
+            headers: { "Content-Type": "application/json" },
+         }, () => get().refreshToken())
 
          if (!response.ok) {
             throw new Error(`Error ${response.status}: ${response.statusText}`)
@@ -585,14 +653,11 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(API_ROUTES.CRUD_ROLES, {
+         const response = await authedFetch(API_ROUTES.CRUD_ROLES, token, {
             method: 'POST',
-            headers: {
-               "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data)
-         })
+         }, () => get().refreshToken())
 
          if (!response.ok) {
             throw new Error(`Error ${response.status}: ${response.statusText}`)
@@ -612,14 +677,11 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${API_ROUTES.CRUD_ROLES}/${roleName}`, {
+         const response = await authedFetch(`${API_ROUTES.CRUD_ROLES}/${roleName}`, token, {
             method: 'PUT',
-            headers: {
-               "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data)
-         })
+         }, () => get().refreshToken())
 
          if (!response.ok) {
             throw new Error(`Error ${response.status}: ${response.statusText}`)
@@ -639,13 +701,10 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${API_ROUTES.CRUD_ROLES}/${roleName}`, {
+         const response = await authedFetch(`${API_ROUTES.CRUD_ROLES}/${roleName}`, token, {
             method: 'DELETE',
-            headers: {
-               "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
-            },
-         })
+            headers: { "Content-Type": "application/json" },
+         }, () => get().refreshToken())
 
          if (!response.ok) {
             throw new Error(`Error ${response.status}: ${response.statusText}`)
@@ -666,13 +725,10 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(API_ROUTES.CRUD_PERMISOS, {
+         const response = await authedFetch(API_ROUTES.CRUD_PERMISOS, token, {
             method: 'GET',
-            headers: {
-               "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
-            },
-         })
+            headers: { "Content-Type": "application/json" },
+         }, () => get().refreshToken())
 
          if (!response.ok) {
             throw new Error(`Error ${response.status}: ${response.statusText}`)
@@ -691,14 +747,11 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(API_ROUTES.CRUD_PERMISOS, {
+         const response = await authedFetch(API_ROUTES.CRUD_PERMISOS, token, {
             method: 'POST',
-            headers: {
-               "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data)
-         })
+         }, () => get().refreshToken())
 
          if (!response.ok) {
             throw new Error(`Error ${response.status}: ${response.statusText}`)
@@ -718,13 +771,10 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${API_ROUTES.CRUD_PERMISOS}/${permissionName}`, {
+         const response = await authedFetch(`${API_ROUTES.CRUD_PERMISOS}/${permissionName}`, token, {
             method: 'DELETE',
-            headers: {
-               "Content-Type": "application/json",
-               "Authorization": `Bearer ${token}`
-            },
-         })
+            headers: { "Content-Type": "application/json" },
+         }, () => get().refreshToken())
 
          if (!response.ok) {
             throw new Error(`Error ${response.status}: ${response.statusText}`)
@@ -762,28 +812,36 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(API_ROUTES.LOGIN_FORM, {
+         const response = await fetchWithTimeout(API_ROUTES.LOGIN_FORM, {
             method: 'POST',
             headers: { "Content-Type": "application/json" },
             credentials: 'include',
             body: JSON.stringify({ email, password })
          })
 
-         const data = await response.json()
-
-         // Verificar si la respuesta fue exitosa
-         if (data.statusCode === 401) {
-            const errorMessage = data.message
-            set({ error: errorMessage, isLoading: false })
-            return { message: data.message, isError: true }
+         let data: { statusCode?: number, message?: string, accessToken?: string } | null = null
+         try {
+            data = await response.json()
+         } catch {
+            data = null
          }
 
-         // Si todo está bien, establecer el token
+         // Antes solo se comprobaba data.statusCode === 401: cualquier otro fallo (500,
+         // cold start, respuesta sin accessToken, etc.) caía al camino "feliz" y dejaba
+         // una sesión corrupta, obligando a reintentar el login.
+         if (!response.ok || !data?.accessToken) {
+            const errorMessage = data?.message || `Error ${response.status}: no fue posible iniciar sesión`
+            set({ error: errorMessage, isLoading: false })
+            return { message: errorMessage, isError: true }
+         }
+
          get().setAccessToken(data.accessToken)
          set({ isLoading: false })
-         return data.accessToken
+         return { message: 'OK', isError: false }
       } catch (error) {
-         const errorMessage = error instanceof Error ? error.message : 'Error al iniciar sesión'
+         const errorMessage = error instanceof Error && error.name === 'AbortError'
+            ? 'El servidor tardó demasiado en responder. Intenta nuevamente.'
+            : (error instanceof Error ? error.message : 'Error al iniciar sesión')
          set({ error: errorMessage, isLoading: false })
          console.error("Error en loginPassword:", error)
          return { message: errorMessage, isError: true }
@@ -878,3 +936,20 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       }
    }
 }))
+
+// Mantiene la sesión viva mientras la app esté abierta:
+// - al cargar, si ya hay una sesión válida, programa el refresh silencioso previo a la expiración
+// - al volver a la pestaña, revalida/refresca el token (getValidAccessToken no golpea red si sigue vigente)
+if (typeof window !== 'undefined') {
+   const initialState = useAuthStore.getState()
+   if (initialState.isAuthenticated) {
+      const token = getCookie("NEXT_COOKIE_ACCESS_TOKEN") as string | undefined
+      if (token) useAuthStore.getState().scheduleTokenRefresh(token)
+   }
+
+   document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && useAuthStore.getState().isAuthenticated) {
+         useAuthStore.getState().getValidAccessToken()
+      }
+   })
+}

@@ -5,6 +5,7 @@ import { Client, Frame } from '@stomp/stompjs'
 import SockJS from 'sockjs-client'
 import { create } from 'zustand'
 import { useAuthStore } from './AuthStore'
+import { authFetch } from '@/lib/http/authFetch'
 import toast from 'react-hot-toast'
 
 interface NotificationPreference {
@@ -100,10 +101,9 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(API_ROUTES.CRUD_NOTIFICATIONS, {
+         const response = await authFetch(API_ROUTES.CRUD_NOTIFICATIONS, token, {
             method: 'GET',
             headers: {
-               'Authorization': `Bearer ${token}`,
                'Content-Type': 'application/json'
             }
          })
@@ -131,10 +131,9 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${API_ROUTES.CRUD_NOTIFICATIONS}/${notificationId}/read`, {
+         const response = await authFetch(`${API_ROUTES.CRUD_NOTIFICATIONS}/${notificationId}/read`, token, {
             method: 'PUT',
             headers: {
-               'Authorization': `Bearer ${token}`,
                'Content-Type': 'application/json'
             }
          })
@@ -174,10 +173,9 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(API_ROUTES.READ_ALL_NOTIFICATIONS, {
+         const response = await authFetch(API_ROUTES.READ_ALL_NOTIFICATIONS, token, {
             method: 'PUT',
             headers: {
-               'Authorization': `Bearer ${token}`,
                'Content-Type': 'application/json'
             }
          })
@@ -209,10 +207,9 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${API_ROUTES.CRUD_NOTIFICATIONS}/${notificationId}`, {
+         const response = await authFetch(`${API_ROUTES.CRUD_NOTIFICATIONS}/${notificationId}`, token, {
             method: 'DELETE',
             headers: {
-               'Authorization': `Bearer ${token}`,
                'Content-Type': 'application/json'
             }
          })
@@ -248,10 +245,9 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(API_ROUTES.DELETE_ALL_NOTIFICATIONS, {
+         const response = await authFetch(API_ROUTES.DELETE_ALL_NOTIFICATIONS, token, {
             method: 'DELETE',
             headers: {
-               'Authorization': `Bearer ${token}`,
                'Content-Type': 'application/json'
             }
          })
@@ -279,10 +275,9 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(API_ROUTES.READ_EDIT_NOTIFICATIONS_PREFERENCES, {
+         const response = await authFetch(API_ROUTES.READ_EDIT_NOTIFICATIONS_PREFERENCES, token, {
             method: 'GET',
             headers: {
-               'Authorization': `Bearer ${token}`,
                'Content-Type': 'application/json'
             }
          })
@@ -306,10 +301,9 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
    // Update notification preferences
    updatePreferences: async (token, preferences) => {
       try {
-         const response = await fetch(API_ROUTES.READ_EDIT_NOTIFICATIONS_PREFERENCES, {
+         const response = await authFetch(API_ROUTES.READ_EDIT_NOTIFICATIONS_PREFERENCES, token, {
             method: 'PUT',
             headers: {
-               'Authorization': `Bearer ${token}`,
                'Content-Type': 'application/json'
             },
             body: JSON.stringify(preferences)
@@ -336,10 +330,9 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(API_ROUTES.CRUD_NOTIFICATIONS_TYPES, {
+         const response = await authFetch(API_ROUTES.CRUD_NOTIFICATIONS_TYPES, token, {
             method: 'GET',
             headers: {
-               'Authorization': `Bearer ${token}`,
                'Content-Type': 'application/json'
             }
          })
@@ -365,10 +358,9 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(API_ROUTES.CRUD_NOTIFICATIONS_TYPES, {
+         const response = await authFetch(API_ROUTES.CRUD_NOTIFICATIONS_TYPES, token, {
             method: 'POST',
             headers: {
-               'Authorization': `Bearer ${token}`,
                'Content-Type': 'application/json'
             },
             body: JSON.stringify({ name })
@@ -400,10 +392,9 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${API_ROUTES.CRUD_NOTIFICATIONS_TYPES}/${typeName}`, {
+         const response = await authFetch(`${API_ROUTES.CRUD_NOTIFICATIONS_TYPES}/${typeName}`, token, {
             method: 'DELETE',
             headers: {
-               'Authorization': `Bearer ${token}`,
                'Content-Type': 'application/json'
             }
          })

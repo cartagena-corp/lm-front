@@ -75,7 +75,7 @@ export function Live3_PieChartLabels({ data }: PieChartProps) {
                                 </TooltipTrigger>
                                 <TooltipContent>
                                     <div>{d.data.name}</div>
-                                    <div className="text-gray-400 text-sm">
+                                    <div className="text-sm" style={{ color: "var(--ds-text-secondary)" }}>
                                         {d.data.percentage.toFixed(1)}%
                                     </div>
                                 </TooltipContent>
@@ -91,19 +91,19 @@ export function Live3_PieChartLabels({ data }: PieChartProps) {
                     {data.map((item, i) => (
                         <div
                             key={i}
-                            className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                            className="flex items-center gap-3 p-2 rounded-md hover:bg-[var(--gray-alpha-100)] transition-colors duration-150"
                         >
                             <div
                                 className="w-4 h-4 rounded-sm flex-shrink-0"
                                 style={{ backgroundColor: item.colorFrom }}
                             />
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-900 truncate">
+                                <p className="text-sm font-medium truncate" style={{ color: "var(--ds-text)" }}>
                                     {item.name}
                                 </p>
                             </div>
                             <div className="flex-shrink-0">
-                                <span className="text-sm font-semibold text-gray-700">
+                                <span className="text-sm font-medium tabular-nums" style={{ color: "var(--ds-text-secondary)" }}>
                                     {item.percentage.toFixed(1)}%
                                 </span>
                             </div>

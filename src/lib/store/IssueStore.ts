@@ -2,6 +2,7 @@ import { FilterTaskProps, GlobalPagination, TaskProps, AuditPagination } from '.
 import { refreshSprints } from './SprintStore'
 import { API_ROUTES } from "@/lib/routes/issues.routes"
 import { API_ROUTES as AUDIT_ROUTES } from "@/lib/routes/audit.routes"
+import { authFetch } from '@/lib/http/authFetch'
 import { create } from 'zustand'
 
 interface IssueUpdated {
@@ -92,8 +93,8 @@ export const useIssueStore = create<IssueState>((set, get) => ({
    getSpecificIssue: async (token: string, issueId: string) => {
       set({ selectedIssue: null, isLoading: true, error: null })
       try {
-         const response = await fetch(`${API_ROUTES.CRUD_ISSUES}/${issueId}`, {
-            method: 'GET', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+         const response = await authFetch(`${API_ROUTES.CRUD_ISSUES}/${issueId}`, token, {
+            method: 'GET', headers: { 'Content-Type': 'application/json' }
          })
          if (!response.ok) { throw new Error(`Error ${response.status}: ${response.statusText}`) }
 
@@ -133,8 +134,8 @@ export const useIssueStore = create<IssueState>((set, get) => ({
          if (filters?.page) params.append('page', filters.page.toString())
          if (filters?.size) params.append('size', filters.size.toString())
 
-         const response = await fetch(`${API_ROUTES.GET_ISSUES_BY_PROJECT}?${params.toString()}`, {
-            method: 'GET', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+         const response = await authFetch(`${API_ROUTES.GET_ISSUES_BY_PROJECT}?${params.toString()}`, token, {
+            method: 'GET', headers: { 'Content-Type': 'application/json' }
          })
 
          if (!response.ok) { throw new Error(`Error ${response.status}: ${response.statusText}`) }
@@ -185,8 +186,8 @@ export const useIssueStore = create<IssueState>((set, get) => ({
          if (filters?.page) params.append('page', filters.page.toString())
          if (filters?.size) params.append('size', filters.size.toString())
 
-         const response = await fetch(`${API_ROUTES.GET_ISSUES_BY_PROJECT}?${params.toString()}`, {
-            method: 'GET', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+         const response = await authFetch(`${API_ROUTES.GET_ISSUES_BY_PROJECT}?${params.toString()}`, token, {
+            method: 'GET', headers: { 'Content-Type': 'application/json' }
          })
 
          if (!response.ok) { throw new Error(`Error ${response.status}: ${response.statusText}`) }
@@ -221,8 +222,8 @@ export const useIssueStore = create<IssueState>((set, get) => ({
             ...(issueData.startDate ? { startDate: issueData.startDate } : {}),
             ...(issueData.endDate ? { endDate: issueData.endDate } : {})
          }
-         const response = await fetch(API_ROUTES.CRUD_ISSUES, {
-            method: 'POST', headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+         const response = await authFetch(API_ROUTES.CRUD_ISSUES, token, {
+            method: 'POST', headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
          })
 
@@ -247,11 +248,11 @@ export const useIssueStore = create<IssueState>((set, get) => ({
                   })
 
                   // Hacer la petición POST para subir archivos
-                  const uploadPromise = fetch(
+                  const uploadPromise = authFetch(
                      API_ROUTES.ADD_FILES_TO_DESCRIPTION(newIssue.id!, description.id),
+                     token,
                      {
                         method: 'POST',
-                        headers: { 'Authorization': `Bearer ${token}` },
                         body: formData
                      }
                   ).then(res => {
@@ -304,8 +305,8 @@ export const useIssueStore = create<IssueState>((set, get) => ({
             ...(issueUpdated.endDate ? { endDate: issueUpdated.endDate } : {}),
             ...(issueUpdated.realDate ? { realDate: issueUpdated.realDate } : {})
          }
-         const response = await fetch(`${API_ROUTES.CRUD_ISSUES}/${issueUpdated.id}`, {
-            method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+         const response = await authFetch(`${API_ROUTES.CRUD_ISSUES}/${issueUpdated.id}`, token, {
+            method: 'PUT', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(requestBody)
          })
 
@@ -330,11 +331,11 @@ export const useIssueStore = create<IssueState>((set, get) => ({
                   })
 
                   // Hacer la petición POST para subir archivos nuevos
-                  const uploadPromise = fetch(
+                  const uploadPromise = authFetch(
                      API_ROUTES.ADD_FILES_TO_DESCRIPTION(updatedIssue.id!, description.id),
+                     token,
                      {
                         method: 'POST',
-                        headers: { 'Authorization': `Bearer ${token}` },
                         body: formData
                      }
                   ).then(res => {
@@ -378,8 +379,8 @@ export const useIssueStore = create<IssueState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${API_ROUTES.CRUD_ISSUES}/${issueId}`, {
-            method: 'DELETE', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+         const response = await authFetch(`${API_ROUTES.CRUD_ISSUES}/${issueId}`, token, {
+            method: 'DELETE', headers: { 'Content-Type': 'application/json' }
          })
 
          if (!response.ok) { throw new Error(`Error ${response.status}: ${response.statusText}`) }
@@ -409,8 +410,8 @@ export const useIssueStore = create<IssueState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(API_ROUTES.DELETE_ALL_ISSUES, {
-            method: 'DELETE', body: JSON.stringify(issueIds), headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+         const response = await authFetch(API_ROUTES.DELETE_ALL_ISSUES, token, {
+            method: 'DELETE', body: JSON.stringify(issueIds), headers: { 'Content-Type': 'application/json' }
          })
 
          if (!response.ok) { throw new Error(`Error ${response.status}: ${response.statusText}`) }
@@ -441,8 +442,8 @@ export const useIssueStore = create<IssueState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(API_ROUTES.ASIGN_ISSUE_TO_SPRINT, {
-            method: 'POST', headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+         const response = await authFetch(API_ROUTES.ASIGN_ISSUE_TO_SPRINT, token, {
+            method: 'POST', headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ issueIds, sprintId })
          })
 
@@ -467,8 +468,8 @@ export const useIssueStore = create<IssueState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(API_ROUTES.REMOVE_ISSUE_FROM_SPRINT, {
-            method: 'POST', headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+         const response = await authFetch(API_ROUTES.REMOVE_ISSUE_FROM_SPRINT, token, {
+            method: 'POST', headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ issueIds })
          })
 
@@ -493,8 +494,8 @@ export const useIssueStore = create<IssueState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${API_ROUTES.ASIGN_USER}/${issueId}`, {
-            method: 'PATCH', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+         const response = await authFetch(`${API_ROUTES.ASIGN_USER}/${issueId}`, token, {
+            method: 'PATCH', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(userId)
          })
 
@@ -519,8 +520,8 @@ export const useIssueStore = create<IssueState>((set, get) => ({
       set({ isLoading: true, error: null })
 
       try {
-         const response = await fetch(`${API_ROUTES.REOPEN_ISSUE}/${issueId}`, {
-            method: 'PATCH', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+         const response = await authFetch(`${API_ROUTES.REOPEN_ISSUE}/${issueId}`, token, {
+            method: 'PATCH', headers: { 'Content-Type': 'application/json' }
          })
 
          if (!response.ok) { throw new Error(`Error ${response.status}: ${response.statusText}`) }
@@ -547,11 +548,10 @@ export const useIssueStore = create<IssueState>((set, get) => ({
             size: size.toString()
          })
 
-         const response = await fetch(`${AUDIT_ROUTES.GET_ISSUE_HISTORY}${issueId}?${params.toString()}`, {
+         const response = await authFetch(`${AUDIT_ROUTES.GET_ISSUE_HISTORY}${issueId}?${params.toString()}`, token, {
             method: 'GET',
             headers: {
                'Content-Type': 'application/json',
-               'Authorization': `Bearer ${token}`,
             },
          })
 
@@ -574,9 +574,8 @@ export const useIssueStore = create<IssueState>((set, get) => ({
          if (text) formData.append('texto', text)
          formData.append('projectId', projectId)
 
-         const response = await fetch(API_ROUTES.DETECT_ISSUES, {
+         const response = await authFetch(API_ROUTES.DETECT_ISSUES, token, {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` },
             body: formData
          })
 
@@ -593,11 +592,10 @@ export const useIssueStore = create<IssueState>((set, get) => ({
    // Create Issues from IA
    createIssuesFromIA: async (token: string, issues: IssueFromIA[]) => {
       try {
-         const response = await fetch(API_ROUTES.CREATE_ISSUES_FROM_IA, {
+         const response = await authFetch(API_ROUTES.CREATE_ISSUES_FROM_IA, token, {
             method: 'POST',
             headers: {
                'Content-Type': 'application/json',
-               'Authorization': `Bearer ${token}`,
             },
             body: JSON.stringify(issues)
          })
@@ -619,11 +617,8 @@ export const useIssueStore = create<IssueState>((set, get) => ({
          const formData = new FormData()
          formData.append('file', file)
 
-         const response = await fetch(API_ROUTES.GET_COLUMNS_FROM_EXCEL, {
+         const response = await authFetch(API_ROUTES.GET_COLUMNS_FROM_EXCEL, token, {
             method: 'POST',
-            headers: {
-               'Authorization': `Bearer ${token}`,
-            },
             body: formData
          })
 
@@ -651,11 +646,8 @@ export const useIssueStore = create<IssueState>((set, get) => ({
             formData.append('sprintId', sprintId)
          }
 
-         const response = await fetch(API_ROUTES.IMPORT_ISSUES, {
+         const response = await authFetch(API_ROUTES.IMPORT_ISSUES, token, {
             method: 'POST',
-            headers: {
-               'Authorization': `Bearer ${token}`,
-            },
             body: formData
          })
 

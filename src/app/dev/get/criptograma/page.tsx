@@ -147,10 +147,10 @@ function InputField({
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-baseline justify-between">
-        <label htmlFor={id} className="text-xs font-medium text-gray-500 uppercase tracking-widest">
+        <label htmlFor={id} className="text-xs font-medium uppercase tracking-widest" style={{ color: "var(--ds-text-muted)" }}>
           {label}
         </label>
-        {hint && <span className="text-[10px] text-gray-400">{hint}</span>}
+        {hint && <span className="text-[10px]" style={{ color: "var(--ds-text-muted)" }}>{hint}</span>}
       </div>
       <input
         id={id}
@@ -160,16 +160,16 @@ function InputField({
         placeholder={placeholder}
         onChange={(e: ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
         className={[
-          "w-full rounded-lg border px-3.5 py-2.5 text-sm outline-none transition-all",
-          "bg-white text-gray-900 placeholder-gray-300",
+          "w-full rounded-lg border px-3.5 py-2.5 text-sm outline-none transition-all placeholder:text-[var(--ds-text-muted)]",
+          "bg-[var(--ds-card)] text-[var(--ds-text)]",
           monospace ? "font-mono tracking-wider" : "",
           error
-            ? "border-red-300 ring-1 ring-red-200 focus:border-red-400 focus:ring-red-200"
-            : "border-gray-200 focus:border-gray-400 focus:ring-1 focus:ring-gray-200",
+            ? "border-[var(--red-400)] ring-1 ring-[var(--red-300)] focus:border-[var(--red-700)] focus:ring-[var(--red-300)]"
+            : "border-[var(--ds-border)] focus:border-[var(--ds-border-strong)] focus:ring-1 focus:ring-[var(--gray-alpha-300)]",
         ].join(" ")}
       />
       {error && (
-        <p className="flex items-center gap-1 text-[11px] text-red-500 mt-0.5">
+        <p className="flex items-center gap-1 text-[11px] mt-0.5" style={{ color: "var(--red-700)" }}>
           <svg className="size-3 shrink-0" viewBox="0 0 16 16" fill="currentColor">
             <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm-.75 3.75a.75.75 0 0 1 1.5 0v3.5a.75.75 0 0 1-1.5 0v-3.5zm.75 7a1 1 0 1 1 0-2 1 1 0 0 1 0 2z" />
           </svg>
@@ -231,7 +231,7 @@ function OtpInput({ value, onChange, error }: OtpInputProps) {
 
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-xs font-medium text-gray-500 uppercase tracking-widest">
+      <label className="text-xs font-medium uppercase tracking-widest" style={{ color: "var(--ds-text-muted)" }}>
         OTP (PIN)
       </label>
       <div className="flex gap-2" onPaste={handlePaste}>
@@ -249,16 +249,16 @@ function OtpInput({ value, onChange, error }: OtpInputProps) {
             className={[
               "flex-1 min-w-0 text-center rounded-lg border py-2.5 text-base font-mono font-semibold outline-none transition-all",
               error
-                ? "border-red-300 ring-1 ring-red-200 focus:border-red-400"
+                ? "border-[var(--red-300)] ring-1 ring-[var(--red-200)] focus:border-[var(--red-400)]"
                 : value[i]
-                ? "border-gray-900 bg-gray-900 text-white"
-                : "border-gray-200 bg-white text-gray-900 focus:border-gray-400 focus:ring-1 focus:ring-gray-200",
+                ? "border-[var(--gray-1000)] bg-[var(--gray-1000)] text-[var(--ds-contrast-inverse)]"
+                : "border-[var(--ds-border)] bg-[var(--ds-card)] text-[var(--ds-text)] focus:border-[var(--ds-border-strong)] focus:ring-1 focus:ring-[var(--gray-alpha-300)]",
             ].join(" ")}
           />
         ))}
       </div>
       {error && (
-        <p className="flex items-center gap-1 text-[11px] text-red-500 mt-0.5">
+        <p className="flex items-center gap-1 text-[11px] mt-0.5" style={{ color: "var(--red-700)" }}>
           <svg className="size-3 shrink-0" viewBox="0 0 16 16" fill="currentColor">
             <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm-.75 3.75a.75.75 0 0 1 1.5 0v3.5a.75.75 0 0 1-1.5 0v-3.5zm.75 7a1 1 0 1 1 0-2 1 1 0 0 1 0 2z" />
           </svg>
@@ -289,23 +289,19 @@ function ResultCard({ label, value, accent }: ResultCardProps) {
       className={[
         "relative rounded-xl border p-4 flex flex-col gap-2 transition-all",
         accent
-          ? "border-gray-900 bg-gray-900 text-white"
-          : "border-gray-200 bg-white",
+          ? "border-[var(--gray-1000)] bg-[var(--gray-1000)] text-[var(--ds-contrast-inverse)]"
+          : "border-[var(--ds-border)] bg-[var(--ds-card)]",
       ].join(" ")}
     >
-      <span
-        className={[
-          "text-[10px] font-semibold uppercase tracking-widest",
-          accent ? "text-gray-400" : "text-gray-400",
-        ].join(" ")}
-      >
+      <span className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--ds-text-muted)" }}>
         {label}
       </span>
       <p
         className={[
           "text-sm font-mono break-all leading-relaxed",
-          accent ? "text-green-400" : "text-gray-900",
+          accent ? "text-[var(--green-700)]" : "",
         ].join(" ")}
+        style={!accent ? { color: "var(--ds-text)" } : undefined}
       >
         {value || "—"}
       </p>
@@ -317,8 +313,8 @@ function ResultCard({ label, value, accent }: ResultCardProps) {
           className={[
             "absolute top-3 right-3 flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium transition-all",
             accent
-              ? "text-gray-400 hover:text-white hover:bg-gray-700"
-              : "text-gray-400 hover:text-gray-700 hover:bg-gray-100",
+              ? "text-[var(--ds-text-muted)] hover:text-[var(--ds-contrast-inverse)] hover:bg-[var(--gray-700)]"
+              : "text-[var(--ds-text-muted)] hover:text-[var(--ds-text)] hover:bg-[var(--gray-alpha-100)]",
           ].join(" ")}
         >
           {copied ? (
@@ -452,27 +448,27 @@ export default function CriptogramaPage() {
   const progress = Math.round((completedFields / 8) * 100);
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans">
+    <div className="min-h-screen font-sans" style={{ background: "var(--ds-background)" }}>
       {/* ── Header ── */}
-      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white/80 backdrop-blur-sm">
+      <header className="sticky top-0 z-10 backdrop-blur-sm" style={{ borderBottom: "1px solid var(--ds-border)", background: "color-mix(in srgb, var(--ds-background) 80%, transparent)" }}>
         <div className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-gray-900">
-              <svg className="size-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <div className="flex size-8 items-center justify-center rounded-lg" style={{ background: "var(--gray-1000)" }}>
+              <svg className="size-4" style={{ color: "var(--ds-contrast-inverse)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
               </svg>
             </div>
             <div>
-              <h1 className="text-sm font-semibold text-gray-900">Criptograma DUKPT</h1>
-              <p className="text-[11px] text-gray-400">Generador y cifrador de PIN Block</p>
+              <h1 className="text-sm font-semibold" style={{ color: "var(--ds-text)" }}>Criptograma DUKPT</h1>
+              <p className="text-[11px]" style={{ color: "var(--ds-text-muted)" }}>Generador y cifrador de PIN Block</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[11px] text-gray-400">{progress}% completado</span>
-            <div className="h-1.5 w-20 rounded-full bg-gray-100 overflow-hidden">
+            <span className="text-[11px]" style={{ color: "var(--ds-text-muted)" }}>{progress}% completado</span>
+            <div className="h-1.5 w-20 rounded-full overflow-hidden" style={{ background: "var(--gray-alpha-200)" }}>
               <div
-                className="h-full rounded-full bg-gray-900 transition-all duration-500"
-                style={{ width: `${progress}%` }}
+                className="h-full rounded-full transition-all duration-500"
+                style={{ width: `${progress}%`, background: "var(--gray-1000)" }}
               />
             </div>
           </div>
@@ -485,10 +481,10 @@ export default function CriptogramaPage() {
           <div className="grid grid-cols-12 gap-4 auto-rows-auto">
 
             {/* ─── Cell: Claves (BDK, KSN, IPEK) ─────────────────────────── */}
-            <section className="col-span-12 lg:col-span-7 rounded-2xl border border-gray-200 bg-white p-6 flex flex-col gap-5">
-              <div className="flex items-center gap-2 pb-1 border-b border-gray-100">
-                <div className="size-2 rounded-full bg-amber-400" />
-                <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Sembrado de Llaves (SIN ENCRIPTAR)</h2>
+            <section className="col-span-12 lg:col-span-7 rounded-2xl p-6 flex flex-col gap-5" style={{ border: "1px solid var(--ds-border)", background: "var(--ds-card)" }}>
+              <div className="flex items-center gap-2 pb-1" style={{ borderBottom: "1px solid var(--ds-border)" }}>
+                <div className="size-2 rounded-full" style={{ background: "var(--amber-700)" }} />
+                <h2 className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--ds-text-muted)" }}>Sembrado de Llaves (SIN ENCRIPTAR)</h2>
               </div>
               <InputField
                 id="bdk"
@@ -526,35 +522,35 @@ export default function CriptogramaPage() {
             </section>
 
             {/* ─── Cell: OTP ───────────────────────────────────────────────── */}
-            <section className="col-span-12 lg:col-span-5 rounded-2xl border border-gray-200 bg-white p-6 flex flex-col gap-5">
-              <div className="flex items-center gap-2 pb-1 border-b border-gray-100">
-                <div className="size-2 rounded-full bg-blue-400" />
-                <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">PIN / OTP</h2>
+            <section className="col-span-12 lg:col-span-5 rounded-2xl p-6 flex flex-col gap-5" style={{ border: "1px solid var(--ds-border)", background: "var(--ds-card)" }}>
+              <div className="flex items-center gap-2 pb-1" style={{ borderBottom: "1px solid var(--ds-border)" }}>
+                <div className="size-2 rounded-full" style={{ background: "var(--blue-700)" }} />
+                <h2 className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--ds-text-muted)" }}>PIN / OTP</h2>
               </div>
               <OtpInput
                 value={form.otp}
                 onChange={(v) => setField("otp", v)}
                 error={errors.otp}
               />
-              <div className="mt-auto rounded-lg bg-gray-50 border border-gray-100 px-4 py-3">
-                <p className="text-[11px] text-gray-400 leading-relaxed">
+              <div className="mt-auto rounded-lg px-4 py-3" style={{ background: "var(--gray-alpha-100)", border: "1px solid var(--ds-border)" }}>
+                <p className="text-[11px] leading-relaxed" style={{ color: "var(--ds-text-muted)" }}>
                   El PIN se construye como{" "}
-                  <code className="font-mono text-gray-600">"0" + len + pin</code>{" "}
-                  y se rellena con <code className="font-mono text-gray-600">F</code> hasta 16 caracteres antes del XOR.
+                  <code className="font-mono" style={{ color: "var(--ds-text-secondary)" }}>"0" + len + pin</code>{" "}
+                  y se rellena con <code className="font-mono" style={{ color: "var(--ds-text-secondary)" }}>F</code> hasta 16 caracteres antes del XOR.
                 </p>
               </div>
             </section>
 
             {/* ─── Cell: Documento ─────────────────────────────────────────── */}
-            <section className="col-span-12 lg:col-span-5 rounded-2xl border border-gray-200 bg-white p-6 flex flex-col gap-5">
-              <div className="flex items-center gap-2 pb-1 border-b border-gray-100">
-                <div className="size-2 rounded-full bg-emerald-400" />
-                <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">INFORMACIÓN DEL USUARIO</h2>
+            <section className="col-span-12 lg:col-span-5 rounded-2xl p-6 flex flex-col gap-5" style={{ border: "1px solid var(--ds-border)", background: "var(--ds-card)" }}>
+              <div className="flex items-center gap-2 pb-1" style={{ borderBottom: "1px solid var(--ds-border)" }}>
+                <div className="size-2 rounded-full" style={{ background: "var(--green-700)" }} />
+                <h2 className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--ds-text-muted)" }}>INFORMACIÓN DEL USUARIO</h2>
               </div>
 
               {/* Tipo de documento */}
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="docType" className="text-xs font-medium text-gray-500 uppercase tracking-widest">
+                <label htmlFor="docType" className="text-xs font-medium uppercase tracking-widest" style={{ color: "var(--ds-text-muted)" }}>
                   Tipo de Documento
                 </label>
                 <select
@@ -562,11 +558,11 @@ export default function CriptogramaPage() {
                   value={form.docType}
                   onChange={(e) => setField("docType", e.target.value)}
                   className={[
-                    "w-full rounded-lg border px-3.5 py-2.5 text-sm outline-none transition-all bg-white appearance-none",
+                    "w-full rounded-lg border px-3.5 py-2.5 text-sm outline-none transition-all bg-[var(--ds-card)] text-[var(--ds-text)] appearance-none",
                     "bg-[url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E\")] bg-no-repeat bg-[right_0.75rem_center] bg-[length:1rem_1rem] pr-10",
                     errors.docType
-                      ? "border-red-300 ring-1 ring-red-200"
-                      : "border-gray-200 focus:border-gray-400 focus:ring-1 focus:ring-gray-200",
+                      ? "border-[var(--red-300)] ring-1 ring-[var(--red-200)]"
+                      : "border-[var(--ds-border)] focus:border-[var(--ds-border-strong)] focus:ring-1 focus:ring-[var(--gray-alpha-300)]",
                   ].join(" ")}
                 >
                   <option value="">Seleccionar tipo...</option>
@@ -577,7 +573,7 @@ export default function CriptogramaPage() {
                   ))}
                 </select>
                 {errors.docType && (
-                  <p className="flex items-center gap-1 text-[11px] text-red-500 mt-0.5">
+                  <p className="flex items-center gap-1 text-[11px] mt-0.5" style={{ color: "var(--red-700)" }}>
                     <svg className="size-3 shrink-0" viewBox="0 0 16 16" fill="currentColor">
                       <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm-.75 3.75a.75.75 0 0 1 1.5 0v3.5a.75.75 0 0 1-1.5 0v-3.5zm.75 7a1 1 0 1 1 0-2 1 1 0 0 1 0 2z" />
                     </svg>
@@ -622,33 +618,29 @@ export default function CriptogramaPage() {
             </section>
 
             {/* ─── Cell: Proceso DUKPT (log de pasos) ─────────────────────── */}
-            <section className="col-span-12 lg:col-span-7 rounded-2xl border border-gray-200 bg-white p-6 flex flex-col gap-4">
-              <div className="flex items-center gap-2 pb-1 border-b border-gray-100">
-                <div className="size-2 rounded-full bg-violet-400" />
-                <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Proceso DUKPT — 19 Pasos</h2>
+            <section className="col-span-12 lg:col-span-7 rounded-2xl p-6 flex flex-col gap-4" style={{ border: "1px solid var(--ds-border)", background: "var(--ds-card)" }}>
+              <div className="flex items-center gap-2 pb-1" style={{ borderBottom: "1px solid var(--ds-border)" }}>
+                <div className="size-2 rounded-full" style={{ background: "var(--purple-700)" }} />
+                <h2 className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--ds-text-muted)" }}>Proceso DUKPT — 19 Pasos</h2>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-64 overflow-y-auto pr-1">
                 {PROCESS_STEPS.map((step, i) => (
                   <div
                     key={i}
-                    className={[
-                      "flex items-start gap-2.5 rounded-lg px-3 py-2 text-[11px] transition-all duration-300",
-                      activeSteps > i
-                        ? "bg-gray-900 text-white"
-                        : "bg-gray-50 text-gray-400",
-                    ].join(" ")}
+                    className="flex items-start gap-2.5 rounded-lg px-3 py-2 text-[11px] transition-all duration-300"
+                    style={activeSteps > i
+                      ? { background: "var(--gray-1000)", color: "var(--ds-contrast-inverse)" }
+                      : { background: "var(--gray-alpha-100)", color: "var(--ds-text-muted)" }}
                   >
                     <span
-                      className={[
-                        "shrink-0 font-mono font-bold tabular-nums w-10",
-                        activeSteps > i ? "text-gray-400" : "text-gray-300",
-                      ].join(" ")}
+                      className="shrink-0 font-mono font-bold tabular-nums w-10"
+                      style={{ color: "var(--ds-text-muted)" }}
                     >
                       {step.label}
                     </span>
                     <span className="leading-snug">{step.description}</span>
                     {activeSteps > i && (
-                      <svg className="ml-auto shrink-0 size-3 text-green-400 mt-0.5" viewBox="0 0 16 16" fill="currentColor">
+                      <svg className="ml-auto shrink-0 size-3 mt-0.5" style={{ color: "var(--green-700)" }} viewBox="0 0 16 16" fill="currentColor">
                         <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 1 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0z" />
                       </svg>
                     )}
@@ -658,20 +650,20 @@ export default function CriptogramaPage() {
             </section>
 
             {/* ─── Cell: Resultados ────────────────────────────────────────── */}
-            <section className="col-span-12 rounded-2xl border border-gray-200 bg-white p-6 flex flex-col gap-4">
-              <div className="flex items-center gap-2 pb-1 border-b border-gray-100">
-                <div className="size-2 rounded-full bg-gray-900" />
-                <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Resultados</h2>
+            <section className="col-span-12 rounded-2xl p-6 flex flex-col gap-4" style={{ border: "1px solid var(--ds-border)", background: "var(--ds-card)" }}>
+              <div className="flex items-center gap-2 pb-1" style={{ borderBottom: "1px solid var(--ds-border)" }}>
+                <div className="size-2 rounded-full" style={{ background: "var(--gray-1000)" }} />
+                <h2 className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--ds-text-muted)" }}>Resultados</h2>
               </div>
 
               {apiError && (
-                <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
-                  <svg className="size-4 text-red-500 shrink-0 mt-0.5" viewBox="0 0 16 16" fill="currentColor">
+                <div className="flex items-start gap-3 rounded-xl px-4 py-3" style={{ border: "1px solid var(--red-400)", background: "var(--red-100)" }}>
+                  <svg className="size-4 shrink-0 mt-0.5" style={{ color: "var(--red-700)" }} viewBox="0 0 16 16" fill="currentColor">
                     <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm-.75 3.75a.75.75 0 0 1 1.5 0v3.5a.75.75 0 0 1-1.5 0v-3.5zm.75 7a1 1 0 1 1 0-2 1 1 0 0 1 0 2z" />
                   </svg>
                   <div>
-                    <p className="text-sm font-medium text-red-700">Error en el proceso</p>
-                    <p className="text-[12px] text-red-500 mt-0.5 font-mono">{apiError}</p>
+                    <p className="text-sm font-medium" style={{ color: "var(--red-900)" }}>Error en el proceso</p>
+                    <p className="text-[12px] mt-0.5 font-mono" style={{ color: "var(--red-700)" }}>{apiError}</p>
                   </div>
                 </div>
               )}
@@ -711,8 +703,8 @@ export default function CriptogramaPage() {
               </div>
 
               {!result && !apiError && (
-                <div className="flex items-center justify-center h-16 text-[12px] text-gray-300">
-                  Completa el formulario y presiona <span className="font-semibold mx-1 text-gray-400">Generar</span> para ver los resultados.
+                <div className="flex items-center justify-center h-16 text-[12px]" style={{ color: "var(--ds-text-muted)" }}>
+                  Completa el formulario y presiona <span className="font-semibold mx-1" style={{ color: "var(--ds-text-secondary)" }}>Generar</span> para ver los resultados.
                 </div>
               )}
             </section>
@@ -722,14 +714,16 @@ export default function CriptogramaPage() {
               <button
                 type="button"
                 onClick={handleReset}
-                className="rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-gray-600 transition-all hover:border-gray-300 hover:text-gray-900 active:scale-[0.98]"
+                className="rounded-lg px-5 py-2.5 text-sm font-medium transition-all hover:border-[var(--ds-border-strong)] hover:text-[var(--ds-text)] active:translate-y-[0.5px]"
+                style={{ border: "1px solid var(--ds-border)", background: "var(--ds-card)", color: "var(--ds-text-secondary)" }}
               >
                 Restablecer
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="relative flex items-center gap-2 rounded-lg bg-gray-900 px-6 py-2.5 text-sm font-medium text-white transition-all hover:bg-gray-700 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
+                className="relative flex items-center gap-2 rounded-lg px-6 py-2.5 text-sm font-medium transition-all hover:bg-[var(--gray-700)] active:translate-y-[0.5px] disabled:opacity-60 disabled:cursor-not-allowed"
+                style={{ background: "var(--gray-1000)", color: "var(--ds-contrast-inverse)" }}
               >
                 {loading ? (
                   <>
@@ -754,12 +748,12 @@ export default function CriptogramaPage() {
       </main>
 
       {/* ── Footer ── */}
-      <footer className="border-t border-gray-200 py-4 mt-4">
+      <footer className="py-4 mt-4" style={{ borderTop: "1px solid var(--ds-border)" }}>
         <div className="mx-auto max-w-6xl px-6 flex items-center justify-between">
-          <p className="text-[11px] text-gray-400">
-            Implementación del estándar <span className="font-medium text-gray-500">DUKPT 3DES</span> — ANSI X9.24
+          <p className="text-[11px]" style={{ color: "var(--ds-text-muted)" }}>
+            Implementación del estándar <span className="font-medium" style={{ color: "var(--ds-text-secondary)" }}>DUKPT 3DES</span> — ANSI X9.24
           </p>
-          <p className="text-[11px] text-gray-300 font-mono">
+          <p className="text-[11px] font-mono" style={{ color: "var(--ds-text-muted)" }}>
             @atmira/dukpt3des v0.2.0
           </p>
         </div>

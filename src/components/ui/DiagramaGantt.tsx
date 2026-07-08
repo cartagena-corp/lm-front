@@ -46,18 +46,27 @@ export default function DiagramaGantt() {
    }, [])
 
    return (
-      <main className="bg-white p-8 rounded-md w-full h-full relative">
-         <h2 className="text-xl font-bold mb-4">Diagrama de Gantt</h2>
+      <main className="w-full h-full relative" style={{ color: "var(--ds-text)" }}>
+         <div className="flex items-center gap-2 mb-4">
+            <h2 className="text-base font-semibold" style={{ color: "var(--ds-text)", letterSpacing: "-0.01em" }}>Diagrama de Gantt</h2>
+            <span
+               className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium whitespace-nowrap"
+               style={{ background: "var(--amber-200)", color: "var(--amber-900)" }}
+            >
+               Pronto
+            </span>
+         </div>
          <div className="w-full overflow-x-auto overflow-y-hidden">
             <div ref={ganttRef} className="w-full" />
          </div>
 
          <section
-            className={`bg-black/25 z-[9999] backdrop-blur-sm rounded-md absolute h-full w-full flex justify-center items-center top-0 left-0 transition-opacity duration-1000 ${
+            className={`z-[9999] backdrop-blur-sm rounded-md absolute h-full w-full flex justify-center items-center top-0 left-0 transition-opacity duration-1000 ${
                showOverlay ? 'opacity-100' : 'opacity-0'
             }`}
+            style={{ background: "var(--gray-alpha-300)" }}
          >
-            <h6 className="text-4xl font-bold shadow-black">Próximamente</h6>
+            <h6 className="text-4xl font-semibold" style={{ color: "var(--ds-text)", letterSpacing: "-0.02em" }}>Próximamente</h6>
          </section>
       </main>
    )

@@ -1,0 +1,639 @@
+<title>La Muralla — Design System Reference</title>
+<meta name="description" content="Living reference for La Muralla's design system: color tokens, typography, spacing, materials, component recipes, and the lucide-react icon mapping." />
+<style>
+  /* ============================================================
+     Token layer — copied verbatim from the real source of truth:
+     src/assets/geist/{colors,typography,spacing,materials}.css
+     This page renders WITH the actual app tokens, not approximations.
+     ============================================================ */
+  :root {
+    --background-100: #ffffff;
+    --background-200: #fafafa;
+
+    --gray-100: hsl(0, 0%, 95%); --gray-200: hsl(0, 0%, 92%); --gray-300: hsl(0, 0%, 90%);
+    --gray-400: hsl(0, 0%, 92%); --gray-500: hsl(0, 0%, 79%); --gray-600: hsl(0, 0%, 66%);
+    --gray-700: hsl(0, 0%, 56%); --gray-800: hsl(0, 0%, 49%); --gray-900: hsl(0, 0%, 40%); --gray-1000: hsl(0, 0%, 9%);
+
+    --gray-alpha-100: rgba(0,0,0,0.05); --gray-alpha-200: rgba(0,0,0,0.08); --gray-alpha-300: rgba(0,0,0,0.10);
+    --gray-alpha-400: rgba(0,0,0,0.08); --gray-alpha-500: rgba(0,0,0,0.21); --gray-alpha-600: rgba(0,0,0,0.34);
+    --gray-alpha-700: rgba(0,0,0,0.44); --gray-alpha-800: rgba(0,0,0,0.51); --gray-alpha-900: rgba(0,0,0,0.61); --gray-alpha-1000: rgba(0,0,0,0.91);
+
+    --blue-100: hsl(212, 100%, 97%); --blue-200: hsl(210, 100%, 96%); --blue-300: hsl(210, 100%, 94%);
+    --blue-400: hsl(209, 100%, 90%); --blue-500: hsl(209, 100%, 80%); --blue-600: hsl(208, 100%, 66%);
+    --blue-700: hsl(212, 100%, 48%); --blue-800: hsl(212, 100%, 41%); --blue-900: hsl(211, 100%, 42%); --blue-1000: hsl(211, 100%, 15%);
+
+    --red-100: hsl(0, 100%, 97%); --red-200: hsl(0, 100%, 96%); --red-300: hsl(0, 100%, 95%);
+    --red-400: hsl(0, 90%, 92%); --red-500: hsl(0, 82%, 85%); --red-600: hsl(359, 90%, 71%);
+    --red-700: hsl(358, 75%, 59%); --red-800: hsl(358, 70%, 52%); --red-900: hsl(358, 66%, 48%); --red-1000: hsl(355, 49%, 15%);
+
+    --amber-100: hsl(39, 100%, 95%); --amber-200: hsl(44, 100%, 92%); --amber-300: hsl(43, 96%, 90%);
+    --amber-400: hsl(42, 100%, 78%); --amber-500: hsl(38, 100%, 71%); --amber-600: hsl(36, 90%, 62%);
+    --amber-700: hsl(39, 100%, 57%); --amber-800: hsl(35, 100%, 52%); --amber-900: hsl(30, 100%, 32%); --amber-1000: hsl(20, 79%, 17%);
+
+    --green-100: hsl(120, 60%, 96%); --green-200: hsl(120, 60%, 95%); --green-300: hsl(120, 60%, 91%);
+    --green-400: hsl(122, 60%, 86%); --green-500: hsl(124, 60%, 75%); --green-600: hsl(125, 60%, 64%);
+    --green-700: hsl(131, 41%, 46%); --green-800: hsl(132, 43%, 39%); --green-900: hsl(133, 50%, 32%); --green-1000: hsl(128, 29%, 15%);
+
+    --teal-100: hsl(169, 70%, 96%); --teal-200: hsl(167, 70%, 94%); --teal-300: hsl(168, 70%, 90%);
+    --teal-400: hsl(170, 70%, 85%); --teal-500: hsl(170, 70%, 72%); --teal-600: hsl(170, 70%, 57%);
+    --teal-700: hsl(173, 80%, 36%); --teal-800: hsl(173, 83%, 30%); --teal-900: hsl(174, 91%, 25%); --teal-1000: hsl(171, 80%, 13%);
+
+    --purple-100: hsl(276, 100%, 97%); --purple-200: hsl(277, 87%, 97%); --purple-300: hsl(274, 78%, 95%);
+    --purple-400: hsl(276, 71%, 92%); --purple-500: hsl(274, 70%, 82%); --purple-600: hsl(273, 72%, 73%);
+    --purple-700: hsl(272, 51%, 54%); --purple-800: hsl(272, 47%, 45%); --purple-900: hsl(274, 71%, 43%); --purple-1000: hsl(276, 100%, 15%);
+
+    --pink-100: hsl(330, 100%, 96%); --pink-200: hsl(340, 90%, 96%); --pink-300: hsl(340, 82%, 94%);
+    --pink-400: hsl(341, 76%, 91%); --pink-500: hsl(340, 75%, 84%); --pink-600: hsl(341, 75%, 73%);
+    --pink-700: hsl(336, 80%, 58%); --pink-800: hsl(336, 74%, 51%); --pink-900: hsl(336, 65%, 45%); --pink-1000: hsl(333, 74%, 15%);
+
+    --primary-100: hsl(220, 50%, 97%); --primary-200: hsl(220, 48%, 94%); --primary-300: hsl(220, 46%, 90%);
+    --primary-400: hsl(220, 40%, 78%); --primary-500: hsl(220, 40%, 61%); --primary-600: hsl(220, 40%, 35%);
+    --primary-700: #101828; --primary-800: hsl(220, 38%, 18%); --primary-900: hsl(220, 45%, 7%); --primary-1000: hsl(220, 45%, 4%);
+    --primary-contrast-fg: #f7f8fa;
+
+    --sidebar-bg: #101828; --sidebar-bg-hover: #1c263b; --sidebar-bg-active: #26324a;
+    --sidebar-border: rgba(255, 255, 255, 0.08); --sidebar-text: #f0f1f5; --sidebar-text-secondary: #b6bcc8;
+    --sidebar-text-muted: #8790a1; --sidebar-avatar-bg: #273249;
+    --sidebar-danger-bg: rgba(239, 68, 68, 0.18); --sidebar-danger-text: #ffb4ab;
+
+    --ds-background: var(--background-100); --ds-background-subtle: var(--background-200);
+    --ds-card: var(--background-100); --ds-text: var(--gray-1000); --ds-text-secondary: var(--gray-900);
+    --ds-text-muted: var(--gray-700); --ds-border: var(--gray-alpha-400); --ds-border-strong: var(--gray-alpha-500);
+    --ds-fill: var(--gray-100); --ds-fill-hover: var(--gray-200); --ds-fill-active: var(--gray-300);
+    --ds-focus: var(--blue-700); --ds-link: var(--blue-700); --ds-error: var(--red-800); --ds-warning: var(--amber-700);
+    --ds-contrast-inverse: var(--background-100);
+
+    --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: "Geist Mono", ui-monospace, "SF Mono", "Roboto Mono", Menlo, Monaco, "Liberation Mono", "Courier New", monospace;
+
+    --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 20px; --space-6: 24px;
+    --space-8: 32px; --space-10: 40px; --space-12: 48px; --space-16: 64px; --space-20: 80px; --space-24: 96px;
+
+    --radius-sm: 4px; --radius-md: 6px; --radius-lg: 8px; --radius-xl: 12px; --radius-2xl: 16px; --radius-full: 9999px;
+
+    --shadow-border: 0 0 0 1px var(--ds-border);
+    --shadow-border-strong: 0 0 0 1px var(--ds-border-strong);
+    --shadow-sm: 0 0 0 1px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+    --shadow-md: 0 0 0 1px rgba(0,0,0,.08), 0 2px 2px rgba(0,0,0,.04), 0 8px 8px -8px rgba(0,0,0,.04);
+    --shadow-lg: 0 0 0 1px rgba(0,0,0,.08), 0 4px 8px rgba(0,0,0,.04), 0 16px 24px -8px rgba(0,0,0,.08);
+    --shadow-xl: 0 0 0 1px rgba(0,0,0,.08), 0 8px 16px rgba(0,0,0,.06), 0 24px 32px -12px rgba(0,0,0,.12);
+    --focus-ring: 0 0 0 2px var(--ds-background), 0 0 0 4px var(--ds-focus);
+  }
+
+  /* This document is a reference for a LIGHT-MODE-ONLY app — it deliberately
+     stays single-theme rather than offering a dark mode the subject doesn't have. */
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; animation: none !important; } }
+
+  body {
+    margin: 0; background: var(--ds-background); color: var(--ds-text);
+    font-family: var(--font-sans); font-size: 15px; line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: var(--ds-link); }
+  code, .mono { font-family: var(--font-mono); font-feature-settings: "tnum" 1; }
+
+  .layout { display: flex; min-height: 100vh; }
+
+  /* ---- Nav rail — a live demo of the actual --sidebar-* recipe ---- */
+  nav.rail {
+    width: 240px; flex-shrink: 0; background: var(--sidebar-bg); color: var(--sidebar-text);
+    border-right: 1px solid var(--sidebar-border); position: sticky; top: 0; height: 100vh; overflow-y: auto;
+    padding: var(--space-6) 0;
+  }
+  nav.rail .brand { padding: 0 var(--space-5) var(--space-5); border-bottom: 1px solid var(--sidebar-border); margin-bottom: var(--space-4); }
+  nav.rail .brand strong { display: block; font-size: 15px; letter-spacing: -0.01em; }
+  nav.rail .brand span { display: block; font-size: 12px; color: var(--sidebar-text-muted); margin-top: 2px; }
+  nav.rail a {
+    display: block; padding: 9px var(--space-5); font-size: 13.5px; font-weight: 500;
+    color: var(--sidebar-text-secondary); text-decoration: none; border-left: 2px solid transparent;
+  }
+  nav.rail a:hover { background: var(--sidebar-bg-hover); color: var(--sidebar-text); }
+  nav.rail .group-label {
+    padding: var(--space-4) var(--space-5) var(--space-1); font-family: var(--font-mono); font-size: 10.5px;
+    text-transform: uppercase; letter-spacing: 0.08em; color: var(--sidebar-text-muted);
+  }
+
+  main { flex: 1; min-width: 0; }
+  .content { max-width: 880px; margin: 0 auto; padding: var(--space-16) var(--space-8) var(--space-24); }
+
+  header.intro { padding-bottom: var(--space-10); border-bottom: 1px solid var(--ds-border); margin-bottom: var(--space-12); }
+  header.intro .eyebrow {
+    font-family: var(--font-mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--primary-600); margin-bottom: var(--space-3);
+  }
+  header.intro h1 { font-size: 34px; line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 var(--space-3); text-wrap: balance; }
+  header.intro p.lede { font-size: 16px; color: var(--ds-text-secondary); max-width: 62ch; margin: 0 0 var(--space-6); }
+
+  .rules { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
+  .rules li {
+    display: flex; gap: var(--space-3); align-items: flex-start; font-size: 13.5px; color: var(--ds-text-secondary);
+    background: var(--ds-background-subtle); border: 1px solid var(--ds-border); border-radius: var(--radius-md);
+    padding: var(--space-3) var(--space-4);
+  }
+  .rules li b { color: var(--ds-text); font-weight: 600; }
+  .rules .n {
+    font-family: var(--font-mono); font-size: 11px; color: var(--primary-contrast-fg); background: var(--primary-700);
+    width: 18px; height: 18px; border-radius: 5px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;
+  }
+
+  section.doc { margin-bottom: var(--space-24); scroll-margin-top: var(--space-8); }
+  section.doc h2 {
+    font-size: 22px; letter-spacing: -0.01em; margin: 0 0 var(--space-2);
+    display: flex; align-items: baseline; gap: var(--space-3);
+  }
+  section.doc h2 .num { font-family: var(--font-mono); font-size: 13px; color: var(--ds-text-muted); font-weight: 400; }
+  section.doc > p.dek { color: var(--ds-text-secondary); max-width: 68ch; margin: 0 0 var(--space-8); }
+  section.doc h3 { font-size: 15px; margin: var(--space-8) 0 var(--space-3); letter-spacing: -0.005em; }
+  section.doc h3 .tag {
+    font-family: var(--font-mono); font-size: 11px; font-weight: 400; color: var(--ds-text-muted);
+    background: var(--ds-fill); padding: 2px 6px; border-radius: var(--radius-sm); margin-left: var(--space-2);
+  }
+
+  .scroll-x { overflow-x: auto; }
+  .scroll-x::-webkit-scrollbar { height: 6px; }
+  .scroll-x::-webkit-scrollbar-thumb { background: var(--ds-border-strong); border-radius: 3px; }
+
+  /* ---- Color scale swatches ---- */
+  .scale-row { display: flex; gap: 0; border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow-border); min-width: 720px; }
+  .swatch {
+    flex: 1; min-width: 64px; height: 64px; position: relative; cursor: pointer; border: none;
+    display: flex; align-items: flex-end; padding: 6px; font-family: var(--font-mono); font-size: 10px;
+  }
+  .swatch:focus-visible { outline: 2px solid var(--ds-focus); outline-offset: 2px; z-index: 1; }
+  .swatch .step { opacity: .55; }
+  .swatch.copied::after {
+    content: "copied ✓"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,.9); color: #000; font-family: var(--font-sans); font-weight: 500; font-size: 11px;
+  }
+  .scale-label { display: flex; justify-content: space-between; align-items: baseline; margin: var(--space-6) 0 var(--space-2); min-width: 720px; }
+  .scale-label .name { font-weight: 600; font-size: 13.5px; }
+  .scale-label .hint { font-size: 12px; color: var(--ds-text-muted); }
+
+  table.tokens { border-collapse: collapse; width: 100%; font-size: 13px; min-width: 600px; }
+  table.tokens th, table.tokens td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--ds-border); vertical-align: top; }
+  table.tokens th { font-weight: 600; color: var(--ds-text-secondary); font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em; }
+  table.tokens td.tok { font-family: var(--font-mono); white-space: nowrap; }
+  table.tokens tr:last-child td { border-bottom: none; }
+  .swab { display: inline-block; width: 14px; height: 14px; border-radius: 4px; box-shadow: var(--shadow-border); vertical-align: -2px; margin-right: 6px; }
+
+  .callout {
+    border-radius: var(--radius-md); padding: var(--space-4) var(--space-5); font-size: 13.5px;
+    background: var(--amber-100); border: 1px solid var(--amber-400); color: var(--amber-900); margin: var(--space-6) 0;
+  }
+  .callout.ok { background: var(--green-100); border-color: var(--green-400); color: var(--green-900); }
+  .callout code { background: rgba(0,0,0,.06); padding: 1px 5px; border-radius: 4px; }
+
+  /* ---- Typography specimens ---- */
+  .type-row { display: flex; align-items: baseline; gap: var(--space-6); padding: var(--space-3) 0; border-bottom: 1px solid var(--ds-border); }
+  .type-row .sample { font-weight: 600; letter-spacing: -0.01em; flex: 1; }
+  .type-row .meta { font-family: var(--font-mono); font-size: 11.5px; color: var(--ds-text-muted); white-space: nowrap; }
+
+  /* ---- Spacing ruler ---- */
+  .space-row { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-2); }
+  .space-row .bar { background: var(--primary-400); height: 12px; border-radius: 2px; }
+  .space-row .lbl { font-family: var(--font-mono); font-size: 12px; color: var(--ds-text-secondary); width: 130px; flex-shrink: 0; }
+
+  /* ---- Materials samples ---- */
+  .swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: var(--space-4); }
+  .mat-card {
+    background: var(--ds-card); padding: var(--space-4); text-align: center; font-family: var(--font-mono); font-size: 12px;
+    color: var(--ds-text-secondary);
+  }
+
+  /* ---- Buttons (real recipes) ---- */
+  .btn { height: 36px; padding: 0 16px; border-radius: var(--radius-md); font-size: 14px; font-weight: 500; border: none; cursor: pointer; transition: background-color .15s, box-shadow .15s; display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-sans); }
+  .btn-primary { background: var(--primary-700); color: var(--primary-contrast-fg); }
+  .btn-primary:hover { background: var(--primary-800); }
+  .btn-danger { background: var(--red-700); color: var(--ds-contrast-inverse); }
+  .btn-danger:hover { background: var(--red-800); }
+  .btn-secondary { background: var(--ds-card); color: var(--ds-text); box-shadow: var(--shadow-border); }
+  .btn-secondary:hover { background: var(--gray-alpha-100); }
+  .btn-ghost { background: transparent; color: var(--ds-text-secondary); padding: 0 10px; }
+  .btn-ghost:hover { background: var(--gray-alpha-100); }
+  .btn:focus-visible { outline: 2px solid var(--ds-focus); outline-offset: 2px; }
+  .btn-row { display: flex; gap: var(--space-3); flex-wrap: wrap; align-items: center; margin: var(--space-4) 0 var(--space-2); }
+  .danger-hover-demo { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: var(--radius-md); color: var(--ds-text-secondary); font-size: 13px; cursor: pointer; }
+  .danger-hover-demo:hover { background: var(--red-100); color: var(--red-900); }
+
+  /* ---- Card / modal demo ---- */
+  .card-demo { background: var(--ds-card); box-shadow: var(--shadow-border); border-radius: var(--radius-md); padding: var(--space-5); transition: box-shadow .15s; }
+  .card-demo:hover { box-shadow: var(--shadow-md); }
+  .modal-demo { background: var(--ds-card); box-shadow: var(--shadow-lg); border-radius: var(--radius-lg); max-width: 420px; display: flex; flex-direction: column; max-height: 260px; overflow: hidden; }
+  .modal-demo .tabs { display: flex; gap: var(--space-1); padding: var(--space-3) var(--space-4) 0; flex-shrink: 0; border-bottom: 1px solid var(--ds-border); }
+  .modal-demo .tabs span { font-size: 12.5px; padding: 6px 10px; color: var(--ds-text-muted); border-bottom: 2px solid transparent; }
+  .modal-demo .tabs span.active { color: var(--ds-text); border-color: var(--primary-700); font-weight: 500; }
+  .modal-demo .body { padding: var(--space-4); overflow-y: auto; font-size: 13px; color: var(--ds-text-secondary); }
+
+  .delete-demo { background: var(--ds-card); box-shadow: var(--shadow-border); border-radius: var(--radius-md); padding: var(--space-6); max-width: 340px; text-align: center; }
+  .delete-demo .roundel { width: 56px; height: 56px; border-radius: 50%; background: var(--red-100); color: var(--red-900); display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-4); }
+  .delete-demo h4 { margin: 0 0 var(--space-2); font-size: 15px; }
+  .delete-demo p { margin: 0 0 var(--space-4); font-size: 13px; color: var(--ds-text-secondary); }
+
+  /* ---- Icon demo ---- */
+  .icon-compare { display: flex; gap: var(--space-8); align-items: center; }
+  .icon-compare figure { margin: 0; text-align: center; }
+  .icon-compare figcaption { font-family: var(--font-mono); font-size: 11px; color: var(--ds-text-muted); margin-top: var(--space-2); }
+  .icon-strip { display: flex; flex-wrap: wrap; gap: var(--space-5); padding: var(--space-4) 0; }
+  .icon-strip .i { text-align: center; width: 72px; }
+  .icon-strip .i svg { color: var(--ds-text); }
+  .icon-strip .i span { display: block; font-family: var(--font-mono); font-size: 10px; color: var(--ds-text-muted); margin-top: 6px; word-break: break-word; }
+
+  .filemap { background: var(--gray-1000); color: #d4d4d8; border-radius: var(--radius-md); padding: var(--space-5); font-family: var(--font-mono); font-size: 12.5px; line-height: 1.8; overflow-x: auto; }
+  .filemap .c { color: #71717a; }
+
+  footer.foot { border-top: 1px solid var(--ds-border); padding-top: var(--space-6); font-size: 12.5px; color: var(--ds-text-muted); }
+</style>
+
+<div class="layout">
+  <nav class="rail" aria-label="Section navigation">
+    <div class="brand"><strong>La Muralla</strong><span>Design system reference</span></div>
+    <div class="group-label">Tokens</div>
+    <a href="#colors">Color</a>
+    <a href="#typography">Typography</a>
+    <a href="#spacing">Spacing &amp; layout</a>
+    <a href="#materials">Materials</a>
+    <div class="group-label">Usage</div>
+    <a href="#components">Component recipes</a>
+    <a href="#icons">Icon system</a>
+    <div class="group-label">Reference</div>
+    <a href="#filemap">File map</a>
+    <a href="#quirks">Known quirks</a>
+  </nav>
+
+  <main>
+    <div class="content">
+      <header class="intro">
+        <div class="eyebrow">Design system · light mode only</div>
+        <h1>The design system implemented in La Muralla</h1>
+        <p class="lede">A rendered reference for every color token, type scale, spacing value, material, component recipe, and icon mapping shipped in this app — read this before touching any presentation-layer code in a new session. Full narrative version: <code>docs/DESIGN_SYSTEM.md</code>.</p>
+
+        <ol class="rules">
+          <li><span class="n">1</span><span><b>Light mode only.</b> Dark mode was deliberately removed — no <code>.dark</code>, no theme toggle, no <code>data-theme</code> branching anywhere.</span></li>
+          <li><span class="n">2</span><span><b>Sidebar is permanently <code>#101828</code>.</b> Not a themeable surface — a fixed brand element.</span></li>
+          <li><span class="n">3</span><span><b>No floating notification widgets.</b> Notifications live in a dropdown anchored inside the Topbar.</span></li>
+          <li><span class="n">4</span><span><b>Zero raw Tailwind palette classes.</b> Every color is a CSS variable — a Geist scale step or a semantic alias.</span></li>
+          <li><span class="n">5</span><span><b><code>lucide-react</code> only.</b> The hand-rolled icon set and SVG sprite are deleted — don't reintroduce either pattern.</span></li>
+        </ol>
+      </header>
+
+      <section class="doc" id="colors">
+        <h2><span class="num">01</span> Color</h2>
+        <p class="dek">All tokens live in <code>src/assets/geist/colors.css</code>, consumed directly as CSS variables — never through a Tailwind theme extension. Click any swatch to copy its variable name. Step convention: 100 bg tint · 200 hover bg · 300 active bg · 400 border · 500 hover border · 600 active border · 700 solid fill · 800 fill hover · 900 secondary text · 1000 primary text.</p>
+
+        <div class="scroll-x">
+          <div id="scales"></div>
+        </div>
+
+        <h3>Brand primary <span class="tag">--primary-*</span></h3>
+        <p style="color:var(--ds-text-secondary); font-size:13.5px; max-width:64ch;">The app's own scale, anchored on the brand navy <code>#101828</code>. This is the single unified recipe for "the one primary CTA button in a view" — it replaced four previously-competing recipes (black invert, ad-hoc blue+white, a <code>text-white</code> variant, and a purple-for-edit split).</p>
+        <div class="scroll-x"><div class="scale-row" id="scale-primary" style="min-width:560px"></div></div>
+
+        <h3>Sidebar surface <span class="tag">--sidebar-*</span></h3>
+        <p style="color:var(--ds-text-secondary); font-size:13.5px; max-width:64ch;">A deliberately <em>separate</em> namespace from <code>--primary-*</code> — the sidebar is a persistent surface, not a CTA, so its hover/active tuning must never cross-affect button tuning.</p>
+        <div class="scroll-x">
+          <table class="tokens" style="min-width:520px">
+            <tr><td class="tok">--sidebar-bg</td><td><span class="swab" style="background:#101828"></span>#101828</td></tr>
+            <tr><td class="tok">--sidebar-bg-hover</td><td><span class="swab" style="background:#1c263b"></span>#1c263b</td></tr>
+            <tr><td class="tok">--sidebar-bg-active</td><td><span class="swab" style="background:#26324a"></span>#26324a</td></tr>
+            <tr><td class="tok">--sidebar-text</td><td><span class="swab" style="background:#f0f1f5"></span>#f0f1f5</td></tr>
+            <tr><td class="tok">--sidebar-text-secondary</td><td><span class="swab" style="background:#b6bcc8"></span>#b6bcc8</td></tr>
+            <tr><td class="tok">--sidebar-text-muted</td><td><span class="swab" style="background:#8790a1"></span>#8790a1</td></tr>
+            <tr><td class="tok">--sidebar-danger-bg / -text</td><td><span class="swab" style="background:#ef4444"></span>logout hover-reveal (rgba red / #ffb4ab)</td></tr>
+          </table>
+        </div>
+
+        <h3>Semantic aliases <span class="tag">--ds-*</span></h3>
+        <p style="color:var(--ds-text-secondary); font-size:13.5px; max-width:64ch;">What most components actually consume day to day.</p>
+        <div class="scroll-x">
+          <table class="tokens">
+            <tr><th>Token</th><th>Resolves to</th><th>Use for</th></tr>
+            <tr><td class="tok">--ds-background</td><td class="tok">--background-100</td><td>page background</td></tr>
+            <tr><td class="tok">--ds-card</td><td class="tok">--background-100</td><td>card / modal / dropdown surfaces</td></tr>
+            <tr><td class="tok">--ds-text</td><td class="tok">--gray-1000</td><td>primary text</td></tr>
+            <tr><td class="tok">--ds-text-secondary</td><td class="tok">--gray-900</td><td>secondary text / labels</td></tr>
+            <tr><td class="tok">--ds-text-muted</td><td class="tok">--gray-700</td><td>muted / placeholder text</td></tr>
+            <tr><td class="tok">--ds-border</td><td class="tok">--gray-alpha-400</td><td>default 1px borders</td></tr>
+            <tr><td class="tok">--ds-border-strong</td><td class="tok">--gray-alpha-500</td><td>emphasized / hover borders</td></tr>
+            <tr><td class="tok">--ds-focus / --ds-link</td><td class="tok">--blue-700</td><td>focus rings, links (always blue, never primary)</td></tr>
+            <tr><td class="tok">--ds-contrast-inverse</td><td class="tok">--background-100</td><td>text on a dark solid fill (e.g. a red delete button)</td></tr>
+          </table>
+        </div>
+
+        <div class="callout">
+          <b>Only two allowed non-token colors in the whole app:</b> <code>ThemeScript.tsx</code>'s accent-bootstrap script (sets a runtime CSS variable's <em>value</em>, not a hardcoded UI color) and a "Blanco" <code>#ffffff</code> swatch inside <code>TextArea.tsx</code>'s rich-text color picker (user <em>content</em> color, not UI chrome). Backend-driven status/priority/type chip colors are also intentionally left inline/data-driven — that's an established pattern, not a leftover.
+        </div>
+      </section>
+
+      <section class="doc" id="typography">
+        <h2><span class="num">02</span> Typography</h2>
+        <p class="dek"><b>Geist Sans</b> for all UI and prose, <b>Geist Mono</b> for code/data/technical labels (loaded via <code>next/font/google</code> — this reference falls back to the same system stack the tokens define, since webfonts can't load here). Three weights only — 400 read, 500 interact, 600 announce — hierarchy comes from size + tracking, not weight.</p>
+        <h3>Headings <span class="tag">.heading-N</span></h3>
+        <div id="type-headings"></div>
+        <h3>Labels <span class="tag">.label-N</span></h3>
+        <div id="type-labels"></div>
+        <h3>Copy <span class="tag">.copy-N</span></h3>
+        <div id="type-copy"></div>
+      </section>
+
+      <section class="doc" id="spacing">
+        <h2><span class="num">03</span> Spacing &amp; layout</h2>
+        <p class="dek">4px base grid, <code>--space-1</code> (4px) through <code>--space-24</code> (96px, not all shown). Control heights: 32 / 40 / 48px for small / medium / large. Breakpoints are stock Tailwind — <code>md</code> (768px) is the sidebar-rail/mobile-drawer cutover, <code>lg</code> (1024px) is where side panels become rows.</p>
+        <div id="space-scale"></div>
+        <div class="callout" style="margin-top:var(--space-6)">
+          <b>Scroll-container rule:</b> a flex-column ancestor chain needs <code>min-h-0</code> at <em>every level</em>, not just the scrolling element — or a descendant's <code>overflow-y-auto</code> silently does nothing. This was the single most common layout bug found across the app.
+        </div>
+      </section>
+
+      <section class="doc" id="materials">
+        <h2><span class="num">04</span> Materials</h2>
+        <p class="dek"><b>Border-first.</b> Static elements are defined by a 1px border or a zero-offset "shadow-as-border," never a soft drop-shadow. Real elevation shadow is reserved for hover states and things lifted above the content plane. Don't mix rounded and sharp corners in one view.</p>
+        <h3>Radii</h3>
+        <div class="swatch-grid" style="margin-bottom:var(--space-8)">
+          <div class="mat-card" style="border-radius:var(--radius-sm); box-shadow:var(--shadow-border)"><div style="height:40px"></div>sm · 4px</div>
+          <div class="mat-card" style="border-radius:var(--radius-md); box-shadow:var(--shadow-border)"><div style="height:40px"></div>md · 6px — default</div>
+          <div class="mat-card" style="border-radius:var(--radius-lg); box-shadow:var(--shadow-border)"><div style="height:40px"></div>lg · 8px</div>
+          <div class="mat-card" style="border-radius:var(--radius-xl); box-shadow:var(--shadow-border)"><div style="height:40px"></div>xl · 12px</div>
+          <div class="mat-card" style="border-radius:var(--radius-full); box-shadow:var(--shadow-border)"><div style="height:40px"></div>full · pill</div>
+        </div>
+        <h3>Elevation stack (border → hover → lifted)</h3>
+        <div class="swatch-grid">
+          <div class="mat-card" style="border-radius:var(--radius-md); box-shadow:var(--shadow-border)"><div style="height:40px"></div>border</div>
+          <div class="mat-card" style="border-radius:var(--radius-md); box-shadow:var(--shadow-sm)"><div style="height:40px"></div>sm</div>
+          <div class="mat-card" style="border-radius:var(--radius-md); box-shadow:var(--shadow-md)"><div style="height:40px"></div>md · hover</div>
+          <div class="mat-card" style="border-radius:var(--radius-md); box-shadow:var(--shadow-lg)"><div style="height:40px"></div>lg · popovers/modals</div>
+          <div class="mat-card" style="border-radius:var(--radius-md); box-shadow:var(--shadow-xl)"><div style="height:40px"></div>xl · max lift</div>
+        </div>
+        <h3>Focus ring</h3>
+        <button class="btn btn-secondary" style="box-shadow:var(--focus-ring)">Always focused (demo)</button>
+      </section>
+
+      <section class="doc" id="components">
+        <h2><span class="num">05</span> Component recipes</h2>
+        <p class="dek">No component library exists — these are hand-repeated conventions across ~150 files. Match the recipe for a component's category exactly; don't improvise a new one.</p>
+
+        <h3>Buttons</h3>
+        <div class="btn-row">
+          <button class="btn btn-primary">Crear tablero</button>
+          <button class="btn btn-danger">Eliminar</button>
+          <button class="btn btn-secondary">Cancelar</button>
+          <button class="btn btn-ghost">⋯ ghost</button>
+          <span class="danger-hover-demo">🗑 danger-hover accent</span>
+        </div>
+        <p style="font-size:12.5px; color:var(--ds-text-muted)">Primary → <code>--primary-700/800</code> + <code>--primary-contrast-fg</code>. Danger → <code>--red-700/800</code> + <code>--ds-contrast-inverse</code>. Secondary → <code>--ds-card</code> + <code>shadow-border</code>. Focus rings stay <code>--blue-700</code> everywhere, even on primary buttons — the navy scale is reserved for CTA fills only.</p>
+        <div class="callout" style="margin-top:var(--space-4)"><b>Gotcha:</b> a hover color must be a class (<code>hover:bg-[var(--x)]</code>), never inline <code>style</code> — inline styles always beat <code>:hover</code> specificity, so the hover silently never fires.</div>
+
+        <h3>Card</h3>
+        <div class="card-demo" style="max-width:320px">A card is <code>--ds-card</code> background + <code>shadow-border</code> + <code>radius-md</code>. Hover this card.</div>
+
+        <h3>Delete confirmation <span class="tag">canonical pattern</span></h3>
+        <div class="delete-demo">
+          <div class="roundel">🗑</div>
+          <h4>Eliminar Tablero</h4>
+          <p>Estás a punto de eliminar el tablero <b style="color:var(--red-700)">Proyecto Marketing</b> de forma permanente. Esta acción <b>NO</b> se puede deshacer.</p>
+          <div class="btn-row" style="justify-content:center; margin:0">
+            <button class="btn btn-secondary">Cancelar</button>
+            <button class="btn btn-danger">Eliminar</button>
+          </div>
+        </div>
+        <p style="font-size:12.5px; color:var(--ds-text-muted)">Every <code>Delete*Form.tsx</code> (~20 of them) copies this exact structure — see <code>DeleteBoardForm.tsx</code> as the reference file.</p>
+
+        <h3>Modal with pinned tabs</h3>
+        <div class="modal-demo">
+          <div class="tabs"><span class="active">General</span><span>Miembros</span><span>Permisos</span></div>
+          <div class="body">The tab row stays <code>flex-shrink: 0</code>; only this body scrolls (<code>flex: 1; min-height: 0; overflow-y: auto</code>). Try adding enough content to force a scrollbar here — the tabs above never move.<br /><br />This is the #1 layout bug pattern found across the app: a missing <code>min-h-0</code> on a flex ancestor makes the whole modal scroll as one block instead.</div>
+        </div>
+      </section>
+
+      <section class="doc" id="icons">
+        <h2><span class="num">06</span> Icon system</h2>
+        <p class="dek">All icons are <code>lucide-react</code> (v1.23.0). The old hand-rolled icon set and SVG sprite are deleted — don't reintroduce either.</p>
+
+        <h3>The stroke-width gotcha</h3>
+        <p style="color:var(--ds-text-secondary); font-size:13.5px; max-width:64ch">Lucide takes <code>strokeWidth</code>, not <code>stroke</code> (that prop controls color, not weight, on a lucide icon). This app's characteristic weight is <b><code>strokeWidth={1.5}</code></b> — lucide's own default is <code>2</code>, visibly heavier. Always pass it explicitly.</p>
+        <div class="icon-compare">
+          <figure><span id="icon-slot-15"></span><figcaption>strokeWidth 1.5<br/>(app default)</figcaption></figure>
+          <figure><span id="icon-slot-2"></span><figcaption>strokeWidth 2<br/>(lucide default — don't ship this)</figcaption></figure>
+        </div>
+
+        <h3>Representative icon set <span class="tag">actual paths, strokeWidth 1.5</span></h3>
+        <div class="icon-strip">
+          __ICON_STRIP__
+        </div>
+
+        <h3>Full legacy-name → lucide mapping</h3>
+        <div class="scroll-x">
+          <table class="tokens">
+            <tr><th>Old name</th><th>lucide-react</th><th>Note</th></tr>
+            <tr><td class="tok">BoardIcon</td><td class="tok">LayoutDashboard</td><td></td></tr>
+            <tr><td class="tok">FilterIcon</td><td class="tok">Filter</td><td></td></tr>
+            <tr><td class="tok">CalendarIcon</td><td class="tok">Calendar</td><td></td></tr>
+            <tr><td class="tok">LogoutIcon</td><td class="tok">LogOut</td><td></td></tr>
+            <tr><td class="tok">XIcon</td><td class="tok">X</td><td></td></tr>
+            <tr><td class="tok">ClockIcon</td><td class="tok">Clock</td><td></td></tr>
+            <tr><td class="tok">PlusIcon</td><td class="tok">Plus</td><td></td></tr>
+            <tr><td class="tok">MenuIcon</td><td class="tok">MoreVertical</td><td>3-dot kebab, <b>not</b> lucide's hamburger <code>Menu</code></td></tr>
+            <tr><td class="tok">ListIcon</td><td class="tok">List</td><td></td></tr>
+            <tr><td class="tok">EditIcon</td><td class="tok">Pencil</td><td></td></tr>
+            <tr><td class="tok">AlertCircleIcon</td><td class="tok">AlertCircle</td><td></td></tr>
+            <tr><td class="tok">UsersIcon</td><td class="tok">Users</td><td></td></tr>
+            <tr><td class="tok">SendIcon</td><td class="tok">Send</td><td></td></tr>
+            <tr><td class="tok">AttachIcon</td><td class="tok">Paperclip</td><td></td></tr>
+            <tr><td class="tok">DownloadIcon</td><td class="tok">Download</td><td></td></tr>
+            <tr><td class="tok">DeleteIcon</td><td class="tok">Trash2</td><td>most-used icon in the app</td></tr>
+            <tr><td class="tok">ConfigIcon</td><td class="tok">Settings</td><td></td></tr>
+            <tr><td class="tok">BellIcon</td><td class="tok">Bell</td><td></td></tr>
+            <tr><td class="tok">MegaphoneIcon</td><td class="tok">Megaphone</td><td></td></tr>
+            <tr><td class="tok">EmptyStateIcon</td><td class="tok">Inbox</td><td>default size 48, not 24</td></tr>
+            <tr><td class="tok">AuditIcon</td><td class="tok">ClipboardCheck</td><td>no strokeWidth override needed</td></tr>
+            <tr><td class="tok">EyeIcon / EyeOffIcon</td><td class="tok">Eye / EyeOff</td><td></td></tr>
+            <tr><td class="tok">ForbiddenIcon</td><td class="tok">Ban</td><td></td></tr>
+            <tr><td class="tok">CheckmarkIcon</td><td class="tok">CircleCheck</td><td>check-in-circle, not bare <code>Check</code></td></tr>
+            <tr><td class="tok">SidebarOpenIcon / CloseIcon</td><td class="tok">PanelLeftOpen / Close</td><td></td></tr>
+            <tr><td class="tok">IAIcon</td><td class="tok">Sparkles</td><td>general "AI" glyph</td></tr>
+            <tr><td class="tok">ChatIAIcon</td><td class="tok">Bot</td><td>kept visually distinct from IAIcon</td></tr>
+            <tr><td class="tok">ImportIcon</td><td class="tok">Upload</td><td></td></tr>
+            <tr><td class="tok">FactoryIcon</td><td class="tok">Factory</td><td>no override needed; watch name collisions w/ local <code>Factory</code> components</td></tr>
+            <tr><td class="tok">KeyIcon</td><td class="tok">KeyRound</td><td></td></tr>
+            <tr><td class="tok">ChevronRightIcon / ArrowRightIcon</td><td class="tok">ChevronRight / ArrowRight</td><td></td></tr>
+            <tr><td class="tok">LinkRedirect</td><td class="tok">ExternalLink</td><td></td></tr>
+            <tr><td class="tok">ChangeIcon</td><td class="tok">ArrowLeftRight</td><td></td></tr>
+            <tr><td class="tok">CopyIcon</td><td class="tok">Copy</td><td></td></tr>
+            <tr><td class="tok">DocumentIcon</td><td class="tok">FileText</td><td></td></tr>
+            <tr><td class="tok">RefreshIcon</td><td class="tok">RefreshCw</td><td></td></tr>
+            <tr><td class="tok">Bold/Italic/Strikethrough/Code/Underline/Palette/Highlighter/RemoveFormat Icon</td><td class="tok">Bold/Italic/Strikethrough/Code/Underline/Palette/Highlighter/RemoveFormatting</td><td>no strokeWidth override needed (all 9)</td></tr>
+            <tr><td class="tok">DashboardIcon</td><td class="tok">BarChart3</td><td>no override needed; resolves collision w/ BoardIcon</td></tr>
+            <tr><td class="tok">ZoomInIcon / ZoomOutIcon</td><td class="tok">ZoomIn / ZoomOut</td><td></td></tr>
+            <tr><td class="tok">ZoomResetIcon</td><td class="tok">RotateCcw</td><td></td></tr>
+            <tr><td class="tok">PlayIcon</td><td class="tok">Play</td><td>fill-based — pass <code>fill="currentColor"</code> explicitly</td></tr>
+          </table>
+        </div>
+        <p style="font-size:12.5px; color:var(--ds-text-muted); margin-top:var(--space-3)">Former sprite icons (now removed): <code>arrow-left</code>→ArrowLeft, <code>magnifying-glass</code>→Search, <code>inbox</code>→Mail, <code>lock-closed</code>→Lock, <code>arrow-right</code>→ArrowRight.</p>
+      </section>
+
+      <section class="doc" id="filemap">
+        <h2><span class="num">07</span> File map</h2>
+        <div class="scroll-x">
+          <pre class="filemap">src/assets/geist/colors.css       <span class="c">— all color tokens</span>
+src/assets/geist/typography.css   <span class="c">— font tokens</span>
+src/assets/geist/spacing.css      <span class="c">— spacing/layout tokens</span>
+src/assets/geist/materials.css    <span class="c">— radii/shadow/motion tokens</span>
+src/assets/geist/base.css         <span class="c">— resets + typography utility classes</span>
+src/assets/globals.css            <span class="c">— imports all of the above</span>
+
+src/components/geist/ThemeScript.tsx           <span class="c">— --accent bootstrap (NOT dark mode — that's gone)</span>
+src/components/geist/HydrationNoiseFilter.tsx  <span class="c">— dev-only console.error filter, see §8</span>
+
+src/components/new_layout/Sidebar.tsx          <span class="c">— sidebar rail + mobile drawer</span>
+src/components/new_layout/Topbar.tsx           <span class="c">— sticky header</span>
+src/components/new_layout/ConditionalLayout.tsx<span class="c"> — wires the responsive app shell</span>
+src/components/new_layout/Modal.tsx            <span class="c">— shared modal wrapper</span>
+src/components/layout/NotificationsDropdown.tsx<span class="c"> — Topbar-anchored notifications</span>
+
+src/lib/store/SidebarStore.ts   <span class="c">— isCollapsed (persisted) + isMobileOpen (not persisted)</span>
+src/lib/store/ThemeStore.ts     <span class="c">— accent preference only (dark/light theme removed)</span></pre>
+        </div>
+      </section>
+
+      <section class="doc" id="quirks">
+        <h2><span class="num">08</span> Known quirks worth knowing about</h2>
+        <ul style="padding-left: 20px; color: var(--ds-text-secondary); font-size: 13.5px; display:grid; gap:var(--space-3)">
+          <li><b>Hydration console-noise filter</b> — <code>HydrationNoiseFilter.tsx</code> monkey-patches <code>console.error</code> in dev only to swallow browser-extension DOM-injection hydration warnings (e.g. <code>bis_skin_checked</code>). Deliberate, user-requested — not hiding a real bug.</li>
+          <li><b>No browser-automation tool was available</b> during the redesign session — verification relied on <code>npm run build</code> + static reasoning. A manual visual QA pass is still owed, especially icon stroke-weight and primary-button contrast.</li>
+        </ul>
+        <footer class="foot">Generated as a companion to <code>docs/DESIGN_SYSTEM.md</code> — the narrative reference. If this page and that file ever disagree, treat the actual source CSS files under <code>src/assets/geist/</code> as ground truth.</footer>
+      </section>
+    </div>
+  </main>
+</div>
+
+<script>
+(function () {
+  var scales = [
+    ["gray", "gray"], ["blue", "blue"], ["red", "red"], ["amber", "amber"],
+    ["green", "green"], ["teal", "teal"], ["purple", "purple"], ["pink", "pink"]
+  ];
+  var steps = [100,200,300,400,500,600,700,800,900,1000];
+  var container = document.getElementById("scales");
+  scales.forEach(function (pair) {
+    var name = pair[0];
+    var label = document.createElement("div");
+    label.className = "scale-label";
+    label.innerHTML = '<span class="name">--' + name + '-*</span><span class="hint">click a step to copy its var name</span>';
+    container.appendChild(label);
+    var row = document.createElement("div");
+    row.className = "scale-row";
+    steps.forEach(function (step) {
+      var varName = "--" + name + "-" + step;
+      var btn = document.createElement("button");
+      btn.className = "swatch";
+      btn.style.background = "var(" + varName + ")";
+      btn.style.color = step >= 700 ? "#fff" : "#000";
+      btn.innerHTML = '<span class="step">' + step + "</span>";
+      btn.title = varName;
+      btn.addEventListener("click", function () { copyToken(btn, varName); });
+      row.appendChild(btn);
+    });
+    container.appendChild(row);
+  });
+
+  var primaryRow = document.getElementById("scale-primary");
+  [100,200,300,400,500,600,700,800,900].forEach(function (step) {
+    var varName = "--primary-" + step;
+    var btn = document.createElement("button");
+    btn.className = "swatch";
+    btn.style.background = "var(" + varName + ")";
+    btn.style.color = step >= 600 ? "var(--primary-contrast-fg)" : "#000";
+    btn.innerHTML = '<span class="step">' + step + "</span>";
+    btn.title = varName;
+    btn.addEventListener("click", function () { copyToken(btn, varName); });
+    primaryRow.appendChild(btn);
+  });
+
+  function copyToken(el, name) {
+    if (navigator.clipboard) navigator.clipboard.writeText("var(" + name + ")").catch(function () {});
+    el.classList.add("copied");
+    setTimeout(function () { el.classList.remove("copied"); }, 900);
+  }
+
+  // Typography specimens
+  var headings = [72,64,56,48,40,32,24,20,16,14];
+  var hWrap = document.getElementById("type-headings");
+  headings.forEach(function (n) {
+    var row = document.createElement("div");
+    row.className = "type-row";
+    row.innerHTML = '<span class="sample" style="font-size:' + Math.min(n, 40) + 'px">Tableros y sprints</span><span class="meta">.heading-' + n + " · " + n + "px</span>";
+    hWrap.appendChild(row);
+  });
+  var labels = [20,18,16,14,13,12];
+  var lWrap = document.getElementById("type-labels");
+  labels.forEach(function (n) {
+    var row = document.createElement("div");
+    row.className = "type-row";
+    row.innerHTML = '<span class="sample" style="font-size:' + n + 'px; font-weight:500">Nombre del Tablero</span><span class="meta">.label-' + n + " · " + n + "px / 500</span>";
+    lWrap.appendChild(row);
+  });
+  var copy = [24,20,18,16,14,13];
+  var cWrap = document.getElementById("type-copy");
+  copy.forEach(function (n) {
+    var row = document.createElement("div");
+    row.className = "type-row";
+    row.innerHTML = '<span class="sample" style="font-size:' + n + 'px; font-weight:400">Tableros, sprints y seguimiento de tu equipo.</span><span class="meta">.copy-' + n + " · " + n + "px / 400</span>";
+    cWrap.appendChild(row);
+  });
+
+  // Spacing ruler
+  var spaces = [["1","4px"],["2","8px"],["3","12px"],["4","16px"],["6","24px"],["8","32px"],["12","48px"],["16","64px"],["20","80px"],["24","96px"]];
+  var sWrap = document.getElementById("space-scale");
+  spaces.forEach(function (pair) {
+    var row = document.createElement("div");
+    row.className = "space-row";
+    row.innerHTML = '<span class="lbl">--space-' + pair[0] + " (" + pair[1] + ")</span><span class=\"bar\" style=\"width:" + pair[1] + "\"></span>";
+    sWrap.appendChild(row);
+  });
+})();
+</script>
+
+<!-- Inline lucide-react SVG paths (real path data from node_modules/lucide-react, ISC licensed) -->
+<script>
+(function () {
+  function svg(paths, stroke, size) {
+    size = size || 22; stroke = stroke || 1.5;
+    return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + stroke + '" stroke-linecap="round" stroke-linejoin="round">' + paths + '</svg>';
+  }
+  var TRASH2 = '<path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>';
+  var slot15 = document.getElementById("icon-slot-15");
+  var slot2 = document.getElementById("icon-slot-2");
+  if (slot15) slot15.innerHTML = svg(TRASH2, 1.5, 36);
+  if (slot2) slot2.innerHTML = svg(TRASH2, 2, 36);
+
+  var icons = {
+    "Trash2": '<path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+    "Plus": '<path d="M5 12h14"/><path d="M12 5v14"/>',
+    "Settings": '<path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/>',
+    "Bell": '<path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/>',
+    "Pencil": '<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/>',
+    "Eye": '<path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/>',
+    "Users": '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/>',
+    "X": '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+    "ChevronRight": '<path d="m9 18 6-6-6-6"/>',
+    "LayoutDashboard": '<rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>',
+    "Sparkles": '<path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"/><path d="M20 2v4"/><path d="M22 4h-4"/><circle cx="4" cy="20" r="2"/>',
+    "Bot": '<path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/>',
+    "CircleCheck": '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+    "Search": '<path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/>',
+    "Filter": '<path d="M12 12v6l-3 2v-8L4.5 5.5A1 1 0 0 1 5.24 4h13.52a1 1 0 0 1 .74 1.5z"/>',
+    "Clock": '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+    "Upload": '<path d="M12 3v12"/><path d="m17 8-5-5-5 5"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>'
+  };
+  var strip = document.querySelector(".icon-strip");
+  var html = "";
+  Object.keys(icons).forEach(function (name) {
+    html += '<div class="i">' + svg(icons[name], 1.5, 26) + "<span>" + name + "</span></div>";
+  });
+  strip.innerHTML = html;
+})();
+</script>

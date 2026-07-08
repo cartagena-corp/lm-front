@@ -3,7 +3,6 @@
 import AutoResizeTextarea from '../../ui/AutoResizeTextarea'
 import { useConfigStore } from '@/lib/store/ConfigStore'
 import { SprintProps } from '@/lib/types/types'
-import { CalendarIcon, XIcon } from '@/assets/Icon'
 import { useRef, useState, useEffect } from 'react'
 
 interface FormProps {
@@ -116,16 +115,20 @@ export default function CreateSprintForm({ onSubmit, onCancel, currentSprint, is
       }
    }
 
+   const labelCls = "block text-[13px] font-medium"
+   const inputCls = "block w-full h-9 px-3 rounded-md text-sm bg-[var(--ds-card)] outline-none transition-shadow duration-150 placeholder:text-[var(--ds-text-muted)] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+   const errorMsgCls = "flex items-center gap-2 text-sm font-medium"
+
    return (
-      <div className="bg-white border-gray-100 rounded-xl shadow-sm border">
+      <div>
          {/* Form Content */}
          <div className="p-6">
             <form onSubmit={handleSubmit} className="space-y-6">
                {/* Título */}
                <div className="space-y-2">
-                  <label htmlFor="title" className="block text-sm font-semibold text-gray-900">
+                  <label htmlFor="title" className={labelCls} style={{ color: "var(--ds-text-secondary)" }}>
                      Título del Sprint
-                     <span className="text-red-500 ml-1">*</span>
+                     <span className="ml-1" style={{ color: "var(--red-700)" }}>*</span>
                   </label>
                   <input
                      type="text"
@@ -133,26 +136,24 @@ export default function CreateSprintForm({ onSubmit, onCancel, currentSprint, is
                      name="title"
                      value={formData.title || ''}
                      onChange={(e) => handleInputChange('title', e.target.value)}
-                     className={`block w-full px-4 py-3 text-sm border-2 rounded-xl shadow-sm transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 ${errors.title
-                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20'
-                        : 'border-gray-200 hover:border-gray-300'
-                        }`}
+                     className={inputCls}
+                     style={{ color: "var(--ds-text)", boxShadow: errors.title ? "0 0 0 1px var(--red-700)" : "var(--shadow-border)" }}
                      placeholder={isEdit ? "Actualiza el título del sprint" : "Ej: Sprint 1 - Desarrollo de funcionalidades base"}
                      disabled={isSubmitting}
                   />
                   {errors.title && (
-                     <div className="flex items-center gap-2 text-red-600">
+                     <div className={errorMsgCls} style={{ color: "var(--red-700)" }}>
                         <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                         </svg>
-                        <span className="text-sm font-medium">{errors.title}</span>
+                        <span>{errors.title}</span>
                      </div>
                   )}
                </div>
 
                {/* Meta del Sprint */}
                <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-gray-900">
+                  <label className={labelCls} style={{ color: "var(--ds-text-secondary)" }}>
                      Meta del Sprint
                   </label>
                   <AutoResizeTextarea
@@ -161,24 +162,22 @@ export default function CreateSprintForm({ onSubmit, onCancel, currentSprint, is
                      required={false}
                      rows={1}
                      placeholder={isEdit ? "Actualiza la meta del sprint" : "Describe el objetivo principal que se espera lograr con este sprint..."}
-                     className={`block w-full px-4 py-3 text-sm border-2 rounded-xl shadow-sm transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 resize-none ${errors.goal
-                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20'
-                        : 'border-gray-200 hover:border-gray-300'
-                        }`}
+                     className="block w-full px-3 py-2 rounded-md text-sm bg-[var(--ds-card)] outline-none transition-shadow duration-150 placeholder:text-[var(--ds-text-muted)] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2 resize-none"
+                     style={{ color: "var(--ds-text)", boxShadow: errors.goal ? "0 0 0 1px var(--red-700)" : "var(--shadow-border)" }}
                   />
                   {errors.goal && (
-                     <div className="flex items-center gap-2 text-red-600">
+                     <div className={errorMsgCls} style={{ color: "var(--red-700)" }}>
                         <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                         </svg>
-                        <span className="text-sm font-medium">{errors.goal}</span>
+                        <span>{errors.goal}</span>
                      </div>
                   )}
                </div>
 
                {/* Estado */}
                <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-gray-900">
+                  <label className={labelCls} style={{ color: "var(--ds-text-secondary)" }}>
                      Estado del Sprint
                   </label>
                   <div className="relative" ref={statusRef}>
@@ -186,7 +185,8 @@ export default function CreateSprintForm({ onSubmit, onCancel, currentSprint, is
                         type="button"
                         onClick={() => setIsStatusOpen(!isStatusOpen)}
                         disabled={isSubmitting}
-                        className="w-full px-4 py-3 text-left bg-white border-2 border-gray-200 rounded-xl shadow-sm hover:border-gray-300 focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full px-3 h-9 text-left rounded-md transition-colors duration-150 hover:bg-[var(--gray-alpha-100)] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{ background: "var(--ds-card)", boxShadow: "var(--shadow-border)" }}
                      >
                         <div className="flex items-center justify-between">
                            <div className="flex items-center gap-3">
@@ -196,16 +196,17 @@ export default function CreateSprintForm({ onSubmit, onCancel, currentSprint, is
                                        className="w-3 h-3 rounded-full"
                                        style={{ backgroundColor: formData.statusObject.color }}
                                     />
-                                    <span className="text-sm font-medium text-gray-900">
+                                    <span className="text-sm font-medium" style={{ color: "var(--ds-text)" }}>
                                        {formData.statusObject.name.charAt(0).toUpperCase() + formData.statusObject.name.slice(1).toLowerCase()}
                                     </span>
                                  </div>
                               ) : (
-                                 <span className="text-gray-500 text-sm">Seleccionar estado</span>
+                                 <span className="text-sm" style={{ color: "var(--ds-text-muted)" }}>Seleccionar estado</span>
                               )}
                            </div>
                            <svg
-                              className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${isStatusOpen ? 'rotate-180' : ''}`}
+                              className={`w-4 h-4 transition-transform duration-200 ${isStatusOpen ? 'rotate-180' : ''}`}
+                              style={{ color: "var(--ds-text-muted)" }}
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -216,7 +217,7 @@ export default function CreateSprintForm({ onSubmit, onCancel, currentSprint, is
                      </button>
 
                      {isStatusOpen && (
-                        <div className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-auto">
+                        <div className="absolute z-50 w-full mt-2 rounded-md max-h-60 overflow-auto" style={{ background: "var(--ds-card)", border: "1px solid var(--ds-border)", boxShadow: "var(--shadow-lg)" }}>
                            {sprintStatuses && sprintStatuses.length > 0 ? (
                               sprintStatuses.map((status) => (
                                  <button
@@ -227,26 +228,26 @@ export default function CreateSprintForm({ onSubmit, onCancel, currentSprint, is
                                        setFormData(prev => ({ ...prev, statusObject: status }))
                                        setIsStatusOpen(false)
                                     }}
-                                    className="w-full px-4 py-3 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none transition-colors flex items-center justify-between"
+                                    className="w-full px-3 h-9 text-left transition-colors duration-150 hover:bg-[var(--gray-alpha-100)] focus:outline-none flex items-center justify-between"
                                  >
                                     <div className="flex items-center gap-2">
                                        <div
                                           className="w-3 h-3 rounded-full"
                                           style={{ backgroundColor: status.color }}
                                        />
-                                       <span className="text-sm font-medium text-gray-900">
+                                       <span className="text-sm font-medium" style={{ color: "var(--ds-text)" }}>
                                           {status.name.charAt(0).toUpperCase() + status.name.slice(1).toLowerCase()}
                                        </span>
                                     </div>
                                     {formData.status === status.id && (
-                                       <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                       <svg className="w-4 h-4" style={{ color: "var(--blue-700)" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                        </svg>
                                     )}
                                  </button>
                               ))
                            ) : (
-                              <div className="px-4 py-3 text-gray-500 text-sm">
+                              <div className="px-3 py-2 text-sm" style={{ color: "var(--ds-text-muted)" }}>
                                  No hay estados disponibles
                               </div>
                            )}
@@ -258,9 +259,9 @@ export default function CreateSprintForm({ onSubmit, onCancel, currentSprint, is
                {/* Fechas */}
                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                     <label htmlFor="startDate" className="block text-sm font-semibold text-gray-900">
+                     <label htmlFor="startDate" className={labelCls} style={{ color: "var(--ds-text-secondary)" }}>
                         Fecha de Inicio
-                        <span className="text-red-500 ml-1">*</span>
+                        <span className="ml-1" style={{ color: "var(--red-700)" }}>*</span>
                      </label>
                      <div className="relative">
                         <input
@@ -269,27 +270,25 @@ export default function CreateSprintForm({ onSubmit, onCancel, currentSprint, is
                            name="startDate"
                            value={formData.startDate || ''}
                            onChange={(e) => handleInputChange('startDate', e.target.value)}
-                           className={`block w-full px-4 py-3 text-sm border-2 rounded-xl shadow-sm transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 ${errors.startDate
-                              ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20'
-                              : 'border-gray-200 hover:border-gray-300'
-                              }`}
+                           className={inputCls}
+                           style={{ color: "var(--ds-text)", boxShadow: errors.startDate ? "0 0 0 1px var(--red-700)" : "var(--shadow-border)" }}
                            disabled={isSubmitting}
                         />
                      </div>
                      {errors.startDate && (
-                        <div className="flex items-center gap-2 text-red-600">
+                        <div className={errorMsgCls} style={{ color: "var(--red-700)" }}>
                            <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                            </svg>
-                           <span className="text-sm font-medium">{errors.startDate}</span>
+                           <span>{errors.startDate}</span>
                         </div>
                      )}
                   </div>
 
                   <div className="space-y-2">
-                     <label htmlFor="endDate" className="block text-sm font-semibold text-gray-900">
+                     <label htmlFor="endDate" className={labelCls} style={{ color: "var(--ds-text-secondary)" }}>
                         Fecha de Fin
-                        <span className="text-red-500 ml-1">*</span>
+                        <span className="ml-1" style={{ color: "var(--red-700)" }}>*</span>
                      </label>
                      <div className="relative">
                         <input
@@ -298,19 +297,17 @@ export default function CreateSprintForm({ onSubmit, onCancel, currentSprint, is
                            name="endDate"
                            value={formData.endDate || ''}
                            onChange={(e) => handleInputChange('endDate', e.target.value)}
-                           className={`block w-full px-4 py-3 text-sm border-2 rounded-xl shadow-sm transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 ${errors.endDate
-                              ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20'
-                              : 'border-gray-200 hover:border-gray-300'
-                              }`}
+                           className={inputCls}
+                           style={{ color: "var(--ds-text)", boxShadow: errors.endDate ? "0 0 0 1px var(--red-700)" : "var(--shadow-border)" }}
                            disabled={isSubmitting}
                         />
                      </div>
                      {errors.endDate && (
-                        <div className="flex items-center gap-2 text-red-600">
+                        <div className={errorMsgCls} style={{ color: "var(--red-700)" }}>
                            <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                            </svg>
-                           <span className="text-sm font-medium">{errors.endDate}</span>
+                           <span>{errors.endDate}</span>
                         </div>
                      )}
                   </div>
@@ -318,33 +315,34 @@ export default function CreateSprintForm({ onSubmit, onCancel, currentSprint, is
 
                {/* Error de rango de fechas */}
                {errors.dateRange && (
-                  <div className="flex items-center gap-2 text-red-600 bg-red-50 px-4 py-3 rounded-xl">
+                  <div className="flex items-center gap-2 px-4 py-3 rounded-md text-sm font-medium" style={{ background: "var(--red-100)", color: "var(--red-900)", boxShadow: "0 0 0 1px var(--red-400)" }}>
                      <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                      </svg>
-                     <span className="text-sm font-medium">{errors.dateRange}</span>
+                     <span>{errors.dateRange}</span>
                   </div>
                )}
 
                {/* Botones de acción */}
-               <div className="flex justify-end flex-col-reverse sm:flex-row gap-3 pt-6 border-t border-gray-200">
+               <div className="flex justify-end flex-col-reverse sm:flex-row gap-3 pt-6" style={{ borderTop: "1px solid var(--ds-border)" }}>
                   <button
                      type="button"
                      onClick={onCancel}
                      disabled={isSubmitting}
-                     className="w-full sm:w-auto px-6 py-3 text-sm font-semibold text-gray-700 bg-white border-2 border-gray-200 rounded-xl shadow-sm hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-4 focus:ring-gray-500/20 focus:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                     className="w-full sm:w-auto h-9 px-4 rounded-md text-sm font-medium transition-colors duration-150 hover:bg-[var(--gray-alpha-100)] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                     style={{ background: "var(--ds-card)", color: "var(--ds-text)", boxShadow: "var(--shadow-border)" }}
                   >
                      Cancelar
                   </button>
                   <button
                      type="submit"
                      disabled={isSubmitting}
-                     className={`${isEdit ? "bg-purple-600 border-2 border-purple-600 hover:bg-purple-700 hover:border-purple-700 focus:ring-purple-500/20" : "bg-blue-600 border-2 border-blue-600 hover:bg-blue-700 hover:border-blue-700 focus:ring-blue-500/20"} w-full sm:w-auto px-6 py-3 text-sm font-semibold text-white
-                  rounded-xl shadow-sm focus:outline-none focus:ring-4 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2`}
+                     className="w-full sm:w-auto h-9 px-4 rounded-md text-sm font-medium transition-colors duration-150 bg-[var(--primary-700)] hover:bg-[var(--primary-800)] focus-visible:outline-2 focus-visible:outline-[var(--primary-900)] focus-visible:outline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                     style={{ color: "var(--primary-contrast-fg)" }}
                   >
                      {isSubmitting ? (
                         <>
-                           <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                           <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                            </svg>

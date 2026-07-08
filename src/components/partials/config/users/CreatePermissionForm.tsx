@@ -38,10 +38,10 @@ export default function CreatePermissionForm({ onSubmit, onCancel }: CreatePermi
     }
 
     return (
-        <div className="space-y-6 p-6">
-            <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="p-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                    <label htmlFor="permissionName" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="permissionName" className="block text-[13px] font-medium" style={{ color: "var(--ds-text-secondary)" }}>
                         Nombre del permiso
                     </label>
                     <input
@@ -49,26 +49,28 @@ export default function CreatePermissionForm({ onSubmit, onCancel }: CreatePermi
                         id="permissionName"
                         value={formData.name}
                         onChange={(e) => handleChange('name', e.target.value)}
-                        className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 ${errors.name
-                            ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                            : 'border-gray-300 hover:border-gray-400'
-                            }`}
+                        className="w-full h-9 px-3 rounded-md text-sm bg-[var(--ds-card)] outline-none transition-shadow duration-150 placeholder:text-[var(--ds-text-muted)] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2"
+                        style={{ color: "var(--ds-text)", boxShadow: errors.name ? "0 0 0 1px var(--red-700)" : "var(--shadow-border)" }}
                         placeholder="SPRINT_READ"
                     />
                     {errors.name && (
-                        <p className="text-sm text-red-600">{errors.name}</p>
+                        <p className="text-sm" style={{ color: "var(--red-700)" }}>{errors.name}</p>
                     )}
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs" style={{ color: "var(--ds-text-muted)" }}>
                         Use mayúsculas y guiones bajos. Ejemplos: SPRINT_READ, PROJECT_WRITE, USER_DELETE
                     </p>
                 </div>
 
                 <div className="flex justify-end gap-3 mt-4">
-                    <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 transition-all duration-200 text-sm font-medium" type="button"
+                    <button className="h-9 px-4 rounded-md text-sm font-medium transition-colors duration-150 bg-[var(--ds-card)] hover:bg-[var(--gray-alpha-100)] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2"
+                        style={{ color: "var(--ds-text)", boxShadow: "var(--shadow-border)" }}
+                        type="button"
                         onClick={() => onCancel()}>
                         Cancelar
                     </button>
-                    <button className={`bg-blue-600 hover:bg-blue-700 focus:ring-blue-500 text-white focus:ring-2 rounded-md focus:ring-offset-2 transition-all duration-200 text-sm font-medium px-4 py-2`} type="submit">
+                    <button className="h-9 px-4 rounded-md text-sm font-medium transition-colors duration-150 bg-[var(--primary-700)] hover:bg-[var(--primary-800)] focus-visible:outline-2 focus-visible:outline-[var(--primary-900)] focus-visible:outline-offset-2"
+                        style={{ color: "var(--primary-contrast-fg)" }}
+                        type="submit">
                         Crear Permiso
                     </button>
                 </div>

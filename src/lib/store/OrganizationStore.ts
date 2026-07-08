@@ -1,5 +1,6 @@
 import { GlobalPagination, UserPagination, UserProps, RoleProps, BoardPagination, ProjectProps } from '../types/types'
 import { API_ROUTES } from '../routes/organization.route'
+import { authFetch } from '@/lib/http/authFetch'
 import toast from 'react-hot-toast'
 import { create } from 'zustand'
 
@@ -36,7 +37,7 @@ export const useOrganizationStore = create<OrganizationState>()((set, get) => ({
     getAllOrganizations: async (token: string) => {
         set({ isLoading: true, error: null })
         try {
-            const response = await fetch(API_ROUTES.GET_ALL_ORGANIZATIONS, { method: 'GET', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` } })
+            const response = await authFetch(API_ROUTES.GET_ALL_ORGANIZATIONS, token, { method: 'GET', headers: { 'Content-Type': 'application/json' } })
             if (!response.ok) {
                 throw new Error('Error al obtener las organizaciones')
             }
@@ -53,7 +54,7 @@ export const useOrganizationStore = create<OrganizationState>()((set, get) => ({
     getSpecificOrganization: async (token: string, id: string) => {
         set({ isLoading: true, error: null })
         try {
-            const response = await fetch(`${API_ROUTES.GET_SPECIFIC_ORGANIZATION}/${id}`, { method: 'GET', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` } })
+            const response = await authFetch(`${API_ROUTES.GET_SPECIFIC_ORGANIZATION}/${id}`, token, { method: 'GET', headers: { 'Content-Type': 'application/json' } })
             if (!response.ok) {
                 throw new Error('Error al obtener una organizacion')
             }
@@ -72,9 +73,9 @@ export const useOrganizationStore = create<OrganizationState>()((set, get) => ({
     createOrganization: async (token: string, name: string) => {
         set({ isLoading: true, error: null })
         try {
-            const response = await fetch(API_ROUTES.CREATE_ORGANIZATION, {
+            const response = await authFetch(API_ROUTES.CREATE_ORGANIZATION, token, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ organizationName: name })
             })
             if (!response.ok) {
@@ -103,11 +104,10 @@ export const useOrganizationStore = create<OrganizationState>()((set, get) => ({
 
             const url = `${API_ROUTES.GET_USERS_BY_ORGANIZATION}?organizationId=${organizationId}&${params.toString()}`
 
-            const response = await fetch(url, {
+            const response = await authFetch(url, token, {
                 method: 'GET',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    'Content-Type': 'application/json'
                 },
             })
 
@@ -145,7 +145,7 @@ export const useOrganizationStore = create<OrganizationState>()((set, get) => ({
             if (size !== undefined) params.append('size', size.toString())
 
             const url = `${API_ROUTES.GET_PROJECTS_BY_ORGANIZATION({ idOrg: organizationId })}?${params.toString()}`
-            const response = await fetch(url, { method: 'GET', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` } })
+            const response = await authFetch(url, token, { method: 'GET', headers: { 'Content-Type': 'application/json' } })
             if (!response.ok) { throw new Error(`Error ${response.status}: ${response.statusText}`) }
             const data: GlobalPagination = await response.json()
             set({
@@ -177,7 +177,7 @@ export const useOrganizationStore = create<OrganizationState>()((set, get) => ({
             if (size !== undefined) params.append('size', size.toString())
 
             const url = `${API_ROUTES.GET_PROJECTS_BY_ORGANIZATION({ idOrg: organizationId })}?${params.toString()}`
-            const response = await fetch(url, { method: 'GET', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` } })
+            const response = await authFetch(url, token, { method: 'GET', headers: { 'Content-Type': 'application/json' } })
             if (!response.ok) { throw new Error(`Error ${response.status}: ${response.statusText}`) }
             const data: GlobalPagination = await response.json()
             set(state => ({
@@ -203,11 +203,10 @@ export const useOrganizationStore = create<OrganizationState>()((set, get) => ({
         set({ isLoading: true, error: null })
         try {
             const url = API_ROUTES.GET_ROLES_BY_ORGANIZATION({ idOrg: organizationId })
-            const response = await fetch(url, {
+            const response = await authFetch(url, token, {
                 method: 'GET',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    'Content-Type': 'application/json'
                 },
             })
 
@@ -235,11 +234,10 @@ export const useOrganizationStore = create<OrganizationState>()((set, get) => ({
 
             const url = `${API_ROUTES.GET_USERS_BY_ORGANIZATION}?organizationId=${organizationId}&${params.toString()}`
 
-            const response = await fetch(url, {
+            const response = await authFetch(url, token, {
                 method: 'GET',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    'Content-Type': 'application/json'
                 },
             })
 
@@ -270,11 +268,10 @@ export const useOrganizationStore = create<OrganizationState>()((set, get) => ({
     updateOrganization: async (token: string, organizationId: string, organizationName: string) => {
         set({ isLoading: true, error: null })
         try {
-            const response = await fetch(`${API_ROUTES.UPDATE_ORGANIZATION}/${organizationId}`, {
+            const response = await authFetch(`${API_ROUTES.UPDATE_ORGANIZATION}/${organizationId}`, token, {
                 method: 'PUT',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ organizationName })
             })
@@ -299,11 +296,10 @@ export const useOrganizationStore = create<OrganizationState>()((set, get) => ({
     deleteOrganization: async (token: string, organizationId: string) => {
         set({ isLoading: true, error: null })
         try {
-            const response = await fetch(`${API_ROUTES.DELETE_ORGANIZATION}/${organizationId}`, {
+            const response = await authFetch(`${API_ROUTES.DELETE_ORGANIZATION}/${organizationId}`, token, {
                 method: 'DELETE',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    'Content-Type': 'application/json'
                 }
             })
 
@@ -327,11 +323,10 @@ export const useOrganizationStore = create<OrganizationState>()((set, get) => ({
     changeUserOrganization: async (token: string, userId: string, data: { organizationId: string, role: string }) => {
         set({ isLoading: true, error: null })
         try {
-            const response = await fetch(`${API_ROUTES.CHANGE_USER_ORGANIZATION}`, {
+            const response = await authFetch(`${API_ROUTES.CHANGE_USER_ORGANIZATION}`, token, {
                 method: 'PATCH',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                     id: userId,
@@ -358,7 +353,7 @@ export const useOrganizationStore = create<OrganizationState>()((set, get) => ({
     changeBoardOrganization: async (token: string, idBoard: string, idOrg: string) => {
         set({ isLoading: true, error: null })
         try {
-            const response = await fetch(API_ROUTES.GET_BOARDS_BY_ORGANIZATION({ idBoard: idBoard, idOrg: idOrg }), { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` } })
+            const response = await authFetch(API_ROUTES.GET_BOARDS_BY_ORGANIZATION({ idBoard: idBoard, idOrg: idOrg }), token, { method: 'PUT', headers: { 'Content-Type': 'application/json' } })
             if (!response.ok) { throw new Error(`Error ${response.status}: ${response.statusText}`) }
             set({ isLoading: false })
             return true

@@ -1,0 +1,57 @@
+/* ============================================================
+   Geist Typography
+   Geist Sans sets UI + prose and all headings.
+   Geist Mono sets code, data, tabular figures, and technical labels.
+   Three weights only: 400 read · 500 interact/label · 600 announce/heading.
+   Hierarchy comes from size + tracking, not weight. letter-spacing
+   tightens as size grows (aggressive negative tracking at display sizes).
+   ============================================================ */
+
+:root {
+  /* Families */
+  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", "Roboto Mono", Menlo, Monaco, "Liberation Mono", "Courier New", monospace;
+
+  /* Weights */
+  --weight-normal: 400;   /* body / reading */
+  --weight-medium: 500;   /* UI / interactive */
+  --weight-semibold: 600; /* headings / emphasis */
+
+  /* ---- Headings (Geist Sans, weight 600) ---- */
+  --heading-72-size: 72px; --heading-72-line: 72px;  --heading-72-spacing: -3.24px;
+  --heading-64-size: 64px; --heading-64-line: 68px;  --heading-64-spacing: -2.88px;
+  --heading-56-size: 56px; --heading-56-line: 60px;  --heading-56-spacing: -2.52px;
+  --heading-48-size: 48px; --heading-48-line: 56px;  --heading-48-spacing: -2.16px;
+  --heading-40-size: 40px; --heading-40-line: 48px;  --heading-40-spacing: -1.6px;
+  --heading-32-size: 32px; --heading-32-line: 40px;  --heading-32-spacing: -1.28px;
+  --heading-24-size: 24px; --heading-24-line: 32px;  --heading-24-spacing: -0.96px;
+  --heading-20-size: 20px; --heading-20-line: 26px;  --heading-20-spacing: -0.4px;
+  --heading-16-size: 16px; --heading-16-line: 24px;  --heading-16-spacing: -0.16px;
+  --heading-14-size: 14px; --heading-14-line: 20px;  --heading-14-spacing: -0.05px;
+
+  /* ---- Labels (Geist Sans, single-line, scannable; weight 500) ---- */
+  --label-20-size: 20px; --label-20-line: 26px;
+  --label-18-size: 18px; --label-18-line: 24px;
+  --label-16-size: 16px; --label-16-line: 20px;
+  --label-14-size: 14px; --label-14-line: 16px;
+  --label-13-size: 13px; --label-13-line: 16px;
+  --label-12-size: 12px; --label-12-line: 16px;
+
+  /* ---- Copy (Geist Sans, multi-line prose; weight 400; relaxed line-height) ---- */
+  --copy-24-size: 24px; --copy-24-line: 36px;
+  --copy-20-size: 20px; --copy-20-line: 30px;
+  --copy-18-size: 18px; --copy-18-line: 28px;
+  --copy-16-size: 16px; --copy-16-line: 24px;
+  --copy-14-size: 14px; --copy-14-line: 20px;
+  --copy-13-size: 13px; --copy-13-line: 18px;
+
+  /* ---- Button text (weight 500) ---- */
+  --button-16-size: 16px; --button-16-line: 16px;
+  --button-14-size: 14px; --button-14-line: 14px;
+}
+
+/* OpenType: ligatures globally; tabular figures for Mono data. */
+:root {
+  --font-feature-sans: "liga" 1, "calt" 1;
+  --font-feature-mono: "liga" 1, "calt" 1, "tnum" 1;
+}

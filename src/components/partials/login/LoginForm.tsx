@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { EyeIcon, EyeOffIcon } from '@/assets/Icon'
+import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react'
 
 interface LoginFormProps {
   onSubmit: (email: string, password: string) => void
@@ -24,6 +24,7 @@ export default function LoginForm({ onSubmit, isLoading = false }: LoginFormProp
   // Manejar envío del formulario de email/password
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (isLoading) return
     setEmailError('')
     setPasswordError('')
 
@@ -47,65 +48,80 @@ export default function LoginForm({ onSubmit, isLoading = false }: LoginFormProp
     onSubmit(email, password)
   }
 
-  return (
-    <>
-      <div className='text-start w-full'>
-        <h6 className='font-bold text-xl md:text-2xl'>Bienvenido</h6>
-        <p className='text-black/50 text-sm md:text-base'>Inicia sesión para acceder a tu cuenta</p>
-      </div>
+  const fieldBox = (hasError: boolean): React.CSSProperties => ({
+    display: 'flex', alignItems: 'center', gap: 8, height: 40, padding: '0 12px',
+    background: 'var(--ds-background)',
+    border: `1px solid ${hasError ? 'var(--red-700)' : 'var(--ds-border)'}`,
+    borderRadius: 'var(--radius-md)',
+  })
+  const inputReset: React.CSSProperties = {
+    flex: 1, minWidth: 0, border: 'none', outline: 'none', background: 'transparent',
+    color: 'var(--ds-text)', fontFamily: 'var(--font-sans)', fontSize: 14,
+  }
 
-      <form onSubmit={handleSubmit} className='w-full space-y-4'>
-        <div>
+  return (
+    <div className='w-full'>
+      <h2 className='font-semibold' style={{ fontSize: 24, letterSpacing: '-0.96px', margin: '0 0 6px' }}>Inicia sesión</h2>
+      <p style={{ fontSize: 14, color: 'var(--ds-text-secondary)', margin: '0 0 28px' }}>Bienvenido de nuevo. Ingresa tus credenciales.</p>
+
+      <form onSubmit={handleSubmit} className='w-full'>
+        <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6 }}>Correo electrónico</label>
+        <div style={fieldBox(!!emailError)}>
+          <Mail size={16} style={{ color: 'var(--ds-text-muted)' }} strokeWidth={1.5} />
           <input
             type='email'
-            placeholder='Correo electrónico'
+            placeholder='tucorreo@empresa.com'
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             disabled={isLoading}
-            className={`w-full px-3 py-2 border rounded-md outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed ${emailError ? 'border-red-500' : 'border-black/15'
-              }`}
+            style={inputReset}
           />
-          {emailError && <p className='text-red-500 text-xs mt-1'>{emailError}</p>}
         </div>
+        {emailError && <p style={{ color: 'var(--red-700)', fontSize: 12, marginTop: 6 }}>{emailError}</p>}
 
-        <div>
-          <div className="relative">
-            <input
-              type={showPassword ? 'text' : 'password'}
-              placeholder='Contraseña'
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={isLoading}
-              className={`w-full px-3 py-2 ${password.length > 0 ? 'pr-10' : 'pr-3'} border rounded-md outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed ${passwordError ? 'border-red-500' : 'border-black/15'
-                }`}
-            />
-            {password.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                disabled={isLoading}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 disabled:cursor-not-allowed"
-              >
-                {showPassword ? (
-                  <EyeOffIcon size={20} stroke={1.5} />
-                ) : (
-                  <EyeIcon size={20} stroke={1.5} />
-                )}
-              </button>
-            )}
-          </div>
-          {passwordError && <p className='text-red-500 text-xs mt-1'>{passwordError}</p>}
-        </div>
-
-        <div className='flex flex-col sm:flex-row gap-2'>
-          <button
-            type='submit'
+        <label style={{ display: 'block', fontSize: 13, fontWeight: 500, margin: '16px 0 6px' }}>Contraseña</label>
+        <div style={fieldBox(!!passwordError)}>
+          <Lock size={16} style={{ color: 'var(--ds-text-muted)' }} strokeWidth={1.5} />
+          <input
+            type={showPassword ? 'text' : 'password'}
+            placeholder='••••••••'
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             disabled={isLoading}
-            className='flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 duration-150 disabled:opacity-50 disabled:cursor-not-allowed'>
-            {isLoading ? 'Iniciando...' : 'Iniciar Sesión'}
-          </button>
+            style={inputReset}
+          />
+          {password.length > 0 && (
+            <button
+              type='button'
+              onClick={() => setShowPassword(!showPassword)}
+              disabled={isLoading}
+              className='flex-shrink-0'
+              style={{ background: 'transparent', border: 'none', color: 'var(--ds-text-muted)', cursor: 'pointer', display: 'flex' }}
+            >
+              {showPassword ? <EyeOff size={18} strokeWidth={1.5} /> : <Eye size={18} strokeWidth={1.5} />}
+            </button>
+          )}
         </div>
+        {passwordError && <p style={{ color: 'var(--red-700)', fontSize: 12, marginTop: 6 }}>{passwordError}</p>}
+
+        <div style={{ textAlign: 'right', margin: '8px 0 18px' }}>
+          <a style={{ fontSize: 13, color: 'var(--accent)', textDecoration: 'none', cursor: 'pointer' }}>¿Olvidaste tu contraseña?</a>
+        </div>
+
+        <button
+          type='submit'
+          disabled={isLoading}
+          className='disabled:opacity-50 disabled:cursor-not-allowed'
+          style={{
+            width: '100%', height: 40, borderRadius: 'var(--radius-md)',
+            background: 'var(--ds-text)', color: 'var(--ds-contrast-inverse)', border: '1px solid var(--ds-text)',
+            fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 500, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          }}>
+          {isLoading ? 'Iniciando…' : 'Iniciar sesión'}
+          {!isLoading && <ArrowRight size={16} strokeWidth={1.5} />}
+        </button>
       </form>
-    </>
+    </div>
   )
 }

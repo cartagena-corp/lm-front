@@ -5,7 +5,7 @@ import { AuditHistoryProps, AuditPagination, TaskProps } from '@/lib/types/types
 import { useAuthStore } from '@/lib/store/AuthStore'
 import { useBoardStore } from '@/lib/store/BoardStore'
 import { useIssueStore } from '@/lib/store/IssueStore'
-import { ClockIcon, UsersIcon, AlertCircleIcon, XIcon } from '@/assets/Icon'
+import { Clock, AlertCircle, ChevronUp, ChevronDown, ArrowRight } from 'lucide-react'
 import { getUserAvatar } from '@/lib/utils/avatar.utils'
 
 interface AuditHistoryModalProps {
@@ -278,22 +278,22 @@ export default function AuditHistory({ projectId, issueId, currentIssue, onCance
       switch (action.toLowerCase()) {
          case 'create':
          case 'created':
-            return <div className="w-2 h-2 bg-green-500 rounded-full" />
+            return <div className="w-2 h-2 rounded-full" style={{ background: "var(--green-700)" }} />
          case 'update':
          case 'updated':
-            return <div className="w-2 h-2 bg-blue-500 rounded-full" />
+            return <div className="w-2 h-2 rounded-full" style={{ background: "var(--blue-700)" }} />
          case 'delete':
          case 'deleted':
-            return <div className="w-2 h-2 bg-red-500 rounded-full" />
+            return <div className="w-2 h-2 rounded-full" style={{ background: "var(--red-700)" }} />
          case 'assign':
          case 'assigned':
-            return <div className="w-2 h-2 bg-purple-500 rounded-full" />
+            return <div className="w-2 h-2 rounded-full" style={{ background: "var(--purple-700)" }} />
          case 'sprint':
          case 'sprint_assign':
          case 'sprint_remove':
-            return <div className="w-2 h-2 bg-orange-500 rounded-full" />
+            return <div className="w-2 h-2 rounded-full" style={{ background: "var(--amber-700)" }} />
          default:
-            return <div className="w-2 h-2 bg-gray-500 rounded-full" />
+            return <div className="w-2 h-2 rounded-full" style={{ background: "var(--gray-700)" }} />
       }
    }
 
@@ -301,32 +301,32 @@ export default function AuditHistory({ projectId, issueId, currentIssue, onCance
       switch (action.toLowerCase()) {
          case 'create':
          case 'created':
-            return 'text-green-600'
+            return 'var(--green-900)'
          case 'update':
          case 'updated':
-            return 'text-blue-600'
+            return 'var(--blue-900)'
          case 'delete':
          case 'deleted':
-            return 'text-red-600'
+            return 'var(--red-900)'
          case 'assign':
          case 'assigned':
-            return 'text-purple-600'
+            return 'var(--purple-900)'
          case 'sprint':
          case 'sprint_assign':
          case 'sprint_remove':
-            return 'text-orange-600'
+            return 'var(--amber-900)'
          default:
-            return 'text-gray-600'
+            return 'var(--ds-text-secondary)'
       }
    }
 
    // Función para renderizar valores de cambios
    const renderValue = (value: any, field: string, isCompact: boolean = false) => {
-      if (value === null || value === undefined) return <span className="text-gray-400 italic">Sin definir</span>
+      if (value === null || value === undefined) return <span className="italic" style={{ color: "var(--ds-text-muted)" }}>Sin definir</span>
 
       if (field === 'descriptions') {
          const descriptions = Array.isArray(value) ? value : []
-         if (descriptions.length === 0) return <span className="text-gray-400 italic">Sin descripciones</span>
+         if (descriptions.length === 0) return <span className="italic" style={{ color: "var(--ds-text-muted)" }}>Sin descripciones</span>
 
          if (isCompact) {
             return <span className="font-medium">{descriptions.length} descripción(es)</span>
@@ -335,9 +335,9 @@ export default function AuditHistory({ projectId, issueId, currentIssue, onCance
          return (
             <div className="space-y-2">
                {descriptions.map((desc: any, idx: number) => (
-                  <div key={idx} className="text-xs bg-white p-3 rounded border border-gray-200">
-                     <div className="font-semibold text-gray-800 mb-1">{desc.title}</div>
-                     <div className="text-gray-600" dangerouslySetInnerHTML={{ __html: desc.text }}></div>
+                  <div key={idx} className="text-xs p-3 rounded-md" style={{ background: "var(--ds-card)", border: "1px solid var(--ds-border)" }}>
+                     <div className="font-medium mb-1" style={{ color: "var(--ds-text)" }}>{desc.title}</div>
+                     <div style={{ color: "var(--ds-text-secondary)" }} dangerouslySetInnerHTML={{ __html: desc.text }}></div>
                   </div>
                ))}
             </div>
@@ -345,11 +345,11 @@ export default function AuditHistory({ projectId, issueId, currentIssue, onCance
       }
 
       if (field === 'assignedId') {
-         return <span className="font-medium text-gray-600 break-all">{value || 'Sin asignar'}</span>
+         return <span className="font-medium break-all" style={{ color: "var(--ds-text-secondary)" }}>{value || 'Sin asignar'}</span>
       }
 
       if (field === 'startDate' || field === 'endDate' || field === 'realDate') {
-         return <span className="font-mono text-sm">{value || 'Sin definir'}</span>
+         return <span className="text-sm" style={{ fontFamily: "var(--font-mono)" }}>{value || 'Sin definir'}</span>
       }
 
       return <span className="font-medium break-words">{value}</span>
@@ -368,21 +368,21 @@ export default function AuditHistory({ projectId, issueId, currentIssue, onCance
       // Obtener el color según la acción
       const getActionBgColor = () => {
          switch (action) {
-            case 'CREATE': return 'bg-green-50'
-            case 'UPDATE': return 'bg-blue-50'
-            case 'DELETE': return 'bg-red-50'
-            case 'ASSIGN': return 'bg-purple-50'
-            default: return 'bg-gray-50'
+            case 'CREATE': return 'bg-[var(--green-100)]'
+            case 'UPDATE': return 'bg-[var(--blue-100)]'
+            case 'DELETE': return 'bg-[var(--red-100)]'
+            case 'ASSIGN': return 'bg-[var(--purple-100)]'
+            default: return 'bg-[var(--gray-alpha-100)]'
          }
       }
 
       const getActionBorderColor = () => {
          switch (action) {
-            case 'CREATE': return 'border-green-200'
-            case 'UPDATE': return 'border-blue-200'
-            case 'DELETE': return 'border-red-200'
-            case 'ASSIGN': return 'border-purple-200'
-            default: return 'border-gray-200'
+            case 'CREATE': return 'border-[var(--green-400)]'
+            case 'UPDATE': return 'border-[var(--blue-400)]'
+            case 'DELETE': return 'border-[var(--red-400)]'
+            case 'ASSIGN': return 'border-[var(--purple-400)]'
+            default: return 'border-[var(--ds-border)]'
          }
       }
 
@@ -391,9 +391,9 @@ export default function AuditHistory({ projectId, issueId, currentIssue, onCance
             <div className="space-y-0">
                {/* Vista compacta - Siempre visible */}
                <div
-                  className={`p-4 border cursor-pointer transition-all ${isExpanded
-                        ? 'bg-gray-50 border-gray-300 rounded-t-lg border-b-0 shadow-sm'
-                        : 'bg-white border-gray-200 rounded-lg hover:bg-gray-50 hover:shadow-md'
+                  className={`p-4 border cursor-pointer transition-colors duration-150 ${isExpanded
+                        ? 'bg-[var(--gray-alpha-100)] border-[var(--ds-border-strong)] rounded-t-md border-b-0'
+                        : 'bg-[var(--ds-card)] border-[var(--ds-border)] rounded-md hover:bg-[var(--gray-alpha-100)]'
                      }`}
                   onClick={() => toggleExpand(item.id)}
                >
@@ -403,7 +403,7 @@ export default function AuditHistory({ projectId, issueId, currentIssue, onCance
                         <div className="flex items-center justify-between gap-3">
                            {/* Izquierda: Usuario y fecha */}
                            <div className="flex items-center gap-2 flex-1 min-w-0">
-                              <div className="w-7 h-7 rounded-full overflow-hidden border-2 border-gray-200 shadow-sm flex-shrink-0">
+                              <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0" style={{ border: "1px solid var(--ds-border)" }}>
                                  <img
                                     src={getUserAvatar(item.userBasicDataDto, 28)}
                                     alt={`${item.userBasicDataDto.firstName} ${item.userBasicDataDto.lastName}`}
@@ -411,10 +411,10 @@ export default function AuditHistory({ projectId, issueId, currentIssue, onCance
                                  />
                               </div>
                               <div className="flex-1 min-w-0">
-                                 <p className="text-sm font-semibold text-gray-900 truncate">
+                                 <p className="text-sm font-medium truncate" style={{ color: "var(--ds-text)" }}>
                                     {item.userBasicDataDto.firstName} {item.userBasicDataDto.lastName}
                                  </p>
-                                 <p className="text-xs text-gray-600">{formatDate(item.timestamp)}</p>
+                                 <p className="text-xs" style={{ color: "var(--ds-text-muted)" }}>{formatDate(item.timestamp)}</p>
                               </div>
                            </div>
 
@@ -422,19 +422,15 @@ export default function AuditHistory({ projectId, issueId, currentIssue, onCance
                            <div className="flex items-center gap-2 flex-shrink-0">
                               <div className="flex items-center gap-2">
                                  {getActionIcon(item.action)}
-                                 <span className={`font-medium text-xs ${getActionColor(item.action)} uppercase`}>
+                                 <span className="font-medium text-xs uppercase" style={{ color: getActionColor(item.action) }}>
                                     {action}
                                  </span>
                               </div>
-                              <div className="text-gray-500">
+                              <div style={{ color: "var(--ds-text-muted)" }}>
                                  {isExpanded ? (
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                                    </svg>
+                                    <ChevronUp size={20} strokeWidth={2} />
                                  ) : (
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                    </svg>
+                                    <ChevronDown size={20} strokeWidth={2} />
                                  )}
                               </div>
                            </div>
@@ -442,7 +438,7 @@ export default function AuditHistory({ projectId, issueId, currentIssue, onCance
 
                         {/* Título de la issue */}
                         {(item.issueTitle && !isCreate) && (
-                           <div className="text-sm font-medium text-gray-900 truncate">
+                           <div className="text-sm font-medium truncate" style={{ color: "var(--ds-text)" }}>
                               {item.issueTitle}
                            </div>
                         )}
@@ -450,32 +446,30 @@ export default function AuditHistory({ projectId, issueId, currentIssue, onCance
                         {/* Cambio principal en formato compacto - Solo para UPDATE */}
                         {!isCreate && mainChange && (
                            <div className="flex items-center gap-3 text-sm">
-                              <div className="flex items-center gap-2 flex-1 bg-red-50 rounded-lg px-3 py-2 border border-red-200">
-                                 <div className="w-1.5 h-1.5 bg-red-500 rounded-full flex-shrink-0"></div>
-                                 <span className="text-red-700 truncate">{renderValue(mainChange.before, mainChange.field, true)}</span>
+                              <div className="flex items-center gap-2 flex-1 rounded-md px-3 py-2" style={{ background: "var(--red-100)", border: "1px solid var(--red-400)" }}>
+                                 <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "var(--red-700)" }}></div>
+                                 <span className="truncate" style={{ color: "var(--red-900)" }}>{renderValue(mainChange.before, mainChange.field, true)}</span>
                               </div>
-                              <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                              </svg>
-                              <div className="flex items-center gap-2 flex-1 bg-green-50 rounded-lg px-3 py-2 border border-green-200">
-                                 <div className="w-1.5 h-1.5 bg-green-500 rounded-full flex-shrink-0"></div>
-                                 <span className="text-green-700 truncate">{renderValue(mainChange.after, mainChange.field, true)}</span>
+                              <ArrowRight size={20} strokeWidth={2} className="flex-shrink-0" style={{ color: "var(--ds-text-muted)" }} />
+                              <div className="flex items-center gap-2 flex-1 rounded-md px-3 py-2" style={{ background: "var(--green-100)", border: "1px solid var(--green-400)" }}>
+                                 <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "var(--green-700)" }}></div>
+                                 <span className="truncate" style={{ color: "var(--green-900)" }}>{renderValue(mainChange.after, mainChange.field, true)}</span>
                               </div>
                            </div>
                         )}
 
                         {/* Descripción compacta para CREATE */}
                         {isCreate && (
-                           <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                                 <div className="text-xs font-semibold text-green-700 mb-2">Nueva tarea creada</div>
+                           <div className="rounded-md p-3" style={{ background: "var(--green-100)", border: "1px solid var(--green-400)", color: "var(--green-900)" }}>
+                                 <div className="text-xs font-medium mb-2">Nueva tarea creada</div>
                                  {/* <div className="flex items-center gap-2 text-sm">
-                                 <span className="text-gray-600">De:</span>
-                                 <span className="font-medium text-gray-800">{assignedChange.before || 'Sin asignar'}</span>
-                                 <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                 <span className="text-[var(--ds-text-secondary)]">De:</span>
+                                 <span className="font-medium text-[var(--ds-text)]">{assignedChange.before || 'Sin asignar'}</span>
+                                 <svg className="w-4 h-4 text-[var(--ds-text-muted)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                                  </svg>
-                                 <span className="text-gray-600">A:</span>
-                                 <span className="font-medium text-purple-700">{assignedChange.after || 'Sin asignar'}</span>
+                                 <span className="text-[var(--ds-text-secondary)]">A:</span>
+                                 <span className="font-medium text-[var(--purple-700)]">{assignedChange.after || 'Sin asignar'}</span>
                               </div> */}
                                  <div className="flex items-center text-sm">
                                     Se ha creado una nueva tarea con el título:&nbsp;<b>{item.issueTitle}</b>
@@ -485,7 +479,7 @@ export default function AuditHistory({ projectId, issueId, currentIssue, onCance
 
                         {/* Indicador de más cambios - Solo para UPDATE */}
                         {!isCreate && changes.length > 1 && (
-                           <div className="text-xs text-gray-700 font-medium">
+                           <div className="text-xs font-medium" style={{ color: "var(--ds-text-secondary)" }}>
                               + {changes.length - 1} cambio(s) más
                            </div>
                         )}
@@ -495,60 +489,60 @@ export default function AuditHistory({ projectId, issueId, currentIssue, onCance
 
                {/* Vista expandida - Descripción y Detalles */}
                {isExpanded && (
-                  <div className="border border-gray-300 rounded-b-lg overflow-hidden animate-in slide-in-from-top-2 duration-200 bg-gray-50">
+                  <div className="rounded-b-md overflow-hidden animate-in slide-in-from-top-2 duration-200" style={{ border: "1px solid var(--ds-border-strong)", background: "var(--gray-alpha-100)" }}>
                      {/* Descripción del Cambio - PRIMERO */}
-                     <div className="bg-gray-50 p-4 border-b-2 border-gray-200">
+                     <div className="p-4" style={{ borderBottom: "1px solid var(--ds-border)" }}>
                         <div className="flex items-center gap-2 mb-2">
-                           <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">Descripción</span>
+                           <span className="text-xs font-medium uppercase tracking-wider" style={{ color: "var(--ds-text-secondary)" }}>Descripción</span>
                         </div>
-                        <p className="text-sm text-gray-900 leading-relaxed">{item.description}</p>
+                        <p className="text-sm leading-relaxed" style={{ color: "var(--ds-text)" }}>{item.description}</p>
                      </div>
 
                      {/* Detalles - Para CREATE mostrar información de la nueva issue */}
                      {isCreate && item.beforeChange && (
-                        <div className="bg-gray-50 p-4 space-y-4">
+                        <div className="p-4 space-y-4">
                            <div className="flex items-center gap-2 mb-3">
-                              <div className="h-px flex-1 bg-gray-300"></div>
-                              <span className="text-xs font-bold text-gray-600 uppercase tracking-wider">Información de la Issue Creada</span>
-                              <div className="h-px flex-1 bg-gray-300"></div>
+                              <div className="h-px flex-1" style={{ background: "var(--ds-border)" }}></div>
+                              <span className="text-xs font-medium uppercase tracking-wider" style={{ color: "var(--ds-text-secondary)" }}>Información de la Issue Creada</span>
+                              <div className="h-px flex-1" style={{ background: "var(--ds-border)" }}></div>
                            </div>
 
-                           <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm space-y-3">
+                           <div className="rounded-md p-4 space-y-3" style={{ background: "var(--ds-card)", boxShadow: "var(--shadow-border)" }}>
                               {/* Título */}
                               <div>
-                                 <span className="text-xs font-semibold text-gray-600 uppercase">Título</span>
-                                 <p className="text-sm text-gray-900 font-medium mt-1">{item.beforeChange.title}</p>
+                                 <span className="text-xs font-medium uppercase" style={{ color: "var(--ds-text-muted)" }}>Título</span>
+                                 <p className="text-sm font-medium mt-1" style={{ color: "var(--ds-text)" }}>{item.beforeChange.title}</p>
                               </div>
 
                               {/* Grid de información */}
-                              <div className="grid grid-cols-2 gap-3 pt-2 border-t border-gray-200">
+                              <div className="grid grid-cols-2 gap-3 pt-2" style={{ borderTop: "1px solid var(--ds-border)" }}>
                                  <div>
-                                    <span className="text-xs font-semibold text-gray-600 uppercase">Prioridad</span>
-                                    <p className="text-sm text-gray-900 mt-1">{item.beforeChange.priority}</p>
+                                    <span className="text-xs font-medium uppercase" style={{ color: "var(--ds-text-muted)" }}>Prioridad</span>
+                                    <p className="text-sm mt-1" style={{ color: "var(--ds-text)" }}>{item.beforeChange.priority}</p>
                                  </div>
                                  <div>
-                                    <span className="text-xs font-semibold text-gray-600 uppercase">Estado</span>
-                                    <p className="text-sm text-gray-900 mt-1">{item.beforeChange.status}</p>
+                                    <span className="text-xs font-medium uppercase" style={{ color: "var(--ds-text-muted)" }}>Estado</span>
+                                    <p className="text-sm mt-1" style={{ color: "var(--ds-text)" }}>{item.beforeChange.status}</p>
                                  </div>
                                  <div>
-                                    <span className="text-xs font-semibold text-gray-600 uppercase">Tipo</span>
-                                    <p className="text-sm text-gray-900 mt-1">{item.beforeChange.type}</p>
+                                    <span className="text-xs font-medium uppercase" style={{ color: "var(--ds-text-muted)" }}>Tipo</span>
+                                    <p className="text-sm mt-1" style={{ color: "var(--ds-text)" }}>{item.beforeChange.type}</p>
                                  </div>
                                  <div>
-                                    <span className="text-xs font-semibold text-gray-600 uppercase">Tiempo Estimado</span>
-                                    <p className="text-sm text-gray-900 mt-1">{item.beforeChange.estimatedTime}h</p>
+                                    <span className="text-xs font-medium uppercase" style={{ color: "var(--ds-text-muted)" }}>Tiempo Estimado</span>
+                                    <p className="text-sm mt-1" style={{ color: "var(--ds-text)" }}>{item.beforeChange.estimatedTime}h</p>
                                  </div>
                               </div>
 
                               {/* Descripciones */}
                               {item.beforeChange.descriptions && item.beforeChange.descriptions.length > 0 && (
-                                 <div className="pt-2 border-t border-gray-200">
-                                    <span className="text-xs font-semibold text-gray-600 uppercase">Descripciones</span>
+                                 <div className="pt-2" style={{ borderTop: "1px solid var(--ds-border)" }}>
+                                    <span className="text-xs font-medium uppercase" style={{ color: "var(--ds-text-muted)" }}>Descripciones</span>
                                     <div className="space-y-2 mt-2">
                                        {item.beforeChange.descriptions.map((desc: any, idx: number) => (
-                                          <div key={idx} className="bg-gray-50 p-3 rounded border border-gray-200">
-                                             <div className="font-semibold text-gray-800 text-xs mb-1">{desc.title}</div>
-                                             <div className="text-xs text-gray-600" dangerouslySetInnerHTML={{ __html: desc.text }}></div>
+                                          <div key={idx} className="p-3 rounded-md" style={{ background: "var(--gray-alpha-100)", border: "1px solid var(--ds-border)" }}>
+                                             <div className="font-medium text-xs mb-1" style={{ color: "var(--ds-text)" }}>{desc.title}</div>
+                                             <div className="text-xs" style={{ color: "var(--ds-text-secondary)" }} dangerouslySetInnerHTML={{ __html: desc.text }}></div>
                                           </div>
                                        ))}
                                     </div>
@@ -560,27 +554,27 @@ export default function AuditHistory({ projectId, issueId, currentIssue, onCance
 
                      {/* Detalles Completos - Para UPDATE y otros con cambios */}
                      {!isCreate && changes.length > 0 && (
-                        <div className="bg-gray-50 p-4 space-y-4">
+                        <div className="p-4 space-y-4">
                            <div className="flex items-center gap-2 mb-3">
-                              <div className="h-px flex-1 bg-gray-300"></div>
-                              <span className="text-xs font-bold text-gray-600 uppercase tracking-wider">Detalles Completos</span>
-                              <div className="h-px flex-1 bg-gray-300"></div>
+                              <div className="h-px flex-1" style={{ background: "var(--ds-border)" }}></div>
+                              <span className="text-xs font-medium uppercase tracking-wider" style={{ color: "var(--ds-text-secondary)" }}>Detalles Completos</span>
+                              <div className="h-px flex-1" style={{ background: "var(--ds-border)" }}></div>
                            </div>
 
                            {changes.map((change, idx) => (
-                              <div key={idx} className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
-                                 <div className="text-xs font-bold text-gray-700 mb-3 uppercase tracking-wide flex items-center gap-2">
-                                    <div className="w-1 h-4 bg-blue-500 rounded-full"></div>
+                              <div key={idx} className="rounded-md p-4" style={{ background: "var(--ds-card)", boxShadow: "var(--shadow-border)" }}>
+                                 <div className="text-xs font-medium mb-3 uppercase tracking-wide flex items-center gap-2" style={{ color: "var(--ds-text-secondary)" }}>
+                                    <div className="w-1 h-4 rounded-full" style={{ background: "var(--blue-700)" }}></div>
                                     {change.label}
                                  </div>
                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {/* Antes */}
                                     <div className="space-y-2">
                                        <div className="flex items-center gap-2">
-                                          <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                                          <span className="text-xs font-semibold text-red-700 uppercase">Antes</span>
+                                          <div className="w-2 h-2 rounded-full" style={{ background: "var(--red-700)" }}></div>
+                                          <span className="text-xs font-medium uppercase" style={{ color: "var(--red-900)" }}>Antes</span>
                                        </div>
-                                       <div className="bg-red-50 border-2 border-red-200 rounded-lg p-3 text-sm text-red-900">
+                                       <div className="rounded-md p-3 text-sm" style={{ background: "var(--red-100)", border: "1px solid var(--red-400)", color: "var(--red-900)" }}>
                                           {renderValue(change.before, change.field, false)}
                                        </div>
                                     </div>
@@ -588,10 +582,10 @@ export default function AuditHistory({ projectId, issueId, currentIssue, onCance
                                     {/* Después */}
                                     <div className="space-y-2">
                                        <div className="flex items-center gap-2">
-                                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                          <span className="text-xs font-semibold text-green-700 uppercase">Después</span>
+                                          <div className="w-2 h-2 rounded-full" style={{ background: "var(--green-700)" }}></div>
+                                          <span className="text-xs font-medium uppercase" style={{ color: "var(--green-900)" }}>Después</span>
                                        </div>
-                                       <div className="bg-green-50 border-2 border-green-200 rounded-lg p-3 text-sm text-green-900">
+                                       <div className="rounded-md p-3 text-sm" style={{ background: "var(--green-100)", border: "1px solid var(--green-400)", color: "var(--green-900)" }}>
                                           {renderValue(change.after, change.field, false)}
                                        </div>
                                     </div>
@@ -609,18 +603,19 @@ export default function AuditHistory({ projectId, issueId, currentIssue, onCance
 
    if (error) {
       return (
-         <div className="bg-white border-gray-100 rounded-xl shadow-sm border">
+         <div className="rounded-md" style={{ background: "var(--ds-card)", boxShadow: "var(--shadow-border)" }}>
             {/* Content */}
             <div className="p-6">
                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <div className="text-red-500 mb-4">
-                     <AlertCircleIcon size={48} />
+                  <div className="mb-4" style={{ color: "var(--ds-error)" }}>
+                     <AlertCircle size={48} strokeWidth={1.5} />
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Error al cargar el historial</h3>
-                  <p className="text-gray-600 mb-4">{error}</p>
+                  <h3 className="text-sm font-medium mb-2" style={{ color: "var(--ds-text)" }}>Error al cargar el historial</h3>
+                  <p className="text-[13px] mb-4" style={{ color: "var(--ds-text-secondary)" }}>{error}</p>
                   <button
                      onClick={loadHistory}
-                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                     className="h-9 px-4 rounded-md text-sm font-medium transition-colors bg-[var(--primary-700)] hover:bg-[var(--primary-800)] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2"
+                     style={{ color: "var(--primary-contrast-fg)" }}
                   >
                      Intentar nuevamente
                   </button>
@@ -629,25 +624,26 @@ export default function AuditHistory({ projectId, issueId, currentIssue, onCance
          </div>
       )
    } return (
-      <div className="bg-white">
+      <div style={{ color: "var(--ds-text)" }}>
          {/* Content */}
-         <div className="p-6 max-w-4xl mx-auto">
+         <div className="py-4">
             {historyData && (
                <div className="mb-4 flex items-center justify-between">
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm" style={{ color: "var(--ds-text-secondary)" }}>
                      Mostrando {allHistoryItems.length} de {historyData.totalElements} entradas
                   </div>
                   {historyData.totalElements > 0 && (
                      <div className="flex items-center gap-2">
-                        <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div className="w-20 h-2 rounded-full overflow-hidden" style={{ background: "var(--gray-alpha-200)" }}>
                            <div
-                              className="h-full bg-blue-500 transition-all duration-300"
+                              className="h-full transition-all duration-300"
                               style={{
+                                 background: "var(--blue-700)",
                                  width: `${Math.min(100, (allHistoryItems.length / historyData.totalElements) * 100)}%`
                               }}
                            />
                         </div>
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs" style={{ color: "var(--ds-text-muted)" }}>
                            {Math.round((allHistoryItems.length / historyData.totalElements) * 100)}%
                         </span>
                      </div>
@@ -671,7 +667,7 @@ export default function AuditHistory({ projectId, issueId, currentIssue, onCance
                   const isDeleteAction = actionUpper === 'DELETE'
                   const isSprintRemoveAction = actionUpper === 'SPRINT_REMOVE'
                   const isSprintAssignAction = actionUpper === 'SPRINT_ASSIGN'
-                  
+
                   const assignChanges = isAssignAction ? detectChanges(item.beforeChange, item.afterChange) : []
                   const assignedChange = assignChanges.find(c => c.field === 'assignedId')
 
@@ -679,12 +675,12 @@ export default function AuditHistory({ projectId, issueId, currentIssue, onCance
                      <div key={`${item.id}-${index}`}>
                         {isDeleteAction && item.beforeChange ? (
                            /* Renderizado especial para DELETE */
-                           <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
+                           <div className="rounded-md p-4 shadow-[var(--shadow-border)] hover:shadow-[var(--shadow-md)] transition-shadow duration-150" style={{ background: "var(--ds-card)" }}>
                               {/* Header */}
                               <div className="flex items-center justify-between gap-3 mb-3">
                                  {/* Izquierda: Usuario y fecha */}
                                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                                    <div className="w-7 h-7 rounded-full overflow-hidden border-2 border-gray-200 shadow-sm flex-shrink-0">
+                                    <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0" style={{ border: "1px solid var(--ds-border)" }}>
                                        <img
                                           src={getUserAvatar(item.userBasicDataDto, 28)}
                                           alt={`${item.userBasicDataDto.firstName} ${item.userBasicDataDto.lastName}`}
@@ -692,30 +688,30 @@ export default function AuditHistory({ projectId, issueId, currentIssue, onCance
                                        />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                       <p className="text-sm font-semibold text-gray-900 truncate">
+                                       <p className="text-sm font-medium truncate" style={{ color: "var(--ds-text)" }}>
                                           {item.userBasicDataDto.firstName} {item.userBasicDataDto.lastName}
                                        </p>
-                                       <p className="text-xs text-gray-600">{formatDate(item.timestamp)}</p>
+                                       <p className="text-xs" style={{ color: "var(--ds-text-muted)" }}>{formatDate(item.timestamp)}</p>
                                     </div>
                                  </div>
 
                                  {/* Derecha: Acción */}
                                  <div className="flex items-center gap-2 flex-shrink-0">
                                     {getActionIcon(item.action)}
-                                    <span className={`font-medium text-xs ${getActionColor(item.action)} uppercase`}>
+                                    <span className="font-medium text-xs uppercase" style={{ color: getActionColor(item.action) }}>
                                        DELETE
                                     </span>
                                  </div>
                               </div>
 
                               {/* Info de la issue eliminada */}
-                              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                                 <div className="text-xs font-semibold text-red-700 mb-2">Tarea eliminada</div>
+                              <div className="rounded-md p-3" style={{ background: "var(--red-100)", border: "1px solid var(--red-400)" }}>
+                                 <div className="text-xs font-medium mb-2" style={{ color: "var(--red-900)" }}>Tarea eliminada</div>
                                  <div className="space-y-2">
                                     <div className="flex items-center text-sm">
-                                       <span className="text-gray-700">Se eliminó la tarea:&nbsp;<b className="text-red-700">{item.beforeChange.title}</b></span>
+                                       <span style={{ color: "var(--red-900)" }}>Se eliminó la tarea:&nbsp;<b>{item.beforeChange.title}</b></span>
                                     </div>
-                                    {/* <div className="text-xs text-gray-600 bg-white rounded p-2 border border-red-100">
+                                    {/* <div className="text-xs text-[var(--ds-text-secondary)] bg-[var(--ds-card)] rounded p-2 border border-[var(--red-100)]">
                                        {item.description}
                                     </div> */}
                                  </div>
@@ -723,12 +719,12 @@ export default function AuditHistory({ projectId, issueId, currentIssue, onCance
                            </div>
                         ) : isSprintRemoveAction ? (
                            /* Renderizado especial para SPRINT_REMOVE */
-                           <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
+                           <div className="rounded-md p-4 shadow-[var(--shadow-border)] hover:shadow-[var(--shadow-md)] transition-shadow duration-150" style={{ background: "var(--ds-card)" }}>
                               {/* Header */}
                               <div className="flex items-center justify-between gap-3 mb-3">
                                  {/* Izquierda: Usuario y fecha */}
                                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                                    <div className="w-7 h-7 rounded-full overflow-hidden border-2 border-gray-200 shadow-sm flex-shrink-0">
+                                    <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0" style={{ border: "1px solid var(--ds-border)" }}>
                                        <img
                                           src={getUserAvatar(item.userBasicDataDto, 28)}
                                           alt={`${item.userBasicDataDto.firstName} ${item.userBasicDataDto.lastName}`}
@@ -736,25 +732,25 @@ export default function AuditHistory({ projectId, issueId, currentIssue, onCance
                                        />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                       <p className="text-sm font-semibold text-gray-900 truncate">
+                                       <p className="text-sm font-medium truncate" style={{ color: "var(--ds-text)" }}>
                                           {item.userBasicDataDto.firstName} {item.userBasicDataDto.lastName}
                                        </p>
-                                       <p className="text-xs text-gray-600">{formatDate(item.timestamp)}</p>
+                                       <p className="text-xs" style={{ color: "var(--ds-text-muted)" }}>{formatDate(item.timestamp)}</p>
                                     </div>
                                  </div>
 
                                  {/* Derecha: Acción */}
                                  <div className="flex items-center gap-2 flex-shrink-0">
                                     {getActionIcon(item.action)}
-                                    <span className={`font-medium text-xs ${getActionColor(item.action)} uppercase`}>
+                                    <span className="font-medium text-xs uppercase" style={{ color: getActionColor(item.action) }}>
                                        Sprint Remove
                                     </span>
                                  </div>
                               </div>
 
                               {/* Info del cambio de sprint */}
-                              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-                                 <div className="text-xs font-semibold text-orange-700 mb-2">Tarea movida al Backlog</div>
+                              <div className="rounded-md p-3" style={{ background: "var(--amber-100)", border: "1px solid var(--amber-400)", color: "var(--amber-900)" }}>
+                                 <div className="text-xs font-medium mb-2">Tarea movida al Backlog</div>
                                  <div className="flex items-center text-sm">
                                     La tarea <b className="mx-1">{item.issueTitle}</b> fue removida del sprint y enviada al Backlog
                                  </div>
@@ -762,12 +758,12 @@ export default function AuditHistory({ projectId, issueId, currentIssue, onCance
                            </div>
                         ) : isSprintAssignAction ? (
                            /* Renderizado especial para SPRINT_ASSIGN */
-                           <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
+                           <div className="rounded-md p-4 shadow-[var(--shadow-border)] hover:shadow-[var(--shadow-md)] transition-shadow duration-150" style={{ background: "var(--ds-card)" }}>
                               {/* Header */}
                               <div className="flex items-center justify-between gap-3 mb-3">
                                  {/* Izquierda: Usuario y fecha */}
                                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                                    <div className="w-7 h-7 rounded-full overflow-hidden border-2 border-gray-200 shadow-sm flex-shrink-0">
+                                    <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0" style={{ border: "1px solid var(--ds-border)" }}>
                                        <img
                                           src={getUserAvatar(item.userBasicDataDto, 28)}
                                           alt={`${item.userBasicDataDto.firstName} ${item.userBasicDataDto.lastName}`}
@@ -775,25 +771,25 @@ export default function AuditHistory({ projectId, issueId, currentIssue, onCance
                                        />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                       <p className="text-sm font-semibold text-gray-900 truncate">
+                                       <p className="text-sm font-medium truncate" style={{ color: "var(--ds-text)" }}>
                                           {item.userBasicDataDto.firstName} {item.userBasicDataDto.lastName}
                                        </p>
-                                       <p className="text-xs text-gray-600">{formatDate(item.timestamp)}</p>
+                                       <p className="text-xs" style={{ color: "var(--ds-text-muted)" }}>{formatDate(item.timestamp)}</p>
                                     </div>
                                  </div>
 
                                  {/* Derecha: Acción */}
                                  <div className="flex items-center gap-2 flex-shrink-0">
                                     {getActionIcon(item.action)}
-                                    <span className={`font-medium text-xs ${getActionColor(item.action)} uppercase`}>
+                                    <span className="font-medium text-xs uppercase" style={{ color: getActionColor(item.action) }}>
                                        Sprint Assign
                                     </span>
                                  </div>
                               </div>
 
                               {/* Info del cambio de sprint */}
-                              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-                                 <div className="text-xs font-semibold text-orange-700 mb-2">Tarea asignada a Sprint</div>
+                              <div className="rounded-md p-3" style={{ background: "var(--amber-100)", border: "1px solid var(--amber-400)", color: "var(--amber-900)" }}>
+                                 <div className="text-xs font-medium mb-2">Tarea asignada a Sprint</div>
                                  <div className="flex items-center text-sm">
                                     La tarea <b className="mx-1">{item.issueTitle}</b> fue asignada a un sprint
                                  </div>
@@ -801,12 +797,12 @@ export default function AuditHistory({ projectId, issueId, currentIssue, onCance
                            </div>
                         ) : isAssignAction && assignedChange ? (
                            /* Renderizado especial para ASSIGN */
-                           <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
+                           <div className="rounded-md p-4 shadow-[var(--shadow-border)] hover:shadow-[var(--shadow-md)] transition-shadow duration-150" style={{ background: "var(--ds-card)" }}>
                               {/* Header */}
                               <div className="flex items-center justify-between gap-3 mb-3">
                                  {/* Izquierda: Usuario y fecha */}
                                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                                    <div className="w-7 h-7 rounded-full overflow-hidden border-2 border-gray-200 shadow-sm flex-shrink-0">
+                                    <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0" style={{ border: "1px solid var(--ds-border)" }}>
                                        <img
                                           src={getUserAvatar(item.userBasicDataDto, 28)}
                                           alt={`${item.userBasicDataDto.firstName} ${item.userBasicDataDto.lastName}`}
@@ -814,17 +810,17 @@ export default function AuditHistory({ projectId, issueId, currentIssue, onCance
                                        />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                       <p className="text-sm font-semibold text-gray-900 truncate">
+                                       <p className="text-sm font-medium truncate" style={{ color: "var(--ds-text)" }}>
                                           {item.userBasicDataDto.firstName} {item.userBasicDataDto.lastName}
                                        </p>
-                                       <p className="text-xs text-gray-600">{formatDate(item.timestamp)}</p>
+                                       <p className="text-xs" style={{ color: "var(--ds-text-muted)" }}>{formatDate(item.timestamp)}</p>
                                     </div>
                                  </div>
 
                                  {/* Derecha: Acción */}
                                  <div className="flex items-center gap-2 flex-shrink-0">
                                     {getActionIcon(item.action)}
-                                    <span className={`font-medium text-xs ${getActionColor(item.action)} uppercase`}>
+                                    <span className="font-medium text-xs uppercase" style={{ color: getActionColor(item.action) }}>
                                        ASSIGN
                                     </span>
                                  </div>
@@ -832,25 +828,25 @@ export default function AuditHistory({ projectId, issueId, currentIssue, onCance
 
                               {/* Título de la issue */}
                               {/* {item.issueTitle && (
-                                 <div className="text-sm font-medium text-gray-900 mb-3">
+                                 <div className="text-sm font-medium text-[var(--ds-text)] mb-3">
                                     {item.issueTitle}
                                  </div>
                               )} */}
 
                               {/* Descripción */}
-                              {/* <p className="text-sm text-gray-700 mb-3">{item.description}</p> */}
+                              {/* <p className="text-sm text-[var(--ds-text-secondary)] mb-3">{item.description}</p> */}
 
                               {/* Cambio de persona asignada */}
-                              <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
-                                 <div className="text-xs font-semibold text-purple-700 mb-2">Cambio de persona asignada</div>
+                              <div className="rounded-md p-3" style={{ background: "var(--purple-100)", border: "1px solid var(--purple-400)", color: "var(--purple-900)" }}>
+                                 <div className="text-xs font-medium mb-2">Cambio de persona asignada</div>
                                  {/* <div className="flex items-center gap-2 text-sm">
-                                 <span className="text-gray-600">De:</span>
-                                 <span className="font-medium text-gray-800">{assignedChange.before || 'Sin asignar'}</span>
-                                 <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                 <span className="text-[var(--ds-text-secondary)]">De:</span>
+                                 <span className="font-medium text-[var(--ds-text)]">{assignedChange.before || 'Sin asignar'}</span>
+                                 <svg className="w-4 h-4 text-[var(--ds-text-muted)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                                  </svg>
-                                 <span className="text-gray-600">A:</span>
-                                 <span className="font-medium text-purple-700">{assignedChange.after || 'Sin asignar'}</span>
+                                 <span className="text-[var(--ds-text-secondary)]">A:</span>
+                                 <span className="font-medium text-[var(--purple-700)]">{assignedChange.after || 'Sin asignar'}</span>
                               </div> */}
                                  <div className="flex items-center text-sm">
                                     Se detectó un cambio en la persona asignada en la tarea:&nbsp;<b>{item.issueTitle}</b>
@@ -862,12 +858,12 @@ export default function AuditHistory({ projectId, issueId, currentIssue, onCance
                            <ActionAccordion item={item} isExpanded={isExpanded} />
                         ) : (
                            /* Renderizado simple para otras acciones */
-                           <div className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-sm transition-shadow">
+                           <div className="rounded-md p-6 shadow-[var(--shadow-border)] hover:shadow-[var(--shadow-md)] transition-shadow duration-150" style={{ background: "var(--ds-card)" }}>
                               {/* Header con usuario, fecha y acción */}
                               <div className="flex items-center justify-between mb-4">
                                  {/* Izquierda: Usuario y fecha */}
                                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                                    <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-gray-200 shadow-sm flex-shrink-0">
+                                    <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0" style={{ border: "1px solid var(--ds-border)" }}>
                                        <img
                                           src={getUserAvatar(item.userBasicDataDto, 32)}
                                           alt={`${item.userBasicDataDto.firstName} ${item.userBasicDataDto.lastName}`}
@@ -875,17 +871,17 @@ export default function AuditHistory({ projectId, issueId, currentIssue, onCance
                                        />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                       <p className="text-sm font-semibold text-gray-900 truncate">
+                                       <p className="text-sm font-medium truncate" style={{ color: "var(--ds-text)" }}>
                                           {item.userBasicDataDto.firstName} {item.userBasicDataDto.lastName}
                                        </p>
-                                       <p className="text-xs text-gray-600">{formatDate(item.timestamp)}</p>
+                                       <p className="text-xs" style={{ color: "var(--ds-text-muted)" }}>{formatDate(item.timestamp)}</p>
                                     </div>
                                  </div>
 
                                  {/* Derecha: Acción */}
                                  <div className="flex items-center gap-2 flex-shrink-0">
                                     {getActionIcon(item.action)}
-                                    <span className={`font-medium text-sm ${getActionColor(item.action)} uppercase`}>
+                                    <span className="font-medium text-sm uppercase" style={{ color: getActionColor(item.action) }}>
                                        {item.action.toUpperCase()}
                                     </span>
                                  </div>
@@ -893,27 +889,27 @@ export default function AuditHistory({ projectId, issueId, currentIssue, onCance
 
                               {/* Título de la issue */}
                               {item.issueTitle && (
-                                 <div className="text-sm font-medium text-gray-900 mb-4">
+                                 <div className="text-sm font-medium mb-4" style={{ color: "var(--ds-text)" }}>
                                     {item.issueTitle}
                                  </div>
                               )}
 
                               {/* Descripción */}
-                              <p className="text-gray-700 text-sm mb-4">
+                              <p className="text-sm mb-4" style={{ color: "var(--ds-text-secondary)" }}>
                                  {item.description}
                               </p>
 
                               {/* Issue (si existe) */}
                               {item.issue && (
-                                 <div className="flex items-center gap-3 bg-green-50 rounded-lg p-3 border border-green-200">
-                                    <div className="w-10 h-10 rounded-lg bg-green-200 flex items-center justify-center flex-shrink-0">
-                                       <span className="text-green-600 text-xs font-bold">Issue</span>
+                                 <div className="flex items-center gap-3 rounded-md p-3" style={{ background: "var(--green-100)", border: "1px solid var(--green-400)" }}>
+                                    <div className="w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0" style={{ background: "var(--green-200)" }}>
+                                       <span className="text-xs font-medium" style={{ color: "var(--green-900)" }}>Issue</span>
                                     </div>
                                     <div className="min-w-0 flex-1">
-                                       <p className="text-sm font-medium text-green-900 truncate" title={item.issue.title}>
+                                       <p className="text-sm font-medium truncate" style={{ color: "var(--green-900)" }} title={item.issue.title}>
                                           {item.issue.title}
                                        </p>
-                                       <p className="text-xs text-green-600">Tarea</p>
+                                       <p className="text-xs" style={{ color: "var(--green-900)" }}>Tarea</p>
                                     </div>
                                  </div>
                               )}
@@ -926,8 +922,8 @@ export default function AuditHistory({ projectId, issueId, currentIssue, onCance
                {/* Indicador de carga para páginas adicionales */}
                {isLoadingMore && (
                   <div className="py-4">
-                     <div className="flex items-center justify-center gap-3 text-blue-600">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                     <div className="flex items-center justify-center gap-3" style={{ color: "var(--blue-700)" }}>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[var(--blue-700)]"></div>
                         <span className="text-sm">Cargando más entradas...</span>
                      </div>
                   </div>
@@ -937,19 +933,19 @@ export default function AuditHistory({ projectId, issueId, currentIssue, onCance
                {isLoading && (
                   <div className="space-y-6">
                      {Array.from({ length: 3 }).map((_, i) => (
-                        <div key={i} className="bg-white border border-gray-200 rounded-lg p-6 animate-pulse">
+                        <div key={i} className="rounded-md p-6 animate-pulse" style={{ background: "var(--ds-card)", boxShadow: "var(--shadow-border)" }}>
                            <div className="flex items-center justify-between mb-4">
                               <div className="flex items-center gap-2">
-                                 <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
-                                 <div className="h-4 bg-gray-300 rounded w-16"></div>
+                                 <div className="w-2 h-2 rounded-full" style={{ background: "var(--gray-alpha-300)" }}></div>
+                                 <div className="h-4 rounded w-16" style={{ background: "var(--gray-alpha-200)" }}></div>
                               </div>
-                              <div className="h-3 bg-gray-300 rounded w-20"></div>
+                              <div className="h-3 rounded w-20" style={{ background: "var(--gray-alpha-200)" }}></div>
                            </div>
-                           <div className="h-4 bg-gray-300 rounded w-3/4 mb-4"></div>
+                           <div className="h-4 rounded w-3/4 mb-4" style={{ background: "var(--gray-alpha-200)" }}></div>
                            <div className="flex items-center justify-between gap-4">
-                              <div className="bg-gray-100 rounded-lg p-3 w-48 h-16"></div>
-                              <div className="w-6 h-6 bg-gray-300 rounded"></div>
-                              <div className="bg-gray-100 rounded-lg p-3 w-48 h-16"></div>
+                              <div className="rounded-md p-3 w-48 h-16" style={{ background: "var(--gray-alpha-100)" }}></div>
+                              <div className="w-6 h-6 rounded" style={{ background: "var(--gray-alpha-200)" }}></div>
+                              <div className="rounded-md p-3 w-48 h-16" style={{ background: "var(--gray-alpha-100)" }}></div>
                            </div>
                         </div>
                      ))}
@@ -958,11 +954,11 @@ export default function AuditHistory({ projectId, issueId, currentIssue, onCance
 
                {/* Mensaje cuando no hay más elementos */}
                {!hasMore && allHistoryItems.length > 0 && (
-                  <div className="text-center py-4 text-gray-500 text-sm border-t">
+                  <div className="text-center py-4 text-sm" style={{ color: "var(--ds-text-muted)", borderTop: "1px solid var(--ds-border)" }}>
                      <div className="flex items-center justify-center gap-2">
-                        <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                        <div className="w-2 h-2 rounded-full" style={{ background: "var(--gray-alpha-300)" }}></div>
                         <span>No hay más entradas para mostrar</span>
-                        <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                        <div className="w-2 h-2 rounded-full" style={{ background: "var(--gray-alpha-300)" }}></div>
                      </div>
                   </div>
                )}
@@ -970,13 +966,13 @@ export default function AuditHistory({ projectId, issueId, currentIssue, onCance
                {/* Estado vacío */}
                {allHistoryItems.length === 0 && !isLoading && (
                   <div className="flex flex-col items-center text-center py-8">
-                     <div className="text-gray-300 mx-auto mb-4">
-                        <ClockIcon size={48} />
+                     <div className="mx-auto mb-4" style={{ color: "var(--ds-text-muted)" }}>
+                        <Clock size={48} strokeWidth={1.5} />
                      </div>
-                     <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                     <h3 className="text-sm font-medium mb-2" style={{ color: "var(--ds-text-secondary)" }}>
                         No hay historial disponible
                      </h3>
-                     <p className="text-gray-600">
+                     <p className="text-[13px]" style={{ color: "var(--ds-text-muted)" }}>
                         Aún no se han registrado cambios para este elemento.
                      </p>
                   </div>

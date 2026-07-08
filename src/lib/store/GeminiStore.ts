@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { API_ROUTES } from '../routes/issues.routes'
+import { authFetch } from '@/lib/http/authFetch'
 
 export interface GeminiModel {
   id: string
@@ -231,11 +232,10 @@ export const useGeminiStore = create<GeminiState>()((set, get) => ({
   }),
   getConfig: async (token: string) => {
     try {
-      const response = await fetch(API_ROUTES.GEMINI_CONFIG, {
+      const response = await authFetch(API_ROUTES.GEMINI_CONFIG, token, {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         }
       })
 
@@ -324,11 +324,10 @@ export const useGeminiStore = create<GeminiState>()((set, get) => ({
       queryParams.append('page', params.page.toString())
       queryParams.append('size', params.size.toString())
 
-      const response = await fetch(`${API_ROUTES.GEMINI_HISTORY}?${queryParams.toString()}`, {
+      const response = await authFetch(`${API_ROUTES.GEMINI_HISTORY}?${queryParams.toString()}`, token, {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         }
       })
 
@@ -359,11 +358,10 @@ export const useGeminiStore = create<GeminiState>()((set, get) => ({
 
   getHistoryFilters: async (token: string) => {
     try {
-      const response = await fetch(API_ROUTES.GEMINI_HISTORY_FILTERS, {
+      const response = await authFetch(API_ROUTES.GEMINI_HISTORY_FILTERS, token, {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         }
       })
 
@@ -397,11 +395,10 @@ export const useGeminiStore = create<GeminiState>()((set, get) => ({
         ? enabledModelsUrls[0].urls.generateContent || enabledModelsUrls[0].urls.embedContent || ''
         : ''
 
-      const response = await fetch(API_ROUTES.GEMINI_CONFIG, {
+      const response = await authFetch(API_ROUTES.GEMINI_CONFIG, token, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           key: apiKey,
@@ -437,14 +434,13 @@ export const useGeminiStore = create<GeminiState>()((set, get) => ({
         });
       }
 
-      const response = await fetch(API_ROUTES.GEMINI_CHAT, {
+      const response = await authFetch(API_ROUTES.GEMINI_CHAT, token, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
           // No incluir 'Content-Type', fetch lo gestiona con FormData
         },
         body: formData,
-      });
+      }, 120_000);
 
       if (!response.ok) {
         throw new Error(`Error ${response.status}: ${response.statusText}`);

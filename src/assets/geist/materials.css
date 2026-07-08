@@ -1,0 +1,60 @@
+/* ============================================================
+   Geist Materials — radii, strokes, shadows, focus.
+   Philosophy: "border-first." Static elements are defined by a
+   1px border (gray-alpha) or a zero-offset 1px-spread shadow
+   (shadow-as-border). True box-shadow is reserved for hover and
+   for elements lifted above the content plane (popovers, modals).
+   Don't mix rounded and sharp corners in one view.
+   ============================================================ */
+
+:root {
+  /* ---- Radii ---- */
+  --radius-none: 0px;
+  --radius-sm: 4px;
+  --radius-md: 6px;     /* default: buttons, inputs, cards */
+  --radius-lg: 8px;
+  --radius-xl: 12px;    /* image cards, larger surfaces */
+  --radius-2xl: 16px;
+  --radius-full: 9999px; /* pills, toggles, avatars, marketing CTAs */
+
+  /* ---- Strokes ---- */
+  --stroke-width: 1px;
+  --border: 1px solid var(--ds-border);
+  --border-strong: 1px solid var(--ds-border-strong);
+
+  /* Shadow-as-border: zero offset, 1px spread, no blur. */
+  --shadow-border: 0 0 0 1px var(--ds-border);
+  --shadow-border-strong: 0 0 0 1px var(--ds-border-strong);
+
+  /* ---- Elevation stacks (border + lift + ambient, with inner light ring) ---- */
+  --shadow-sm:
+    0 0 0 1px rgba(0, 0, 0, 0.06),
+    0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md:
+    0 0 0 1px rgba(0, 0, 0, 0.08),
+    0 2px 2px rgba(0, 0, 0, 0.04),
+    0 8px 8px -8px rgba(0, 0, 0, 0.04);
+  --shadow-lg:
+    0 0 0 1px rgba(0, 0, 0, 0.08),
+    0 4px 8px rgba(0, 0, 0, 0.04),
+    0 16px 24px -8px rgba(0, 0, 0, 0.08);
+  --shadow-xl:
+    0 0 0 1px rgba(0, 0, 0, 0.08),
+    0 8px 16px rgba(0, 0, 0, 0.06),
+    0 24px 32px -12px rgba(0, 0, 0, 0.12);
+
+  /* ---- Focus ring: 2px surface gap, then 2px blue-700 ring ---- */
+  --focus-ring: 0 0 0 2px var(--ds-background), 0 0 0 4px var(--ds-focus);
+
+  /* ---- Motion ---- */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --duration-fast: 120ms;
+  --duration-base: 180ms;
+  --duration-slow: 280ms;
+
+  /* ---- Runtime accent (set by ThemeStore; default blue) ---- */
+  --accent: var(--blue-700);
+  --accent-fg: #fff;
+}

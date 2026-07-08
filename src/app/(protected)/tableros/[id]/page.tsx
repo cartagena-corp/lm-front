@@ -4,21 +4,21 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { useAuthStore } from '@/lib/store/AuthStore'
 import { useBoardStore } from '@/lib/store/BoardStore'
-import { CalendarIcon, ClockIcon, EditIcon, BoardIcon, UsersIcon, ConfigIcon } from '@/assets/Icon'
+import { Calendar, Clock, Pencil, LayoutDashboard, Settings, ChevronUp, ChevronDown } from 'lucide-react'
 import Image from 'next/image'
 import { useConfigStore } from '@/lib/store/ConfigStore'
 import SprintBoard from '@/components/partials/sprints/SprintBoard'
-import { useIssueStore } from '@/lib/store/IssueStore'
 import { useSprintStore } from '@/lib/store/SprintStore'
 import UpdateProjectForm from '@/components/partials/boards/UpdateProjectForm'
 import ProjectConfigModal from '@/components/partials/config/projects/ProjectConfigModal'
 import { ProjectProps } from '@/lib/types/types'
 import { CustomSwitch } from '@/components/ui/CustomSwitch'
+import type { valueProps } from '@/components/ui/CustomSwitch'
 import DiagramaGantt from '@/components/ui/DiagramaGantt'
 import SprintList from '@/components/partials/sprints/SprintList'
 import { useModalStore } from '@/lib/hooks/ModalStore'
 
-const view = [
+const view: valueProps[] = [
 	{
 		id: 1,
 		name: "Tablero",
@@ -32,34 +32,46 @@ const view = [
 	{
 		id: 3,
 		name: "Diagrama de Gantt",
+		shortName: "Gantt",
 		view: DiagramaGantt
 	},
 ]
 
 export default function TableroDetalle() {
-	const { selectedBoard, getBoard, updateBoard, isLoading, error } = useBoardStore()
+	const { selectedBoard, getBoard, updateBoard, setSelectedBoard, isLoading } = useBoardStore()
 	const { getValidAccessToken, isAuthenticated, getListUsers } = useAuthStore()
 	const { setProjectConfig, projectStatus, setConfig } = useConfigStore()
 	const [sprintMode, setSprintMode] = useState(view[0])
-	const { getSprints } = useSprintStore()
-	const { getIssues } = useIssueStore()
+	const [isHeaderVisible, setIsHeaderVisible] = useState(true)
+	const { getSprints, clearSprints } = useSprintStore()
 	const { id } = useParams()
 
 	useEffect(() => {
 		if (isAuthenticated) {
+			// Limpiar la data del tablero anterior de inmediato: si no, mientras se
+			// resuelven los fetches de abajo se sigue mostrando (y parpadeando entre)
+			// el tablero/sprints previos hasta que llega la data del nuevo `id`.
+			setSelectedBoard(null)
+			clearSprints();
 			(async () => {
 				const token = await getValidAccessToken()
 				if (token) {
-					await getBoard(token, id as string)
-					// Get backlog issues (issues without sprint assigned)
-					await getIssues(token, id as string, { sprintId: '' })
-					await setProjectConfig(id as string, token)
-					await getSprints(token, id as string)
-					await getListUsers(token)
+					// Ninguna de estas depende del resultado de otra (todas solo
+					// necesitan token + id) — se piden en paralelo en vez de una
+					// tras otra. `getSprints` ya prioriza internamente el sprint
+					// activo (ver SprintStore.ts), así que esto es lo que deja
+					// que el Kanban se pinte apenas esa respuesta llega, sin
+					// esperar a `getListUsers` ni a `setProjectConfig`.
+					await Promise.all([
+						getBoard(token, id as string),
+						setProjectConfig(id as string, token),
+						getSprints(token, id as string),
+						getListUsers(token),
+					])
 				}
 			})()
 		}
-	}, [isAuthenticated, getBoard, setProjectConfig, getValidAccessToken, getIssues, getSprints, getListUsers, id])
+	}, [isAuthenticated, getBoard, setProjectConfig, getValidAccessToken, getSprints, getListUsers, id, setSelectedBoard, clearSprints])
 
 	useEffect(() => {
 		if (isAuthenticated) {
@@ -105,7 +117,7 @@ export default function TableroDetalle() {
 			size: "lg",
 			title: "Editar Tablero",
 			desc: "Edita los detalles del tablero",
-			Icon: <EditIcon size={20} stroke={1.75} />,
+			Icon: <Pencil size={20} strokeWidth={1.75} />,
 			children: <UpdateProjectForm onSubmit={handleUpdate} onCancel={() => closeModal()} projectObject={selectedBoard as ProjectProps} />,
 			closeOnBackdrop: false,
 			closeOnEscape: false,
@@ -119,7 +131,7 @@ export default function TableroDetalle() {
 			size: "xl",
 			title: "Configuración del Tablero",
 			desc: "Gestiona la configuración específica de este tablero",
-			Icon: <ConfigIcon size={20} stroke={1.75} />,
+			Icon: <Settings size={20} strokeWidth={1.75} />,
 			children: <ProjectConfigModal projectId={id as string} onClose={() => closeModal()} />,
 			closeOnBackdrop: false,
 			closeOnEscape: false,
@@ -127,220 +139,137 @@ export default function TableroDetalle() {
 		})
 	}
 
+	const formatDate = (raw: string | undefined, fallback: string) => {
+		if (!raw) return fallback
+		let date: Date
+		if (raw.includes('T')) {
+			date = new Date(raw)
+		} else {
+			const [year, month, day] = raw.split('-').map(num => parseInt(num, 10))
+			date = new Date(year, month - 1, day)
+		}
+		return date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })
+	}
+
 	return (
-		<div className=" mx-auto space-y-8">
+		<div className="space-y-6">
 			{/* Header */}
-			<div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-				<div className="flex items-center justify-between">
-					<div className="flex items-center gap-4">
-						<div className="p-3 bg-blue-50 rounded-xl">
-							<BoardIcon size={28} />
-						</div>
-						<div>
-							<h1 className="text-2xl font-bold text-gray-900">Detalles del Tablero</h1>
-							<p className="text-gray-600 mt-1">Gestiona tu proyecto y sus sprints</p>
-						</div>
+			{isHeaderVisible && (
+			<div className="flex items-center justify-between gap-4 flex-wrap">
+				<div className="flex items-center gap-[14px] min-w-0">
+					<div className="flex items-center justify-center flex-shrink-0" style={{ width: 44, height: 44, borderRadius: 10, background: "var(--blue-200)", color: "var(--blue-900)" }}>
+						<LayoutDashboard size={24} strokeWidth={1.5} />
 					</div>
-					<CustomSwitch value={sprintMode} onChange={(value) => setSprintMode(value)} />
+					<div className="min-w-0">
+						<div className="flex items-center gap-2 flex-wrap">
+							<h1 className="font-semibold truncate" style={{ fontSize: 24, letterSpacing: "-0.96px", color: "var(--ds-text)" }}>
+								{selectedBoard?.name || (isLoading ? 'Cargando…' : 'Tablero')}
+							</h1>
+							{selectedBoard && (
+								<div className="inline-flex items-center gap-[5px] whitespace-nowrap flex-shrink-0 w-fit"
+									style={{
+										height: 20, padding: "0 8px", borderRadius: 9999,
+										background: `${getStatusColor(Number(selectedBoard.status))}1f`,
+										color: getStatusColor(Number(selectedBoard.status)),
+										fontSize: 11, fontWeight: 500
+									}}
+								>
+									<span style={{ width: 5, height: 5, borderRadius: 9999, background: getStatusColor(Number(selectedBoard.status)) }} />
+									{getStatusName(Number(selectedBoard.status)).charAt(0).toUpperCase() + getStatusName(Number(selectedBoard.status)).slice(1).toLowerCase()}
+								</div>
+							)}
+						</div>
+						<p style={{ fontSize: 13, color: "var(--ds-text-secondary)", marginTop: 2 }}>
+							{selectedBoard?.description || 'Gestiona tu proyecto y sus sprints'}
+						</p>
+					</div>
+				</div>
+
+				<div className="flex items-center gap-2 flex-shrink-0">
+					<button
+						onClick={() => handleConfigBoardModal()}
+						disabled={isLoading}
+						className="flex items-center gap-2 transition-colors text-sm font-medium hover:bg-[var(--gray-alpha-100)] disabled:opacity-50 disabled:cursor-not-allowed"
+						style={{ height: 34, padding: "0 11px", color: "var(--ds-text)", background: "var(--ds-background)", border: "1px solid var(--ds-border-strong)", borderRadius: "var(--radius-md)" }}
+					>
+						<Settings size={15} strokeWidth={1.5} />
+						<span className="hidden sm:inline">Configuración</span>
+						<span className="sm:hidden">Config</span>
+					</button>
+
+					<button
+						onClick={() => handleUpdateBoardModal()}
+						disabled={isLoading}
+						className="flex items-center gap-2 transition-colors text-sm font-medium hover:bg-[var(--gray-alpha-100)] disabled:opacity-50 disabled:cursor-not-allowed"
+						style={{ height: 34, padding: "0 11px", color: "var(--ds-text)", background: "var(--ds-background)", border: "1px solid var(--ds-border-strong)", borderRadius: "var(--radius-md)" }}
+					>
+						<Pencil size={15} strokeWidth={1.5} />
+						<span className="hidden sm:inline">{isLoading ? 'Cargando...' : 'Editar Proyecto'}</span>
+						<span className="sm:hidden">Editar</span>
+					</button>
 				</div>
 			</div>
+			)}
 
-			{/* Project Details - Solo mostrar si NO está en vista Tablero */}
+			{/* Tabs */}
+			<div className="flex items-center justify-between gap-4">
+				<CustomSwitch tabs={view} value={sprintMode} onChange={(value) => setSprintMode(value)} />
+				<button
+					onClick={() => setIsHeaderVisible(prev => !prev)}
+					className="flex items-center gap-2 transition-colors text-sm font-medium hover:bg-[var(--gray-alpha-100)] flex-shrink-0"
+					style={{ height: 34, padding: "0 11px", marginBottom: 16, color: "var(--ds-text)", background: "var(--ds-background)", border: "none", borderRadius: "var(--radius-md)" }}
+					title={isHeaderVisible ? "Ocultar información del tablero" : "Mostrar información del tablero"}
+				>
+					{isHeaderVisible ? <ChevronUp size={15} strokeWidth={1.5} /> : <ChevronDown size={15} strokeWidth={1.5} />}
+					<span className="hidden sm:inline">{isHeaderVisible ? "Ocultar información" : "Mostrar información"}</span>
+				</button>
+			</div>
+
+			{/* Project Metadata - Solo mostrar si NO está en vista Tablero */}
 			{sprintMode.name !== "Tablero" && (
 				<>
 					{isLoading && !selectedBoard ? (
-						<div className='bg-white rounded-xl shadow-sm border border-gray-100 p-6 animate-pulse'>
-							<div className='flex justify-between items-start gap-4 mb-6'>
-								<div className='flex items-center gap-4 flex-1'>
-									<div className='h-8 bg-gray-300 rounded w-64'></div>
-									<div className='h-6 bg-gray-300 rounded w-24'></div>
-								</div>
-								<div className='h-10 bg-gray-300 rounded w-32'></div>
-							</div>
-							<div className='h-4 bg-gray-300 rounded w-full mb-6'></div>
-							<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
-								{Array.from({ length: 4 }).map((_, i) => (
-									<div key={i} className='space-y-2'>
-										<div className='h-4 bg-gray-300 rounded w-20'></div>
-										<div className='h-6 bg-gray-300 rounded w-32'></div>
-									</div>
-								))}
-							</div>
+						<div className='flex flex-wrap gap-x-8 gap-y-2 pb-6 animate-pulse' style={{ borderBottom: "1px solid var(--ds-border)" }}>
+							{Array.from({ length: 4 }).map((_, i) => (
+								<div key={i} className='h-4 rounded w-32' style={{ background: "var(--gray-alpha-200)" }}></div>
+							))}
 						</div>
 					) : (
-						<div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-							{/* Project Header */}
-							<div className="p-6 border-b border-gray-100">
-								<div className='flex justify-between items-start gap-4'>
-									<div className='flex flex-col'>
-										<h2 className='text-2xl font-bold text-gray-900 mb-2'>{selectedBoard?.name}</h2>
-										{selectedBoard && (
-											<div className="rounded-full text-xs font-medium px-3 py-1 whitespace-nowrap flex-shrink-0 w-fit"
-												style={{
-													backgroundColor: `${getStatusColor(Number(selectedBoard.status))}20`,
-													color: getStatusColor(Number(selectedBoard.status)),
-													border: `1px solid ${getStatusColor(Number(selectedBoard.status))}40`
-												}}
-											>
-												{getStatusName(Number(selectedBoard.status)).charAt(0).toUpperCase() + getStatusName(Number(selectedBoard.status)).slice(1).toLowerCase()}
-											</div>
-										)}
-									</div>
-
-									<div className="flex gap-2">
-										<button
-											onClick={() => handleConfigBoardModal()}
-											disabled={isLoading}
-											className="flex items-center gap-2 px-4 py-2 text-blue-700 bg-blue-50 border border-blue-300 rounded-lg hover:bg-blue-100 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-										>
-											<ConfigIcon size={16} />
-											<span className="hidden sm:inline">Configuración</span>
-											<span className="sm:hidden">Config</span>
-										</button>
-
-										<button
-											onClick={() => handleUpdateBoardModal()}
-											disabled={isLoading}
-											className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-										>
-											<EditIcon size={16} />
-											<span className="hidden sm:inline">{isLoading ? 'Cargando...' : 'Editar Proyecto'}</span>
-											<span className="sm:hidden">Editar</span>
-										</button>
-									</div>
-								</div>
-
-								{selectedBoard?.description && (
-									<p className='text-gray-600 mt-4 leading-relaxed'>{selectedBoard.description}</p>
-								)}
+						<div className="flex flex-wrap items-center gap-x-8 gap-y-2 pb-6 text-xs" style={{ borderBottom: "1px solid var(--ds-border)", color: "var(--ds-text-muted)" }}>
+							{/* Período */}
+							<div className="flex items-center gap-2">
+								<Calendar size={14} strokeWidth={1.5} />
+								<span className="font-medium">Período:</span>
+								<span>{formatDate(selectedBoard?.startDate, 'No definida')}</span>
+								<span>–</span>
+								<span>{formatDate(selectedBoard?.endDate, 'No definida')}</span>
 							</div>
 
-							{/* Project Metadata */}
-							<div className="p-6">
-								<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
-									{/* Start Date */}
-									<div className='flex items-center gap-3'>
-										<div className='p-2 bg-blue-50 text-blue-600 rounded-lg'>
-											<CalendarIcon size={20} />
-										</div>
-										<div>
-											<h6 className='text-sm font-bold text-gray-900'>Fecha de inicio</h6>
-											<p className='text-sm text-gray-600'>
-												{selectedBoard?.startDate ? (() => {
-													const [year, month, day] = selectedBoard.startDate.split('-').map(num => parseInt(num, 10))
-													const date = new Date(year, month - 1, day)
-													return date.toLocaleDateString('es-ES', {
-														day: '2-digit',
-														month: 'short',
-														year: 'numeric'
-													})
-												})() : 'No definida'}
-											</p>
-										</div>
-									</div>
-
-									{/* End Date */}
-									<div className='flex items-center gap-3'>
-										<div className='p-2 bg-green-50 text-green-600 rounded-lg'>
-											<CalendarIcon size={20} />
-										</div>
-										<div>
-											<h6 className='text-sm font-bold text-gray-900'>Fecha de fin</h6>
-											<p className='text-sm text-gray-600'>
-												{selectedBoard?.endDate ? (() => {
-													const [year, month, day] = selectedBoard.endDate.split('-').map(num => parseInt(num, 10))
-													const date = new Date(year, month - 1, day)
-													return date.toLocaleDateString('es-ES', {
-														day: '2-digit',
-														month: 'short',
-														year: 'numeric'
-													})
-												})() : 'No definida'}
-											</p>
-										</div>
-									</div>
-
-									{/* Created Date */}
-									<div className='flex items-center gap-3'>
-										<div className='p-2 bg-purple-50 text-purple-600 rounded-lg'>
-											<ClockIcon size={20} />
-										</div>
-										<div>
-											<h6 className='text-sm font-bold text-gray-900'>Creado</h6>
-											<p className='text-sm text-gray-600'>
-												{selectedBoard?.createdAt ? (() => {
-													let date
-													if (selectedBoard.createdAt.includes('T')) {
-														date = new Date(selectedBoard.createdAt)
-													} else {
-														const [year, month, day] = selectedBoard.createdAt.split('-').map(num => parseInt(num, 10))
-														date = new Date(year, month - 1, day)
-													}
-													return date.toLocaleDateString('es-ES', {
-														day: '2-digit',
-														month: 'short',
-														year: 'numeric'
-													})
-												})() : 'No disponible'}
-											</p>
-										</div>
-									</div>
-
-									{/* Updated Date */}
-									<div className='flex items-center gap-3'>
-										<div className='p-2 bg-orange-50 text-orange-600 rounded-lg'>
-											<ClockIcon size={20} />
-										</div>
-										<div>
-											<h6 className='text-sm font-bold text-gray-900'>Actualizado</h6>
-											<p className='text-sm text-gray-600'>
-												{selectedBoard?.updatedAt ? (() => {
-													let date
-													if (selectedBoard.updatedAt.includes('T')) {
-														date = new Date(selectedBoard.updatedAt)
-													} else {
-														const [year, month, day] = selectedBoard.updatedAt.split('-').map(num => parseInt(num, 10))
-														date = new Date(year, month - 1, day)
-													}
-													return date.toLocaleDateString('es-ES', {
-														day: '2-digit',
-														month: 'short',
-														year: 'numeric'
-													})
-												})() : 'No disponible'}
-											</p>
-										</div>
-									</div>
-								</div>
-
-								{/* Created By Section */}
-								{selectedBoard?.createdBy && (
-									<div className="mt-6 pt-6 border-t border-gray-100">
-										<div className='flex items-center gap-4'>
-											<div className='p-2 bg-indigo-50 text-indigo-600 rounded-lg'>
-												<UsersIcon size={20} />
-											</div>
-											<div>
-												<h6 className='text-sm font-bold text-gray-900'>Creado por</h6>
-												<div className='flex items-center gap-2'>
-													<div className='w-8 h-8 bg-gray-100 rounded-full overflow-hidden'>
-														<Image
-															src={selectedBoard.createdBy.picture}
-															alt={`${selectedBoard.createdBy.firstName} ${selectedBoard.createdBy.lastName}`}
-															width={32}
-															height={32}
-															className="w-full h-full object-cover"
-														/>
-													</div>
-													<span className='text-sm text-gray-600'>
-														{selectedBoard.createdBy.firstName} {selectedBoard.createdBy.lastName}
-													</span>
-												</div>
-											</div>
-										</div>
-									</div>
-								)}
+							{/* Created */}
+							<div className="flex items-center gap-2">
+								<Clock size={14} strokeWidth={1.5} />
+								<span>Creado {formatDate(selectedBoard?.createdAt, 'No disponible')}</span>
 							</div>
+
+							{/* Updated */}
+							<div className="flex items-center gap-2">
+								<Clock size={14} strokeWidth={1.5} />
+								<span>Actualizado {formatDate(selectedBoard?.updatedAt, 'No disponible')}</span>
+							</div>
+
+							{/* Created By */}
+							{selectedBoard?.createdBy && (
+								<div className="flex items-center gap-2 ml-auto">
+									<Image
+										src={selectedBoard.createdBy.picture}
+										alt={`${selectedBoard.createdBy.firstName} ${selectedBoard.createdBy.lastName}`}
+										width={16}
+										height={16}
+										className="rounded-full object-cover flex-shrink-0"
+									/>
+									<span>Creado por {selectedBoard.createdBy.firstName} {selectedBoard.createdBy.lastName}</span>
+								</div>
+							)}
 						</div>
 					)}
 				</>
@@ -350,4 +279,4 @@ export default function TableroDetalle() {
 			<sprintMode.view />
 		</div>
 	)
-} 
+}

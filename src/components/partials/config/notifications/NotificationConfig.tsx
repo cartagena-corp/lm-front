@@ -1,9 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { BellIcon } from "@/assets/Icon"
+import { Bell } from "lucide-react"
 import { useNotificationStore } from "@/lib/store/NotificationStore"
 import { useAuthStore } from "@/lib/store/AuthStore"
+import Switch from "@/components/ui/Switch"
 
 // Mapeo de nombres técnicos a nombres descriptivos
 const notificationTypeNames: Record<string, string> = {
@@ -114,85 +115,67 @@ export default function NotificationConfig() {
    }
 
    return (
-      <section className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300">
-         {/* Header */}
-         <div className="border-gray-100 border-b p-6">
-            <div className="flex items-center gap-3">
-               <div className="bg-purple-50 text-purple-600 rounded-lg p-2">
-                  <BellIcon size={24} />
-               </div>
-               <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Preferencias de Notificaciones</h3>
-                  <p className="text-sm text-gray-500">Configura qué notificaciones deseas recibir</p>
-               </div>
-            </div>
-         </div>
-
+      <div className="p-6">
          {/* Content */}
-         <div className="p-6">
+         <div>
             {isLoading ? (
                <div className="space-y-4">
                   {[...Array(3)].map((_, i) => (
                      <div key={i} className="animate-pulse">
-                        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                           <div className="space-y-2">
-                              <div className="bg-gray-200 rounded h-4 w-48"></div>
-                              <div className="bg-gray-200 rounded h-3 w-64"></div>
+                        <div className="flex items-center justify-between gap-3 p-4" style={{ background: "var(--gray-alpha-100)", borderRadius: "var(--radius-md)" }}>
+                           <div className="space-y-2 min-w-0 flex-1">
+                              <div className="bg-[var(--gray-alpha-200)] rounded h-4 w-48 max-w-full"></div>
+                              <div className="bg-[var(--gray-alpha-200)] rounded h-3 w-64 max-w-full"></div>
                            </div>
-                           <div className="bg-gray-200 rounded-full h-6 w-11"></div>
+                           <div className="bg-[var(--gray-alpha-200)] rounded-full h-6 w-11 flex-shrink-0"></div>
                         </div>
                      </div>
                   ))}
                </div>
             ) : localPreferences.length === 0 ? (
                <div className="text-center py-12">
-                  <div className="bg-gray-50 text-gray-400 rounded-full w-fit mx-auto mb-4 p-3">
-                     <BellIcon size={32} />
+                  <div className="w-fit mx-auto mb-4 p-3 rounded-full" style={{ background: "var(--gray-alpha-100)", color: "var(--ds-text-muted)" }}>
+                     <Bell size={32} strokeWidth={1.5} />
                   </div>
-                  <h4 className="text-lg font-medium text-gray-900 mb-2">No hay tipos de notificación disponibles</h4>
-                  <p className="text-gray-500">Contacta con el administrador para configurar los tipos de notificación</p>
+                  <h4 className="text-lg font-medium text-[var(--ds-text)] mb-2">No hay tipos de notificación disponibles</h4>
+                  <p className="text-[var(--ds-text-muted)]">Contacta con el administrador para configurar los tipos de notificación</p>
                </div>
             ) : (
                <div className="space-y-4">
                   {localPreferences.map((preference) => (
                      <div
                         key={preference.type}
-                        className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+                        className="flex items-center justify-between gap-3 p-4 hover:bg-[var(--gray-alpha-200)] transition-colors duration-200"
+                        style={{ background: "var(--gray-alpha-100)", borderRadius: "var(--radius-md)" }}
                      >
-                        <div className="flex-1">
-                           <div className="flex items-center gap-3 mb-1">
-                              <div className={`w-2 h-2 rounded-full ${preference.enabled ? 'bg-purple-500' : 'bg-gray-400'}`} />
-                              <h4 className="font-medium text-gray-900">
+                        <div className="flex-1 min-w-0">
+                           <div className="flex items-center gap-3 mb-1 min-w-0">
+                              <div className={`w-2 h-2 rounded-full flex-shrink-0 ${preference.enabled ? 'bg-[var(--purple-700)]' : 'bg-[var(--gray-400)]'}`} />
+                              <h4 className="font-medium text-[var(--ds-text)] break-words min-w-0">
                                  {getDisplayName(preference.type)}
                               </h4>
                            </div>
-                           <p className="text-sm text-gray-600 ml-5">
+                           <p className="text-sm text-[var(--ds-text-secondary)] ml-5 break-words">
                               {getDescription(preference.type)}
                            </p>
                         </div>
-                        
+
                         {/* Toggle Switch */}
-                        <button
-                           onClick={() => toggleNotification(preference.type)}
-                           disabled={savingStates[preference.type]}
-                           className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                              preference.enabled ? 'bg-purple-600' : 'bg-gray-200'
-                           }`}
-                           role="switch"
-                           aria-checked={preference.enabled}
-                           aria-label={`Toggle ${getDisplayName(preference.type)}`}
-                        >
-                           <span
-                              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                                 preference.enabled ? 'translate-x-5' : 'translate-x-0'
-                              }`}
-                           />
+                        <div className="flex items-center gap-2 flex-shrink-0">
                            {savingStates[preference.type] && (
-                              <div className="absolute inset-0 flex items-center justify-center">
-                                 <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin" />
-                              </div>
+                              <div
+                                 className="w-3.5 h-3.5 rounded-full animate-spin flex-shrink-0"
+                                 style={{ border: "2px solid var(--gray-alpha-300)", borderTopColor: "var(--ds-text-secondary)" }}
+                              />
                            )}
-                        </button>
+                           <Switch
+                              id={`notification-pref-${preference.type}`}
+                              checked={preference.enabled}
+                              onChange={() => toggleNotification(preference.type)}
+                              disabled={savingStates[preference.type]}
+                              size="md"
+                           />
+                        </div>
                      </div>
                   ))}
                </div>
@@ -201,14 +184,14 @@ export default function NotificationConfig() {
 
          {/* Footer con resumen */}
          {localPreferences.length > 0 && (
-            <div className="border-gray-100 border-t p-4 bg-gray-50">
+            <div className="p-4" style={{ borderTop: "1px solid var(--ds-border)" }}>
                <div className="text-center">
-                  <span className="text-sm text-gray-600">
+                  <span className="text-sm" style={{ color: "var(--ds-text-secondary)" }}>
                      {localPreferences.filter(p => p.enabled).length} de {localPreferences.length} tipos de notificación activados
                   </span>
                </div>
             </div>
          )}
-      </section>
+      </div>
    )
 }

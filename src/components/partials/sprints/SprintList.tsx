@@ -1,19 +1,48 @@
-import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, pointerWithin, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
-import { MultiDragProvider } from '@/components/ui/dnd-kit/MultiDragContext'
 import { useSprintStore } from '@/lib/store/SprintStore'
-import { restrictToVerticalAxis, restrictToWindowEdges } from '@dnd-kit/modifiers'
 import { useBoardStore } from '@/lib/store/BoardStore'
 import { useIssueStore } from '@/lib/store/IssueStore'
 import CreateTaskForm from '../issues/CreateTaskForm'
 import { useAuthStore } from '@/lib/store/AuthStore'
 import CreateSprintForm from './CreateSprintForm'
-import { PlusIcon, CalendarIcon } from '@/assets/Icon'
+import { Plus, Calendar } from 'lucide-react'
 import { useModalStore } from '@/lib/hooks/ModalStore'
 import IssuesRow from './IssuesRow'
-import { useState } from 'react'
+import { Fragment, useRef, useState } from 'react'
 import { sortSprints } from '@/lib/utils/sprint.utils'
 import { toast } from 'react-hot-toast'
 import CreateWithIA from '../issues/CreateWithIA'
+
+// Separador invisible entre dos sprints que, al pasar el mouse, revela una línea +
+// botón "Agregar Sprint" — mismo patrón "hover-reveal insert row" que Notion/Linear.
+// No mueve nada de layout mientras no está en hover: colapsado mide lo mismo que el
+// espacio que antes daba `space-y-4`. La línea se parte en dos segmentos (izquierda/
+// derecha del botón) en vez de un único trazo que pase por detrás — así nunca comparte
+// píxeles con el botón y no se alcanza a ver la línea "a través" de él a mitad de la
+// transición de opacidad.
+function SprintGapAdd({ onAdd }: { onAdd: () => void }) {
+   return (
+      <div className="group flex items-center h-4 hover:h-9 focus-within:h-9 transition-all duration-150">
+         <div
+            className="flex-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-150"
+            style={{ borderTop: "1px dashed var(--ds-border-strong)" }}
+         />
+         <button
+            type="button"
+            onClick={onAdd}
+            title="Agregar sprint aquí"
+            className="flex-shrink-0 mx-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium text-[var(--ds-text-secondary)] bg-[var(--ds-card)] hover:bg-[var(--gray-alpha-100)] opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 group-focus-within:opacity-100 group-focus-within:scale-100 focus-visible:opacity-100 focus-visible:scale-100 focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2 transition-all duration-150"
+            style={{ boxShadow: "var(--shadow-border)" }}
+         >
+            <Plus size={12} strokeWidth={2} />
+            Agregar Sprint
+         </button>
+         <div
+            className="flex-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-150"
+            style={{ borderTop: "1px dashed var(--ds-border-strong)" }}
+         />
+      </div>
+   )
+}
 
 export default function SprintList() {
    const { createIssue, assignIssueToSprint, removeIssueFromSprint } = useIssueStore()
@@ -22,21 +51,19 @@ export default function SprintList() {
    const { selectedBoard } = useBoardStore()
    const { openModal, closeModal } = useModalStore()
 
+   // Selección múltiple de tareas (shift/cmd+click extiende la selección al
+   // empezar a arrastrar) — vive acá porque una tarea puede arrastrarse desde
+   // el sprint A hacia el sprint B, así que ambos IssuesRow necesitan verla.
    const [selectedIds, setSelectedIds] = useState<string[]>([])
-   const [activeId, setActiveId] = useState<string | null>(null)
+
+   // Elemento persistente fuera de pantalla para el "fantasma" de arrastre
+   // cuando se mueven varias tareas seleccionadas a la vez — mismo patrón que
+   // ImportIssuesModal.tsx usa para su drag de columnas.
+   const dragPreviewRef = useRef<HTMLDivElement>(null)
 
    // Estado optimista para sprints
    const [optimisticSprints, setOptimisticSprints] = useState<any[] | null>(null)
    const [optimisticTimeout, setOptimisticTimeout] = useState<NodeJS.Timeout | null>(null)
-
-   // Sensores personalizados para drag igual que SprintKanbanCard
-   const sensors = useSensors(
-      useSensor(PointerSensor, {
-         activationConstraint: {
-            distance: 3, // El drag se activa después de mover 3 píxeles
-         },
-      })
-   )
 
    const handleCreateTask = async (newTask: any, filesMap?: Map<string, File[]>) => {
       const token = await getValidAccessToken()
@@ -97,7 +124,7 @@ export default function SprintList() {
                onCancel={() => closeModal()}
             />
          ),
-         Icon: <PlusIcon size={20} stroke={1.75} />,
+         Icon: <Plus size={20} strokeWidth={1.75} />,
          closeOnBackdrop: false,
          closeOnEscape: true,
          mode: "CREATE"
@@ -116,7 +143,7 @@ export default function SprintList() {
                isEdit={false}
             />
          ),
-         Icon: <CalendarIcon size={20} stroke={1.75} />,
+         Icon: <Calendar size={20} strokeWidth={1.75} />,
          closeOnBackdrop: false,
          closeOnEscape: true,
          mode: "CREATE"
@@ -134,42 +161,42 @@ export default function SprintList() {
                onCancel={() => closeModal()}
             />
          ),
-         Icon: <PlusIcon size={20} stroke={1.75} />,
+         Icon: <Plus size={20} strokeWidth={1.75} />,
          closeOnBackdrop: false,
          closeOnEscape: false,
          mode: "CREATE"
       })
    }
 
-   const handleDragStart = (event: DragStartEvent) => {
-      const { active, activatorEvent } = event
-      const id = active.id as string
-      const shiftKey = (activatorEvent as PointerEvent).shiftKey
-      const metaKey = (activatorEvent as PointerEvent).metaKey
-
-      if (shiftKey || metaKey) {
-         setSelectedIds(prev =>
-            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-         )
-      } else if (!selectedIds.includes(id)) {
-         setSelectedIds([id])
+   // Empieza (o extiende, con shift/cmd) la selección de tareas al arrastrar.
+   const handleTaskDragStart = (e: React.DragEvent, taskId: string) => {
+      let effectiveSelection = selectedIds
+      if (e.shiftKey || e.metaKey || e.ctrlKey) {
+         effectiveSelection = selectedIds.includes(taskId) ? selectedIds.filter(i => i !== taskId) : [...selectedIds, taskId]
+         setSelectedIds(effectiveSelection)
+      } else if (!selectedIds.includes(taskId)) {
+         effectiveSelection = [taskId]
+         setSelectedIds(effectiveSelection)
       }
-      setActiveId(id)
+
+      e.dataTransfer.effectAllowed = 'move'
+      e.dataTransfer.setData('text/plain', taskId)
+
+      // Con más de una tarea seleccionada, mostrar una burbuja "N tareas
+      // seleccionadas" en vez del snapshot por defecto del navegador (que solo
+      // capturaría esta fila).
+      if (effectiveSelection.length > 1 && dragPreviewRef.current) {
+         dragPreviewRef.current.textContent = `${effectiveSelection.length} tareas seleccionadas`
+         e.dataTransfer.setDragImage(dragPreviewRef.current, 16, 16)
+      }
    }
 
-   const handleDragEnd = async (event: DragEndEvent) => {
-      const { over } = event
-      if (!over) {
-         setSelectedIds([])
-         setActiveId(null)
-         return
-      }
-
-      const targetSprintId = over.id as string
-      if (!selectedIds.length) {
-         setActiveId(null)
-         return
-      }
+   // Soltar sobre un sprint (o el backlog, id 'null'): mueve todas las tareas
+   // seleccionadas hacia ahí. Misma lógica optimista de antes, solo cambia
+   // cómo se dispara (evento nativo en vez de DragEndEvent de dnd-kit).
+   const handleSprintDrop = async (e: React.DragEvent, targetSprintId: string) => {
+      e.preventDefault()
+      if (!selectedIds.length) return
 
       const alreadyThere = sprints
          .find(s => s.id === targetSprintId)
@@ -177,7 +204,6 @@ export default function SprintList() {
 
       if (alreadyThere) {
          setSelectedIds([])
-         setActiveId(null)
          return
       }
 
@@ -246,6 +272,7 @@ export default function SprintList() {
          }
       }
 
+      const draggedIds = selectedIds
       setOptimisticSprints(newSprints)
 
       // --- FIN OPTIMISTIC ---
@@ -258,13 +285,13 @@ export default function SprintList() {
          if (targetSprintId === 'null') {
             await removeIssueFromSprint(
                token,
-               selectedIds,
+               draggedIds,
                selectedBoard?.id as string
             )
          } else {
             await assignIssueToSprint(
                token,
-               selectedIds,
+               draggedIds,
                targetSprintId,
                selectedBoard?.id as string
             )
@@ -278,26 +305,25 @@ export default function SprintList() {
          setOptimisticTimeout(setTimeout(() => setOptimisticSprints(null), 2000))
       } finally {
          setSelectedIds([])
-         setActiveId(null)
       }
    }
 
    if (isLoading && !sprints.length) {
       return (
-         <div className="space-y-6">
+         <div className="space-y-4">
             {Array.from({ length: 3 }).map((_, i) => (
-               <div key={i} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 animate-pulse">
-                  <div className="flex justify-between items-center mb-4">
+               <div key={i} className="p-4 animate-pulse" style={{ background: "var(--ds-card)", borderRadius: "var(--radius-xl)", boxShadow: "var(--shadow-border)" }}>
+                  <div className="flex justify-between items-center mb-3">
                      <div className="flex items-center gap-4">
-                        <div className="h-6 bg-gray-300 rounded w-32"></div>
-                        <div className="h-5 bg-gray-300 rounded w-20"></div>
+                        <div className="h-5 rounded w-32" style={{ background: "var(--gray-alpha-200)" }}></div>
+                        <div className="h-4 rounded w-20" style={{ background: "var(--gray-alpha-200)" }}></div>
                      </div>
-                     <div className="h-8 bg-gray-300 rounded w-24"></div>
+                     <div className="h-7 rounded w-24" style={{ background: "var(--gray-alpha-200)" }}></div>
                   </div>
-                  <div className="h-4 bg-gray-300 rounded w-3/4 mb-4"></div>
-                  <div className="space-y-3">
+                  <div className="h-3 rounded w-3/4 mb-3" style={{ background: "var(--gray-alpha-200)" }}></div>
+                  <div className="space-y-2">
                      {Array.from({ length: 2 }).map((_, j) => (
-                        <div key={j} className="h-12 bg-gray-300 rounded"></div>
+                        <div key={j} className="h-10 rounded" style={{ background: "var(--gray-alpha-200)" }}></div>
                      ))}
                   </div>
                </div>
@@ -309,59 +335,50 @@ export default function SprintList() {
    // Usar sprints optimistas si existen, si no, los del store
    const sprintsToRender = optimisticSprints || sprints
 
-   return (
-      <div className="space-y-6">
-         <MultiDragProvider value={{ selectedIds, setSelectedIds }}>
-            <DndContext
-               sensors={sensors}
-               collisionDetection={pointerWithin}
-               onDragStart={handleDragStart}
-               onDragEnd={handleDragEnd}
-               modifiers={[restrictToVerticalAxis, restrictToWindowEdges]}
-            >
-               {sortSprints(sprintsToRender).map(spr => (
-                  <IssuesRow
-                     key={spr.id}
-                     spr={spr}
-                     isOverlay={false}
-                     setIsOpen={handleCreateTaskModal}
-                     setIsCreateWithIAOpen={handleCreateWithIAModal}
-                  />
-               ))}
+   const sortedSprints = sortSprints(sprintsToRender)
 
-               <DragOverlay dropAnimation={null}>
-                  {activeId && (
-                     <div className="bg-blue-50 border-2 border-blue-200 border-dashed text-blue-700 cursor-grabbing flex items-center justify-center rounded-xl shadow-lg w-full h-20 transition-all duration-200">
-                        <div className="flex items-center gap-2">
-                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-                           </svg>
-                           <span className="font-medium text-sm">
-                              {selectedIds.length === 1 ? `${selectedIds.length} tarea seleccionada` : `${selectedIds.length} tareas seleccionadas`}
-                           </span>
-                        </div>
-                     </div>
-                  )}
-               </DragOverlay>
-            </DndContext>
-         </MultiDragProvider>
+   return (
+      <div>
+         {/* Fantasma de arrastre para selección múltiple — ver handleTaskDragStart */}
+         <div
+            ref={dragPreviewRef}
+            className="pointer-events-none fixed px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap"
+            style={{ top: -9999, left: -9999, background: "var(--blue-700)", color: "var(--primary-contrast-fg)" }}
+         />
+
+         {sortedSprints.map((spr, idx) => (
+            <Fragment key={spr.id}>
+               <IssuesRow
+                  spr={spr}
+                  setIsOpen={handleCreateTaskModal}
+                  setIsCreateWithIAOpen={handleCreateWithIAModal}
+                  selectedIds={selectedIds}
+                  setSelectedIds={setSelectedIds}
+                  onTaskDragStart={handleTaskDragStart}
+                  onDropOnSprint={(e) => handleSprintDrop(e, spr.id as string)}
+               />
+               {/* Zona hover entre sprints para insertar uno nuevo ahí mismo */}
+               {idx < sortedSprints.length - 1 && <SprintGapAdd onAdd={handleCreateSprintModal} />}
+            </Fragment>
+         ))}
 
          {/* Create Sprint Button */}
-         <div className="bg-white rounded-xl shadow-sm  overflow-hidden">
+         <div className="overflow-hidden rounded-xl mt-4">
             <button
                onClick={handleCreateSprintModal}
                disabled={isLoading}
-               className="w-full p-8 border-2 border-dashed border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 rounded-xl group disabled:opacity-50 disabled:cursor-not-allowed"
+               className="w-full p-4 transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[var(--gray-alpha-100)]"
+               style={{ border: "2px dashed var(--ds-border-strong)", borderRadius: "var(--radius-xl)" }}
             >
-               <div className="flex flex-col items-center gap-3">
-                  <div className="p-3 bg-gray-100 group-hover:bg-blue-100 rounded-xl transition-colors duration-200 text-gray-400 group-hover:text-blue-600">
-                     <CalendarIcon size={24} />
+               <div className="flex items-center justify-center gap-3">
+                  <div className="p-2 rounded-lg transition-colors duration-200" style={{ background: "var(--gray-alpha-100)", color: "var(--ds-text-muted)" }}>
+                     <Calendar size={18} strokeWidth={1.5} />
                   </div>
-                  <div className="text-center">
-                     <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors duration-200">
+                  <div className="text-left">
+                     <h3 className="text-sm font-semibold transition-colors duration-200" style={{ color: "var(--ds-text)" }}>
                         {isLoading ? 'Creando...' : 'Crear Nuevo Sprint'}
                      </h3>
-                     <p className="text-sm text-gray-500 mt-1">
+                     <p className="text-xs" style={{ color: "var(--ds-text-muted)" }}>
                         Organiza tus tareas en un nuevo sprint
                      </p>
                   </div>

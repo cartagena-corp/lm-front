@@ -1,4 +1,4 @@
-import { EmptyStateIcon } from '@/assets/Icon'
+import { Inbox } from 'lucide-react'
 
 interface EmptyStateProps {
   icon?: React.ReactNode
@@ -21,21 +21,25 @@ export default function EmptyState({
   return (
     <div className={`flex flex-col items-center justify-center py-16 px-4 ${className}`}>
       <div className="text-center">
-        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gray-100">
-          {icon || <EmptyStateIcon size={48} stroke={1.5} />}
+        <div
+          className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full"
+          style={{ background: "var(--gray-alpha-100)", color: "var(--ds-text-muted)" }}
+        >
+          {icon || <Inbox size={48} strokeWidth={1.5} />}
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+        <h3 className="text-sm font-medium mb-2" style={{ color: "var(--ds-text-secondary)" }}>
           {title}
         </h3>
         {description && (
-          <p className="text-gray-500 mb-6 max-w-md">
+          <p className="text-[13px] mb-6 max-w-md" style={{ color: "var(--ds-text-muted)" }}>
             {description}
           </p>
         )}
         {action && (
           <button
             onClick={action.onClick}
-            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 duration-150 font-medium"
+            className="inline-flex items-center h-9 px-3 rounded-md text-sm font-medium transition-opacity duration-150 hover:opacity-90 focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2"
+            style={{ background: "var(--gray-1000)", color: "var(--ds-contrast-inverse)" }}
           >
             {action.label}
           </button>

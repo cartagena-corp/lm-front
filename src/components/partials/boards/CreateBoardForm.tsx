@@ -2,9 +2,12 @@
 
 import { ProjectProps } from '@/lib/types/types'
 import { useEffect, useRef, useState, DragEvent } from 'react'
+import { createPortal } from 'react-dom'
 import AutoResizeTextarea from '../../ui/AutoResizeTextarea'
 import { useConfigStore } from '@/lib/store/ConfigStore'
-import { XIcon, PlusIcon } from '@/assets/Icon'
+import { computeDropdownPosition } from '@/lib/utils/dropdown.utils'
+
+const STATUS_DROPDOWN_MAX_HEIGHT = 240 // px, debe coincidir con max-h-60 del panel
 
 interface CreateBoardFormProps {
    onSubmit: (newBoard: ProjectProps, jiraImport: File | null) => void
@@ -31,7 +34,37 @@ export default function CreateBoardForm({ onSubmit, onCancel, editData = null, i
 
    const [jiraImport, setJiraImport] = useState<File | null>(null)
    const inputRef = useRef<HTMLInputElement>(null)
-   const statusRef = useRef(null)
+   const statusRef = useRef<HTMLDivElement>(null)
+   const statusPanelRef = useRef<HTMLDivElement>(null)
+   const [statusPosition, setStatusPosition] = useState<{ top?: number, bottom?: number, left: number, width: number, openUpward: boolean }>({ left: 0, width: 0, openUpward: false })
+   const [mounted, setMounted] = useState(false)
+
+   // Necesario para el portal del dropdown de Estado: document solo existe en el cliente
+   useEffect(() => {
+      setMounted(true)
+   }, [])
+
+   // El dropdown se porta a document.body para no quedar recortado por el overflow-y-auto
+   // del contenido de la modal (Modal.tsx), que además rompe position:fixed al animar con
+   // un transform en framer-motion. Si no cabe debajo antes del borde inferior del
+   // viewport, se abre hacia arriba (ver dropdown.utils.ts)
+   useEffect(() => {
+      if (isStatusOpen && statusRef.current) {
+         const rect = statusRef.current.getBoundingClientRect()
+         setStatusPosition(computeDropdownPosition(rect, { maxHeight: STATUS_DROPDOWN_MAX_HEIGHT, gap: 4 }))
+      }
+   }, [isStatusOpen])
+
+   useEffect(() => {
+      if (!isStatusOpen) return
+      const handleScroll = (event: Event) => {
+         const target = event.target as Node
+         if (statusPanelRef.current?.contains(target)) return
+         setIsStatusOpen(false)
+      }
+      window.addEventListener('scroll', handleScroll, true)
+      return () => window.removeEventListener('scroll', handleScroll, true)
+   }, [isStatusOpen])
 
    useEffect(() => {
       if (projectStatus && !isEdit) {
@@ -85,23 +118,27 @@ export default function CreateBoardForm({ onSubmit, onCancel, editData = null, i
       if (inputRef.current) inputRef.current.value = ''
    }
 
+   const labelCls = "text-[13px] font-medium"
+   const inputWrapCls = "flex items-center rounded-md px-4 h-11 transition-shadow duration-150 focus-within:outline-2 focus-within:outline-[var(--blue-700)] focus-within:outline-offset-2"
+   const inputCls = "outline-none text-sm w-full bg-transparent placeholder:text-[var(--ds-text-muted)]"
 
    return (
-      <div className="bg-white border-gray-100">
+      <div>
          {/* Form Content */}
          <form onSubmit={handleSubmit} className="p-6">
             <div className='space-y-4'>
                {/* Nombre del Tablero */}
                <div className='flex flex-col'>
-                  <label htmlFor="name" className="text-gray-900 text-sm font-semibold">
+                  <label htmlFor="name" className={labelCls} style={{ color: "var(--ds-text-secondary)" }}>
                      Nombre del Tablero
-                     <span className='text-red-500 ml-1'>*</span>
+                     <span className='ml-1' style={{ color: "var(--red-700)" }}>*</span>
                   </label>
-                  <div className='border-gray-200 flex items-center rounded-lg border px-4 py-3 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-all duration-200'>
+                  <div className={inputWrapCls} style={{ background: "var(--ds-card)", boxShadow: "var(--shadow-border)" }}>
                      <input
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         placeholder={isEdit ? (editData?.name || 'Nombre del tablero') : 'Ej: Proyecto Marketing Digital 2025'}
-                        className="outline-none text-sm w-full bg-transparent placeholder-gray-400"
+                        className={inputCls}
+                        style={{ color: "var(--ds-text)" }}
                         value={formData.name}
                         name="name"
                         type="text"
@@ -114,33 +151,34 @@ export default function CreateBoardForm({ onSubmit, onCancel, editData = null, i
                {/* Descripción */}
                <div className='flex flex-col'>
                   <div className='flex items-center justify-between text-sm gap-2'>
-                     <label htmlFor="desc" className="text-gray-900 font-semibold">
+                     <label htmlFor="desc" className="font-medium" style={{ color: "var(--ds-text-secondary)" }}>
                         Descripción
-                        <span className='text-red-500 ml-1'>*</span>
+                        <span className='ml-1' style={{ color: "var(--red-700)" }}>*</span>
                      </label>
 
                      <div className='flex items-center gap-2 text-xs'>
-                        <div className={`w-2 h-2 rounded-full ${formData.description.length > 280 ? 'bg-red-500' : formData.description.length > 250 ? 'bg-orange-500' : 'bg-green-500'}`} />
-                        <span className={`font-medium ${formData.description.length > 280 ? 'text-red-600' : formData.description.length > 250 ? 'text-orange-600' : 'text-green-600'}`}>
+                        <div className='w-2 h-2 rounded-full' style={{ background: formData.description.length > 280 ? 'var(--red-700)' : formData.description.length > 250 ? 'var(--amber-700)' : 'var(--green-700)' }} />
+                        <span className='font-medium' style={{ color: formData.description.length > 280 ? 'var(--red-700)' : formData.description.length > 250 ? 'var(--amber-700)' : 'var(--green-700)' }}>
                            {formData.description.length}/300
                         </span>
                      </div>
                   </div>
                   <div className='space-y-2'>
-                     <div className='border-gray-200 flex items-center rounded-lg border focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-all duration-200'>
+                     <div className='flex items-center rounded-md transition-shadow duration-150 focus-within:outline-2 focus-within:outline-[var(--blue-700)] focus-within:outline-offset-2'
+                        style={{ background: "var(--ds-card)", boxShadow: "var(--shadow-border)" }}>
                         <AutoResizeTextarea
-                           required
                            value={formData.description}
                            onChange={(str) => {
                               if (str.length <= 300) {
                                  setFormData({ ...formData, description: str })
                               }
                            }}
-                           className='text-sm! px-4 py-2 w-full resize-none bg-transparent placeholder-gray-400 border-0!'
+                           className='text-sm! px-4 py-2 w-full resize-none bg-transparent placeholder:text-[var(--ds-text-muted)] border-0!'
+                           style={{ color: "var(--ds-text)" }}
                            placeholder='Describe el propósito, objetivos y alcance del tablero...'
                         />
                      </div>
-                     <p className='text-gray-500 leading-relaxed text-xs'>
+                     <p className='leading-relaxed text-xs' style={{ color: "var(--ds-text-muted)" }}>
                         💡 Una descripción clara ayuda al equipo a entender el propósito del proyecto
                      </p>
                   </div>
@@ -150,14 +188,15 @@ export default function CreateBoardForm({ onSubmit, onCancel, editData = null, i
                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Fecha de Inicio */}
                   <div className='space-y-2'>
-                     <label htmlFor="startDate" className="text-gray-900 text-sm font-semibold">
+                     <label htmlFor="startDate" className={labelCls} style={{ color: "var(--ds-text-secondary)" }}>
                         Fecha de Inicio
-                        <span className='text-red-500 ml-1'>*</span>
+                        <span className='ml-1' style={{ color: "var(--red-700)" }}>*</span>
                      </label>
-                     <div className='border-gray-200 flex items-center rounded-lg border px-4 py-3 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-all duration-200'>
+                     <div className={inputWrapCls} style={{ background: "var(--ds-card)", boxShadow: "var(--shadow-border)" }}>
                         <input
                            onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                           className="outline-none text-sm w-full bg-transparent"
+                           className={inputCls}
+                           style={{ color: "var(--ds-text)" }}
                            value={formData.startDate}
                            name="startDate"
                            type="date"
@@ -169,14 +208,15 @@ export default function CreateBoardForm({ onSubmit, onCancel, editData = null, i
 
                   {/* Fecha de Finalización */}
                   <div className='space-y-2'>
-                     <label htmlFor="endDate" className="text-gray-900 text-sm font-semibold">
+                     <label htmlFor="endDate" className={labelCls} style={{ color: "var(--ds-text-secondary)" }}>
                         Fecha de Finalización
-                        <span className='text-red-500 ml-1'>*</span>
+                        <span className='ml-1' style={{ color: "var(--red-700)" }}>*</span>
                      </label>
-                     <div className='border-gray-200 flex items-center rounded-lg border px-4 py-3 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-all duration-200'>
+                     <div className={inputWrapCls} style={{ background: "var(--ds-card)", boxShadow: "var(--shadow-border)" }}>
                         <input
                            onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                           className="outline-none text-sm w-full bg-transparent"
+                           className={inputCls}
+                           style={{ color: "var(--ds-text)" }}
                            value={formData.endDate}
                            name="endDate"
                            type="date"
@@ -189,14 +229,15 @@ export default function CreateBoardForm({ onSubmit, onCancel, editData = null, i
 
                {/* Estado */}
                <div className='space-y-2 relative' ref={statusRef}>
-                  <label htmlFor="state" className="text-gray-900 text-sm font-semibold">
+                  <label htmlFor="state" className={labelCls} style={{ color: "var(--ds-text-secondary)" }}>
                      Estado
-                     <span className='text-red-500 ml-1'>*</span>
+                     <span className='ml-1' style={{ color: "var(--red-700)" }}>*</span>
                   </label>
                   <button
                      onClick={() => setIsStatusOpen(!isStatusOpen)}
                      type='button'
-                     className='border-gray-200 flex items-center justify-between rounded-lg border w-full px-4 py-3 hover:border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200'
+                     className='flex items-center justify-between rounded-md w-full px-4 py-2.5 transition-colors duration-150 hover:bg-[var(--gray-alpha-100)] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2'
+                     style={{ background: "var(--ds-card)", boxShadow: "var(--shadow-border)" }}
                   >
                      <div className="flex items-center gap-3">
                         {typeof formData.status === 'object' && formData.status.color && (
@@ -205,12 +246,13 @@ export default function CreateBoardForm({ onSubmit, onCancel, editData = null, i
                               style={{ backgroundColor: formData.status.color }}
                            />
                         )}
-                        <span className='text-sm text-gray-700'>
+                        <span className='text-sm' style={{ color: "var(--ds-text)" }}>
                            {typeof formData.status === 'object' ? formData.status.name : 'Seleccionar estado'}
                         </span>
                      </div>
                      <svg
-                        className={`text-gray-400 w-4 h-4 transition-transform duration-200 ${isStatusOpen ? "rotate-180" : ""}`}
+                        className={`w-4 h-4 transition-transform duration-200 ${isStatusOpen ? "rotate-180" : ""}`}
+                        style={{ color: "var(--ds-text-muted)" }}
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
                         viewBox="0 0 24 24"
@@ -220,20 +262,29 @@ export default function CreateBoardForm({ onSubmit, onCancel, editData = null, i
                         <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                      </svg>
                   </button>
-                  {isStatusOpen && (
-                     <div className='border-gray-200 bg-white shadow-lg absolute z-10 top-full mt-1 flex flex-col rounded-lg border text-sm w-full max-h-60 overflow-y-auto'>
+                  {isStatusOpen && mounted && createPortal(
+                     <div
+                        ref={statusPanelRef}
+                        className='fixed z-[9999] flex flex-col rounded-md text-sm max-h-60 overflow-y-auto'
+                        style={{
+                           ...(statusPosition.openUpward ? { bottom: statusPosition.bottom } : { top: statusPosition.top }),
+                           left: statusPosition.left,
+                           width: statusPosition.width,
+                           background: "var(--ds-card)", border: "1px solid var(--ds-border)", boxShadow: "var(--shadow-lg)"
+                        }}
+                     >
                         {projectStatus?.map(obj => (
                            <div
                               key={obj.id}
                               onClick={() => { setFormData({ ...formData, status: obj }); setIsStatusOpen(false) }}
-                              className='hover:bg-blue-50 duration-150 w-full text-start py-3 px-4 flex items-center gap-3 cursor-pointer'
+                              className='hover:bg-[var(--gray-alpha-100)] transition-colors duration-150 w-full text-start py-3 px-4 flex items-center gap-3 cursor-pointer'
                            >
                               <div className="flex items-center gap-3 flex-1">
                                  <div
                                     className="w-3 h-3 rounded-full"
                                     style={{ backgroundColor: obj.color }}
                                  />
-                                 <span className="text-gray-700">{obj.name}</span>
+                                 <span style={{ color: "var(--ds-text)" }}>{obj.name}</span>
                               </div>
                               {(typeof formData.status === 'object' && obj.id === formData.status.id) && (
                                  <svg
@@ -242,23 +293,31 @@ export default function CreateBoardForm({ onSubmit, onCancel, editData = null, i
                                     viewBox="0 0 24 24"
                                     strokeWidth={2}
                                     stroke="currentColor"
-                                    className="w-4 h-4 text-blue-600"
+                                    className="w-4 h-4"
+                                    style={{ color: "var(--blue-700)" }}
                                  >
                                     <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                                  </svg>
                               )}
                            </div>
                         ))}
-                     </div>
+                     </div>,
+                     document.body
                   )}
                </div>
             </div>
             <div className="flex justify-end gap-3 mt-4">
-               <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 transition-all duration-200 text-sm font-medium" type="button"
+               <button
+                  className="h-9 px-4 rounded-md text-sm font-medium transition-colors duration-150 hover:bg-[var(--gray-alpha-100)] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2"
+                  style={{ background: "var(--ds-card)", color: "var(--ds-text)", boxShadow: "var(--shadow-border)" }}
+                  type="button"
                   onClick={() => onCancel()}>
                   Cancelar
                </button>
-               <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium" type="submit">
+               <button
+                  className="h-9 px-4 rounded-md text-sm font-medium transition-colors duration-150 bg-[var(--primary-700)] hover:bg-[var(--primary-800)] focus-visible:outline-2 focus-visible:outline-[var(--primary-900)] focus-visible:outline-offset-2"
+                  style={{ color: "var(--primary-contrast-fg)" }}
+                  type="submit">
                   {isEdit ? 'Actualizar Tablero' : 'Crear Tablero'}
                </button>
             </div>

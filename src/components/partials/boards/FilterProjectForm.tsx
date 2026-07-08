@@ -4,6 +4,10 @@ import { useAuthStore } from '@/lib/store/AuthStore'
 import { useConfigStore } from '@/lib/store/ConfigStore'
 import { FilterProjectProps } from '@/lib/types/types'
 import { FormEvent, useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
+import { computeDropdownPosition } from '@/lib/utils/dropdown.utils'
+
+const DROPDOWN_MAX_HEIGHT = 240 // px, debe coincidir con max-h-60 de los paneles
 
 interface FilterFormProps {
    onSubmit: (data: FilterProjectProps) => void
@@ -27,7 +31,7 @@ export default function FilterProjectForm({ onSubmit, onCancel, initialFilters }
          page: 0,
          size: 10,
          sortBy: { id: "createdAt", sort: "Fecha de creación" },
-         direction: "desc"
+         direction: "asc"
       }
    })
 
@@ -41,8 +45,19 @@ export default function FilterProjectForm({ onSubmit, onCancel, initialFilters }
    ]
 
    const statusSelectRef = useRef<HTMLDivElement>(null)
+   const statusPanelRef = useRef<HTMLDivElement>(null)
    const paginationSelectRef = useRef<HTMLDivElement>(null)
    const sortBySelectRef = useRef<HTMLDivElement>(null)
+   const sortByPanelRef = useRef<HTMLDivElement>(null)
+
+   const [statusPosition, setStatusPosition] = useState<{ top?: number, bottom?: number, left: number, width: number, openUpward: boolean }>({ left: 0, width: 0, openUpward: false })
+   const [sortByPosition, setSortByPosition] = useState<{ top?: number, bottom?: number, left: number, width: number, openUpward: boolean }>({ left: 0, width: 0, openUpward: false })
+   const [mounted, setMounted] = useState(false)
+
+   // Necesario para portar los dropdowns a document.body: document solo existe en el cliente
+   useEffect(() => {
+      setMounted(true)
+   }, [])
 
    // Sincronizar el estado visual con el valor del formulario
    useEffect(() => {
@@ -51,15 +66,18 @@ export default function FilterProjectForm({ onSubmit, onCancel, initialFilters }
 
    useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
+         const target = event.target as Node
          if (
             statusSelectRef.current &&
-            !statusSelectRef.current.contains(event.target as Node)
+            !statusSelectRef.current.contains(target) &&
+            !(statusPanelRef.current && statusPanelRef.current.contains(target))
          ) {
             setIsStatusSelectOpen(false)
          }
          if (
             sortBySelectRef.current &&
-            !sortBySelectRef.current.contains(event.target as Node)
+            !sortBySelectRef.current.contains(target) &&
+            !(sortByPanelRef.current && sortByPanelRef.current.contains(target))
          ) {
             setIsSortBySelectOpen(false)
          }
@@ -71,23 +89,61 @@ export default function FilterProjectForm({ onSubmit, onCancel, initialFilters }
       }
    }, [])
 
+   // Los paneles se portan a document.body para no quedar recortados por el overflow-y-auto
+   // del contenido de la modal (Modal.tsx), que además rompe position:fixed al animar con
+   // un transform en framer-motion. Si no caben debajo antes del borde inferior del
+   // viewport, se abren hacia arriba (ver dropdown.utils.ts)
+   useEffect(() => {
+      if (isStatusSelectOpen && statusSelectRef.current) {
+         const rect = statusSelectRef.current.getBoundingClientRect()
+         setStatusPosition(computeDropdownPosition(rect, { maxHeight: DROPDOWN_MAX_HEIGHT }))
+      }
+   }, [isStatusSelectOpen])
+
+   useEffect(() => {
+      if (isSortBySelectOpen && sortBySelectRef.current) {
+         const rect = sortBySelectRef.current.getBoundingClientRect()
+         setSortByPosition(computeDropdownPosition(rect, { maxHeight: DROPDOWN_MAX_HEIGHT }))
+      }
+   }, [isSortBySelectOpen])
+
+   useEffect(() => {
+      if (!isStatusSelectOpen && !isSortBySelectOpen) return
+      const handleScroll = (event: Event) => {
+         const target = event.target as Node
+         if (!(statusPanelRef.current?.contains(target))) {
+            setIsStatusSelectOpen(false)
+         }
+         if (!(sortByPanelRef.current?.contains(target))) {
+            setIsSortBySelectOpen(false)
+         }
+      }
+      window.addEventListener('scroll', handleScroll, true)
+      return () => window.removeEventListener('scroll', handleScroll, true)
+   }, [isStatusSelectOpen, isSortBySelectOpen])
+
    const handleSubmit = (e: FormEvent) => {
       e.preventDefault()
       onSubmit(formData)
    }
 
+   const labelCls = "text-[13px] font-medium"
+   const selectTriggerCls = "flex items-center justify-between rounded-md w-full px-3 h-9 transition-colors duration-150 hover:bg-[var(--gray-alpha-100)] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2"
+   const selectItemCls = "hover:bg-[var(--gray-alpha-100)] transition-colors duration-150 w-full text-start py-2.5 px-3 flex items-center gap-3 cursor-pointer"
+
    return (
-      <div className="bg-white border-gray-100 rounded-xl shadow-sm border">
+      <div>
          {/* Form Content */}
          <form onSubmit={handleSubmit} className="p-6">
             <div className='space-y-5'>
                {/* Búsqueda por palabra clave */}
                <div className='space-y-2'>
-                  <label htmlFor="title" className="text-gray-900 text-sm font-semibold">
+                  <label htmlFor="title" className={labelCls} style={{ color: "var(--ds-text-secondary)" }}>
                      Búsqueda
                   </label>
-                  <div className='border-gray-200 flex items-center rounded-lg border px-4 py-3 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-all duration-200'>
-                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-400 mr-3">
+                  <div className='flex items-center rounded-md px-3 h-9 gap-2 transition-shadow duration-150 focus-within:outline-2 focus-within:outline-[var(--blue-700)] focus-within:outline-offset-2'
+                     style={{ background: "var(--ds-card)", boxShadow: "var(--shadow-border)" }}>
+                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 flex-shrink-0" style={{ color: "var(--ds-text-muted)" }}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
                      </svg>
                      <input
@@ -96,7 +152,8 @@ export default function FilterProjectForm({ onSubmit, onCancel, initialFilters }
                         placeholder="Buscar por nombre del tablero..."
                         id="name"
                         name="name"
-                        className="outline-none text-sm w-full bg-transparent placeholder-gray-400"
+                        className="outline-none text-sm w-full bg-transparent placeholder:text-[var(--ds-text-muted)]"
+                        style={{ color: "var(--ds-text)" }}
                         value={formData.name}
                      />
                   </div>
@@ -104,7 +161,7 @@ export default function FilterProjectForm({ onSubmit, onCancel, initialFilters }
 
                {/* Estado */}
                <div className='space-y-2 relative' ref={statusSelectRef}>
-                  <label htmlFor="status" className="text-gray-900 text-sm font-semibold">
+                  <label htmlFor="status" className={labelCls} style={{ color: "var(--ds-text-secondary)" }}>
                      Estado del proyecto
                   </label>
                   <button
@@ -113,37 +170,42 @@ export default function FilterProjectForm({ onSubmit, onCancel, initialFilters }
                         setIsSortBySelectOpen(false)
                      }}
                      type='button'
-                     className='border-gray-200 flex items-center justify-between rounded-lg border w-full px-4 py-3 hover:border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200'
+                     className={selectTriggerCls}
+                     style={{ background: "var(--ds-card)", boxShadow: "var(--shadow-border)" }}
                   >
                      <div className="flex items-center gap-3">
                         {formData.status !== 0 && (
                            <div
                               className="w-3 h-3 rounded-full"
-                              style={{ backgroundColor: projectStatus?.find(status => status.id === formData.status)?.color || '#6B7280' }}
+                              style={{ backgroundColor: projectStatus?.find(status => status.id === formData.status)?.color || 'var(--gray-500)' }}
                            />
                         )}
-                        <span className='text-sm text-gray-700'>
+                        <span className='text-sm' style={{ color: "var(--ds-text)" }}>
                            {formData.status == 0 ? "Cualquier estado" : projectStatus?.find(status => status.id == formData.status)?.name}
                         </span>
                      </div>
-                     <svg className={`text-gray-400 w-4 h-4 transition-transform duration-200 ${isStatusSelectOpen ? "rotate-180" : ""}`}
+                     <svg className="w-4 h-4 transition-transform duration-200" style={{ color: "var(--ds-text-muted)", transform: isStatusSelectOpen ? "rotate(180deg)" : undefined }}
                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                      </svg>
                   </button>
-                  {isStatusSelectOpen && (
-                     <div className='border-gray-200 bg-white shadow-lg absolute z-10 top-full mt-1 flex flex-col rounded-lg border text-sm w-full max-h-60 overflow-y-auto'>
+                  {isStatusSelectOpen && mounted && createPortal(
+                     <div
+                        ref={statusPanelRef}
+                        className="fixed z-[9999] flex flex-col rounded-md text-sm max-h-60 overflow-y-auto"
+                        style={{ ...(statusPosition.openUpward ? { bottom: statusPosition.bottom } : { top: statusPosition.top }), left: statusPosition.left, width: statusPosition.width, background: "var(--ds-card)", border: "1px solid var(--ds-border)", boxShadow: "var(--shadow-lg)" }}
+                     >
                         {/* Opción "Cualquier estado" */}
                         <div
                            onClick={() => { setFormData({ ...formData, status: 0 }), setIsStatusSelectOpen(false) }}
-                           className='hover:bg-blue-50 duration-150 w-full text-start py-3 px-4 flex items-center gap-3 cursor-pointer'
+                           className={selectItemCls}
                         >
                            <div className="flex items-center gap-3 flex-1">
-                              <div className="w-3 h-3 rounded-full bg-gray-300" />
-                              <span className="text-gray-700">Cualquier estado</span>
+                              <div className="w-3 h-3 rounded-full" style={{ background: "var(--gray-500)" }} />
+                              <span style={{ color: "var(--ds-text)" }}>Cualquier estado</span>
                            </div>
                            {formData.status === 0 && (
-                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-blue-600">
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4" style={{ color: "var(--blue-700)" }}>
                                  <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                               </svg>
                            )}
@@ -153,29 +215,30 @@ export default function FilterProjectForm({ onSubmit, onCancel, initialFilters }
                            <div
                               key={obj.id}
                               onClick={() => { setFormData({ ...formData, status: obj.id }), setIsStatusSelectOpen(false) }}
-                              className='hover:bg-blue-50 duration-150 w-full text-start py-3 px-4 flex items-center gap-3 cursor-pointer'
+                              className={selectItemCls}
                            >
                               <div className="flex items-center gap-3 flex-1">
                                  <div
                                     className="w-3 h-3 rounded-full"
                                     style={{ backgroundColor: obj.color }}
                                  />
-                                 <span className="text-gray-700">{obj.name}</span>
+                                 <span style={{ color: "var(--ds-text)" }}>{obj.name}</span>
                               </div>
                               {obj.id === formData.status && (
-                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-blue-600">
+                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4" style={{ color: "var(--blue-700)" }}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                                  </svg>
                               )}
                            </div>
                         ))}
-                     </div>
+                     </div>,
+                     document.body
                   )}
                </div>
 
                {/* Ordenamiento */}
                <div className='space-y-2' ref={sortBySelectRef}>
-                  <label htmlFor="sortBy" className="text-gray-900 text-sm font-semibold">
+                  <label htmlFor="sortBy" className={labelCls} style={{ color: "var(--ds-text-secondary)" }}>
                      Ordenar resultados
                   </label>
                   <div className='flex gap-3'>
@@ -185,33 +248,39 @@ export default function FilterProjectForm({ onSubmit, onCancel, initialFilters }
                            setIsStatusSelectOpen(false)
                         }}
                         type='button'
-                        className='border-gray-200 flex items-center justify-between rounded-lg border flex-1 px-4 py-3 hover:border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 relative'
+                        className={`${selectTriggerCls} flex-1 relative`}
+                        style={{ background: "var(--ds-card)", boxShadow: "var(--shadow-border)" }}
                      >
-                        <span className='text-sm text-gray-700'>
+                        <span className='text-sm' style={{ color: "var(--ds-text)" }}>
                            {formData.sortBy.sort}
                         </span>
-                        <svg className={`text-gray-400 w-4 h-4 transition-transform duration-200 ${isSortBySelectOpen ? "rotate-180" : ""}`}
+                        <svg className="w-4 h-4 transition-transform duration-200" style={{ color: "var(--ds-text-muted)", transform: isSortBySelectOpen ? "rotate(180deg)" : undefined }}
                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                            <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                         </svg>
 
-                        {isSortBySelectOpen && (
-                           <div className='border-gray-200 bg-white shadow-lg absolute z-10 top-full mt-1 left-0 flex flex-col rounded-lg border text-sm w-full max-h-60 overflow-y-auto'>
+                        {isSortBySelectOpen && mounted && createPortal(
+                           <div
+                              ref={sortByPanelRef}
+                              className="fixed z-[9999] flex flex-col rounded-md text-sm max-h-60 overflow-y-auto"
+                              style={{ ...(sortByPosition.openUpward ? { bottom: sortByPosition.bottom } : { top: sortByPosition.top }), left: sortByPosition.left, width: sortByPosition.width, background: "var(--ds-card)", border: "1px solid var(--ds-border)", boxShadow: "var(--shadow-lg)" }}
+                           >
                               {sortBySelect.map((obj) => (
                                  <div
                                     key={obj.id}
                                     onClick={() => { setFormData({ ...formData, sortBy: obj }), setIsSortBySelectOpen(false) }}
-                                    className='hover:bg-blue-50 duration-150 w-full text-start py-3 px-4 flex items-center gap-3 cursor-pointer'
+                                    className={selectItemCls}
                                  >
-                                    <span className="text-gray-700 flex-1">{obj.sort}</span>
+                                    <span className="flex-1" style={{ color: "var(--ds-text)" }}>{obj.sort}</span>
                                     {obj.id === formData.sortBy.id && (
-                                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-blue-600">
+                                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4" style={{ color: "var(--blue-700)" }}>
                                           <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                                        </svg>
                                     )}
                                  </div>
                               ))}
-                           </div>
+                           </div>,
+                           document.body
                         )}
                      </button>
 
@@ -224,11 +293,14 @@ export default function FilterProjectForm({ onSubmit, onCancel, initialFilters }
                            setFormData({ ...formData, direction: newDirection })
                         }}
                         type='button'
-                        className={`border-gray-200 border p-3 rounded-lg hover:border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${isAsc ? 'bg-blue-50 border-blue-200' : 'bg-gray-50'}`}
+                        className={`h-9 w-9 flex items-center justify-center rounded-md transition-colors duration-150 ${isAsc ? '' : 'hover:bg-[var(--gray-alpha-100)]'} focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2`}
+                        style={isAsc
+                           ? { background: "var(--blue-100)", border: "1px solid var(--blue-400)", color: "var(--blue-900)" }
+                           : { background: "var(--ds-card)", boxShadow: "var(--shadow-border)", color: "var(--ds-text-secondary)" }}
                         title={isAsc ? 'Orden ascendente (A-Z, 1-9, más reciente)' : 'Orden descendente (Z-A, 9-1, más antiguo)'}
                      >
                         {isAsc ? (
-                           <svg className='w-5 h-5 text-blue-600' viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                           <svg className='w-5 h-5' viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                               <path d="M11 10H18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                               <path d="M11 14H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                               <path d="M11 18H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -236,7 +308,7 @@ export default function FilterProjectForm({ onSubmit, onCancel, initialFilters }
                               <path d="M3 5.1875C3.39322 4.74501 4.43982 3 5 3M5 3C5.56018 3 6.60678 4.74501 7 5.1875M5 3V9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                            </svg>
                         ) : (
-                           <svg className='w-5 h-5 text-gray-600' viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                           <svg className='w-5 h-5' viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                               <path d="M11 10H18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                               <path d="M11 14H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                               <path d="M11 18H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -249,21 +321,22 @@ export default function FilterProjectForm({ onSubmit, onCancel, initialFilters }
                </div>
 
                {/* Checkbox "Mis tableros" */}
-               <div className='bg-gray-50 rounded-lg p-4 border border-gray-200'>
+               <div className='rounded-md p-4' style={{ background: "var(--gray-alpha-100)" }}>
                   <div className='flex items-center gap-3' ref={paginationSelectRef}>
                      <input
                         onChange={(e) => setFormData({ ...formData, createdBy: e.target.checked && user ? user?.id : "" })}
-                        className='w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-2'
+                        className='w-4 h-4 rounded focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2'
+                        style={{ accentColor: "var(--blue-700)" }}
                         checked={formData.createdBy !== ""}
                         name="createdBy"
                         type="checkbox"
                         id="createdBy"
                      />
                      <div className="flex-1">
-                        <label htmlFor="createdBy" className="text-gray-900 text-sm font-medium cursor-pointer">
+                        <label htmlFor="createdBy" className="text-sm font-medium cursor-pointer" style={{ color: "var(--ds-text)" }}>
                            Solo mis tableros
                         </label>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs" style={{ color: "var(--ds-text-muted)" }}>
                            Mostrar únicamente los tableros que he creado
                         </p>
                      </div>
@@ -272,11 +345,17 @@ export default function FilterProjectForm({ onSubmit, onCancel, initialFilters }
             </div>
 
             <div className="flex justify-end gap-3 mt-4">
-               <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 transition-all duration-200 text-sm font-medium" type="button"
+               <button
+                  className="h-9 px-4 rounded-md text-sm font-medium transition-colors duration-150 hover:bg-[var(--gray-alpha-100)] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2"
+                  style={{ background: "var(--ds-card)", color: "var(--ds-text)", boxShadow: "var(--shadow-border)" }}
+                  type="button"
                   onClick={() => onCancel()}>
                   Cancelar
                </button>
-               <button className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium" type="submit">
+               <button
+                  className="h-9 px-4 rounded-md text-sm font-medium transition-colors duration-150 bg-[var(--primary-700)] hover:bg-[var(--primary-800)] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2"
+                  style={{ color: "var(--primary-contrast-fg)" }}
+                  type="submit">
                   Aplicar filtros
                </button>
             </div>

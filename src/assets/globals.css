@@ -1,25 +1,20 @@
 @import "tailwindcss";
 
-@theme {
-  /* Colores personalizados para el sidebar */
-  --color-primary: #1e293b;
-  --color-primary-text: #f8fafc;
-  --color-primary-hover: #334155;
-  --color-primary-border: #64748b;
-  --color-background: #f8fafc;
-  --color-button-secondary-background: #ffffff;
-  --color-button-secondary-text: #1e293b;
-  --color-background-background: #e2e8f0;
-}
+/* ---- Geist Design System tokens (plain CSS custom properties) ----
+   Light mode only — the app does not support a dark theme.
+   The ds, space, radius, shadow and font token namespaces do not collide with
+   Tailwind's @theme color- vars, so existing utilities keep working.
+   base.css owns body color/background. */
+@import "./geist/colors.css";
+@import "./geist/typography.css";
+@import "./geist/spacing.css";
+@import "./geist/materials.css";
+@import "./geist/base.css";
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-rgb: 255, 255, 255;
-}
-
-body {
-  color: rgb(var(--foreground-rgb));
-  background: rgb(var(--background-rgb));
+  /* Bridge Geist's type tokens to the next/font CSS variables (set on <html>). */
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", "Roboto Mono", Menlo, Monaco, "Liberation Mono", "Courier New", monospace;
 }
 
 button,
@@ -86,7 +81,7 @@ input[type=number] {
   width: 4px;
   height: 4px;
   border-radius: 100%;
-  background-color: black;
+  background-color: var(--ds-text);
   transition: transform 0.3s ease;
 }
 
@@ -142,25 +137,40 @@ input[type=number] {
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: transparent;
   border-radius: 4px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: var(--gray-alpha-400);
   border-radius: 4px;
   transition: background 0.2s ease;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: var(--gray-alpha-500);
 }
 
 /* Firefox scrollbar */
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 #f1f5f9;
+  scrollbar-color: var(--gray-alpha-400) transparent;
 }
+
+/* Geist hover elevations / row hover (box-shadow & token bg can't be set inline on :hover) */
+.lm-board-card:hover { box-shadow: var(--shadow-md); }
+.lm-card:hover { box-shadow: var(--shadow-md); }
+.lm-row:hover { background: var(--gray-alpha-100); }
+
+/* Blinking caret for the login typewriter headline */
+.lm-caret { display: inline-block; margin-left: 2px; animation: lm-blink 1s steps(1) infinite; }
+@keyframes lm-blink { 50% { opacity: 0; } }
+
+/* Geist token helper utilities (for restyling large legacy screens in bulk) */
+.lm-surface { background: var(--ds-card); box-shadow: var(--shadow-border); }
+.lm-t1 { color: var(--ds-text); }
+.lm-t2 { color: var(--ds-text-secondary); }
+.lm-t3 { color: var(--ds-text-muted); }
 
 /* Issue badge styles */
 .issue-badge {
@@ -169,8 +179,8 @@ input[type=number] {
   gap: 4px;
   padding: 1px 6px;
   border-radius: 4px;
-  border: 1px solid #e5e7eb;
-  background: #f9fafb;
+  border: 1px solid var(--ds-border);
+  background: var(--gray-alpha-100);
   margin: 0 2px;
 }
 
@@ -181,7 +191,7 @@ input[type=number] {
 }
 
 .issue-badge a {
-  color: #2563eb;
+  color: var(--blue-900);
   font-size: 11px;
   font-weight: 500;
   text-decoration: none;

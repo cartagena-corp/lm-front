@@ -1,5 +1,5 @@
 import DeleteSprintStatus from "./DeleteSprintStatus"
-import { DeleteIcon, EditIcon, PlusIcon, ConfigIcon } from "@/assets/Icon"
+import { Trash2, Pencil, Plus, CalendarClock } from "lucide-react"
 import { useAuthStore } from "@/lib/store/AuthStore"
 import { useConfigStore } from "@/lib/store/ConfigStore"
 import CreateEditStatus from "../CreateEditStatus"
@@ -37,7 +37,7 @@ export default function SprintConfig({ projectId }: { projectId: string }) {
          title: "Crear Nuevo Estado",
          desc: "Define un nuevo estado para los sprints",
          children: <CreateEditStatus onSubmit={handleCreateStatus} onCancel={() => closeModal()} currentStatus={{ name: "", color: "#000000" }} />,
-         Icon: <PlusIcon size={20} stroke={1.75} />,
+         Icon: <Plus size={20} strokeWidth={1.75} />,
          closeOnBackdrop: false,
          closeOnEscape: false,
          mode: "CREATE"
@@ -50,7 +50,7 @@ export default function SprintConfig({ projectId }: { projectId: string }) {
          title: "Editar Estado",
          desc: "Modifica la información del estado",
          children: <CreateEditStatus onSubmit={(data) => handleEditStatus({ id, ...data })} onCancel={() => closeModal()} currentStatus={{ name, color }} />,
-         Icon: <EditIcon size={20} stroke={1.75} />,
+         Icon: <Pencil size={20} strokeWidth={1.75} />,
          closeOnBackdrop: false,
          closeOnEscape: false,
          mode: "UPDATE"
@@ -68,102 +68,81 @@ export default function SprintConfig({ projectId }: { projectId: string }) {
    }
 
    return (
-      <>
-         <section className="bg-white">
-            {/* Header */}
-            <div className="p-6 border-b border-gray-200">
-               <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                     <div className="bg-green-50 text-green-600 rounded-lg p-2">
-                        <ConfigIcon size={24} />
-                     </div>
-                     <div>
-                        <h3 className="text-lg font-semibold text-gray-900">Estados de Sprints</h3>
-                        <p className="text-sm text-gray-500">Gestiona los estados disponibles para tus sprints</p>
-                     </div>
-                  </div>
-                  <button
-                     onClick={handleCreateStatusModal}
-                     className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium"
-                  >
-                     <PlusIcon size={16} stroke={4} />
-                     Nuevo Estado
-                  </button>
-               </div>
+      <div className="mt-6">
+         {/* Header */}
+         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end mb-6 gap-4">
+            <div>
+               <h2 className="font-semibold" style={{ fontSize: 20, letterSpacing: "-0.02em", color: "var(--ds-text)", margin: "0 0 4px" }}>Estados de Sprints</h2>
+               <p style={{ fontSize: 14, color: "var(--ds-text-secondary)", margin: 0 }}>
+                  {sprintStatuses.length} estados · gestiona los estados disponibles para tus sprints
+               </p>
             </div>
+            <button
+               onClick={handleCreateStatusModal}
+               className="flex items-center justify-center gap-[7px] transition-colors hover:bg-[var(--primary-800)] bg-[var(--primary-700)] text-sm font-medium flex-shrink-0"
+               style={{ height: 36, padding: "0 14px", color: "var(--primary-contrast-fg)", border: "1px solid var(--primary-700)", borderRadius: "var(--radius-md)" }}
+            >
+               <Plus size={15} strokeWidth={2.5} />
+               <span className="hidden sm:inline">Nuevo Estado</span>
+               <span className="sm:hidden">Nuevo</span>
+            </button>
+         </div>
 
-            {/* Content */}
-            <div className="p-6 max-h-80 overflow-y-auto">
-               {isLoading ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-4">
-                     {[...Array(4)].map((_, i) => (
-                        <div key={i} className="animate-pulse">
-                           <div className="bg-gray-200 rounded-lg h-12"></div>
-                        </div>
-                     ))}
-                  </div>
-               ) : sprintStatuses.length === 0 ? (
-                  <div className="text-center py-12">
-                     <div className="p-3 bg-gray-50 rounded-full w-fit mx-auto mb-4 text-gray-400">
-                        <ConfigIcon size={32} />
-                     </div>
-                     <h4 className="text-lg font-medium text-gray-900 mb-2">No hay estados configurados</h4>
-                     <p className="text-gray-500 mb-6">Crea tu primer estado para comenzar a organizar tus sprints</p>
-                     <button
-                        onClick={handleCreateStatusModal}
-                        className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium mx-auto"
-                     >
-                        <PlusIcon size={16} />
-                        Crear Primer Estado
-                     </button>
-                  </div>
-               ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-4">
-                     {sprintStatuses.map((status) => (
-                        <div
-                           key={status.id}
-                           className="group relative bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200 hover:border-gray-300"
-                           style={{
-                              backgroundColor: `${status.color}08`,
-                              borderColor: `${status.color}20`
-                           }}
-                        >
-                           <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3 flex-1 min-w-0">
-                                 <div
-                                    className="w-3 h-3 rounded-full flex-shrink-0"
-                                    style={{ backgroundColor: status.color }}
-                                 />
-                                 <span
-                                    className="font-medium text-sm truncate"
-                                    style={{ color: status.color }}
-                                 >
-                                    {status.name}
-                                 </span>
-                              </div>
-                              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                                 <button
-                                    onClick={() => handleUpdateStatusModal({ id: status.id?.toString() || "", name: status.name, color: status.color })}
-                                    className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-md transition-colors duration-200"
-                                    title="Editar estado"
-                                 >
-                                    <EditIcon size={14} />
-                                 </button>
-                                 <button
-                                    onClick={() => handleDeleteStatusModal({ id: status.id?.toString() || "", name: status.name, color: status.color })}
-                                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors duration-200"
-                                    title="Eliminar estado"
-                                 >
-                                    <DeleteIcon size={14} />
-                                 </button>
-                              </div>
-                           </div>
-                        </div>
-                     ))}
-                  </div>
-               )}
+         {/* Content */}
+         {isLoading ? (
+            <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))" }}>
+               {[...Array(4)].map((_, i) => (
+                  <div key={i} className="animate-pulse"><div className="h-[92px]" style={{ background: "var(--gray-alpha-200)", borderRadius: "var(--radius-xl)" }} /></div>
+               ))}
             </div>
-         </section>
-      </>
+         ) : sprintStatuses.length === 0 ? (
+            <div className="text-center py-12">
+               <div className="w-fit mx-auto mb-4 p-3 rounded-full" style={{ background: "var(--gray-alpha-100)", color: "var(--ds-text-muted)" }}>
+                  <CalendarClock size={32} strokeWidth={1.5} />
+               </div>
+               <h4 className="font-medium mb-2" style={{ fontSize: 16, color: "var(--ds-text)" }}>No hay estados configurados</h4>
+               <p className="mb-6" style={{ color: "var(--ds-text-muted)" }}>Crea tu primer estado para comenzar a organizar tus sprints</p>
+               <button
+                  onClick={handleCreateStatusModal}
+                  className="flex items-center gap-2 px-[14px] transition-colors hover:bg-[var(--primary-800)] bg-[var(--primary-700)] text-sm font-medium mx-auto"
+                  style={{ height: 36, color: "var(--primary-contrast-fg)", border: "1px solid var(--primary-700)", borderRadius: "var(--radius-md)" }}
+               >
+                  <Plus size={16} strokeWidth={1.5} />
+                  Crear Primer Estado
+               </button>
+            </div>
+         ) : (
+            <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))" }}>
+               {sprintStatuses.map((status) => (
+                  <div key={status.id} className="lm-card group relative flex flex-col gap-3 p-[18px] transition-shadow duration-150"
+                     style={{ background: "var(--ds-card)", border: "1px solid var(--ds-border)", borderRadius: "var(--radius-xl)" }}>
+                     <div className="flex items-start justify-between gap-2">
+                        <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium min-w-0" style={{ background: "var(--gray-alpha-100)", color: "var(--ds-text)" }}>
+                           <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: status.color }} />
+                           <span className="truncate">{status.name}</span>
+                        </span>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex-shrink-0">
+                           <button
+                              onClick={() => handleUpdateStatusModal({ id: status.id?.toString() || "", name: status.name, color: status.color })}
+                              className="p-1.5 rounded-md transition-colors duration-200 hover:bg-[var(--gray-alpha-100)]" style={{ color: "var(--ds-text-muted)" }}
+                              title="Editar estado"
+                           >
+                              <Pencil size={14} strokeWidth={1.5} />
+                           </button>
+                           <button
+                              onClick={() => handleDeleteStatusModal({ id: status.id?.toString() || "", name: status.name, color: status.color })}
+                              className="p-1.5 rounded-md transition-colors duration-200 hover:bg-[var(--red-100)] hover:text-[var(--red-900)]" style={{ color: "var(--ds-text-muted)" }}
+                              title="Eliminar estado"
+                           >
+                              <Trash2 size={14} strokeWidth={1.5} />
+                           </button>
+                        </div>
+                     </div>
+                     <p className="text-xs" style={{ color: "var(--ds-text-muted)" }}>Estado de sprint</p>
+                  </div>
+               ))}
+            </div>
+         )}
+      </div>
    )
 }

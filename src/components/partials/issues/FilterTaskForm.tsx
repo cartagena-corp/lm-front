@@ -79,21 +79,28 @@ export default function FilterTaskForm({ onSubmit, onCancel }: FilterFormProps) 
       onSubmit(formData)
    }
 
+   const labelCls = "text-[13px] font-medium"
+   const selectTriggerCls = "flex items-center select-none rounded-md w-full px-3 h-9 gap-2 transition-colors duration-150 hover:bg-[var(--gray-alpha-100)] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2"
+   const selectPanelCls = "absolute z-10 top-[105%] flex flex-col items-start rounded-md text-sm w-full max-h-28 overflow-y-auto"
+   const selectItemCls = "hover:bg-[var(--gray-alpha-100)] transition-colors duration-150 w-full text-start py-2 px-2 flex items-center gap-2 cursor-pointer"
+
    return (
       <form onSubmit={handleSubmit}>
          <div className='pt-4 pb-14 space-y-4'>
             <div className='space-y-1'>
-               <label htmlFor="title" className="text-gray-700 text-sm font-medium">
+               <label htmlFor="title" className={labelCls} style={{ color: "var(--ds-text-secondary)" }}>
                   Palabra clave
                </label>
-               <div className='border-gray-300 flex justify-center items-center rounded-md border px-2 gap-2'>
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-5 text-gray-400">
+               <div className='flex justify-center items-center rounded-md px-3 h-9 gap-2 transition-shadow duration-150 focus-within:outline-2 focus-within:outline-[var(--blue-700)] focus-within:outline-offset-2'
+                  style={{ background: "var(--ds-card)", boxShadow: "var(--shadow-border)" }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-4 flex-shrink-0" style={{ color: "var(--ds-text-muted)" }}>
                      <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
                   </svg>
 
                   <input onChange={(e) => setFormData({ ...formData, keyword: e.target.value })}
                      placeholder="Buscar por nombre o palabra clave"
-                     className="outline-none text-sm w-full py-2"
+                     className="outline-none text-sm w-full bg-transparent placeholder:text-[var(--ds-text-muted)]"
+                     style={{ color: "var(--ds-text)" }}
                      value={formData.keyword}
                      name="keyword"
                      type="search"
@@ -104,7 +111,7 @@ export default function FilterTaskForm({ onSubmit, onCancel }: FilterFormProps) 
 
             <div className='flex items-center gap-2 justify-between'>
                <div className='space-y-1 relative w-full' ref={stateSelectRef}>
-                  <label htmlFor="state" className="text-gray-700 text-sm font-medium">
+                  <label htmlFor="state" className={labelCls} style={{ color: "var(--ds-text-secondary)" }}>
                      Estado
                   </label>
 
@@ -112,24 +119,26 @@ export default function FilterTaskForm({ onSubmit, onCancel }: FilterFormProps) 
                      setIsStateSelectOpen(!isStateSelectOpen)
                      setIsPrioritySelectOpen(false), setIsSortBySelectOpen(false), setIsUserSelectOpen(false)
                   }} type='button'
-                     className='border-gray-300 flex justify-center items-center select-none rounded-md border w-full px-2 gap-2'>
-                     <p className='py-2 w-full text-start text-sm'>
+                     className={selectTriggerCls}
+                     style={{ background: "var(--ds-card)", boxShadow: "var(--shadow-border)" }}>
+                     <p className='w-full text-start text-sm' style={{ color: "var(--ds-text)" }}>
                         {formData.state}
                      </p>
 
-                     <svg className={`text-gray-500 size-4 duration-150 ${isStateSelectOpen ? "-rotate-180" : ""}`}
+                     <svg className={`size-4 duration-150 ${isStateSelectOpen ? "-rotate-180" : ""}`}
+                        style={{ color: "var(--ds-text-muted)" }}
                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                      </svg>
                      {
                         isStateSelectOpen &&
-                        <div className='border-gray-300 bg-white shadow-md absolute z-10 top-[105%] flex flex-col items-start rounded-md border text-sm w-full max-h-28 overflow-y-auto'>{
+                        <div className={selectPanelCls} style={{ background: "var(--ds-card)", border: "1px solid var(--ds-border)", boxShadow: "var(--shadow-lg)" }}>{
                            stateSelect.map((obj, i) =>
                               <div key={i} onClick={() => { setFormData({ ...formData, state: obj.state }), setIsStateSelectOpen(false) }}
-                                 className='hover:bg-black/5 duration-150 w-full text-start py-2 px-2 flex items-center gap-2 cursor-pointer'>
+                                 className={selectItemCls} style={{ color: "var(--ds-text)" }}>
                                  {
                                     obj.state === formData.state ?
-                                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
+                                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3" style={{ color: "var(--blue-700)" }}>
                                           <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                                        </svg>
                                        :
@@ -146,7 +155,7 @@ export default function FilterTaskForm({ onSubmit, onCancel }: FilterFormProps) 
                   </button>
                </div>
                <div className='space-y-1 relative w-full' ref={prioritySelectRef}>
-                  <label htmlFor="state" className="text-gray-700 text-sm font-medium">
+                  <label htmlFor="state" className={labelCls} style={{ color: "var(--ds-text-secondary)" }}>
                      Prioridad
                   </label>
 
@@ -154,24 +163,26 @@ export default function FilterTaskForm({ onSubmit, onCancel }: FilterFormProps) 
                      setIsPrioritySelectOpen(!isPrioritySelectOpen)
                      setIsUserSelectOpen(false), setIsSortBySelectOpen(false), setIsStateSelectOpen(false)
                   }} type='button'
-                     className='border-gray-300 flex justify-center items-center select-none rounded-md border w-full px-2 gap-2'>
-                     <p className='py-2 w-full text-start text-sm'>
+                     className={selectTriggerCls}
+                     style={{ background: "var(--ds-card)", boxShadow: "var(--shadow-border)" }}>
+                     <p className='w-full text-start text-sm' style={{ color: "var(--ds-text)" }}>
                         {formData.priority}
                      </p>
 
-                     <svg className={`text-gray-500 size-4 duration-150 ${isPrioritySelectOpen ? "-rotate-180" : ""}`}
+                     <svg className={`size-4 duration-150 ${isPrioritySelectOpen ? "-rotate-180" : ""}`}
+                        style={{ color: "var(--ds-text-muted)" }}
                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                      </svg>
                      {
                         isPrioritySelectOpen &&
-                        <div className='border-gray-300 bg-white shadow-md absolute z-10 top-[105%] flex flex-col items-start rounded-md border text-sm w-full max-h-28 overflow-y-auto'>{
+                        <div className={selectPanelCls} style={{ background: "var(--ds-card)", border: "1px solid var(--ds-border)", boxShadow: "var(--shadow-lg)" }}>{
                            prioritySelect.map((obj, i) =>
                               <div key={i} onClick={() => { setFormData({ ...formData, priority: obj.priority }), setIsPrioritySelectOpen(false) }}
-                                 className='hover:bg-black/5 duration-150 w-full text-start py-2 px-2 flex items-center gap-2 cursor-pointer'>
+                                 className={selectItemCls} style={{ color: "var(--ds-text)" }}>
                                  {
                                     obj.priority === formData.priority ?
-                                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
+                                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3" style={{ color: "var(--blue-700)" }}>
                                           <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                                        </svg>
                                        :
@@ -190,7 +201,7 @@ export default function FilterTaskForm({ onSubmit, onCancel }: FilterFormProps) 
             </div>
 
             <div className='space-y-1 relative' ref={userSelectRef}>
-               <label htmlFor="state" className="text-gray-700 text-sm font-medium">
+               <label htmlFor="state" className={labelCls} style={{ color: "var(--ds-text-secondary)" }}>
                   Usuario
                </label>
 
@@ -198,24 +209,26 @@ export default function FilterTaskForm({ onSubmit, onCancel }: FilterFormProps) 
                   setIsUserSelectOpen(!isUserSelectOpen)
                   setIsPrioritySelectOpen(false), setIsSortBySelectOpen(false), setIsStateSelectOpen(false)
                }} type='button'
-                  className='border-gray-300 flex justify-center items-center select-none rounded-md border w-full px-2 gap-2'>
-                  <p className='py-2 w-full text-start text-sm'>
+                  className={selectTriggerCls}
+                  style={{ background: "var(--ds-card)", boxShadow: "var(--shadow-border)" }}>
+                  <p className='w-full text-start text-sm' style={{ color: "var(--ds-text)" }}>
                      {formData.user}
                   </p>
 
-                  <svg className={`text-gray-500 size-4 duration-150 ${isUserSelectOpen ? "-rotate-180" : ""}`}
+                  <svg className={`size-4 duration-150 ${isUserSelectOpen ? "-rotate-180" : ""}`}
+                     style={{ color: "var(--ds-text-muted)" }}
                      xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                      <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                   </svg>
                   {
                      isUserSelectOpen &&
-                     <div className='border-gray-300 bg-white shadow-md absolute z-10 top-[105%] flex flex-col items-start rounded-md border text-sm w-full max-h-28 overflow-y-auto'>{
+                     <div className={selectPanelCls} style={{ background: "var(--ds-card)", border: "1px solid var(--ds-border)", boxShadow: "var(--shadow-lg)" }}>{
                         userSelect.map((obj, i) =>
                            <div key={i} onClick={() => { setFormData({ ...formData, user: obj.user }), setIsUserSelectOpen(false) }}
-                              className='hover:bg-black/5 duration-150 w-full text-start py-2 px-2 flex items-center gap-2 cursor-pointer'>
+                              className={selectItemCls} style={{ color: "var(--ds-text)" }}>
                               {
                                  obj.user === formData.user ?
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3" style={{ color: "var(--blue-700)" }}>
                                        <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                                     </svg>
                                     :
@@ -234,7 +247,7 @@ export default function FilterTaskForm({ onSubmit, onCancel }: FilterFormProps) 
             </div>
 
             <div className='space-y-1'>
-               <label htmlFor="state" className="text-gray-700 text-sm font-medium">
+               <label htmlFor="state" className={labelCls} style={{ color: "var(--ds-text-secondary)" }}>
                   Ordenar por
                </label>
                <div className='flex justify-center items-center gap-2' ref={sortBySelectRef}>
@@ -242,24 +255,26 @@ export default function FilterTaskForm({ onSubmit, onCancel }: FilterFormProps) 
                      setIsSortBySelectOpen(!isSortBySelectOpen)
                      setIsPrioritySelectOpen(false), setIsUserSelectOpen(false), setIsStateSelectOpen(false)
                   }} type='button'
-                     className='border-gray-300 flex justify-center items-center select-none rounded-md border w-full px-2 gap-2 relative'>
-                     <p className='py-2 w-full text-start text-sm'>
+                     className={`${selectTriggerCls} relative`}
+                     style={{ background: "var(--ds-card)", boxShadow: "var(--shadow-border)" }}>
+                     <p className='w-full text-start text-sm' style={{ color: "var(--ds-text)" }}>
                         {formData.sort}
                      </p>
 
-                     <svg className={`text-gray-500 size-4 duration-150 ${isSortBySelectOpen ? "-rotate-180" : ""}`}
+                     <svg className={`size-4 duration-150 ${isSortBySelectOpen ? "-rotate-180" : ""}`}
+                        style={{ color: "var(--ds-text-muted)" }}
                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                      </svg>
                      {
                         isSortBySelectOpen &&
-                        <div className='border-gray-300 bg-white shadow-md absolute z-10 top-[110%] flex flex-col items-start rounded-md border text-sm w-full max-h-28 overflow-y-auto'>{
+                        <div className={`${selectPanelCls} top-[110%]`} style={{ background: "var(--ds-card)", border: "1px solid var(--ds-border)", boxShadow: "var(--shadow-lg)" }}>{
                            sortBySelect.map((obj, i) =>
                               <div key={i} onClick={() => { setFormData({ ...formData, sort: obj.sort }), setIsSortBySelectOpen(false) }}
-                                 className='hover:bg-black/5 duration-150 w-full text-start py-2 px-2 flex items-center gap-2 cursor-pointer'>
+                                 className={selectItemCls} style={{ color: "var(--ds-text)" }}>
                                  {
                                     obj.sort === formData.sort ?
-                                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3">
+                                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-3" style={{ color: "var(--blue-700)" }}>
                                           <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                                        </svg>
                                        :
@@ -275,10 +290,12 @@ export default function FilterTaskForm({ onSubmit, onCancel }: FilterFormProps) 
                      }
                   </button>
 
-                  <button onClick={() => setFormData({ ...formData, isAsc: !formData.isAsc })} type='button' className='border-gray-300 border p-1.5 rounded-md'>
+                  <button onClick={() => setFormData({ ...formData, isAsc: !formData.isAsc })} type='button'
+                     className="h-9 w-9 flex items-center justify-center rounded-md transition-colors duration-150 hover:bg-[var(--gray-alpha-100)] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2"
+                     style={{ background: "var(--ds-card)", boxShadow: "var(--shadow-border)", color: "var(--ds-text-secondary)" }}>
                      {
                         formData.isAsc ?
-                           <svg className='size-6' viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                           <svg className='size-5' viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                               <path d="M11 10H18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                               <path d="M11 14H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                               <path d="M11 18H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -286,7 +303,7 @@ export default function FilterTaskForm({ onSubmit, onCancel }: FilterFormProps) 
                               <path d="M3 5.1875C3.39322 4.74501 4.43982 3 5 3M5 3C5.56018 3 6.60678 4.74501 7 5.1875M5 3V9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                            </svg>
                            :
-                           <svg className='size-6' viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                           <svg className='size-5' viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                               <path d="M11 10H18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                               <path d="M11 14H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                               <path d="M11 18H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -302,13 +319,15 @@ export default function FilterTaskForm({ onSubmit, onCancel }: FilterFormProps) 
          <div className="pb-3 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
             <button
                type="submit"
-               className="text-white inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold textWhite shadow-sm hover:bg-blue-500 focus-visible:outline-offset-2 focus-visible:outline-blue-600 sm:col-start-2"
+               className="inline-flex items-center w-full justify-center rounded-md px-3 h-9 text-sm font-medium transition-opacity duration-150 hover:opacity-90 focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2 sm:col-start-2"
+               style={{ background: "var(--gray-1000)", color: "var(--ds-contrast-inverse)" }}
             >
                Aplicar Filtros
             </button>
             <button
                type="button"
-               className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
+               className="mt-3 inline-flex items-center w-full justify-center rounded-md px-3 h-9 text-sm font-medium transition-colors duration-150 hover:bg-[var(--gray-alpha-100)] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2 sm:col-start-1 sm:mt-0"
+               style={{ background: "var(--ds-card)", color: "var(--ds-text)", boxShadow: "var(--shadow-border)" }}
                onClick={onCancel}
             >
                Cancelar

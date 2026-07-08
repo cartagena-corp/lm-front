@@ -1,0 +1,94 @@
+/* ============================================================
+   Geist Base — resets, body defaults, and typography utility
+   classes that apply the type tokens (size/line/spacing/weight)
+   as a unit, the way Geist's Tailwind classes do.
+
+   NOTE: the upstream Geist base.css also defines global `a {}`,
+   `a:hover {}` and `::selection` rules. They are intentionally
+   omitted here so they don't restyle the not-yet-migrated screens
+   in this live app — migrated Geist components style their own
+   links/selection locally.
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-feature-settings: var(--font-feature-sans);
+  font-size: var(--copy-16-size);
+  line-height: var(--copy-16-line);
+  font-weight: var(--weight-normal);
+  color: var(--ds-text);
+  background: var(--ds-background);
+}
+
+code, kbd, samp, pre {
+  font-family: var(--font-mono);
+  font-feature-settings: var(--font-feature-mono);
+}
+
+/* ---- Headings (Geist Sans, weight 600) ---- */
+.heading-72,.heading-64,.heading-56,.heading-48,.heading-40,
+.heading-32,.heading-24,.heading-20,.heading-16,.heading-14{
+  font-family: var(--font-sans);
+  font-weight: var(--weight-semibold);
+  margin: 0;
+}
+.heading-72{font-size:var(--heading-72-size);line-height:var(--heading-72-line);letter-spacing:var(--heading-72-spacing);}
+.heading-64{font-size:var(--heading-64-size);line-height:var(--heading-64-line);letter-spacing:var(--heading-64-spacing);}
+.heading-56{font-size:var(--heading-56-size);line-height:var(--heading-56-line);letter-spacing:var(--heading-56-spacing);}
+.heading-48{font-size:var(--heading-48-size);line-height:var(--heading-48-line);letter-spacing:var(--heading-48-spacing);}
+.heading-40{font-size:var(--heading-40-size);line-height:var(--heading-40-line);letter-spacing:var(--heading-40-spacing);}
+.heading-32{font-size:var(--heading-32-size);line-height:var(--heading-32-line);letter-spacing:var(--heading-32-spacing);}
+.heading-24{font-size:var(--heading-24-size);line-height:var(--heading-24-line);letter-spacing:var(--heading-24-spacing);}
+.heading-20{font-size:var(--heading-20-size);line-height:var(--heading-20-line);letter-spacing:var(--heading-20-spacing);}
+.heading-16{font-size:var(--heading-16-size);line-height:var(--heading-16-line);letter-spacing:var(--heading-16-spacing);}
+.heading-14{font-size:var(--heading-14-size);line-height:var(--heading-14-line);letter-spacing:var(--heading-14-spacing);}
+
+/* ---- Labels (single-line, weight 500) ---- */
+.label-20,.label-18,.label-16,.label-14,.label-13,.label-12{
+  font-family: var(--font-sans);
+  font-weight: var(--weight-medium);
+  margin: 0;
+}
+.label-20{font-size:var(--label-20-size);line-height:var(--label-20-line);}
+.label-18{font-size:var(--label-18-size);line-height:var(--label-18-line);}
+.label-16{font-size:var(--label-16-size);line-height:var(--label-16-line);}
+.label-14{font-size:var(--label-14-size);line-height:var(--label-14-line);}
+.label-13{font-size:var(--label-13-size);line-height:var(--label-13-line);}
+.label-12{font-size:var(--label-12-size);line-height:var(--label-12-line);}
+
+/* ---- Copy (multi-line prose, weight 400) ---- */
+.copy-24,.copy-20,.copy-18,.copy-16,.copy-14,.copy-13{
+  font-family: var(--font-sans);
+  font-weight: var(--weight-normal);
+  margin: 0;
+}
+.copy-24{font-size:var(--copy-24-size);line-height:var(--copy-24-line);}
+.copy-20{font-size:var(--copy-20-size);line-height:var(--copy-20-line);}
+.copy-18{font-size:var(--copy-18-size);line-height:var(--copy-18-line);}
+.copy-16{font-size:var(--copy-16-size);line-height:var(--copy-16-line);}
+.copy-14{font-size:var(--copy-14-size);line-height:var(--copy-14-line);}
+.copy-13{font-size:var(--copy-13-size);line-height:var(--copy-13-line);}
+
+/* ---- Mono technical label: uppercase, tracked, tabular ---- */
+.mono-label{
+  font-family: var(--font-mono);
+  font-feature-settings: var(--font-feature-mono);
+  font-size: var(--label-13-size);
+  line-height: var(--label-13-line);
+  font-weight: var(--weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ds-text-secondary);
+}
+
+.subtle{ color: var(--ds-text-secondary); }

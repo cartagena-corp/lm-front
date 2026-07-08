@@ -8,15 +8,15 @@ import { useConfigStore } from '@/lib/store/ConfigStore'
 import { useBoardStore } from '@/lib/store/BoardStore'
 import { useAuthStore } from '@/lib/store/AuthStore'
 import EmptyState from '@/components/ui/EmptyState'
-import Pagination from '@/components/ui/Pagination'
-import { BoardIcon, FilterIcon, PlusIcon } from '@/assets/Icon'
-import { useEffect, useState, Suspense } from 'react'
+import { useInfiniteScroll } from '@/lib/hooks/useInfiniteScroll'
+import { LayoutDashboard, Filter, Plus } from 'lucide-react'
+import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useModalStore } from '@/lib/hooks/ModalStore'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Live3_PieChartLabels } from '@/components/partials/audit/PieChart'
 
 function TablerosContent() {
-   const { boards, getBoards, createBoard, importFromJira, isLoading, error } = useBoardStore()
+   const { boards, getBoards, createBoard, importFromJira, isLoading, isLoadingMore, hasMoreBoards, error } = useBoardStore()
    const [currentFilters, setCurrentFilters] = useState<FilterProjectProps | null>(null)
    const { getValidAccessToken, isAuthenticated } = useAuthStore((state) => state)
    const { setConfig } = useConfigStore()
@@ -30,7 +30,7 @@ function TablerosContent() {
       const createdBy = searchParams.get('createdBy') || ''
       const sortById = searchParams.get('sortBy') || 'createdAt'
       const sortByName = searchParams.get('sortByName') || 'Fecha de creación'
-      const direction = searchParams.get('direction') || 'desc'
+      const direction = searchParams.get('direction') || 'asc'
 
       // Si no hay ningún parámetro en la URL, retornar null
       if (!searchParams.toString()) {
@@ -122,7 +122,7 @@ function TablerosContent() {
                      : 'createdAt' as 'createdAt' | 'updatedAt',
                   direction: filtersFromUrl.direction === 'asc' || filtersFromUrl.direction === 'desc'
                      ? filtersFromUrl.direction as 'asc' | 'desc'
-                     : 'desc' as 'asc' | 'desc'
+                     : 'asc' as 'asc' | 'desc'
                }
 
                // Ejecutar configuración inicial y carga de tableros con filtros en paralelo
@@ -132,8 +132,10 @@ function TablerosContent() {
                ])
             } else {
                // Ejecutar configuración inicial y carga de tableros sin filtros en paralelo
+               // (por defecto se ordena de forma ascendente)
+               setCurrentFilters(null)
                await Promise.all([
-                  getBoards(token),
+                  getBoards(token, { direction: 'asc' }),
                   setConfig(token)
                ])
             }
@@ -143,7 +145,8 @@ function TablerosContent() {
       }
 
       initializeData()
-   }, [isAuthenticated, getBoards, getValidAccessToken, setConfig])
+      // Re-ejecuta cuando cambia la URL (p. ej. búsqueda desde la barra superior: /tableros?name=...)
+   }, [isAuthenticated, getBoards, getValidAccessToken, setConfig, searchParams])
 
    const handleFilter = async (filters: FilterProjectProps) => {
       try {
@@ -167,7 +170,7 @@ function TablerosContent() {
                : 'createdAt' as 'createdAt' | 'updatedAt',
             direction: filters.direction === 'asc' || filters.direction === 'desc'
                ? filters.direction as 'asc' | 'desc'
-               : 'desc' as 'asc' | 'desc'
+               : 'asc' as 'asc' | 'desc'
          }
 
          // Actualizar la URL con los filtros
@@ -180,7 +183,9 @@ function TablerosContent() {
       }
    }
 
-   const handlePageChange = async (page: number) => {
+   // Infinite scroll: carga la siguiente página y la concatena a boards.content
+   // en lugar de reemplazarla (ver getBoards(token, filters, append=true) en BoardStore)
+   const handleLoadMore = useCallback(async () => {
       try {
          const token = await getValidAccessToken()
          if (!token) {
@@ -188,22 +193,19 @@ function TablerosContent() {
             return
          }
 
-         // Use current filters with new page (no actualizar URL)
+         const nextPage = boards.number + 1
          const updatedFilters = currentFilters ? {
             ...currentFilters,
-            page: page - 1 // API uses 0-based pagination
+            page: nextPage
          } : {
             name: "",
             status: 0,
             createdBy: "",
-            page: page - 1,
+            page: nextPage,
             size: 10,
             sortBy: { id: "createdAt", sort: "Fecha de creación" },
-            direction: "desc"
+            direction: "asc"
          }
-
-         setCurrentFilters(updatedFilters)
-         // No actualizar search params al cambiar de página
 
          const boardFilters = {
             name: updatedFilters.name || undefined,
@@ -216,14 +218,21 @@ function TablerosContent() {
                : 'createdAt' as 'createdAt' | 'updatedAt',
             direction: updatedFilters.direction === 'asc' || updatedFilters.direction === 'desc'
                ? updatedFilters.direction as 'asc' | 'desc'
-               : 'desc' as 'asc' | 'desc'
+               : 'asc' as 'asc' | 'desc'
          }
 
-         await getBoards(token, boardFilters)
+         await getBoards(token, boardFilters, true)
       } catch (error) {
-         console.error('Error cambiando página:', error)
+         console.error('Error cargando más tableros:', error)
       }
-   }
+   }, [boards.number, currentFilters, getValidAccessToken, getBoards])
+
+   useInfiniteScroll({
+      loading: isLoading || isLoadingMore,
+      hasMore: hasMoreBoards,
+      onLoadMore: handleLoadMore,
+      threshold: 200
+   })
 
    const { openModal, closeModal } = useModalStore()
 
@@ -232,7 +241,7 @@ function TablerosContent() {
          size: "lg",
          title: "Crear Nuevo Tablero",
          desc: "Completa los detalles del nuevo tablero",
-         Icon: <PlusIcon size={20} stroke={1.75} />,
+         Icon: <Plus size={20} strokeWidth={1.75} />,
          children: <CreateBoardForm onSubmit={handleCreateBoard} onCancel={() => closeModal()} />,
          closeOnBackdrop: false,
          closeOnEscape: false,
@@ -245,7 +254,7 @@ function TablerosContent() {
          size: "md",
          title: "Filtrar tableros",
          desc: "Encuentra tableros específicos usando los filtros",
-         Icon: <FilterIcon size={20} stroke={1.75} />,
+         Icon: <Filter size={20} strokeWidth={1.75} />,
          children: <FilterProjectForm onSubmit={handleFilter} onCancel={() => closeModal()} initialFilters={getFiltersFromSearchParams()} />,
          closeOnBackdrop: false,
          closeOnEscape: false,
@@ -275,9 +284,15 @@ function TablerosContent() {
 
          {JSON.stringify(mensajePrueba)} 
          */}
-         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 md:mb-8 gap-4">
-            <h1 className="text-2xl font-bold text-gray-900">Tableros</h1>
-            <div className="flex flex-col sm:flex-row gap-3">
+         <div>
+         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end mb-6 gap-4">
+            <div>
+               <h1 className="font-semibold" style={{ fontSize: 28, letterSpacing: "-1.1px", color: "var(--ds-text)", margin: "0 0 4px" }}>Tableros</h1>
+               <p style={{ fontSize: 14, color: "var(--ds-text-secondary)", margin: 0 }}>
+                  {boards.totalElements ?? boards.content?.length ?? 0} proyectos · organiza tu trabajo en sprints
+               </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2">
                {currentFilters && (
                   <button
                      onClick={async () => {
@@ -288,7 +303,8 @@ function TablerosContent() {
                            await getBoards(token)
                         }
                      }}
-                     className="flex items-center justify-center gap-2 px-4 py-2.5 text-red-600 bg-white border border-red-300 rounded-lg hover:bg-red-50 hover:border-red-400 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium shadow-sm"
+                     className="flex items-center justify-center gap-2 transition-colors text-sm font-medium hover:bg-[var(--red-100)] hover:text-[var(--red-900)]"
+                     style={{ height: 36, padding: "0 12px", color: "var(--red-700)", background: "var(--ds-background)", border: "1px solid var(--red-400)", borderRadius: "var(--radius-md)" }}
                   >
                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
@@ -299,18 +315,20 @@ function TablerosContent() {
                )}
                <button
                   onClick={() => handleFilterBoardModal()}
-                  className="flex items-center justify-center gap-2 px-4 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium shadow-sm"
+                  className="flex items-center justify-center gap-[7px] transition-colors text-sm font-medium hover:bg-[var(--gray-alpha-100)]"
+                  style={{ height: 36, padding: "0 12px", color: "var(--ds-text)", background: "var(--ds-background)", border: "1px solid var(--ds-border-strong)", borderRadius: "var(--radius-md)" }}
                >
-                  <FilterIcon size={16} stroke={2} />
-                  <span className="hidden sm:inline">Filtrar tableros</span>
+                  <Filter size={15} strokeWidth={2} />
+                  <span className="hidden sm:inline">Filtrar</span>
                   <span className="sm:hidden">Filtrar</span>
                </button>
                <button
                   onClick={() => handleCreateBoardModal()}
                   disabled={isLoading}
-                  className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600"
+                  className="flex items-center justify-center gap-[7px] transition-colors text-sm font-medium hover:bg-[var(--primary-800)] disabled:opacity-50 disabled:cursor-not-allowed bg-[var(--primary-700)]"
+                  style={{ height: 36, padding: "0 14px", color: "var(--primary-contrast-fg)", border: "1px solid var(--primary-700)", borderRadius: "var(--radius-md)" }}
                >
-                  <PlusIcon size={16} stroke={2.5} />
+                  <Plus size={15} strokeWidth={2.5} />
                   <span className="hidden sm:inline">{isLoading ? 'Creando tablero...' : 'Crear tablero'}</span>
                   <span className="sm:hidden">{isLoading ? 'Creando...' : 'Crear'}</span>
                </button>
@@ -319,12 +337,12 @@ function TablerosContent() {
 
          {/* Información de paginación */}
          {boards.content && boards.content.length > 0 && (
-            <div className="mb-4 text-sm text-gray-600">
+            <div className="mb-4 text-sm" style={{ color: "var(--ds-text-muted)" }}>
                Mostrando {boards.content.length} de {boards.totalElements} tableros
             </div>
          )}
 
-         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-3 gap-4 md:gap-6 min-h-[60vh]">
+         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-4 ">
             {
                isLoading ? (
                   Array.from({ length: 8 }).map((_, i) => <BoardCardSkeleton key={i} />)
@@ -333,7 +351,7 @@ function TablerosContent() {
                ) : (
                   <div className="col-span-full flex items-center justify-center">
                      <EmptyState
-                        icon={<BoardIcon size={48} stroke={1.5} />}
+                        icon={<LayoutDashboard size={48} strokeWidth={1.5} />}
                         title={currentFilters ? "No se encontraron tableros" : "No hay tableros disponibles"}
                         description={currentFilters ? "No hay tableros que coincidan con los filtros aplicados. Intenta ajustar los criterios de búsqueda." : "Aún no has creado ningún tablero. Comienza creando tu primer tablero para organizar tus proyectos."}
                         action={{
@@ -353,15 +371,23 @@ function TablerosContent() {
             }
          </div>
 
-         {/* Paginación */}
+         {/* Infinite scroll: indicador de carga y fin de lista */}
          {boards.content && boards.content.length > 0 && (
-            <Pagination
-               currentPage={boards.number + 1} // API uses 0-based pagination
-               totalPages={boards.totalPages}
-               onPageChange={handlePageChange}
-               isLoading={isLoading}
-            />
+            <>
+               {isLoadingMore && (
+                  <div className="flex items-center justify-center gap-2 py-6 text-sm" style={{ color: "var(--ds-text-muted)" }}>
+                     <div className="w-4 h-4 rounded-full animate-spin" style={{ border: "2px solid var(--ds-border)", borderTopColor: "var(--blue-700)" }}></div>
+                     Cargando más tableros...
+                  </div>
+               )}
+               {!hasMoreBoards && !isLoadingMore && (
+                  <div className="text-center py-6 text-sm" style={{ color: "var(--ds-text-muted)" }}>
+                     No hay más tableros para mostrar
+                  </div>
+               )}
+            </>
          )}
+         </div>
       </>
    )
 }
@@ -370,10 +396,10 @@ export default function TablerosPage() {
    return (
       <Suspense fallback={
          <div>
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 md:mb-8 gap-4">
-               <h1 className="text-2xl font-bold text-gray-900">Tableros</h1>
+            <div className="mb-6">
+               <h1 className="font-semibold" style={{ fontSize: 28, letterSpacing: "-1.1px", color: "var(--ds-text)" }}>Tableros</h1>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-3 gap-4 md:gap-6 min-h-[60vh]">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-3 gap-4 min-h-[60vh]">
                {Array.from({ length: 8 }).map((_, i) => <BoardCardSkeleton key={i} />)}
             </div>
          </div>

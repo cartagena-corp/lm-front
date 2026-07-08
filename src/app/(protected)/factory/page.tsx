@@ -1,13 +1,14 @@
 "use client"
 
 import { useOrganizationStore } from "@/lib/store/OrganizationStore"
-import { ChevronRightIcon, FactoryIcon, PlusIcon } from "@/assets/Icon"
+import { ChevronRight, Factory, Plus, Calendar } from "lucide-react"
 import CreateOrg from "@/components/partials/factory/createOrg"
 import { useAuthStore } from "@/lib/store/AuthStore"
 import { useEffect, useState } from "react"
 import toast from "react-hot-toast"
 import Link from "next/link"
 import { useModalStore } from "@/lib/hooks/ModalStore"
+import EmptyState from "@/components/ui/EmptyState"
 
 export default function FactoryPage() {
     const { getAllOrganizations, organizations, createOrganization } = useOrganizationStore()
@@ -62,7 +63,7 @@ export default function FactoryPage() {
             size: "md",
             title: "Crear Nueva Organización",
             desc: "Completa los detalles de la nueva organización",
-            Icon: <PlusIcon size={20} stroke={1.75} />,
+            Icon: <Plus size={20} strokeWidth={1.75} />,
             children: <CreateOrg onSubmit={handleCreate} onCancel={() => closeModal()} orgObject={viewOrganization} isEdit={false} />,
             closeOnBackdrop: false,
             closeOnEscape: false,
@@ -71,48 +72,70 @@ export default function FactoryPage() {
 
 
     return (
-        <main className="bg-white border-gray-100 flex flex-col gap-6 border-b rounded-md shadow-md p-6">
+        <div>
             {/* Header */}
-            <section className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <div className="bg-blue-50 text-blue-600 rounded-lg p-2">
-                        <FactoryIcon size={24} />
-                    </div>
-                    <div>
-                        <h3 className="text-lg font-semibold text-gray-900">Listado de Organizaciones</h3>
-                        <p className="text-sm text-gray-500">Gestiona las organizaciones y sus propiedades</p>
-                    </div>
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end mb-6 gap-4">
+                <div>
+                    <h1 className="font-semibold" style={{ fontSize: 28, letterSpacing: "-1.1px", color: "var(--ds-text)", margin: "0 0 4px" }}>Organizaciones</h1>
+                    <p style={{ fontSize: 14, color: "var(--ds-text-secondary)", margin: 0 }}>
+                        {organizations.length} organizaciones · gestiona organizaciones y agrega usuarios
+                    </p>
                 </div>
-                <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 text-sm font-medium"
-                    onClick={() => {
-                        setViewOrganization(null)
-                        handleCreateOrganization()
-                    }}>
-                    <PlusIcon size={16} stroke={4} />
-                    Crear Organización
-                </button>
-            </section>
+                <div className="flex flex-col sm:flex-row gap-2">
+                    <button
+                        onClick={() => {
+                            setViewOrganization(null)
+                            handleCreateOrganization()
+                        }}
+                        className="flex items-center justify-center gap-[7px] transition-colors text-sm font-medium hover:bg-[var(--primary-800)] bg-[var(--primary-700)]"
+                        style={{ height: 36, padding: "0 14px", color: "var(--primary-contrast-fg)", border: "1px solid var(--primary-700)", borderRadius: "var(--radius-md)" }}
+                    >
+                        <Plus size={15} strokeWidth={2.5} />
+                        <span className="hidden sm:inline">Crear Organización</span>
+                        <span className="sm:hidden">Crear</span>
+                    </button>
+                </div>
+            </div>
 
             {/* Organizations List */}
-            <section className="flex flex-col gap-2">
-                {
-                    (organizations.length > 0) && organizations.map(org =>
-                        <Link href={`/factory/${org.organizationId}`} key={org.organizationId} className="border-black/5 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-colors flex justify-between items-center rounded-md border p-4">
-                            <aside className="flex items-center gap-4">
-                                <div className="text-blue-600 rounded-lg">
-                                    <FactoryIcon size={24} />
+            {
+                (organizations.length > 0) ? (
+                    <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+                        {organizations.map(org =>
+                            <Link href={`/factory/${org.organizationId}`} key={org.organizationId}
+                                className="lm-board-card group transition-shadow duration-150 flex flex-col gap-3 p-[18px] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2"
+                                style={{ background: "var(--ds-card)", borderRadius: "var(--radius-xl)", boxShadow: "var(--shadow-border)", color: "var(--ds-text)" }}>
+                                <div className="flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <div className="flex items-center justify-center flex-shrink-0" style={{ width: 40, height: 40, borderRadius: 8, background: "var(--gray-alpha-100)", color: "var(--ds-text-secondary)" }}>
+                                            <Factory size={20} strokeWidth={1.5} />
+                                        </div>
+                                        <h3 className="font-semibold truncate min-w-0" style={{ fontSize: 15, letterSpacing: "-0.01em", color: "var(--ds-text)" }}>{org.organizationName}</h3>
+                                    </div>
+                                    <ChevronRight className="flex-shrink-0" size={18} strokeWidth={1.5} style={{ color: "var(--ds-text-muted)" }} />
                                 </div>
-                                <hgroup className="flex flex-col items-start">
-                                    <h6 className="font-semibold">{org.organizationName}</h6>
-                                    <p className="opacity-50 text-xs">{org.createdAt && formatDate(org.createdAt)}</p>
-                                </hgroup>
-                            </aside>
-
-                            <ChevronRightIcon />
-                        </Link>
-                    )
-                }
-            </section>
-        </main>
+                                <div className="flex items-center gap-2 text-xs" style={{ color: "var(--ds-text-muted)" }}>
+                                    <Calendar size={14} strokeWidth={1.5} />
+                                    <span>{org.createdAt && formatDate(org.createdAt)}</span>
+                                </div>
+                            </Link>
+                        )}
+                    </section>
+                ) : (
+                    <EmptyState
+                        icon={<Factory size={48} strokeWidth={1.5} />}
+                        title="No hay organizaciones"
+                        description="Aún no has creado ninguna organización. Comienza creando la primera para organizar tus tableros y usuarios."
+                        action={{
+                            label: "Crear Organización",
+                            onClick: () => {
+                                setViewOrganization(null)
+                                handleCreateOrganization()
+                            }
+                        }}
+                    />
+                )
+            }
+        </div>
     )
 }

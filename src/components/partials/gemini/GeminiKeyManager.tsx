@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useGeminiStore } from '@/lib/store/GeminiStore'
 import { useAuthStore } from '@/lib/store/AuthStore'
-import { EyeIcon, KeyIcon, PlusIcon, DeleteIcon } from '@/assets/Icon'
+import { Building2, CircleCheck, Eye, EyeOff, Info, Plus, Trash2 } from 'lucide-react'
 import Switch from '@/components/ui/Switch'
 import toast from 'react-hot-toast'
 
@@ -78,41 +78,33 @@ export default function GeminiKeyManager() {
     }
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <div className="space-y-6">
-                {/* Header */}
-                <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
-                    <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
-                        <KeyIcon size={20} />
-                    </div>
-                    <div>
-                        <h3 className="text-lg font-semibold text-gray-900">Configuración de Gemini</h3>
-                        <p className="text-sm text-gray-600">Configura tu API Key y selecciona los modelos de Gemini a usar</p>
-                    </div>
-                </div>
+        <div>
+            {/* Header */}
+            <div className="mb-6">
+                <h2 className="font-semibold" style={{ fontSize: 20, letterSpacing: "-0.02em", color: "var(--ds-text)", margin: "0 0 4px" }}>Configuración de Gemini</h2>
+                <p style={{ fontSize: 14, color: "var(--ds-text-secondary)", margin: 0 }}>Configura tu API Key y selecciona los modelos de Gemini a usar</p>
+            </div>
 
-                {/* Organization Info */}
-                {organizationName && (
-                    <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4">
-                        <div className="flex items-center gap-3">
-                            <div className="flex-shrink-0">
-                                <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h4 className="text-sm font-medium text-purple-900 mb-1">Organización Activa</h4>
-                                <p className="text-lg font-semibold text-purple-800">{organizationName}</p>
-                            </div>
+            {/* Organization Info */}
+            {organizationName && (
+                <div className="rounded-md p-4 mb-6" style={{ background: "var(--purple-100)", border: "1px solid var(--purple-400)" }}>
+                    <div className="flex items-center gap-3">
+                        <div className="flex-shrink-0" style={{ color: "var(--purple-900)" }}>
+                            <Building2 size={24} strokeWidth={1.5} />
+                        </div>
+                        <div>
+                            <h4 className="text-sm font-medium mb-1" style={{ color: "var(--purple-900)" }}>Organización Activa</h4>
+                            <p className="text-lg font-semibold" style={{ color: "var(--purple-900)" }}>{organizationName}</p>
                         </div>
                     </div>
-                )}
+                </div>
+            )}
 
-                {/* Form */}
-                <form onSubmit={handleSaveGemini} className="space-y-6">
+            {/* Form */}
+            <form onSubmit={handleSaveGemini} className="space-y-6">
                     {/* API Key Field */}
                     <div className="space-y-2">
-                        <label htmlFor="apiKey" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="apiKey" className="block text-sm font-medium" style={{ color: "var(--ds-text)" }}>
                             API Key
                         </label>
                         <div className="relative">
@@ -121,60 +113,59 @@ export default function GeminiKeyManager() {
                                 id="apiKey"
                                 value={apiKey || ''}
                                 onChange={(e) => setApiKey(e.target.value)}
-                                className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                className="w-full h-9 px-3 pr-11 rounded-md text-sm placeholder:text-[var(--ds-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--blue-700)] transition-colors"
+                                style={{ background: "var(--ds-card)", color: "var(--ds-text)", border: "1px solid var(--ds-border)" }}
                                 placeholder="Ingresa tu API Key de Gemini"
                                 required
                             />
                             <button
                                 type="button"
                                 onClick={toggleApiKeyVisibility}
-                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--ds-text-muted)] hover:text-[var(--ds-text-secondary)] transition-colors"
                                 title={showApiKey ? "Ocultar API Key" : "Mostrar API Key"}
                             >
                                 {showApiKey ? (
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-                                    </svg>
+                                    <EyeOff size={20} strokeWidth={1.5} />
                                 ) : (
-                                    <EyeIcon size={20} />
+                                    <Eye size={20} strokeWidth={1.5} />
                                 )}
                             </button>
                         </div>
-                        <p className="text-xs text-gray-600">Tu API Key se almacena de forma segura y solo es visible para ti</p>
+                        <p className="text-xs" style={{ color: "var(--ds-text-muted)" }}>Tu API Key se almacena de forma segura y solo es visible para ti</p>
                     </div>
 
                     {/* Models Configuration */}
                     <div className="space-y-4">
                         <div className="pb-2">
-                            <h4 className="text-sm font-medium text-gray-700 mb-1">Modelos de Gemini</h4>
-                            <p className="text-xs text-gray-600">Agrega, edita o elimina los modelos disponibles y selecciona el que deseas usar. No es necesario modificar código cuando Google cambie o renombre un modelo.</p>
+                            <h4 className="text-sm font-medium mb-1" style={{ color: "var(--ds-text)" }}>Modelos de Gemini</h4>
+                            <p className="text-xs" style={{ color: "var(--ds-text-secondary)" }}>Agrega, edita o elimina los modelos disponibles y selecciona el que deseas usar. No es necesario modificar código cuando Google cambie o renombre un modelo.</p>
                         </div>
 
                         <div className="space-y-4">
                             {models.length === 0 && (
-                                <div className="text-center text-sm text-gray-500 bg-gray-50 border border-dashed border-gray-300 rounded-lg py-6">
+                                <div className="text-center text-sm rounded-md py-6" style={{ color: "var(--ds-text-muted)", border: "1px dashed var(--ds-border-strong)" }}>
                                     Aún no hay modelos configurados. Agrega uno abajo con su ID técnico.
                                 </div>
                             )}
                             {models.map((model) => (
-                                <div key={model.id} className="bg-gray-50 rounded-lg p-4 space-y-3">
+                                <div key={model.id} className="rounded-md p-4 space-y-3" style={{ background: "var(--gray-alpha-100)" }}>
                                     {/* Model Toggle */}
                                     <div className="flex items-center justify-between gap-3">
                                         <div className="flex items-center gap-3 flex-1 min-w-0">
-                                            <div className={`w-3 h-3 rounded-full flex-shrink-0 ${model.enabled ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                                            <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: model.enabled ? "var(--green-700)" : "var(--gray-alpha-400)" }}></div>
                                             <div className="flex-1 min-w-0 space-y-1">
                                                 <input
                                                     type="text"
                                                     value={model.displayName}
                                                     onChange={(e) => updateModelField(model.id, 'displayName', e.target.value)}
-                                                    className="w-full text-sm font-medium text-gray-900 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none transition-colors px-0.5"
+                                                    className="w-full text-sm font-medium text-[var(--ds-text)] placeholder:text-[var(--ds-text-muted)] bg-transparent border-b border-transparent hover:border-[var(--ds-border-strong)] focus:border-[var(--blue-700)] focus:outline-none transition-colors px-0.5"
                                                     placeholder="Nombre para mostrar"
                                                 />
                                                 <input
                                                     type="text"
                                                     value={model.name}
                                                     onChange={(e) => updateModelField(model.id, 'name', e.target.value)}
-                                                    className="w-full text-xs text-gray-500 font-mono bg-transparent border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none transition-colors px-0.5"
+                                                    className="w-full text-xs text-[var(--ds-text-muted)] placeholder:text-[var(--ds-text-muted)] font-mono bg-transparent border-b border-transparent hover:border-[var(--ds-border-strong)] focus:border-[var(--blue-700)] focus:outline-none transition-colors px-0.5"
                                                     placeholder="id-tecnico-del-modelo"
                                                 />
                                             </div>
@@ -189,23 +180,23 @@ export default function GeminiKeyManager() {
                                             <button
                                                 type="button"
                                                 onClick={() => handleRemoveModel(model.id, model.displayName)}
-                                                className="text-gray-400 hover:text-red-600 transition-colors"
+                                                className="text-[var(--ds-text-muted)] hover:text-[var(--red-700)] transition-colors"
                                                 title="Eliminar modelo"
                                             >
-                                                <DeleteIcon size={18} />
+                                                <Trash2 size={18} strokeWidth={1.5} />
                                             </button>
                                         </div>
                                     </div>
 
                                     {/* Methods Configuration */}
                                     {model.enabled && (
-                                        <div className="ml-6 space-y-3 border-l-2 border-green-200 pl-4">
-                                            <p className="text-xs font-medium text-gray-700 mb-2">Métodos disponibles:</p>
+                                        <div className="ml-6 space-y-3 pl-4" style={{ borderLeft: "2px solid var(--green-400)" }}>
+                                            <p className="text-xs font-medium mb-2" style={{ color: "var(--ds-text)" }}>Métodos disponibles:</p>
 
                                             <div className="flex items-center justify-between">
                                                 <div>
-                                                    <span className="text-sm font-medium text-gray-700">Generate Content</span>
-                                                    <p className="text-xs text-gray-500">Crea contenido como texto, código, resúmenes o historias. Es lo que usas para pedirle a Gemini que escriba algo.</p>
+                                                    <span className="text-sm font-medium" style={{ color: "var(--ds-text)" }}>Generate Content</span>
+                                                    <p className="text-xs" style={{ color: "var(--ds-text-secondary)" }}>Crea contenido como texto, código, resúmenes o historias. Es lo que usas para pedirle a Gemini que escriba algo.</p>
                                                 </div>
                                                 <Switch
                                                     id={`${model.id}-generateContent`}
@@ -217,8 +208,8 @@ export default function GeminiKeyManager() {
 
                                             <div className="flex items-center justify-between">
                                                 <div>
-                                                    <span className="text-sm font-medium text-gray-700">Embed Content</span>
-                                                    <p className="text-xs text-gray-500">Crea vectores numéricos (embeddings) a partir de texto. Esto es para que una computadora entienda el significado de tus palabras y pueda hacer cosas como buscar información relacionada o comparar documentos.</p>
+                                                    <span className="text-sm font-medium" style={{ color: "var(--ds-text)" }}>Embed Content</span>
+                                                    <p className="text-xs" style={{ color: "var(--ds-text-secondary)" }}>Crea vectores numéricos (embeddings) a partir de texto. Esto es para que una computadora entienda el significado de tus palabras y pueda hacer cosas como buscar información relacionada o comparar documentos.</p>
                                                 </div>
                                                 <Switch
                                                     id={`${model.id}-embedContent`}
@@ -229,20 +220,20 @@ export default function GeminiKeyManager() {
                                             </div>
 
                                             {/* URLs Preview */}
-                                            <div className="mt-3 p-3 bg-white rounded-lg border border-gray-200">
-                                                <p className="text-sm font-medium text-gray-700 mb-2">URL generada:</p>
+                                            <div className="mt-3 p-3 rounded-md" style={{ background: "var(--ds-card)", boxShadow: "var(--shadow-border)" }}>
+                                                <p className="text-sm font-medium mb-2" style={{ color: "var(--ds-text)" }}>URL generada:</p>
                                                 {model.methods.generateContent && (
-                                                    <p className="text-sm text-green-700 font-mono bg-green-50 p-2 rounded break-all">
+                                                    <p className="text-sm font-mono p-2 rounded break-all" style={{ color: "var(--green-900)", background: "var(--green-100)" }}>
                                                         https://generativelanguage.googleapis.com/v1beta/models/{model.name}:generateContent
                                                     </p>
                                                 )}
                                                 {model.methods.embedContent && (
-                                                    <p className="text-sm text-blue-700 font-mono bg-blue-50 p-2 rounded break-all">
+                                                    <p className="text-sm font-mono p-2 rounded break-all" style={{ color: "var(--blue-900)", background: "var(--blue-100)" }}>
                                                         https://generativelanguage.googleapis.com/v1beta/models/{model.name}:embedContent
                                                     </p>
                                                 )}
                                                 {!model.methods.generateContent && !model.methods.embedContent && (
-                                                    <p className="text-sm text-gray-700 font-mono bg-gray-50 p-2 rounded break-all">
+                                                    <p className="text-sm font-mono p-2 rounded break-all" style={{ color: "var(--ds-text-secondary)", background: "var(--gray-alpha-100)" }}>
                                                         https://generativelanguage.googleapis.com/v1beta/models/{model.name}
                                                     </p>
                                                 )}
@@ -254,29 +245,32 @@ export default function GeminiKeyManager() {
                         </div>
 
                         {/* Add new model */}
-                        <div className="border border-dashed border-gray-300 rounded-lg p-4 space-y-3">
-                            <p className="text-xs font-medium text-gray-700">Agregar nuevo modelo</p>
+                        <div className="rounded-md p-4 space-y-3" style={{ border: "1px dashed var(--ds-border-strong)" }}>
+                            <p className="text-xs font-medium" style={{ color: "var(--ds-text)" }}>Agregar nuevo modelo</p>
                             <div className="flex flex-col sm:flex-row gap-2">
                                 <input
                                     type="text"
                                     value={newModelName}
                                     onChange={(e) => setNewModelName(e.target.value)}
                                     placeholder="ID técnico (ej. gemini-3.5-flash)"
-                                    className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                    className="flex-1 h-9 px-3 text-sm rounded-md placeholder:text-[var(--ds-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--blue-700)] transition-colors"
+                                    style={{ background: "var(--ds-card)", color: "var(--ds-text)", border: "1px solid var(--ds-border)" }}
                                 />
                                 <input
                                     type="text"
                                     value={newModelDisplayName}
                                     onChange={(e) => setNewModelDisplayName(e.target.value)}
                                     placeholder="Nombre para mostrar (opcional)"
-                                    className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                    className="flex-1 h-9 px-3 text-sm rounded-md placeholder:text-[var(--ds-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--blue-700)] transition-colors"
+                                    style={{ background: "var(--ds-card)", color: "var(--ds-text)", border: "1px solid var(--ds-border)" }}
                                 />
                                 <button
                                     type="button"
                                     onClick={handleAddModel}
-                                    className="flex items-center justify-center gap-1.5 px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors flex-shrink-0"
+                                    className="flex h-9 items-center justify-center gap-1.5 px-4 rounded-md text-sm font-medium transition-colors duration-150 hover:bg-[var(--gray-alpha-100)] flex-shrink-0 focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2"
+                                    style={{ background: "var(--ds-card)", color: "var(--ds-text)", boxShadow: "var(--shadow-border)" }}
                                 >
-                                    <PlusIcon size={16} />
+                                    <Plus size={16} strokeWidth={1.5} />
                                     Agregar
                                 </button>
                             </div>
@@ -284,16 +278,14 @@ export default function GeminiKeyManager() {
                     </div>
 
                     {/* Info Section */}
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="rounded-md p-4" style={{ background: "var(--blue-100)", border: "1px solid var(--blue-400)" }}>
                         <div className="flex items-start gap-3">
-                            <div className="flex-shrink-0">
-                                <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                                </svg>
+                            <div className="flex-shrink-0 mt-0.5" style={{ color: "var(--blue-900)" }}>
+                                <Info size={18} strokeWidth={1.5} />
                             </div>
                             <div>
-                                <h4 className="text-sm font-medium text-blue-900 mb-1">Información importante</h4>
-                                <ul className="text-sm text-blue-800 space-y-1">
+                                <h4 className="text-sm font-medium mb-1" style={{ color: "var(--blue-900)" }}>Información importante</h4>
+                                <ul className="text-sm space-y-1" style={{ color: "var(--blue-900)" }}>
                                     <li>• La API Key se encripta antes de ser almacenada</li>
                                     <li>• Solo puede haber un modelo activo a la vez</li>
                                     <li>• Solo puede haber un método activo por modelo a la vez</li>
@@ -305,13 +297,11 @@ export default function GeminiKeyManager() {
                     </div>
 
                     {/* Save Button */}
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                    <div className="flex items-center justify-between pt-4" style={{ borderTop: "1px solid var(--ds-border)" }}>
                         <div className="flex items-center gap-2">
                             {showSaved && (
-                                <span className="text-green-600 text-sm font-medium flex items-center gap-1">
-                                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                    </svg>
+                                <span className="text-sm font-medium flex items-center gap-1" style={{ color: "var(--green-900)" }}>
+                                    <CircleCheck size={16} strokeWidth={1.75} />
                                     ¡Configuración guardada!
                                 </span>
                             )}
@@ -319,13 +309,13 @@ export default function GeminiKeyManager() {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center gap-2"
+                            className="h-9 px-4 rounded-md text-sm font-medium transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed bg-[var(--primary-700)] hover:bg-[var(--primary-800)] focus-visible:outline-2 focus-visible:outline-[var(--primary-900)] focus-visible:outline-offset-2 flex items-center gap-2"
+                            style={{ color: "var(--primary-contrast-fg)" }}
                         >
                             {isLoading ? <>Guardando...</> : <>Guardar Configuración</>}
                         </button>
                     </div>
                 </form>
             </div>
-        </div>
     )
 }

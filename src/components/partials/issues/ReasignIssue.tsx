@@ -2,10 +2,9 @@ import { useConfigStore } from "@/lib/store/ConfigStore"
 import { useBoardStore } from "@/lib/store/BoardStore"
 import { useAuthStore } from "@/lib/store/AuthStore"
 import { TaskProps } from "@/lib/types/types"
-import { useState, useRef, useEffect, useMemo } from "react"
-import Image from "next/image"
-import { getUserAvatar } from "@/lib/utils/avatar.utils"
-import { XIcon } from "@/assets/Icon"
+import { useState, useMemo } from "react"
+import CustomSelect from "@/components/ui/CustomSelect"
+import { FileText } from "lucide-react"
 
 interface ReasignIssueFormProps {
    onSubmit: ({ newUserId, issueId }: { newUserId: string, issueId: string }) => void
@@ -40,52 +39,21 @@ export default function ReasignIssue({ onSubmit, onCancel, taskObject }: Reasign
    }, [projectParticipants, selectedBoard?.createdBy, listUsers])
 
    const [userSelected, setUserSelected] = useState(allProjectUsers.find(user => typeof taskObject.assignedId !== 'string' && user.id === taskObject.assignedId?.id))
-   const [isUserOpen, setIsUserOpen] = useState(false)
-   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 })
-   const userRef = useRef(null)
-
-   // Calculate dropdown position when it opens
-   useEffect(() => {
-      if (isUserOpen && userRef.current) {
-         const rect = (userRef.current as HTMLElement).getBoundingClientRect()
-         setDropdownPosition({
-            top: rect.bottom + window.scrollY + 8, // 8px gap
-            left: rect.left + window.scrollX,
-            width: rect.width
-         })
-      }
-   }, [isUserOpen])
-
-   // Effect to handle clicks outside of select
-   useEffect(() => {
-      const handleClickOutside = (event: MouseEvent) => {
-         if (userRef.current && !(userRef.current as HTMLElement).contains(event.target as Node)) {
-            setIsUserOpen(false)
-         }
-      }
-
-      document.addEventListener('mousedown', handleClickOutside)
-      return () => {
-         document.removeEventListener('mousedown', handleClickOutside)
-      }
-   }, [])
 
    return (
-      <div className="bg-white border-gray-100 rounded-xl shadow-sm border">
+      <div>
          {/* Content */}
          <div className="p-6">
             <div className="space-y-4">
                {/* Current Task Info */}
-               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+               <div className="rounded-md p-4" style={{ background: "var(--gray-alpha-100)" }}>
                   <div className="flex items-center gap-3">
-                     <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                        <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
+                     <div className="w-10 h-10 rounded-md flex items-center justify-center" style={{ background: "var(--purple-100)" }}>
+                        <FileText size={20} strokeWidth={1.5} style={{ color: "var(--purple-900)" }} />
                      </div>
                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-900 text-sm">{taskObject.title}</h4>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <h4 className="font-medium text-sm" style={{ color: "var(--ds-text)" }}>{taskObject.title}</h4>
+                        <p className="text-xs mt-1" style={{ color: "var(--ds-text-muted)" }}>
                            Asignado actualmente a: {' '}
                            <span className="font-medium">
                               {typeof taskObject.assignedId === 'object' && taskObject.assignedId
@@ -100,103 +68,41 @@ export default function ReasignIssue({ onSubmit, onCancel, taskObject }: Reasign
 
                {/* User Selection */}
                <div className="space-y-2">
-                  <label className="text-gray-900 text-sm font-semibold">
+                  <label className="text-[13px] font-medium" style={{ color: "var(--ds-text-secondary)" }}>
                      Nuevo usuario responsable
-                     <span className='text-red-500 ml-1'>*</span>
+                     <span className='ml-1' style={{ color: "var(--red-700)" }}>*</span>
                   </label>
-                  <div className="relative" ref={userRef}>
-                     <button
-                        onClick={() => setIsUserOpen(!isUserOpen)}
-                        type='button'
-                        className='w-full text-left bg-white border border-gray-200 rounded-lg px-4 py-3 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200'
-                     >
-                        <div className='flex items-center justify-between'>
-                           <div className='flex items-center gap-3'>
-                              <div className='w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden'>
-                                 {userSelected ? (
-                                    <img
-                                       src={getUserAvatar(userSelected, 32)}
-                                       alt='Usuario seleccionado'
-                                       className="w-full h-full object-cover rounded-full"
-                                    />
-                                 ) : (
-                                    <span className='text-sm font-medium text-gray-600'>
-                                       ?
-                                    </span>
-                                 )}
-                              </div>
-                              <div>
-                                 <span className='text-sm font-medium text-gray-900'>
-                                    {userSelected?.firstName} {userSelected?.lastName}
-                                 </span>
-                                 <p className="text-xs text-gray-500">
-                                    {userSelected?.email || 'Sin email'}
-                                 </p>
-                              </div>
-                           </div>
-                           <svg className={`text-gray-400 w-5 h-5 transition-transform duration-200 ${isUserOpen ? "rotate-180" : ""}`}
-                              xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-                           </svg>
-                        </div>
-                     </button>
-
-                     {isUserOpen && (
-                        <div 
-                           className='fixed z-[99999] bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto'
-                           style={{
-                              top: `${dropdownPosition.top}px`,
-                              left: `${dropdownPosition.left}px`,
-                              width: `${dropdownPosition.width}px`
-                           }}
-                        >
-                           {allProjectUsers.map((obj, i) => (
-                              <button
-                                 key={i}
-                                 type="button"
-                                 onClick={() => {
-                                    setUserSelected(obj)
-                                    setIsUserOpen(false)
-                                 }}
-                                 className='w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors first:rounded-t-lg last:rounded-b-lg'
-                              >
-                                 <div className="flex items-center gap-3">
-                                    <div className={`w-2 h-2 rounded-full ${obj.id === userSelected?.id ? 'bg-blue-600' : 'bg-transparent'}`} />
-                                    <div className='w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden'>
-                                       <img
-                                          src={getUserAvatar(obj, 32)}
-                                          alt={obj.id}
-                                          className="w-full h-full object-cover rounded-full"
-                                       />
-                                    </div>
-                                    <div className="flex-1">
-                                       <span className='text-sm font-medium text-gray-900 block'>
-                                          {obj.firstName} {obj.lastName}
-                                       </span>
-                                       <span className="text-xs text-gray-500">
-                                          {obj.email || 'Sin email'}
-                                       </span>
-                                    </div>
-                                    {obj.id === userSelected?.id && (
-                                       <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                       </svg>
-                                    )}
-                                 </div>
-                              </button>
-                           ))}
-                        </div>
-                     )}
-                  </div>
+                  <CustomSelect
+                     value={userSelected?.id ?? null}
+                     onChange={(value) => {
+                        // Campo requerido: ignorar la opción "limpiar" del select.
+                        const user = allProjectUsers.find(u => u.id === value)
+                        if (user) setUserSelected(user)
+                     }}
+                     options={allProjectUsers.map(user => ({
+                        value: user.id,
+                        label: user.firstName || user.lastName ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() : (user.email || 'Sin nombre'),
+                        image: user.picture || undefined,
+                        subtitle: user.email
+                     }))}
+                     placeholder="Seleccionar usuario"
+                     variant="user"
+                  />
                </div>
             </div>
 
             <div className="flex justify-end gap-3 mt-4">
-               <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 transition-all duration-200 text-sm font-medium" type="button"
+               <button
+                  className="h-9 px-4 rounded-md text-sm font-medium transition-colors duration-150 hover:bg-[var(--gray-alpha-100)] focus-visible:outline-2 focus-visible:outline-[var(--blue-700)] focus-visible:outline-offset-2"
+                  style={{ background: "var(--ds-card)", color: "var(--ds-text)", boxShadow: "var(--shadow-border)" }}
+                  type="button"
                   onClick={() => onCancel()}>
                   Cancelar
                </button>
-               <button disabled={!userSelected} className={`bg-purple-600 hover:bg-purple-700 focus:ring-purple-500 text-white focus:ring-2 rounded-md focus:ring-offset-2 transition-all duration-200 text-sm font-medium px-4 py-2`}
+               <button
+                  disabled={!userSelected}
+                  className="h-9 px-4 rounded-md text-sm font-medium transition-colors duration-150 bg-[var(--primary-700)] hover:bg-[var(--primary-800)] focus-visible:outline-2 focus-visible:outline-[var(--primary-900)] focus-visible:outline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ color: "var(--primary-contrast-fg)" }}
                   onClick={() => onSubmit({ newUserId: userSelected?.id as string, issueId: taskObject.id as string })}
                   type="button">
                   Reasignar Tarea
