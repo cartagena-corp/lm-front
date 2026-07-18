@@ -28,13 +28,16 @@
     "lucide-react": "^1.23.0",
     "motion": "^12.23.24",
     "next": "^15.3.8",
-    "postcss": "^8.5.3",
+    "postcss": "^8.5.10",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-hot-toast": "^2.5.2",
     "sockjs-client": "^1.6.1",
     "tailwindcss": "^4.1.4",
     "zustand": "^5.0.3"
+  },
+  "overrides": {
+    "postcss": "$postcss"
   },
   "devDependencies": {
     "@types/dompurify": "^3.0.5",

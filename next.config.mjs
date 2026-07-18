@@ -26,6 +26,16 @@ const nextConfig = {
       },
     ],
   },
+  webpack: (config) => {
+    // 'supports-color' es una dependencia opcional de 'debug' (via sockjs-client)
+    // que solo se usa en Node. En el bundle del navegador no hace falta, así que
+    // la resolvemos a un módulo vacío para evitar el warning "Module not found".
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      'supports-color': false,
+    }
+    return config
+  },
 }
 
 export default nextConfig
