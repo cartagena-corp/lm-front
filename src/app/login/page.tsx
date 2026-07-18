@@ -283,10 +283,10 @@ export default function LoginPage() {
         }}
       >
         <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(120% 80% at 80% 0%, rgba(0,112,243,0.18), transparent 60%)' }} />
-        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 12 }}>
+        <Link href='/' style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 12 }}>
           <img src='/favicon-light.ico' alt='La Muralla' style={{ width: 48, height: 48, objectFit: 'contain', display: 'block' }} />
           <span className={`${roboto.className} pt-0.5`} style={{ fontSize: 26, fontWeight: 600, letterSpacing: '-0.02em' }}>LA MURALLA</span>
-        </div>
+        </Link>
         <div style={{ position: 'relative' }}>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, letterSpacing: '0.04em', color: 'var(--blue-600)', textTransform: 'uppercase', marginBottom: 20 }}>Gestión de proyectos</div>
           <TypingHeadline />

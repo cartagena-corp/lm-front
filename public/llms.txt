@@ -1,0 +1,23 @@
+# La Muralla
+
+> La Muralla es una plataforma de gestión de proyectos por tableros kanban e
+> incidencias, con sprints, seguimiento en tiempo real y auditorías. Está
+> construida por Cartagena Corporation y se ejecuta en cartagenacorporation.com.
+
+## Qué es
+La Muralla organiza el trabajo de un equipo en tableros kanban. Cada tablero
+agrupa incidencias en columnas por estado; las incidencias se arrastran entre
+columnas para actualizar su progreso al instante. Incluye planificación de
+sprints, creación de tareas asistida por IA, notificaciones en tiempo real y
+auditorías de rendimiento.
+
+## Páginas
+- [La Muralla (Español)](https://cartagenacorporation.com/es): Landing en español.
+- [La Muralla (English)](https://cartagenacorporation.com/en): Landing in English.
+- [Iniciar sesión](https://cartagenacorporation.com/login): Acceso a la aplicación.
+
+## Acciones
+- Agendar una demo de 30 minutos en Google Meet: https://cartagenacorporation.com/es#agendar
+
+## Empresa
+- Cartagena Corporation: https://cartagenacorporation.com

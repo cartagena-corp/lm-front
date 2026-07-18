@@ -8,6 +8,9 @@ import Topbar from "./Topbar"
 import Modal from "./Modal"
 
 const EXCLUDED_ROUTES = ["/login", "/login/callback", "/dev/get/criptograma"] as const
+// Public landing (/es, /en and any sub-paths) renders its own header/footer and
+// must never get the app shell — not even for an authenticated visitor.
+const LANDING_ROUTES = ["/es", "/en"] as const
 
 export default function ConditionalLayout({ children }: { children: ReactNode }) {
     const pathname = usePathname()
@@ -15,7 +18,8 @@ export default function ConditionalLayout({ children }: { children: ReactNode })
     const [mounted, setMounted] = useState(false)
     useEffect(() => { setMounted(true) }, [])
 
-    const shouldExcludeLayout = EXCLUDED_ROUTES.some(route => pathname.startsWith(route))
+    const isLandingRoute = LANDING_ROUTES.some(route => pathname === route || pathname.startsWith(`${route}/`))
+    const shouldExcludeLayout = isLandingRoute || EXCLUDED_ROUTES.some(route => pathname.startsWith(route))
 
     // El shell (sidebar + topbar) solo se ve con sesión. Antes de montar asumimos
     // que se muestra (igual que el SSR) para no parpadear en usuarios autenticados;

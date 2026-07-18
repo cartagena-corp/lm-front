@@ -1,4 +1,5 @@
 import { Analytics } from "@vercel/analytics/next"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 import ConditionalLayout from '@/components/new_layout/ConditionalLayout'
 import ThemeScript from '@/components/geist/ThemeScript'
 import HydrationNoiseFilter from '@/components/geist/HydrationNoiseFilter'
@@ -49,6 +50,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )
